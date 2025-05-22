@@ -1,0 +1,6 @@
+docker stop reservabot-client
+docker rm reservabot-client
+docker build -t reservabot-client .
+docker run -d -p 3000:3000 --name reservabot-client   -e API_URL=https://api.reservabot.io   -e API_KEY=tu-clave-secreta   --restart unless-stopped   reservabot-client
+docker ps
+docker logs reservabot-client
