@@ -1,7 +1,25 @@
 <?php
 /**
- * Funciones para el generador de formularios
+ * Funciones para el generador de formularios - VERSIÓN COMPLETA CORREGIDA
  */
+
+/**
+ * Verifica si el usuario está autenticado (simplificado para MVP)
+ */
+function verificarSesion() {
+    // Para MVP, asumimos que el usuario está siempre autenticado
+    // En producción aquí iría la lógica de autenticación real
+    return true;
+}
+
+/**
+ * Obtiene el ID del negocio del usuario actual (simplificado para MVP)
+ */
+function obtenerNegocioUsuario() {
+    // Para MVP, retornamos ID fijo
+    // En producción aquí se obtendría del usuario autenticado
+    return 1;
+}
 
 /**
  * Crea un nuevo formulario público
@@ -20,6 +38,7 @@ function createFormularioPublico($data) {
         $mensajeConfirmacion = trim($data['mensaje_confirmacion'] ?? '');
         $mensajeHeader = trim($data['mensaje_header'] ?? '');
         $id_negocio = intval($data['id_negocio'] ?? 0);
+        $activo = isset($data['activo']) ? 1 : 0;
         
         // Validaciones
         if (empty($nombre) || empty($camposActivos) || $id_negocio <= 0) {
@@ -35,13 +54,13 @@ function createFormularioPublico($data) {
         // Insertar formulario
         $stmt = $pdo->prepare("INSERT INTO formularios_publicos 
             (id_negocio, nombre, descripcion, slug, confirmacion_automatica, 
-             campos_activos, mensaje_confirmacion, mensaje_header, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+             campos_activos, mensaje_confirmacion, mensaje_header, activo, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
         $timestamp = time();
         $stmt->execute([
             $id_negocio, $nombre, $descripcion, $slug, $confirmacionAutomatica,
-            $camposActivosJson, $mensajeConfirmacion, $mensajeHeader, $timestamp
+            $camposActivosJson, $mensajeConfirmacion, $mensajeHeader, $activo, $timestamp
         ]);
         
         $formularioId = $pdo->lastInsertId();
@@ -278,8 +297,8 @@ function generarSlugUnico($nombre) {
     global $pdo;
     
     // Generar slug base
-    $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $nombre));
-    $slug = preg_replace('/-+/', '-', $slug);
+    $slug = strtolower(preg_replace('/[^a-zA-Z0-9\s]/', '', $nombre));
+    $slug = preg_replace('/\s+/', '-', $slug);
     $slug = trim($slug, '-');
     
     // Si está vacío, usar un valor predeterminado
@@ -331,7 +350,7 @@ function procesarReservaFormulario($data) {
         }
         
         // Validar datos requeridos
-        $camposRequeridos = ['nombre', 'email', 'fecha', 'hora'];
+        $camposRequeridos = ['nombre', 'fecha', 'hora'];
         foreach ($camposRequeridos as $campo) {
             if (empty($data[$campo]) && in_array($campo, $formulario['campos_activos'])) {
                 return ['success' => false, 'message' => 'Faltan campos obligatorios'];
@@ -340,48 +359,21 @@ function procesarReservaFormulario($data) {
         
         // Preparar datos para la reserva
         $nombre = trim($data['nombre'] ?? '');
-        $email = trim($data['email'] ?? '');
         $telefono = trim($data['telefono'] ?? '');
         $fecha = $data['fecha'] ?? '';
         $hora = $data['hora'] ?? '';
-        $personas = intval($data['personas'] ?? 1);
         $comentarios = trim($data['comentarios'] ?? '');
         
-        // Buscar o crear cliente
-        $clienteId = 0;
-        
-        if (!empty($email)) {
-            $stmt = $pdo->prepare("SELECT id FROM clientes WHERE email = ?");
-            $stmt->execute([$email]);
-            $cliente = $stmt->fetch();
-            
-            if ($cliente) {
-                $clienteId = $cliente['id'];
-                
-                // Actualizar información si es necesario
-                if (!empty($nombre) || !empty($telefono)) {
-                    $stmtUpdate = $pdo->prepare("UPDATE clientes SET nombre = ?, telefono = ? WHERE id = ?");
-                    $stmtUpdate->execute([$nombre, $telefono, $clienteId]);
-                }
-            } else {
-                // Crear nuevo cliente
-                $stmtInsert = $pdo->prepare("INSERT INTO clientes (nombre, email, telefono, created_at) VALUES (?, ?, ?, ?)");
-                $stmtInsert->execute([$nombre, $email, $telefono, time()]);
-                $clienteId = $pdo->lastInsertId();
-            }
-        }
+        // Determinar estado de la reserva
+        $estado = $formulario['confirmacion_automatica'] ? 'confirmada' : 'pendiente';
         
         // Crear la reserva
-        $confirmada = $formulario['confirmacion_automatica'] ? 1 : 0;
-        
         $stmtReserva = $pdo->prepare("INSERT INTO reservas 
-            (id_negocio, cliente_id, fecha, hora, personas, comentarios, confirmada, origen, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'formulario', ?)");
+            (nombre, telefono, fecha, hora, mensaje, estado) 
+            VALUES (?, ?, ?, ?, ?, ?)");
         
-        $timestamp = time();
         $stmtReserva->execute([
-            $formulario['id_negocio'], $clienteId, $fecha, $hora, 
-            $personas, $comentarios, $confirmada, $timestamp
+            $nombre, $telefono, $fecha, $hora . ':00', $comentarios, $estado
         ]);
         
         $reservaId = $pdo->lastInsertId();
@@ -412,143 +404,17 @@ function procesarReservaFormulario($data) {
             $_SERVER['HTTP_REFERER'] ?? null,
             $_SERVER['REMOTE_ADDR'] ?? null,
             $_SERVER['HTTP_USER_AGENT'] ?? null,
-            $timestamp
+            time()
         ]);
-        
-        // Enviar notificación por email si está configurado
-        if (!empty($email)) {
-            enviarEmailConfirmacionReserva($reservaId);
-        }
-        
-        // Si está habilitado, enviar notificación por WhatsApp
-        if (!empty($telefono) && function_exists('sendWhatsAppNotification')) {
-            sendWhatsAppNotification($reservaId, 'nueva_reserva');
-        }
         
         return [
             'success' => true, 
             'message' => 'Reserva creada correctamente',
             'id' => $reservaId,
-            'confirmada' => $confirmada
+            'confirmada' => $formulario['confirmacion_automatica']
         ];
     } catch (\PDOException $e) {
         error_log('Error al procesar reserva desde formulario: ' . $e->getMessage());
         return ['success' => false, 'message' => 'Error al procesar la reserva'];
-    }
-}
-
-/**
- * Envía un email de confirmación de reserva
- *
- * @param int $reservaId ID de la reserva
- * @return bool Resultado del envío
- */
-function enviarEmailConfirmacionReserva($reservaId) {
-    global $pdo;
-    
-    try {
-        // Obtener datos de la reserva
-        $stmt = $pdo->prepare("
-            SELECT r.*, c.nombre, c.email, n.nombre AS nombre_negocio
-            FROM reservas r
-            LEFT JOIN clientes c ON r.cliente_id = c.id
-            LEFT JOIN negocios n ON r.id_negocio = n.id
-            WHERE r.id = ?
-        ");
-        $stmt->execute([intval($reservaId)]);
-        $reserva = $stmt->fetch();
-        
-        if (!$reserva || empty($reserva['email'])) {
-            return false;
-        }
-        
-        // Formatear fecha y hora
-        $fecha = date('d/m/Y', strtotime($reserva['fecha']));
-        $hora = date('H:i', strtotime($reserva['hora']));
-        
-        // Obtener configuración de email
-        $configStmt = $pdo->query("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'email_%'");
-        $config = [];
-        
-        while ($row = $configStmt->fetch()) {
-            $config[$row['clave']] = $row['valor'];
-        }
-        
-        // Verificar configuración mínima
-        if (empty($config['email_host']) || empty($config['email_from'])) {
-            return false;
-        }
-        
-        // Preparar plantilla de email
-        $asunto = 'Confirmación de reserva - ' . $reserva['nombre_negocio'];
-        
-        $mensaje = "<html><body>";
-        $mensaje .= "<h2>Confirmación de Reserva</h2>";
-        $mensaje .= "<p>Hola " . htmlspecialchars($reserva['nombre']) . ",</p>";
-        
-        if ($reserva['confirmada']) {
-            $mensaje .= "<p>Tu reserva ha sido <strong>confirmada</strong>.</p>";
-        } else {
-            $mensaje .= "<p>Hemos recibido tu solicitud de reserva. Te notificaremos cuando sea confirmada.</p>";
-        }
-        
-        $mensaje .= "<h3>Detalles de la reserva:</h3>";
-        $mensaje .= "<ul>";
-        $mensaje .= "<li><strong>Fecha:</strong> " . $fecha . "</li>";
-        $mensaje .= "<li><strong>Hora:</strong> " . $hora . "</li>";
-        $mensaje .= "<li><strong>Personas:</strong> " . $reserva['personas'] . "</li>";
-        
-        if (!empty($reserva['comentarios'])) {
-            $mensaje .= "<li><strong>Comentarios:</strong> " . htmlspecialchars($reserva['comentarios']) . "</li>";
-        }
-        
-        $mensaje .= "</ul>";
-        
-        // Obtener respuestas personalizadas si existen
-        $stmtMeta = $pdo->prepare("SELECT * FROM reservas_formulario WHERE id_reserva = ?");
-        $stmtMeta->execute([$reservaId]);
-        $metadatos = $stmtMeta->fetch();
-        
-        if ($metadatos && !empty($metadatos['respuestas'])) {
-            $respuestas = json_decode($metadatos['respuestas'], true);
-            
-            if (!empty($respuestas)) {
-                $mensaje .= "<h3>Información adicional:</h3>";
-                $mensaje .= "<ul>";
-                
-                // Obtener detalles de las preguntas
-                $stmtPreguntas = $pdo->prepare("SELECT * FROM formulario_preguntas WHERE id_formulario = ?");
-                $stmtPreguntas->execute([$metadatos['id_formulario']]);
-                $preguntas = [];
-                
-                while ($pregunta = $stmtPreguntas->fetch()) {
-                    $preguntas[$pregunta['id']] = $pregunta;
-                }
-                
-                // Mostrar respuestas con sus preguntas
-                foreach ($respuestas as $idPregunta => $respuesta) {
-                    if (isset($preguntas[$idPregunta])) {
-                        $mensaje .= "<li><strong>" . htmlspecialchars($preguntas[$idPregunta]['pregunta']) . ":</strong> " . htmlspecialchars($respuesta) . "</li>";
-                    }
-                }
-                
-                $mensaje .= "</ul>";
-            }
-        }
-        
-        $mensaje .= "<p>Gracias por tu reserva.</p>";
-        $mensaje .= "<p><em>Este es un mensaje automático, por favor no respondas a este email.</em></p>";
-        $mensaje .= "</body></html>";
-        
-        // Configurar cabeceras
-        $cabeceras  = "MIME-Version: 1.0\r\n";
-        $cabeceras .= "Content-type: text/html; charset=UTF-8\r\n";
-        $cabeceras .= "From: " . $config['email_from'] . "\r\n";
-        
-        // Enviar email
-        return mail($reserva['email'], $asunto, $mensaje, $cabeceras);
-    } catch (\PDOException $e) {
-        error_log('Error al enviar email de confirmación: ' . $e->getMessage());
-        return false;
     }
 }

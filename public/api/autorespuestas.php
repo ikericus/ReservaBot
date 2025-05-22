@@ -1,12 +1,13 @@
 <?php
+// === ARCHIVO: api/autorespuestas.php ===
 /**
- * API para gestionar respuestas automáticas de WhatsApp
+ * API para gestionar respuestas automáticas de WhatsApp - VERSIÓN CORREGIDA
  */
 
 // Incluir configuración y funciones
-require_once '../db-config.php';
-require_once '../functions.php';
-require_once '../whatsapp-functions.php';
+require_once '../includes/db-config.php';
+require_once '../includes/functions.php';
+require_once '../includes/whatsapp-functions.php';
 
 // Cabeceras para JSON
 header('Content-Type: application/json');
@@ -203,3 +204,77 @@ function handleUpdateStatus() {
         echo json_encode(['success' => false, 'message' => 'Error al actualizar el estado']);
     }
 }
+
+// === ARCHIVO: api/whatsapp-status.php ===
+<?php
+/**
+ * API para verificar el estado de la conexión WhatsApp - VERSIÓN CORREGIDA
+ */
+
+// Incluir configuración y funciones
+require_once '../includes/db-config.php';
+require_once '../includes/functions.php';
+require_once '../includes/whatsapp-functions.php';
+
+// Cabeceras para JSON
+header('Content-Type: application/json');
+
+try {
+    // Verificar estado
+    $status = getWhatsAppStatus();
+    
+    // Devolver resultado
+    echo json_encode($status);
+} catch (\Exception $e) {
+    error_log('Error en API whatsapp-status: ' . $e->getMessage());
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Error al obtener el estado de WhatsApp'
+    ]);
+}
+
+// === ARCHIVO: api/actualizar-configuracion.php ===
+<?php
+// Cabeceras para JSON
+header('Content-Type: application/json');
+
+// Incluir configuración y funciones
+require_once '../includes/db-config.php';
+require_once '../includes/functions.php';
+
+// Obtener los datos enviados
+$data = json_decode(file_get_contents('php://input'), true);
+
+// Validar los datos
+if (empty($data)) {
+    echo json_encode(['success' => false, 'message' => 'No se recibieron datos']);
+    exit;
+}
+
+try {
+    // Iniciar una transacción
+    $pdo->beginTransaction();
+    
+    // Preparar la consulta para actualizar o insertar en la tabla CORRECTA
+    $stmt = $pdo->prepare('
+        INSERT INTO configuraciones (clave, valor) 
+        VALUES (?, ?) 
+        ON DUPLICATE KEY UPDATE valor = ?
+    ');
+    
+    // Procesar cada elemento de configuración
+    foreach ($data as $clave => $valor) {
+        $stmt->execute([$clave, $valor, $valor]);
+    }
+    
+    // Confirmar la transacción
+    $pdo->commit();
+    
+    echo json_encode(['success' => true]);
+} catch (\PDOException $e) {
+    // Revertir la transacción si hay un error
+    $pdo->rollBack();
+    
+    echo json_encode(['success' => false, 'message' => 'Error en la base de datos: ' . $e->getMessage()]);
+}
+?>

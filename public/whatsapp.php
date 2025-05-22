@@ -11,7 +11,7 @@ $pageScript = 'whatsapp';
 
 // Obtener la configuración de WhatsApp
 try {
-    $stmt = $pdo->query("SELECT * FROM configuracion WHERE clave LIKE 'whatsapp_%'");
+    $stmt = $pdo->query("SELECT * FROM configuraciones WHERE clave LIKE 'whatsapp_%'");
     $whatsappConfig = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 } catch (\PDOException $e) {
     $whatsappConfig = [];
@@ -46,7 +46,7 @@ include 'includes/header.php';
     
     <div class="flex items-center mb-4">
         <div class="mr-3">
-            <?php if ($whatsappStatus['connected']): ?>
+            <?php if ($whatsappStatus['connected'] ?? false): ?>
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                     <span class="w-2 h-2 mr-2 bg-green-500 rounded-full"></span>
                     Conectado
@@ -64,7 +64,7 @@ include 'includes/header.php';
         </button>
     </div>
     
-    <?php if ($whatsappStatus['connected']): ?>
+    <?php if ($whatsappStatus['connected'] ?? false): ?>
         <div class="bg-gray-50 rounded-lg p-4">
             <div class="flex flex-col md:flex-row md:justify-between">
                 <div class="mb-3 md:mb-0">

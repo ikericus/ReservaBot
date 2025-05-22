@@ -8,12 +8,18 @@ $currentPage = 'config';
 $pageTitle = 'ReservaBot - Configuración';
 $pageScript = 'config';
 
-// Obtener la configuración actual
+// Obtener la configuración actual - USAR TABLA CORREGIDA
 try {
-    $stmt = $pdo->query('SELECT * FROM configuracion');
+    $stmt = $pdo->query('SELECT * FROM configuraciones');
     $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 } catch (\PDOException $e) {
-    $configuraciones = [];
+    // Si falla, intentar con la tabla original
+    try {
+        $stmt = $pdo->query('SELECT * FROM configuracion');
+        $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+    } catch (\PDOException $e2) {
+        $configuraciones = [];
+    }
 }
 
 // Establecer valores predeterminados si no existen

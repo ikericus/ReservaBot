@@ -1,239 +1,181 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Elementos UI
-    const autorespuestasTable = document.getElementById('autorespuestasTable');
-    const autorespuestasForm = document.getElementById('autorespuestasForm');
-    const addResponseBtn = document.getElementById('addResponseBtn');
-    const modalTitle = document.getElementById('modalTitle');
-    const responseForm = document.getElementById('responseForm');
-    const responseModal = document.getElementById('responseModal');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
+    // Elementos del DOM
+    const filterForm = document.getElementById('filterForm');
+    const statsRecibidos = document.getElementById('statsRecibidos');
+    const statsEnviados = document.getElementById('statsEnviados');
     
-    // Variables globales
-    let currentEditId = null;
+    // Cargar estadísticas al inicio
+    loadStats();
     
-    // Event listeners
-    if (addResponseBtn) {
-        addResponseBtn.addEventListener('click', () => showModal());
+    // Event listener para el formulario de filtros
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(filterForm);
+            const searchParams = new URLSearchParams();
+            
+            // Construir parámetros de búsqueda
+            for (const [key, value] of formData.entries()) {
+                if (value.trim() !== '') {
+                    searchParams.append(key, value);
+                }
+            }
+            
+            // Redirigir con los filtros aplicados
+            window.location.href = 'mensajes.php?' + searchParams.toString();
+        });
     }
     
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', hideModal);
-    }
-    
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', hideModal);
-    }
-    
-    if (responseForm) {
-        responseForm.addEventListener('submit', handleFormSubmit);
-    }
-    
-    if (autorespuestasTable) {
-        autorespuestasTable.addEventListener('click', handleTableClick);
-    }
-    
-    // Funciones
-    function showModal(id = null, data = null) {
-        modalTitle.textContent = id ? 'Editar respuesta automática' : 'Añadir respuesta automática';
-        currentEditId = id;
+    // Función para cargar estadísticas
+    function loadStats() {
+        // Obtener parámetros actuales de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const search = urlParams.get('search') || '';
+        const chat = urlParams.get('chat') || '';
         
-        if (data) {
-            document.getElementById('keyword').value = data.keyword || '';
-            document.getElementById('response').value = data.response || '';
-            document.getElementById('isActive').checked = data.is_active === '1';
-            document.getElementById('isRegex').checked = data.is_regex === '1';
-        } else {
-            responseForm.reset();
-            document.getElementById('isActive').checked = true;
-            document.getElementById('isRegex').checked = false;
-        }
+        // Construir URL para la API de estadísticas
+        const apiUrl = 'api/mensajes-stats.php?' + new URLSearchParams({
+            search: search,
+            chat: chat
+        }).toString();
         
-        responseModal.classList.remove('hidden');
-    }
-    
-    function hideModal() {
-        responseModal.classList.add('hidden');
-        responseForm.reset();
-        currentEditId = null;
-    }
-    
-    function handleFormSubmit(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(responseForm);
-        
-        if (currentEditId) {
-            formData.append('id', currentEditId);
-            formData.append('action', 'update');
-        } else {
-            formData.append('action', 'create');
-        }
-        
-        fetch('api/autorespuestas.php', {
-            method: 'POST',
-            body: formData
-        })
+        fetch(apiUrl)
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    hideModal();
-                    showSuccessMessage(data.message || 'Respuesta guardada correctamente');
-                    
-                    // Recargar la tabla
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
+                if (data.success && data.stats) {
+                    updateStatsDisplay(data.stats);
                 } else {
-                    showErrorMessage(data.message || 'Error al guardar la respuesta');
+                    console.error('Error al cargar estadísticas:', data.message);
+                    showErrorStats();
                 }
             })
             .catch(error => {
-                console.error('Error al enviar formulario:', error);
-                showErrorMessage('Error al guardar la respuesta');
+                console.error('Error en la petición de estadísticas:', error);
+                showErrorStats();
             });
     }
     
-    function handleTableClick(e) {
-        const target = e.target;
-        
-        // Editar respuesta
-        if (target.classList.contains('edit-btn') || 
-            target.closest('.edit-btn')) {
-            const btn = target.classList.contains('edit-btn') ? target : target.closest('.edit-btn');
-            const id = btn.dataset.id;
-            getResponseData(id);
+    // Función para actualizar la visualización de estadísticas
+    function updateStatsDisplay(stats) {
+        if (statsRecibidos) {
+            const recibidosCount = statsRecibidos.querySelector('.text-2xl');
+            if (recibidosCount) {
+                recibidosCount.textContent = numberWithCommas(stats.recibidos || 0);
+            }
         }
         
-        // Eliminar respuesta
-        if (target.classList.contains('delete-btn') || 
-            target.closest('.delete-btn')) {
-            const btn = target.classList.contains('delete-btn') ? target : target.closest('.delete-btn');
-            const id = btn.dataset.id;
-            confirmDelete(id);
+        if (statsEnviados) {
+            const enviadosCount = statsEnviados.querySelector('.text-2xl');
+            if (enviadosCount) {
+                enviadosCount.textContent = numberWithCommas(stats.enviados || 0);
+            }
+        }
+    }
+    
+    // Función para mostrar error en estadísticas
+    function showErrorStats() {
+        if (statsRecibidos) {
+            const recibidosCount = statsRecibidos.querySelector('.text-2xl');
+            if (recibidosCount) {
+                recibidosCount.textContent = 'Error';
+            }
         }
         
-        // Toggle estado activo
-        if (target.classList.contains('toggle-active')) {
-            const checkbox = target;
-            const id = checkbox.dataset.id;
-            const isActive = checkbox.checked;
+        if (statsEnviados) {
+            const enviadosCount = statsEnviados.querySelector('.text-2xl');
+            if (enviadosCount) {
+                enviadosCount.textContent = 'Error';
+            }
+        }
+    }
+    
+    // Función para formatear números con comas
+    function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    
+    // Event listeners para abrir detalles de mensaje (si se implementa modal)
+    const messageRows = document.querySelectorAll('tbody tr');
+    messageRows.forEach(row => {
+        // Hacer las filas clickables para ver detalles
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function() {
+            const messageCell = this.querySelector('td:nth-child(4)'); // Columna del mensaje
+            const fullMessage = messageCell.querySelector('.text-sm').textContent;
             
-            updateResponseStatus(id, isActive);
-        }
-    }
+            // Si el mensaje está truncado, mostrar el completo
+            if (fullMessage.length > 50) {
+                showMessageDetail(this);
+            }
+        });
+    });
     
-    function getResponseData(id) {
-        fetch(`api/autorespuestas.php?id=${id}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.response) {
-                    showModal(id, data.response);
-                } else {
-                    showErrorMessage(data.message || 'Error al obtener datos de la respuesta');
-                }
-            })
-            .catch(error => {
-                console.error('Error al obtener datos:', error);
-                showErrorMessage('Error al obtener datos de la respuesta');
-            });
-    }
-    
-    function confirmDelete(id) {
-        if (confirm('¿Está seguro de que desea eliminar esta respuesta automática?')) {
-            const formData = new FormData();
-            formData.append('id', id);
-            formData.append('action', 'delete');
-            
-            fetch('api/autorespuestas.php', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showSuccessMessage(data.message || 'Respuesta eliminada correctamente');
-                        
-                        // Eliminar la fila de la tabla
-                        const row = document.querySelector(`tr[data-id="${id}"]`);
-                        if (row) {
-                            row.remove();
-                        } else {
-                            // Si no se encuentra la fila, recargar la página
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 500);
-                        }
-                    } else {
-                        showErrorMessage(data.message || 'Error al eliminar la respuesta');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al eliminar:', error);
-                    showErrorMessage('Error al eliminar la respuesta');
-                });
-        }
-    }
-    
-    function updateResponseStatus(id, isActive) {
-        const formData = new FormData();
-        formData.append('id', id);
-        formData.append('action', 'update_status');
-        formData.append('is_active', isActive ? 1 : 0);
+    // Función para mostrar detalles del mensaje (implementación futura)
+    function showMessageDetail(row) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 5) return;
         
-        fetch('api/autorespuestas.php', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showSuccessMessage(data.message || 'Estado actualizado correctamente');
-                } else {
-                    showErrorMessage(data.message || 'Error al actualizar el estado');
-                    // Revertir el cambio del checkbox
-                    const checkbox = document.querySelector(`.toggle-active[data-id="${id}"]`);
-                    if (checkbox) {
-                        checkbox.checked = !isActive;
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error al actualizar estado:', error);
-                showErrorMessage('Error al actualizar el estado');
-                // Revertir el cambio del checkbox
-                const checkbox = document.querySelector(`.toggle-active[data-id="${id}"]`);
-                if (checkbox) {
-                    checkbox.checked = !isActive;
-                }
-            });
-    }
-    
-    function showSuccessMessage(message) {
-        const successMessage = document.getElementById('successMessage');
-        const successText = document.getElementById('successText');
+        const datetime = cells[0].textContent.trim();
+        const chatName = cells[1].querySelector('.text-sm').textContent.trim();
+        const chatId = cells[1].querySelector('.text-xs').textContent.trim();
+        const direction = cells[2].querySelector('span').textContent.trim();
+        const message = cells[3].querySelector('.text-sm').textContent.trim();
+        const isAuto = cells[4].querySelector('span') ? 'Sí' : 'No';
         
-        if (successMessage && successText) {
-            successText.textContent = message;
-            successMessage.classList.remove('hidden');
+        // Mostrar modal con detalles (si existe)
+        const modal = document.getElementById('messageDetailModal');
+        if (modal) {
+            document.getElementById('messageDetailChat').textContent = `${chatName} (${chatId})`;
+            document.getElementById('messageDetailTime').textContent = datetime;
+            document.getElementById('messageDetailBody').textContent = message;
             
-            setTimeout(() => {
-                successMessage.classList.add('hidden');
-            }, 3000);
+            const directionElement = document.getElementById('messageDetailDirection');
+            directionElement.innerHTML = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                direction === 'Enviado' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+            }">${direction}</span>`;
+            
+            modal.classList.remove('hidden');
         }
     }
     
-    function showErrorMessage(message) {
-        const errorMessage = document.getElementById('errorMessage');
-        const errorText = document.getElementById('errorText');
-        
-        if (errorMessage && errorText) {
-            errorText.textContent = message;
-            errorMessage.classList.remove('hidden');
-            
-            setTimeout(() => {
-                errorMessage.classList.add('hidden');
-            }, 3000);
-        }
+    // Event listener para cerrar modal de detalles
+    const closeDetailBtn = document.getElementById('closeDetailBtn');
+    if (closeDetailBtn) {
+        closeDetailBtn.addEventListener('click', function() {
+            const modal = document.getElementById('messageDetailModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        });
     }
+    
+    // Cerrar modal al hacer click fuera de él
+    const messageDetailModal = document.getElementById('messageDetailModal');
+    if (messageDetailModal) {
+        messageDetailModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Auto-actualización de estadísticas cada 30 segundos
+    setInterval(loadStats, 30000);
+    
+    // Función para actualizar la página automáticamente cada 2 minutos
+    // (opcional, comentado por defecto)
+    /*
+    setInterval(function() {
+        if (document.hidden) return; // No actualizar si la pestaña no está visible
+        
+        const currentUrl = new URL(window.location);
+        const currentPage = parseInt(currentUrl.searchParams.get('page')) || 1;
+        
+        // Solo auto-actualizar la primera página para evitar confusión
+        if (currentPage === 1) {
+            loadStats();
+        }
+    }, 120000); // 2 minutos
+    */
 });
