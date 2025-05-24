@@ -30,12 +30,12 @@ $diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
 
 if ($formulario) {
     try {
-        $stmt = $pdo->prepare("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'horario_%'");
+        $stmt = $pdo->prepare("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'horario_%' OR clave = 'intervalo_reservas' OR clave = 'modo_aceptacion'");
         $stmt->execute();
-        $configHorarios = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+        $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
         
         foreach ($diasSemana as $dia) {
-            $horarioConfig = $configHorarios["horario_{$dia}"] ?? 'true|09:00|18:00';
+            $horarioConfig = $configuraciones["horario_{$dia}"] ?? 'true|09:00|18:00';
             list($activo, $horaInicio, $horaFin) = explode('|', $horarioConfig);
             
             $horarios[$dia] = [
@@ -45,10 +45,10 @@ if ($formulario) {
             ];
         }
         
-        // Obtener intervalo de reservas
-        $stmt = $pdo->prepare("SELECT valor FROM configuraciones WHERE clave = 'intervalo_reservas'");
-        $stmt->execute();
-        $intervaloReservas = intval($stmt->fetchColumn() ?: 30);
+        // Obtener intervalo de reservas y modo de aceptación
+        $intervaloReservas = intval($configuraciones['intervalo_reservas'] ?? 30);
+        $modoAceptacion = $configuraciones['modo_aceptacion'] ?? 'manual';
+        
     } catch (Exception $e) {
         // Si hay error, usar horarios por defecto
         foreach ($diasSemana as $dia) {
@@ -59,144 +59,28 @@ if ($formulario) {
             ];
         }
         $intervaloReservas = 30;
+        $modoAceptacion = 'manual';
     }
 }
 
-// Función para obtener el día de la semana en formato español
-function getDiaSemana($fecha) {
-    $diasMap = [
-        1 => 'lun', 2 => 'mar', 3 => 'mie', 4 => 'jue', 
-        5 => 'vie', 6 => 'sab', 0 => 'dom'
-    ];
-    $diaSemana = date('w', strtotime($fecha));
-    return $diasMap[$diaSemana];
-}
+// Verificar si es una respuesta exitosa
+$reservaExitosa = false;
+$datosReserva = null;
 
-// Función para generar horarios disponibles para una fecha
-function getHorariosDisponibles($fecha, $horarios, $intervalo, $pdo) {
-    $diaSemana = getDiaSemana($fecha);
-    
-    // Verificar si el día está activo
-    if (!$horarios[$diaSemana]['activo']) {
-        return [];
-    }
-    
-    $horaInicio = $horarios[$diaSemana]['inicio'];
-    $horaFin = $horarios[$diaSemana]['fin'];
-    
-    // Generar todas las horas posibles en intervalos configurados
-    $horas = [];
-    $current = strtotime($horaInicio);
-    $end = strtotime($horaFin);
-    
-    while ($current < $end) {
-        $horas[] = date('H:i', $current);
-        $current += $intervalo * 60; // Convertir minutos a segundos
-    }
-    
-    // Obtener horas ya reservadas para esta fecha
-    try {
-        $stmt = $pdo->prepare("SELECT TIME_FORMAT(hora, '%H:%i') as hora_reservada 
-                               FROM reservas 
-                               WHERE fecha = ? AND estado IN ('pendiente', 'confirmada')");
-        $stmt->execute([$fecha]);
-        $horasReservadas = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        
-        // Filtrar horas ya reservadas
-        $horas = array_diff($horas, $horasReservadas);
-        
-        // Si es hoy, filtrar horas que ya pasaron
-        if ($fecha === date('Y-m-d')) {
-            $horaActual = date('H:i');
-            $horas = array_filter($horas, function($hora) use ($horaActual) {
-                return $hora > $horaActual;
-            });
-        }
-    } catch (Exception $e) {
-        // Si hay error, devolver todas las horas
-    }
-    
-    return array_values($horas);
-}
-
-// Verificar si es una respuesta exitosa vía GET
-$reservaExitosaGet = isset($_GET['success']) && $_GET['success'] == '1';
-if ($reservaExitosaGet && $formulario) {
+if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
     $reservaExitosa = true;
-    $nombre = $_GET['nombre'] ?? '';
-    $telefono = $_GET['telefono'] ?? '';
-    $fecha = $_GET['fecha'] ?? '';
-    $hora = $_GET['hora'] ?? '';
-    $comentarios = $_GET['mensaje'] ?? '';
-    $confirmacionAuto = isset($_GET['auto']) && $_GET['auto'] == '1';
+    $datosReserva = [
+        'nombre' => $_GET['nombre'] ?? '',
+        'telefono' => $_GET['telefono'] ?? '',
+        'fecha' => $_GET['fecha'] ?? '',
+        'hora' => $_GET['hora'] ?? '',
+        'mensaje' => $_GET['mensaje'] ?? '',
+        'confirmacion_automatica' => isset($_GET['auto']) && $_GET['auto'] == '1'
+    ];
     
-    // Usar la configuración real del formulario
-    $mensaje = $confirmacionAuto
+    $mensaje = $datosReserva['confirmacion_automatica']
         ? 'Tu reserva ha sido confirmada automáticamente. ¡Te esperamos!' 
         : 'Tu solicitud de reserva ha sido recibida. Te contactaremos pronto para confirmarla.';
-}
-
-// Procesar envío de reserva vía POST (mantener como fallback)
-$mensaje = '';
-$reservaExitosa = false;
-$reservaId = null;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
-    $nombre = trim($_POST['nombre'] ?? '');
-    $telefono = trim($_POST['telefono'] ?? '');
-    $fecha = $_POST['fecha'] ?? '';
-    $hora = $_POST['hora'] ?? '';
-    $comentarios = trim($_POST['mensaje'] ?? '');
-    
-    // Validaciones básicas
-    if (empty($nombre) || empty($telefono) || empty($fecha) || empty($hora)) {
-        $mensaje = 'Por favor completa todos los campos obligatorios';
-    } elseif ($fecha < date('Y-m-d')) {
-        $mensaje = 'La fecha no puede ser anterior a hoy';
-    } else {
-        // Validar que el día esté activo
-        $diaSemana = getDiaSemana($fecha);
-        if (!$horarios[$diaSemana]['activo']) {
-            $mensaje = 'El día seleccionado no está disponible para reservas';
-        } else {
-            // Validar que la hora esté dentro del horario de atención
-            $horaInicio = $horarios[$diaSemana]['inicio'];
-            $horaFin = $horarios[$diaSemana]['fin'];
-            
-            if ($hora < $horaInicio || $hora >= $horaFin) {
-                $mensaje = 'La hora seleccionada está fuera del horario de atención';
-            } else {
-                // Verificar que la hora no esté ya reservada
-                try {
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM reservas 
-                                           WHERE fecha = ? AND TIME_FORMAT(hora, '%H:%i') = ? 
-                                           AND estado IN ('pendiente', 'confirmada')");
-                    $stmt->execute([$fecha, $hora]);
-                    $yaReservada = $stmt->fetchColumn();
-                    
-                    if ($yaReservada > 0) {
-                        $mensaje = 'La hora seleccionada ya no está disponible. Por favor elige otra hora.';
-                    } else {
-                        // Crear la reserva
-                        $estado = $formulario['confirmacion_automatica'] ? 'confirmada' : 'pendiente';
-                        
-                        $stmt = $pdo->prepare("INSERT INTO reservas (nombre, telefono, fecha, hora, mensaje, estado, created_at) 
-                                               VALUES (?, ?, ?, ?, ?, ?, NOW())");
-                        
-                        $stmt->execute([$nombre, $telefono, $fecha, $hora . ':00', $comentarios, $estado]);
-                        $reservaId = $pdo->lastInsertId();
-                        
-                        $reservaExitosa = true;
-                        $mensaje = $formulario['confirmacion_automatica'] 
-                            ? 'Tu reserva ha sido confirmada. ¡Te esperamos!' 
-                            : 'Tu solicitud de reserva ha sido recibida. Te contactaremos pronto para confirmarla.';
-                    }
-                } catch (Exception $e) {
-                    $mensaje = 'Error al procesar la reserva. Por favor intenta nuevamente.';
-                }
-            }
-        }
-    }
 }
 ?>
 <!DOCTYPE html>
@@ -227,6 +111,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
+        .btn-loading {
+            position: relative;
+            color: transparent;
+        }
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -256,24 +161,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
                         <i class="ri-check-line text-2xl text-green-600"></i>
                     </div>
                     <h1 class="text-2xl font-bold text-gray-900 mb-2">
-                        <?php echo $formulario['confirmacion_automatica'] ? '¡Reserva Confirmada!' : '¡Solicitud Recibida!'; ?>
+                        <?php echo $datosReserva['confirmacion_automatica'] ? '¡Reserva Confirmada!' : '¡Solicitud Recibida!'; ?>
                     </h1>
                     <p class="text-gray-600 mb-6"><?php echo htmlspecialchars($mensaje); ?></p>
                     
                     <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left">
                         <h3 class="font-medium text-gray-900 mb-2">Detalles de tu reserva:</h3>
                         <div class="space-y-1 text-sm text-gray-600">
-                            <p><span class="font-medium">Nombre:</span> <?php echo htmlspecialchars($nombre); ?></p>
-                            <p><span class="font-medium">Teléfono:</span> <?php echo htmlspecialchars($telefono); ?></p>
-                            <p><span class="font-medium">Fecha:</span> <?php echo $fecha ? date('d/m/Y', strtotime($fecha)) : ''; ?></p>
-                            <p><span class="font-medium">Hora:</span> <?php echo htmlspecialchars($hora); ?></p>
-                            <?php if (!empty($comentarios)): ?>
-                                <p><span class="font-medium">Comentarios:</span> <?php echo htmlspecialchars($comentarios); ?></p>
+                            <p><span class="font-medium">Nombre:</span> <?php echo htmlspecialchars($datosReserva['nombre']); ?></p>
+                            <p><span class="font-medium">Teléfono:</span> <?php echo htmlspecialchars($datosReserva['telefono']); ?></p>
+                            <p><span class="font-medium">Fecha:</span> <?php echo $datosReserva['fecha'] ? date('d/m/Y', strtotime($datosReserva['fecha'])) : ''; ?></p>
+                            <p><span class="font-medium">Hora:</span> <?php echo htmlspecialchars($datosReserva['hora']); ?></p>
+                            <?php if (!empty($datosReserva['mensaje'])): ?>
+                                <p><span class="font-medium">Comentarios:</span> <?php echo htmlspecialchars($datosReserva['mensaje']); ?></p>
                             <?php endif; ?>
                         </div>
                     </div>
                     
-                    <?php if (!$confirmacionAuto): ?>
+                    <?php if (!$datosReserva['confirmacion_automatica']): ?>
                         <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
                             <p class="text-sm text-blue-800">
                                 <i class="ri-information-line mr-1"></i>
@@ -289,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
                         </div>
                     <?php endif; ?>
                     
-                    <button onclick="window.location.reload()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <button onclick="resetForm()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <i class="ri-add-line mr-2"></i>
                         Hacer otra reserva
                     </button>
@@ -316,16 +221,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
             <div class="max-w-2xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
                 <div class="bg-white rounded-lg shadow-lg fade-in">
                     <div class="px-6 py-8">
-                        <?php if (!empty($mensaje) && !$reservaExitosa): ?>
-                            <div class="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-                                <div class="flex">
-                                    <i class="ri-error-warning-line text-red-400 mt-0.5 mr-3"></i>
-                                    <p class="text-sm text-red-800"><?php echo htmlspecialchars($mensaje); ?></p>
-                                </div>
+                        <!-- Contenedor para mensajes de error -->
+                        <div id="errorContainer" class="mb-6 bg-red-50 border border-red-200 rounded-md p-4 hidden">
+                            <div class="flex">
+                                <i class="ri-error-warning-line text-red-400 mt-0.5 mr-3"></i>
+                                <p class="text-sm text-red-800" id="errorMessage"></p>
                             </div>
-                        <?php endif; ?>
+                        </div>
                         
-                        <form method="POST" id="reservaForm" class="space-y-6">
+                        <form id="reservaForm" class="space-y-6">
                             <!-- Información personal -->
                             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <div>
@@ -343,7 +247,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
                                             required
                                             class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                             placeholder="Tu nombre completo"
-                                            value="<?php echo htmlspecialchars($_POST['nombre'] ?? ''); ?>"
                                         >
                                     </div>
                                 </div>
@@ -363,7 +266,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
                                             required
                                             class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                             placeholder="+34 600 123 456"
-                                            value="<?php echo htmlspecialchars($_POST['telefono'] ?? ''); ?>"
                                         >
                                     </div>
                                 </div>
@@ -386,7 +288,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
                                             required
                                             min="<?php echo date('Y-m-d'); ?>"
                                             class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                            value="<?php echo htmlspecialchars($_POST['fecha'] ?? ''); ?>"
                                         >
                                     </div>
                                 </div>
@@ -427,7 +328,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
                                         rows="3"
                                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                         placeholder="Información adicional que consideres importante..."
-                                    ><?php echo htmlspecialchars($_POST['mensaje'] ?? ''); ?></textarea>
+                                    ></textarea>
                                 </div>
                             </div>
                             
@@ -438,7 +339,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
                                     id="submitBtn"
                                     class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <i class="ri-calendar-check-line mr-2"></i>
+                                    <i class="ri-calendar-check-line mr-2" id="submitIcon"></i>
                                     <span id="submitText">Reservar Cita</span>
                                 </button>
                             </div>
@@ -477,7 +378,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
         const config = {
             horarios: <?php echo json_encode($horarios ?? []); ?>,
             intervalo: <?php echo json_encode($intervaloReservas ?? 30); ?>,
-            slug: <?php echo json_encode($slug); ?>
+            slug: <?php echo json_encode($slug); ?>,
+            confirmacionAutomatica: <?php echo json_encode($formulario['confirmacion_automatica'] ?? 0); ?>
         };
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -486,19 +388,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
             const horarioInfo = document.getElementById('horarioInfo');
             const submitBtn = document.getElementById('submitBtn');
             const submitText = document.getElementById('submitText');
+            const submitIcon = document.getElementById('submitIcon');
+            const errorContainer = document.getElementById('errorContainer');
+            const errorMessage = document.getElementById('errorMessage');
             
             if (fechaInput && horaSelect) {
                 fechaInput.addEventListener('change', cargarHorasDisponibles);
-                
-                // Si hay una fecha preseleccionada, cargar las horas
-                if (fechaInput.value) {
-                    cargarHorasDisponibles();
+            }
+            
+            function showError(message, type = 'error') {
+                if (type === 'success') {
+                    // Cambiar el estilo del contenedor para éxito
+                    errorContainer.className = 'mb-6 bg-green-50 border border-green-200 rounded-md p-4';
+                    errorContainer.innerHTML = `
+                        <div class="flex">
+                            <i class="ri-check-line text-green-400 mt-0.5 mr-3"></i>
+                            <p class="text-sm text-green-800">${message}</p>
+                        </div>
+                    `;
+                } else {
+                    // Estilo normal de error
+                    errorContainer.className = 'mb-6 bg-red-50 border border-red-200 rounded-md p-4';
+                    errorContainer.innerHTML = `
+                        <div class="flex">
+                            <i class="ri-error-warning-line text-red-400 mt-0.5 mr-3"></i>
+                            <p class="text-sm text-red-800">${message}</p>
+                        </div>
+                    `;
                 }
+                
+                errorContainer.classList.remove('hidden');
+                // Scroll al mensaje
+                errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            function hideError() {
+                errorContainer.classList.add('hidden');
             }
             
             function cargarHorasDisponibles() {
                 const fecha = fechaInput.value;
                 if (!fecha) return;
+                
+                hideError(); // Ocultar errores previos
                 
                 // Mostrar loading
                 horaSelect.innerHTML = '<option value="">Cargando horas...</option>';
@@ -559,60 +491,135 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
                 return diasMap[diaSemana];
             }
             
+            function setLoadingState(loading) {
+                submitBtn.disabled = loading;
+                if (loading) {
+                    submitBtn.classList.add('btn-loading');
+                    submitText.textContent = 'Procesando reserva...';
+                    submitIcon.style.display = 'none';
+                } else {
+                    submitBtn.classList.remove('btn-loading');
+                    submitText.textContent = 'Reservar Cita';
+                    submitIcon.style.display = 'inline';
+                }
+            }
+            
             // Manejar envío del formulario
             const form = document.getElementById('reservaForm');
             if (form) {
                 form.addEventListener('submit', function(e) {
                     e.preventDefault(); // Evitar envío tradicional
                     
-                    // Cambiar el texto del botón para mostrar que se está procesando
-                    submitBtn.disabled = true;
-                    submitText.textContent = 'Procesando reserva...';
+                    hideError(); // Ocultar errores previos
+                    setLoadingState(true); // Mostrar estado de carga
                     
                     // Recopilar datos del formulario
                     const formData = new FormData(form);
                     const data = {};
                     formData.forEach((value, key) => {
-                        data[key] = value;
+                        data[key] = value.trim();
                     });
                     
-                    // Enviar vía AJAX
-                    fetch('api/crear-reserva.php', {
+                    // Validaciones del lado cliente
+                    if (!data.nombre || !data.telefono || !data.fecha || !data.hora) {
+                        showError('Por favor completa todos los campos obligatorios');
+                        setLoadingState(false);
+                        return;
+                    }
+                    
+                    if (data.fecha < new Date().toISOString().split('T')[0]) {
+                        showError('La fecha no puede ser anterior a hoy');
+                        setLoadingState(false);
+                        return;
+                    }
+                    
+                    // Enviar vía AJAX a la nueva API
+                    fetch('api/crear-reserva-publica.php', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify(data)
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        // Verificar si la respuesta es válida
+                        if (!response.ok) {
+                            if (response.status === 404) {
+                                throw new Error('API no encontrada. Verifica que el archivo api/crear-reserva-publica.php existe.');
+                            } else if (response.status === 500) {
+                                throw new Error('Error interno del servidor. Revisa los logs de PHP.');
+                            } else {
+                                throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
+                            }
+                        }
+                        
+                        // Verificar que la respuesta es JSON
+                        const contentType = response.headers.get('content-type');
+                        if (!contentType || !contentType.includes('application/json')) {
+                            throw new Error('La respuesta del servidor no es JSON válido. Verifica la configuración de la API.');
+                        }
+                        
+                        return response.json();
+                    })
                     .then(result => {
+                        console.log('Respuesta de la API:', result); // Debug
+                        
                         if (result.success) {
+                            // Verificar que tenemos los datos necesarios
+                            if (!result.datos || !result.datos.nombre) {
+                                console.warn('Respuesta exitosa pero faltan datos:', result);
+                                throw new Error('Respuesta incompleta del servidor');
+                            }
+                            
                             // Redirigir a la misma página con parámetros de éxito
                             const urlParams = new URLSearchParams(window.location.search);
                             const baseUrl = window.location.pathname + '?f=' + urlParams.get('f');
                             
-                            const successUrl = baseUrl + 
-                                              '&success=1' +
-                                              '&nombre=' + encodeURIComponent(data.nombre) +
-                                              '&telefono=' + encodeURIComponent(data.telefono) +
-                                              '&fecha=' + encodeURIComponent(data.fecha) +
-                                              '&hora=' + encodeURIComponent(data.hora) +
-                                              '&mensaje=' + encodeURIComponent(data.mensaje || '') +
-                                              '&auto=' + (<?php echo json_encode($formulario['confirmacion_automatica'] ?? 0); ?> ? '1' : '0');
+                            const successParams = new URLSearchParams({
+                                success: '1',
+                                nombre: result.datos.nombre,
+                                telefono: result.datos.telefono,
+                                fecha: result.datos.fecha,
+                                hora: result.datos.hora,
+                                mensaje: result.datos.mensaje || '',
+                                auto: result.confirmacion_automatica ? '1' : '0'
+                            });
                             
-                            window.location.href = successUrl;
+                            const successUrl = baseUrl + '&' + successParams.toString();
+                            
+                            // Mostrar mensaje de éxito antes de redirigir
+                            showError('¡Reserva creada con éxito! Redirigiendo...', 'success');
+                            
+                            // Redirigir después de un breve delay
+                            setTimeout(() => {
+                                window.location.href = successUrl;
+                            }, 1000);
+                            
                         } else {
-                            // Mostrar error
-                            alert('Error: ' + (result.message || 'Error desconocido'));
-                            submitBtn.disabled = false;
-                            submitText.textContent = 'Reservar Cita';
+                            // Mostrar error del servidor
+                            const errorMsg = result.message || 'Error desconocido al procesar la reserva';
+                            showError(errorMsg);
+                            setLoadingState(false);
                         }
                     })
                     .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error de conexión. Por favor, intenta nuevamente.');
-                        submitBtn.disabled = false;
-                        submitText.textContent = 'Reservar Cita';
+                        console.error('Error completo:', error);
+                        
+                        // Mostrar error más específico
+                        let errorMessage = 'Error de conexión. ';
+                        
+                        if (error.message.includes('API no encontrada')) {
+                            errorMessage = 'Error del sistema: API no encontrada. Contacta al administrador.';
+                        } else if (error.message.includes('JSON')) {
+                            errorMessage = 'Error del servidor: respuesta inválida. Contacta al administrador.';
+                        } else if (error.message.includes('NetworkError') || error.message.includes('fetch')) {
+                            errorMessage = 'Error de conexión a internet. Verifica tu conexión e intenta nuevamente.';
+                        } else {
+                            errorMessage += error.message;
+                        }
+                        
+                        showError(errorMessage);
+                        setLoadingState(false);
                     });
                 });
             }
@@ -622,15 +629,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formulario) {
             inputs.forEach(input => {
                 input.addEventListener('blur', function() {
                     if (this.value.trim() === '') {
-                        this.classList.add('border-red-300');
-                        this.classList.remove('border-gray-300');
+                        this.classList.add('border-red-300', 'focus:border-red-500', 'focus:ring-red-500');
+                        this.classList.remove('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
                     } else {
-                        this.classList.remove('border-red-300');
-                        this.classList.add('border-gray-300');
+                        this.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-500');
+                        this.classList.add('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
+                    }
+                });
+                
+                input.addEventListener('input', function() {
+                    if (this.value.trim() !== '') {
+                        this.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-500');
+                        this.classList.add('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
                     }
                 });
             });
         });
+        
+        // Función para resetear el formulario (llamada desde el botón de "Hacer otra reserva")
+        function resetForm() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const baseUrl = window.location.pathname + '?f=' + urlParams.get('f');
+            window.location.href = baseUrl;
+        }
     </script>
 </body>
 </html>
