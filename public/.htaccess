@@ -21,6 +21,10 @@ RewriteRule ^ /%1 [R=301,L]
 # Manejar la página de inicio primero
 RewriteRule ^$ index.php [L]
 
+# Rutas específicas para clientes
+RewriteRule ^clientes/?$ clientes.php [L]
+RewriteRule ^cliente-detail/?$ cliente-detail.php [L]
+
 # Reescribir URLs limpias a archivos .php
 # Solo si no es un archivo o directorio existente
 RewriteCond %{REQUEST_FILENAME} !-f

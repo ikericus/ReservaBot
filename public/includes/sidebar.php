@@ -13,6 +13,10 @@
             <a href="/calendar" class="<?php echo $currentPage === 'calendar' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                 <i class="ri-calendar-line mr-3 h-5 w-5 <?php echo $currentPage === 'calendar' ? 'text-blue-500' : 'text-gray-400'; ?>"></i>
                 Calendario
+            </a>                        
+            <a href="/clientes" class="<?php echo $currentPage === 'clientes' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                <i class="ri-user-line mr-3 h-5 w-5 <?php echo $currentPage === 'clientes' ? 'text-blue-500' : 'text-gray-400'; ?>"></i>
+                Clientes
             </a>
             
             <!-- NUEVAS OPCIONES DE MENÚ PARA WHATSAPP -->
