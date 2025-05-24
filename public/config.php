@@ -6,20 +6,15 @@ require_once 'includes/functions.php';
 // Configurar la página actual
 $currentPage = 'config';
 $pageTitle = 'ReservaBot - Configuración';
-$pageScript = 'config';
+$pageScript = 'dashboard'; // Cambiado de 'config' a 'dashboard' para usar el archivo corregido
 
-// Obtener la configuración actual - USAR TABLA CORREGIDA
+// Obtener la configuración actual - USAR TABLA CORRECTA
 try {
     $stmt = $pdo->query('SELECT * FROM configuraciones');
     $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 } catch (\PDOException $e) {
-    // Si falla, intentar con la tabla original
-    try {
-        $stmt = $pdo->query('SELECT * FROM configuracion');
-        $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-    } catch (\PDOException $e2) {
-        $configuraciones = [];
-    }
+    error_log('Error al obtener configuraciones: ' . $e->getMessage());
+    $configuraciones = [];
 }
 
 // Establecer valores predeterminados si no existen
@@ -136,7 +131,7 @@ include 'includes/header.php';
             
             <div class="mt-2">
                 <p class="text-sm text-gray-500">
-                    Para configuración avanzada de WhatsApp, vaya a la sección <a href="whatsapp.php" class="text-blue-600 hover:text-blue-800">Conexión WhatsApp</a>.
+                    Para configuración avanzada de WhatsApp, vaya a la sección <a href="/whatsapp" class="text-blue-600 hover:text-blue-800">Conexión WhatsApp</a>.
                 </p>
             </div>
         </div>
@@ -166,6 +161,7 @@ include 'includes/header.php';
                         </span>
                         <button 
                             id="toggleModo" 
+                            type="button"
                             class="relative inline-flex h-6 w-11 items-center rounded-full <?php echo $modoAceptacion === 'automatico' ? 'bg-blue-600' : 'bg-gray-200'; ?> focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
                             <span 

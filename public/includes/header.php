@@ -35,7 +35,7 @@
                     <i class="ri-home-line mr-2"></i>
                     Reservas
                 </a>
-                <a href="/calendar.php" class="<?php echo $currentPage === 'calendar' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50'; ?> block px-3 py-2 rounded-md text-base font-medium">
+                <a href="/calendar" class="<?php echo $currentPage === 'calendar' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50'; ?> block px-3 py-2 rounded-md text-base font-medium">
                     <i class="ri-calendar-line mr-2"></i>
                     Calendario
                 </a>
@@ -47,17 +47,17 @@
                     </p>
                 </div>
                 
-                <a href="/whatsapp.php" class="<?php echo $currentPage === 'whatsapp' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50'; ?> block px-3 py-2 rounded-md text-base font-medium">
+                <a href="/whatsapp" class="<?php echo $currentPage === 'whatsapp' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50'; ?> block px-3 py-2 rounded-md text-base font-medium">
                     <i class="ri-whatsapp-line mr-2"></i>
                     Conexión WhatsApp
                 </a>
                 
-                <a href="/autorespuestas.php" class="<?php echo $currentPage === 'autorespuestas' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50'; ?> block px-3 py-2 rounded-md text-base font-medium">
+                <a href="/autorespuestas" class="<?php echo $currentPage === 'autorespuestas' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50'; ?> block px-3 py-2 rounded-md text-base font-medium">
                     <i class="ri-message-2-line mr-2"></i>
                     Respuestas Automáticas
                 </a>
                 
-                <a href="/mensajes.php" class="<?php echo $currentPage === 'mensajes' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50'; ?> block px-3 py-2 rounded-md text-base font-medium">
+                <a href="/mensajes" class="<?php echo $currentPage === 'mensajes' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50'; ?> block px-3 py-2 rounded-md text-base font-medium">
                     <i class="ri-chat-history-line mr-2"></i>
                     Historial de Mensajes
                 </a>
@@ -69,9 +69,16 @@
                     </p>
                 </div>
                 
-                <a href="/config.php" class="<?php echo $currentPage === 'config' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50'; ?> block px-3 py-2 rounded-md text-base font-medium">
+                <a href="/formularios" class="<?php echo $currentPage === 'formularios' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50'; ?> block px-3 py-2 rounded-md text-base font-medium">
+                    <i class="ri-survey-fill mr-2"></i>
+                    Formularios
+                </a>
+                
+                <a href="/config" class="<?php echo $currentPage === 'config' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50'; ?> block px-3 py-2 rounded-md text-base font-medium">
                     <i class="ri-settings-line mr-2"></i>
                     Configuración
                 </a>
             </div>
         </div>
+
+        <main class="flex-1 overflow-y-auto p-6">

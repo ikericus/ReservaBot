@@ -40,7 +40,7 @@ if ($fecha < date('Y-m-d')) {
 }
 
 try {
-    // Obtener configuración de horarios
+    // Obtener configuración de horarios - TABLA CORREGIDA
     $stmt = $pdo->prepare("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'horario_%'");
     $stmt->execute();
     $configHorarios = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -67,7 +67,7 @@ try {
         exit;
     }
     
-    // Obtener intervalo de reservas de la configuración
+    // Obtener intervalo de reservas de la configuración - TABLA CORREGIDA
     $stmt = $pdo->prepare("SELECT valor FROM configuraciones WHERE clave = 'intervalo_reservas'");
     $stmt->execute();
     $intervalo = intval($stmt->fetchColumn() ?: 30); // Por defecto 30 minutos
@@ -82,10 +82,11 @@ try {
         $current += $intervalo * 60; // Convertir minutos a segundos
     }
     
-    // Obtener horas ya reservadas para esta fecha
+    // Obtener horas ya reservadas para esta fecha - SOLUCIONADO problema de collation
     $stmt = $pdo->prepare("SELECT TIME_FORMAT(hora, '%H:%i') as hora_reservada 
                            FROM reservas 
-                           WHERE fecha = ? AND estado IN ('pendiente', 'confirmada')");
+                           WHERE CAST(fecha AS CHAR) = CAST(? AS CHAR) 
+                           AND estado IN ('pendiente', 'confirmada')");
     $stmt->execute([$fecha]);
     $horasReservadas = $stmt->fetchAll(PDO::FETCH_COLUMN);
     

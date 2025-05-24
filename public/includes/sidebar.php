@@ -6,11 +6,11 @@
     </div>
     <div class="flex flex-col flex-grow pt-5">
         <nav class="flex-1 px-2 space-y-1">
-            <a href="index.php" class="<?php echo $currentPage === 'dashboard' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+            <a href="/" class="<?php echo $currentPage === 'dashboard' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                 <i class="ri-home-line mr-3 h-5 w-5 <?php echo $currentPage === 'dashboard' ? 'text-blue-500' : 'text-gray-400'; ?>"></i>
                 Reservas
             </a>
-            <a href="calendar.php" class="<?php echo $currentPage === 'calendar' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+            <a href="/calendar" class="<?php echo $currentPage === 'calendar' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                 <i class="ri-calendar-line mr-3 h-5 w-5 <?php echo $currentPage === 'calendar' ? 'text-blue-500' : 'text-gray-400'; ?>"></i>
                 Calendario
             </a>
@@ -22,17 +22,17 @@
                 </p>
             </div>
             
-            <a href="whatsapp.php" class="<?php echo $currentPage === 'whatsapp' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+            <a href="/whatsapp" class="<?php echo $currentPage === 'whatsapp' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                 <i class="ri-whatsapp-line mr-3 h-5 w-5 <?php echo $currentPage === 'whatsapp' ? 'text-blue-500' : 'text-gray-400'; ?>"></i>
                 Conexión
             </a>
             
-            <a href="autorespuestas.php" class="<?php echo $currentPage === 'autorespuestas' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+            <a href="/autorespuestas" class="<?php echo $currentPage === 'autorespuestas' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                 <i class="ri-message-2-line mr-3 h-5 w-5 <?php echo $currentPage === 'autorespuestas' ? 'text-blue-500' : 'text-gray-400'; ?>"></i>
                 Respuestas Auto
             </a>
             
-            <a href="mensajes.php" class="<?php echo $currentPage === 'mensajes' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+            <a href="/mensajes" class="<?php echo $currentPage === 'mensajes' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                 <i class="ri-chat-history-line mr-3 h-5 w-5 <?php echo $currentPage === 'mensajes' ? 'text-blue-500' : 'text-gray-400'; ?>"></i>
                 Historial
             </a>
@@ -44,11 +44,11 @@
                 </p>
             </div>
             
-            <a href="formularios.php" class="<?php echo $currentPage === 'formularios' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+            <a href="/formularios" class="<?php echo $currentPage === 'formularios' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                 <i class="ri-survey-fill mr-3 h-5 w-5 <?php echo $currentPage === 'formularios' ? 'text-blue-500' : 'text-gray-400'; ?>"></i>
                 Formularios
             </a>
-            <a href="config.php" class="<?php echo $currentPage === 'config' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+            <a href="/config" class="<?php echo $currentPage === 'config' ? 'bg-blue-100 text-blue-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?> group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                 <i class="ri-settings-line mr-3 h-5 w-5 <?php echo $currentPage === 'config' ? 'text-blue-500' : 'text-gray-400'; ?>"></i>
                 Configuración
             </a>

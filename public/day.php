@@ -31,14 +31,14 @@ include 'includes/header.php';
 ?>
 
 <div class="flex items-center mb-6">
-    <a href="calendar.php" class="mr-4 p-2 rounded-full hover:bg-gray-100">
+    <a href="/calendar" class="mr-4 p-2 rounded-full hover:bg-gray-100">
         <i class="ri-arrow-left-line text-gray-600 text-xl"></i>
     </a>
     <h1 class="text-2xl font-bold text-gray-900">Reservas del <?php echo formatearFecha($fecha); ?></h1>
 </div>
 
 <div class="flex justify-end mb-6">
-    <a href="reserva-form.php?date=<?php echo $fecha; ?>" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+    <a href="/reserva-form?date=<?php echo $fecha; ?>" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
         <i class="ri-add-line mr-2"></i>
         Nueva Reserva
     </a>
@@ -53,7 +53,7 @@ include 'includes/header.php';
             ¿Quieres crear una nueva reserva?
         </p>
         <div class="mt-6">
-            <a href="reserva-form.php?date=<?php echo $fecha; ?>" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <a href="/reserva-form?date=<?php echo $fecha; ?>" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 <i class="ri-add-line mr-2"></i>
                 Nueva Reserva
             </a>
@@ -92,10 +92,10 @@ include 'includes/header.php';
                         </div>
                         
                         <div class="flex items-start space-x-2">
-                            <a href="reserva-detail.php?id=<?php echo $reserva['id']; ?>" class="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <a href="/reserva-detail?id=<?php echo $reserva['id']; ?>" class="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <i class="ri-eye-line"></i>
                             </a>
-                            <a href="reserva-form.php?id=<?php echo $reserva['id']; ?>" class="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" class="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <i class="ri-edit-line"></i>
                             </a>
                             <?php if ($reserva['estado'] === 'pendiente'): ?>

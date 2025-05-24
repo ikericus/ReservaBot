@@ -20,12 +20,12 @@ try {
     
     if (!$reserva) {
         // Si la reserva no existe, redirigir al calendario
-        header('Location: calendar.php');
+        header('Location: /calendar');
         exit;
     }
 } catch (\PDOException $e) {
     // Si hay un error, redirigir al calendario
-    header('Location: calendar.php');
+    header('Location: /calendar');
     exit;
 }
 
@@ -34,7 +34,7 @@ include 'includes/header.php';
 ?>
 
 <div class="flex items-center mb-6">
-    <a href="day.php?date=<?php echo $reserva['fecha']; ?>" class="mr-4 p-2 rounded-full hover:bg-gray-100">
+    <a href="/day?date=<?php echo $reserva['fecha']; ?>" class="mr-4 p-2 rounded-full hover:bg-gray-100">
         <i class="ri-arrow-left-line text-gray-600 text-xl"></i>
     </a>
     <h1 class="text-2xl font-bold text-gray-900">Detalle de Reserva</h1>
@@ -95,7 +95,7 @@ include 'includes/header.php';
 <div class="border-t border-gray-200 pt-4">
     <h3 class="text-lg font-medium text-gray-900 mb-3">Acciones</h3>
     <div class="flex flex-wrap gap-2">
-        <a href="reserva-form.php?id=<?php echo $reserva['id']; ?>" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
             <i class="ri-edit-line mr-2"></i>
             Editar Reserva
         </a>

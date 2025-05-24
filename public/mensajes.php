@@ -131,8 +131,8 @@ include 'includes/header.php';
             </button>
             
             <?php if (!empty($search) || !empty($chatId)): ?>
-                
-                    href="mensajes.php"
+                <a
+                    href="/mensajes"
                     class="ml-2 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                     <i class="ri-refresh-line mr-2"></i>
@@ -244,7 +244,7 @@ include 'includes/header.php';
                     <div>
                         <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                             <?php if ($page > 1): ?>
-                                <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&chat=<?php echo urlencode($chatId); ?>" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <a href="/mensajes?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&chat=<?php echo urlencode($chatId); ?>" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                     <span class="sr-only">Anterior</span>
                                     <i class="ri-arrow-left-s-line"></i>
                                 </a>
@@ -271,7 +271,7 @@ include 'includes/header.php';
                             
                             // Primera página
                             if ($startPage > 1) {
-                                echo '<a href="?page=1&search=' . urlencode($search) . '&chat=' . urlencode($chatId) . '" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>';
+                                echo '<a href="/mensajes?page=1&search=' . urlencode($search) . '&chat=' . urlencode($chatId) . '" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>';
                                 if ($startPage > 2) {
                                     echo '<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>';
                                 }
@@ -282,7 +282,7 @@ include 'includes/header.php';
                                 if ($i == $page) {
                                     echo '<span class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">' . $i . '</span>';
                                 } else {
-                                    echo '<a href="?page=' . $i . '&search=' . urlencode($search) . '&chat=' . urlencode($chatId) . '" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">' . $i . '</a>';
+                                    echo '<a href="/mensajes?page=' . $i . '&search=' . urlencode($search) . '&chat=' . urlencode($chatId) . '" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">' . $i . '</a>';
                                 }
                             }
                             
@@ -291,12 +291,12 @@ include 'includes/header.php';
                                 if ($endPage < $totalPages - 1) {
                                     echo '<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>';
                                 }
-                                echo '<a href="?page=' . $totalPages . '&search=' . urlencode($search) . '&chat=' . urlencode($chatId) . '" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">' . $totalPages . '</a>';
+                                echo '<a href="/mensajes?page=' . $totalPages . '&search=' . urlencode($search) . '&chat=' . urlencode($chatId) . '" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">' . $totalPages . '</a>';
                             }
                             ?>
                             
                             <?php if ($page < $totalPages): ?>
-                                <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&chat=<?php echo urlencode($chatId); ?>" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <a href="/mensajes?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&chat=<?php echo urlencode($chatId); ?>" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                     <span class="sr-only">Siguiente</span>
                                     <i class="ri-arrow-right-s-line"></i>
                                 </a>
