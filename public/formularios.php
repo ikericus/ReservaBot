@@ -94,12 +94,393 @@ try {
 include 'includes/header.php';
 ?>
 
+<style>
+/* Estilos específicos para móvil - Formularios */
+@media (max-width: 768px) {
+    .form-mobile-card {
+        margin: 0.75rem 0;
+        border-radius: 1rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .form-mobile-card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        transform: translateY(-3px);
+    }
+    
+    .form-card-header {
+        padding: 1rem 1rem 0.5rem 1rem;
+        position: relative;
+    }
+    
+    .form-card-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .form-card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0 0 0.25rem 0;
+        line-height: 1.3;
+    }
+    
+    .form-card-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 0 0 0.75rem 0;
+        line-height: 1.4;
+    }
+    
+    .form-card-badges {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .form-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .form-badge-auto {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    
+    .form-badge-manual {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+    
+    .form-badge-date {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+    
+    .form-card-url {
+        background: rgba(102, 126, 234, 0.05);
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        margin: 1rem;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    
+    .form-card-url-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 500;
+    }
+    
+    .form-card-url-text {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 0.75rem;
+        color: #374151;
+        word-break: break-all;
+        line-height: 1.4;
+    }
+    
+    .form-card-actions {
+        padding: 0 1rem 1rem 1rem;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .form-action-btn {
+        flex: 1;
+        min-width: calc(50% - 0.25rem);
+        padding: 0.625rem 0.75rem;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-align: center;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.375rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .form-action-btn:focus {
+        outline: none;
+        ring: 2px solid rgba(102, 126, 234, 0.5);
+    }
+    
+    .form-btn-view {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    
+    .form-btn-view:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    
+    .form-btn-copy {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+    }
+    
+    .form-btn-copy:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .form-btn-qr {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: white;
+    }
+    
+    .form-btn-qr:hover {
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .form-btn-delete {
+        background: white;
+        color: #dc2626;
+        border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+    
+    .form-btn-delete:hover {
+        background: rgba(220, 38, 38, 0.05);
+        color: #b91c1c;
+        transform: translateY(-1px);
+    }
+    
+    /* Formulario de creación mobile */
+    .mobile-create-form {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .mobile-form-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .mobile-form-title i {
+        color: #667eea;
+        font-size: 1.5rem;
+    }
+    
+    .mobile-form-input {
+        width: 100%;
+        padding: 0.875rem;
+        border-radius: 0.75rem;
+        border: 2px solid #e5e7eb;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: white;
+        margin-bottom: 1rem;
+    }
+    
+    .mobile-form-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+    
+    .mobile-form-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .mobile-form-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 0.75rem;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    
+    .mobile-form-checkbox input {
+        width: 1.25rem;
+        height: 1.25rem;
+        accent-color: #667eea;
+    }
+    
+    .mobile-form-checkbox label {
+        font-size: 0.875rem;
+        color: #374151;
+        margin: 0;
+    }
+    
+    .mobile-submit-btn {
+        width: 100%;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .mobile-submit-btn:hover {
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Estados de mensajes */
+    .mobile-message {
+        padding: 1rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .mobile-message-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .mobile-message-error {
+        background: rgba(220, 38, 38, 0.1);
+        color: #991b1b;
+        border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+    
+    /* Lista vacía */
+    .mobile-empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #6b7280;
+    }
+    
+    .mobile-empty-icon {
+        font-size: 3rem;
+        color: #d1d5db;
+        margin-bottom: 1rem;
+    }
+    
+    .mobile-empty-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .mobile-empty-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Animaciones */
+    .fade-in-mobile {
+        animation: fadeInMobile 0.4s ease-out;
+    }
+    
+    @keyframes fadeInMobile {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .copy-feedback {
+        animation: copyFeedback 2s ease-in-out;
+    }
+    
+    @keyframes copyFeedback {
+        0%, 100% { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        50% { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    }
+}
+
+/* Estilos para desktop - mantener diseño original */
+@media (min-width: 769px) {
+    .desktop-view {
+        display: block;
+    }
+    
+    .mobile-view {
+        display: none;
+    }
+}
+
+/* Estilos para móvil - usar diseño de tarjetas */
+@media (max-width: 768px) {
+    .desktop-view {
+        display: none;
+    }
+    
+    .mobile-view {
+        display: block;
+    }
+}
+</style>
+
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Enlaces de Reserva</h1>
 </div>
 
 <?php if (!empty($mensaje)): ?>
-    <div class="mb-4 p-4 rounded-md <?php echo $tipoMensaje === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'; ?>">
+    <!-- Mensaje Desktop -->
+    <div class="desktop-view mb-4 p-4 rounded-md <?php echo $tipoMensaje === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'; ?>">
         <div class="flex">
             <div class="flex-shrink-0">
                 <i class="<?php echo $tipoMensaje === 'success' ? 'ri-check-line text-green-400' : 'ri-error-warning-line text-red-400'; ?>"></i>
@@ -109,10 +490,16 @@ include 'includes/header.php';
             </div>
         </div>
     </div>
+    
+    <!-- Mensaje Mobile -->
+    <div class="mobile-view mobile-message <?php echo $tipoMensaje === 'success' ? 'mobile-message-success' : 'mobile-message-error'; ?>">
+        <i class="<?php echo $tipoMensaje === 'success' ? 'ri-check-line' : 'ri-error-warning-line'; ?>"></i>
+        <span><?php echo htmlspecialchars($mensaje); ?></span>
+    </div>
 <?php endif; ?>
 
-<!-- Formulario para crear nuevo enlace -->
-<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+<!-- Formulario para crear nuevo enlace - Vista Desktop -->
+<div class="desktop-view bg-white rounded-lg shadow-sm p-6 mb-6">
     <h2 class="text-lg font-medium text-gray-900 mb-4">Crear Nuevo Enlace de Reserva</h2>
     
     <form method="post" class="space-y-4">
@@ -155,9 +542,41 @@ include 'includes/header.php';
     </form>
 </div>
 
+<!-- Formulario para crear nuevo enlace - Vista Mobile -->
+<div class="mobile-view mobile-create-form">
+    <h2 class="mobile-form-title">
+        <i class="ri-add-circle-line"></i>
+        Crear Nuevo Enlace
+    </h2>
+    
+    <form method="post">
+        <label class="mobile-form-label">Nombre del enlace*</label>
+        <input type="text" name="nombre" required
+               class="mobile-form-input"
+               placeholder="Ej: Reserva Consulta General">
+        
+        <label class="mobile-form-label">Descripción (opcional)</label>
+        <input type="text" name="descripcion"
+               class="mobile-form-input"
+               placeholder="Descripción interna del enlace">
+        
+        <div class="mobile-form-checkbox">
+            <input type="checkbox" id="confirmacion_auto_mobile" name="confirmacion_auto">
+            <label for="confirmacion_auto_mobile">
+                Confirmación automática de reservas
+            </label>
+        </div>
+        
+        <button type="submit" name="crear_enlace" class="mobile-submit-btn">
+            <i class="ri-add-line"></i>
+            Crear Enlace de Reserva
+        </button>
+    </form>
+</div>
+
 <!-- Lista de enlaces existentes -->
 <div class="bg-white rounded-lg shadow-sm">
-    <div class="p-6">
+    <div class="desktop-view p-6">
         <h2 class="text-lg font-medium text-gray-900 mb-4">Enlaces Existentes</h2>
         
         <?php if (empty($enlaces)): ?>
@@ -242,6 +661,92 @@ include 'includes/header.php';
                         </div>
                     </div>
                 <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+    
+    <!-- Vista Mobile -->
+    <div class="mobile-view">
+        <?php if (empty($enlaces)): ?>
+            <div class="mobile-empty-state">
+                <i class="ri-link mobile-empty-icon"></i>
+                <h3 class="mobile-empty-title">No hay enlaces creados</h3>
+                <p class="mobile-empty-description">Crea tu primer enlace de reserva usando el formulario de arriba</p>
+            </div>
+        <?php else: ?>
+            <div class="p-4">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Enlaces Existentes (<?php echo count($enlaces); ?>)</h2>
+                
+                <div class="space-y-4">
+                    <?php foreach ($enlaces as $enlace): ?>
+                        <div class="form-mobile-card fade-in-mobile">
+                            <div class="form-card-header">
+                                <div class="form-card-icon">
+                                    <i class="ri-link"></i>
+                                </div>
+                                <h3 class="form-card-title"><?php echo htmlspecialchars($enlace['nombre']); ?></h3>
+                                <?php if (!empty($enlace['descripcion'])): ?>
+                                    <p class="form-card-description"><?php echo htmlspecialchars($enlace['descripcion']); ?></p>
+                                <?php endif; ?>
+                                
+                                <div class="form-card-badges">
+                                    <span class="form-badge <?php echo $enlace['confirmacion_automatica'] ? 'form-badge-auto' : 'form-badge-manual'; ?>">
+                                        <i class="<?php echo $enlace['confirmacion_automatica'] ? 'ri-check-line' : 'ri-time-line'; ?>"></i>
+                                        <?php echo $enlace['confirmacion_automatica'] ? 'Automática' : 'Manual'; ?>
+                                    </span>
+                                    <span class="form-badge form-badge-date">
+                                        <i class="ri-calendar-line"></i>
+                                        <?php echo date('d/m/Y', strtotime($enlace['created_at'])); ?>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <?php 
+                            // Generar URL completa
+                            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+                            $host = $_SERVER['HTTP_HOST'];
+                            $path = dirname($_SERVER['REQUEST_URI']);
+                            $baseUrl = $protocol . $host . $path . '/';
+                            $enlaceCompleto = $baseUrl . 'reservar.php?f=' . $enlace['slug'];
+                            ?>
+                            
+                            <div class="form-card-url">
+                                <div class="form-card-url-label">Enlace del formulario:</div>
+                                <div class="form-card-url-text"><?php echo $enlaceCompleto; ?></div>
+                            </div>
+                            
+                            <div class="form-card-actions">
+                                <a href="<?php echo $enlaceCompleto; ?>" 
+                                   target="_blank"
+                                   class="form-action-btn form-btn-view">
+                                    <i class="ri-eye-line"></i>
+                                    Ver
+                                </a>
+                                
+                                <button class="form-action-btn form-btn-copy btn-copiar-mobile"
+                                        data-clipboard-text="<?php echo $enlaceCompleto; ?>"
+                                        data-enlace-id="<?php echo $enlace['id']; ?>">
+                                    <i class="ri-file-copy-line"></i>
+                                    Copiar
+                                </button>
+                                
+                                <button class="form-action-btn form-btn-qr btn-qr"
+                                        data-url="<?php echo $enlaceCompleto; ?>"
+                                        data-nombre="<?php echo htmlspecialchars($enlace['nombre']); ?>">
+                                    <i class="ri-qr-code-line"></i>
+                                    QR
+                                </button>
+                                
+                                <button class="form-action-btn form-btn-delete btn-eliminar"
+                                        data-id="<?php echo $enlace['id']; ?>"
+                                        data-nombre="<?php echo htmlspecialchars($enlace['nombre']); ?>">
+                                    <i class="ri-delete-bin-line"></i>
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
         <?php endif; ?>
     </div>
@@ -339,52 +844,286 @@ include 'includes/header.php';
 <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="assets/js/formularios-mejorado.js"></script>
+
 <script>
-// Script específico para esta página
+// JavaScript específico para móvil
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Formularios page loaded');
+    console.log('Formularios responsive loaded');
     
-    // Validación adicional del formulario de creación
-    const createForm = document.querySelector('form[method="post"]');
-    if (createForm && !createForm.querySelector('input[name="eliminar_enlace"]')) {
-        createForm.addEventListener('submit', function(e) {
-            const nombre = document.getElementById('nombre').value.trim();
+    // Funcionalidad de copiado específica para móvil
+    if (typeof ClipboardJS !== 'undefined') {
+        // ClipboardJS para desktop
+        new ClipboardJS('.btn-copiar');
+        
+        // Feedback para desktop
+        document.querySelectorAll('.btn-copiar').forEach(button => {
+            button.addEventListener('click', function() {
+                const original = this.innerHTML;
+                this.innerHTML = '<i class="ri-check-line mr-1"></i>Copiado';
+                
+                setTimeout(() => {
+                    this.innerHTML = original;
+                }, 2000);
+            });
+        });
+        
+        // ClipboardJS específico para móvil
+        const clipboardMobile = new ClipboardJS('.btn-copiar-mobile');
+        
+        clipboardMobile.on('success', function(e) {
+            const button = e.trigger;
+            const original = button.innerHTML;
             
-            if (nombre.length < 3) {
-                e.preventDefault();
-                window.ReservaBot.showNotification('El nombre debe tener al menos 3 caracteres', 'error');
-                return false;
+            // Feedback visual mejorado para móvil
+            button.classList.add('copy-feedback');
+            button.innerHTML = '<i class="ri-check-line"></i>¡Copiado!';
+            
+            // Vibración si está disponible
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
             }
             
-            if (nombre.length > 100) {
-                e.preventDefault();
-                window.ReservaBot.showNotification('El nombre no puede tener más de 100 caracteres', 'error');
-                return false;
-            }
+            setTimeout(() => {
+                button.classList.remove('copy-feedback');
+                button.innerHTML = original;
+            }, 2000);
+            
+            e.clearSelection();
+        });
+        
+        clipboardMobile.on('error', function(e) {
+            console.error('Error copiando:', e);
+            showMobileNotification('Error al copiar el enlace', 'error');
+        });
+    } else {
+        // Fallback para móvil sin ClipboardJS
+        document.querySelectorAll('.btn-copiar-mobile').forEach(button => {
+            button.addEventListener('click', function() {
+                const url = this.dataset.clipboardText;
+                fallbackCopyToClipboard(url, this);
+            });
         });
     }
     
-    // Mejorar la experiencia de usuario con loading states
-    document.querySelectorAll('button[type="submit"]').forEach(button => {
+    // Funcionalidad mejorada de QR para móvil
+    document.querySelectorAll('.btn-qr').forEach(button => {
         button.addEventListener('click', function() {
-            const originalText = this.innerHTML;
-            this.innerHTML = '<i class="ri-loader-line animate-spin mr-2"></i>Procesando...';
-            this.disabled = true;
-            
-            // Restaurar el botón después de un tiempo si no se envía el formulario
-            setTimeout(() => {
-                this.innerHTML = originalText;
-                this.disabled = false;
-            }, 5000);
+            const url = this.dataset.url;
+            const nombre = this.dataset.nombre;
+            showQRModal(url, nombre);
         });
     });
     
-    // Auto-focus en el campo nombre
-    const nombreInput = document.getElementById('nombre');
-    if (nombreInput && !nombreInput.value) {
-        nombreInput.focus();
+    // Funcionalidad de eliminación mejorada para móvil
+    document.querySelectorAll('.btn-eliminar').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const nombre = this.dataset.nombre;
+            showDeleteModal(id, nombre);
+        });
+    });
+    
+    // Cerrar modales al tocar fuera (mejorado para móvil)
+    document.addEventListener('click', function(e) {
+        const qrModal = document.getElementById('qrModal');
+        const deleteModal = document.getElementById('eliminarModal');
+        
+        if (e.target === qrModal) {
+            qrModal.classList.add('hidden');
+        }
+        
+        if (e.target === deleteModal) {
+            deleteModal.classList.add('hidden');
+        }
+    });
+    
+    // Botones de cerrar modales
+    const closeQrBtn = document.getElementById('closeQrModal');
+    const cancelDeleteBtn = document.getElementById('cancelarEliminar');
+    
+    if (closeQrBtn) {
+        closeQrBtn.addEventListener('click', () => {
+            document.getElementById('qrModal').classList.add('hidden');
+        });
     }
+    
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', () => {
+            document.getElementById('eliminarModal').classList.add('hidden');
+        });
+    }
+    
+    // Validación mejorada del formulario para móvil
+    const createForms = document.querySelectorAll('form[method="post"]');
+    createForms.forEach(form => {
+        if (!form.querySelector('input[name="eliminar_enlace"]')) {
+            form.addEventListener('submit', function(e) {
+                const nombreInput = form.querySelector('input[name="nombre"]');
+                const nombre = nombreInput ? nombreInput.value.trim() : '';
+                
+                if (nombre.length < 3) {
+                    e.preventDefault();
+                    showMobileNotification('El nombre debe tener al menos 3 caracteres', 'error');
+                    if (nombreInput) nombreInput.focus();
+                    return false;
+                }
+                
+                if (nombre.length > 100) {
+                    e.preventDefault();
+                    showMobileNotification('El nombre no puede tener más de 100 caracteres', 'error');
+                    if (nombreInput) nombreInput.focus();
+                    return false;
+                }
+                
+                // Loading state para el botón
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="ri-loader-line animate-spin"></i>Creando...';
+                    submitBtn.disabled = true;
+                    
+                    // Restaurar después de 5 segundos si no se envía
+                    setTimeout(() => {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }, 5000);
+                }
+            });
+        }
+    });
 });
+
+// Función auxiliar para copiar sin ClipboardJS
+function fallbackCopyToClipboard(text, button) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            const original = button.innerHTML;
+            button.innerHTML = '<i class="ri-check-line"></i>¡Copiado!';
+            
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            
+            setTimeout(() => {
+                button.innerHTML = original;
+            }, 2000);
+        }).catch(() => {
+            showMobileNotification('Error al copiar el enlace', 'error');
+        });
+    } else {
+        // Fallback para navegadores muy antiguos
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            const original = button.innerHTML;
+            button.innerHTML = '<i class="ri-check-line"></i>¡Copiado!';
+            
+            setTimeout(() => {
+                button.innerHTML = original;
+            }, 2000);
+        } catch (err) {
+            showMobileNotification('Error al copiar el enlace', 'error');
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    }
+}
+
+// Función para mostrar notificaciones móviles
+function showMobileNotification(message, type = 'info') {
+    // Crear elemento de notificación optimizado para móvil
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 left-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 transform -translate-y-full opacity-0`;
+    
+    // Aplicar estilos según el tipo
+    switch (type) {
+        case 'success':
+            notification.className += ' bg-green-500 text-white';
+            notification.innerHTML = `<div class="flex items-center"><i class="ri-check-line mr-2"></i><span>${message}</span></div>`;
+            break;
+        case 'error':
+            notification.className += ' bg-red-500 text-white';
+            notification.innerHTML = `<div class="flex items-center"><i class="ri-error-warning-line mr-2"></i><span>${message}</span></div>`;
+            break;
+        default:
+            notification.className += ' bg-blue-500 text-white';
+            notification.innerHTML = `<div class="flex items-center"><i class="ri-information-line mr-2"></i><span>${message}</span></div>`;
+    }
+    
+    // Añadir al DOM
+    document.body.appendChild(notification);
+    
+    // Mostrar notificación
+    setTimeout(() => {
+        notification.classList.remove('-translate-y-full', 'opacity-0');
+    }, 100);
+    
+    // Ocultar notificación después de 3 segundos
+    setTimeout(() => {
+        notification.classList.add('-translate-y-full', 'opacity-0');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Funciones para modales (reutilizadas del script original)
+function showQRModal(url, nombre) {
+    const modal = document.getElementById('qrModal');
+    const title = document.getElementById('qrModalTitle');
+    const container = document.getElementById('qrCodeContainer');
+    
+    if (!modal || !container) {
+        showMobileNotification('Error al abrir el modal de QR', 'error');
+        return;
+    }
+    
+    title.textContent = `Código QR - ${nombre}`;
+    container.innerHTML = '<div class="text-center p-4"><i class="ri-loader-line animate-spin text-2xl"></i><br>Generando código QR...</div>';
+    
+    // Mostrar modal
+    modal.classList.remove('hidden');
+    
+    // Generar QR usando el script original
+    if (typeof QRCode !== 'undefined') {
+        container.innerHTML = '';
+        QRCode.toCanvas(container, url, {
+            width: 256,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        }, function (error) {
+            if (error) {
+                container.innerHTML = '<div class="text-red-500 p-4"><i class="ri-error-warning-line"></i><br>Error al generar código QR</div>';
+                console.error('Error generando QR:', error);
+            }
+        });
+    }
+}
+
+function showDeleteModal(id, nombre) {
+    const modal = document.getElementById('eliminarModal');
+    const nameSpan = document.getElementById('nombreEnlaceEliminar');
+    const idInput = document.getElementById('idEnlaceEliminar');
+    
+    if (modal && nameSpan && idInput) {
+        nameSpan.textContent = nombre;
+        idInput.value = id;
+        modal.classList.remove('hidden');
+    }
+}
 </script>
 
 <?php include 'includes/footer.php'; ?>
