@@ -6,9 +6,9 @@ require_once 'includes/functions.php';
 // Configurar la página actual
 $currentPage = 'config';
 $pageTitle = 'ReservaBot - Configuración';
-$pageScript = 'dashboard'; // Cambiado de 'config' a 'dashboard' para usar el archivo corregido
+$pageScript = 'dashboard';
 
-// Obtener la configuración actual - USAR TABLA CORRECTA
+// Obtener la configuración actual
 try {
     $stmt = $pdo->query('SELECT * FROM configuraciones');
     $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -19,23 +19,42 @@ try {
 
 // Establecer valores predeterminados si no existen
 $modoAceptacion = $configuraciones['modo_aceptacion'] ?? 'manual';
-$mensajeBienvenida = $configuraciones['mensaje_bienvenida'] ?? '¡Hola! Soy el asistente virtual de [Nombre del Negocio]. ¿En qué puedo ayudarte hoy?';
-$mensajeConfirmacion = $configuraciones['mensaje_confirmacion'] ?? 'Tu reserva para el día {fecha} a las {hora} ha sido confirmada. ¡Te esperamos!';
-$mensajePendiente = $configuraciones['mensaje_pendiente'] ?? 'Hemos recibido tu solicitud para el día {fecha} a las {hora}. Te confirmaremos pronto.';
 $intervaloReservas = $configuraciones['intervalo_reservas'] ?? '30';
 
-// Horarios
+// Horarios con soporte para múltiples ventanas
 $diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
 $horarios = [];
 
 foreach ($diasSemana as $dia) {
-    $horarioConfig = $configuraciones["horario_{$dia}"] ?? 'true|09:00|18:00';
-    list($activo, $horaInicio, $horaFin) = explode('|', $horarioConfig);
+    $horarioConfig = $configuraciones["horario_{$dia}"] ?? 'true|[{"inicio":"09:00","fin":"18:00"}]';
+    
+    // Separar activo y ventanas
+    $parts = explode('|', $horarioConfig, 2);
+    $activo = $parts[0] === 'true';
+    
+    if ($activo && isset($parts[1])) {
+        // Intentar decodificar como JSON (nuevo formato)
+        $ventanas = json_decode($parts[1], true);
+        
+        // Si no es JSON válido, usar formato legacy
+        if (!$ventanas) {
+            // Formato legacy: "09:00|18:00"
+            $tiempos = explode('|', $parts[1]);
+            if (count($tiempos) >= 2) {
+                $ventanas = [
+                    ['inicio' => $tiempos[0], 'fin' => $tiempos[1]]
+                ];
+            } else {
+                $ventanas = [['inicio' => '09:00', 'fin' => '18:00']];
+            }
+        }
+    } else {
+        $ventanas = [['inicio' => '09:00', 'fin' => '18:00']];
+    }
     
     $horarios[$dia] = [
-        'activo' => $activo === 'true',
-        'inicio' => $horaInicio,
-        'fin' => $horaFin
+        'activo' => $activo,
+        'ventanas' => $ventanas
     ];
 }
 
@@ -55,87 +74,11 @@ include 'includes/header.php';
 ?>
 
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Configuración</h1>
+    <h1 class="text-2xl font-bold text-gray-900">Configuración General</h1>
 </div>
 
 <div class="max-w-4xl mx-auto">
     <form id="configForm" class="space-y-8">
-
-    <!-- Configuración de WhatsApp -->
-    <div class="bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-            <i class="ri-whatsapp-line mr-2 text-green-600"></i>
-            Configuración de WhatsApp
-        </h2>
-        
-        <div class="space-y-4">
-            <div>
-                <label for="whatsappMensajeNuevaReserva" class="block text-sm font-medium text-gray-700 mb-1">
-                    Mensaje de nueva reserva
-                </label>
-                <textarea
-                    id="whatsappMensajeNuevaReserva"
-                    name="whatsapp_mensaje_nueva_reserva"
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                    rows="2"
-                ><?php echo htmlspecialchars($configuraciones['whatsapp_mensaje_nueva_reserva'] ?? 'Has realizado una nueva reserva para el {fecha} a las {hora}. Te confirmaremos pronto.'); ?></textarea>
-                <p class="mt-1 text-xs text-gray-500">
-                    Variables disponibles: {nombre}, {fecha}, {hora}
-                </p>
-            </div>
-            
-            <div>
-                <label for="whatsappMensajeConfirmacion" class="block text-sm font-medium text-gray-700 mb-1">
-                    Mensaje de confirmación
-                </label>
-                <textarea
-                    id="whatsappMensajeConfirmacion"
-                    name="whatsapp_mensaje_confirmacion"
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                    rows="2"
-                ><?php echo htmlspecialchars($configuraciones['whatsapp_mensaje_confirmacion'] ?? 'Tu reserva para el {fecha} a las {hora} ha sido confirmada. ¡Te esperamos!'); ?></textarea>
-                <p class="mt-1 text-xs text-gray-500">
-                    Variables disponibles: {nombre}, {fecha}, {hora}
-                </p>
-            </div>
-            
-            <div>
-                <label for="whatsappMensajeRecordatorio" class="block text-sm font-medium text-gray-700 mb-1">
-                    Mensaje de recordatorio
-                </label>
-                <textarea
-                    id="whatsappMensajeRecordatorio"
-                    name="whatsapp_mensaje_recordatorio"
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                    rows="2"
-                ><?php echo htmlspecialchars($configuraciones['whatsapp_mensaje_recordatorio'] ?? 'Recordatorio: Tienes una cita mañana {fecha} a las {hora}. ¡Te esperamos!'); ?></textarea>
-                <p class="mt-1 text-xs text-gray-500">
-                    Variables disponibles: {nombre}, {fecha}, {hora}
-                </p>
-            </div>
-            
-            <div>
-                <label for="whatsappMensajeCancelacion" class="block text-sm font-medium text-gray-700 mb-1">
-                    Mensaje de cancelación
-                </label>
-                <textarea
-                    id="whatsappMensajeCancelacion"
-                    name="whatsapp_mensaje_cancelacion"
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                    rows="2"
-                ><?php echo htmlspecialchars($configuraciones['whatsapp_mensaje_cancelacion'] ?? 'Tu reserva para el {fecha} a las {hora} ha sido cancelada.'); ?></textarea>
-                <p class="mt-1 text-xs text-gray-500">
-                    Variables disponibles: {nombre}, {fecha}, {hora}
-                </p>
-            </div>
-            
-            <div class="mt-2">
-                <p class="text-sm text-gray-500">
-                    Para configuración avanzada de WhatsApp, vaya a la sección <a href="/whatsapp" class="text-blue-600 hover:text-blue-800">Conexión WhatsApp</a>.
-                </p>
-            </div>
-        </div>
-    </div>
 
         <!-- Configuración de reservas -->
         <div class="bg-white rounded-lg shadow-sm p-6">
@@ -194,114 +137,95 @@ include 'includes/header.php';
             </div>
         </div>
         
-        <!-- Mensajes automáticos -->
+        <!-- Horario de atención con múltiples ventanas -->
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <i class="ri-message-3-line mr-2 text-blue-600"></i>
-                Mensajes automáticos
-            </h2>
-            
-            <div class="space-y-4">
-                <div>
-                    <label for="mensajeBienvenida" class="block text-sm font-medium text-gray-700 mb-1">
-                        Mensaje de bienvenida
-                    </label>
-                    <textarea
-                        id="mensajeBienvenida"
-                        name="mensaje_bienvenida"
-                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                        rows="2"
-                    ><?php echo htmlspecialchars($mensajeBienvenida); ?></textarea>
-                </div>
-                
-                <div>
-                    <label for="mensajeConfirmacion" class="block text-sm font-medium text-gray-700 mb-1">
-                        Mensaje de confirmación
-                    </label>
-                    <textarea
-                        id="mensajeConfirmacion"
-                        name="mensaje_confirmacion"
-                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                        rows="2"
-                    ><?php echo htmlspecialchars($mensajeConfirmacion); ?></textarea>
-                    <p class="mt-1 text-xs text-gray-500">
-                        Variables disponibles: {fecha}, {hora}, {nombre}
-                    </p>
-                </div>
-                
-                <div>
-                    <label for="mensajePendiente" class="block text-sm font-medium text-gray-700 mb-1">
-                        Mensaje de reserva pendiente
-                    </label>
-                    <textarea
-                        id="mensajePendiente"
-                        name="mensaje_pendiente"
-                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                        rows="2"
-                    ><?php echo htmlspecialchars($mensajePendiente); ?></textarea>
-                    <p class="mt-1 text-xs text-gray-500">
-                        Variables disponibles: {fecha}, {hora}, {nombre}
-                    </p>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-900 flex items-center">
+                    <i class="ri-time-line mr-2 text-blue-600"></i>
+                    Horario de atención
+                </h2>
+                <div class="text-sm text-gray-500">
+                    <i class="ri-information-line mr-1"></i>
+                    Puedes definir múltiples ventanas horarias por día
                 </div>
             </div>
-        </div>
-        
-        <!-- Horario de atención -->
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <i class="ri-time-line mr-2 text-blue-600"></i>
-                Horario de atención
-            </h2>
             
-            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg mb-4">
-                <table class="min-w-full divide-y divide-gray-300">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Día</th>
-                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Hora Inicio</th>
-                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Hora Fin</th>
-                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Activo</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
-                        <?php foreach ($diasSemana as $dia): ?>
-                            <tr>
-                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+            <div class="space-y-6">
+                <?php foreach ($diasSemana as $dia): ?>
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <input 
+                                    class="toggle-day h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3" 
+                                    type="checkbox" 
+                                    id="horario_<?php echo $dia; ?>_activo"
+                                    name="horario_<?php echo $dia; ?>_activo" 
+                                    data-dia="<?php echo $dia; ?>"
+                                    <?php echo $horarios[$dia]['activo'] ? 'checked' : ''; ?>
+                                >
+                                <label for="horario_<?php echo $dia; ?>_activo" class="text-base font-medium text-gray-900">
                                     <?php echo $nombresDias[$dia]; ?>
-                                </td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                    <input
-                                        type="time"
-                                        name="horario_<?php echo $dia; ?>_inicio"
-                                        class="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                        value="<?php echo $horarios[$dia]['inicio']; ?>"
-                                        <?php echo !$horarios[$dia]['activo'] ? 'disabled' : ''; ?>
-                                    >
-                                </td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                    <input
-                                        type="time"
-                                        name="horario_<?php echo $dia; ?>_fin"
-                                        class="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                        value="<?php echo $horarios[$dia]['fin']; ?>"
-                                        <?php echo !$horarios[$dia]['activo'] ? 'disabled' : ''; ?>
-                                    >
-                                </td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                    <div class="form-check form-switch">
-                                        <input 
-                                            class="toggle-day" 
-                                            type="checkbox" 
-                                            name="horario_<?php echo $dia; ?>_activo" 
-                                            data-dia="<?php echo $dia; ?>"
-                                            <?php echo $horarios[$dia]['activo'] ? 'checked' : ''; ?>
+                                </label>
+                            </div>
+                            
+                            <button 
+                                type="button" 
+                                class="btn-add-ventana text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                                data-dia="<?php echo $dia; ?>"
+                                style="<?php echo !$horarios[$dia]['activo'] ? 'display: none;' : ''; ?>"
+                            >
+                                <i class="ri-add-line mr-1"></i>
+                                Añadir ventana horaria
+                            </button>
+                        </div>
+                        
+                        <div class="ventanas-horarias space-y-3" id="ventanas_<?php echo $dia; ?>" 
+                             style="<?php echo !$horarios[$dia]['activo'] ? 'display: none;' : ''; ?>">
+                            
+                            <?php foreach ($horarios[$dia]['ventanas'] as $index => $ventana): ?>
+                                <div class="ventana-horaria flex items-center space-x-3 p-3 <?php echo $index === 0 ? 'bg-gray-50' : 'bg-blue-50 border border-blue-200'; ?> rounded-lg">
+                                    <div class="flex items-center space-x-2">
+                                        <label class="text-sm font-medium text-gray-700">Desde:</label>
+                                        <input
+                                            type="time"
+                                            name="horario_<?php echo $dia; ?>_inicio_<?php echo $index + 1; ?>"
+                                            class="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                            value="<?php echo htmlspecialchars($ventana['inicio']); ?>"
+                                            <?php echo !$horarios[$dia]['activo'] ? 'disabled' : ''; ?>
                                         >
                                     </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                                    
+                                    <div class="flex items-center space-x-2">
+                                        <label class="text-sm font-medium text-gray-700">Hasta:</label>
+                                        <input
+                                            type="time"
+                                            name="horario_<?php echo $dia; ?>_fin_<?php echo $index + 1; ?>"
+                                            class="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                            value="<?php echo htmlspecialchars($ventana['fin']); ?>"
+                                            <?php echo !$horarios[$dia]['activo'] ? 'disabled' : ''; ?>
+                                        >
+                                    </div>
+                                    
+                                    <div class="flex items-center space-x-2">
+                                        <span class="px-2 py-1 text-xs font-medium <?php echo $index === 0 ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; ?> rounded-full">
+                                            <?php echo $index === 0 ? 'Principal' : 'Adicional'; ?>
+                                        </span>
+                                        
+                                        <?php if ($index > 0): ?>
+                                            <button 
+                                                type="button" 
+                                                class="btn-remove-ventana text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50"
+                                                title="Eliminar ventana"
+                                            >
+                                                <i class="ri-close-line text-sm"></i>
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
                 
@@ -318,12 +242,253 @@ include 'includes/header.php';
     </form>
 </div>
 
+<!-- Template para nuevas ventanas horarias -->
+<template id="ventana-horaria-template">
+    <div class="ventana-horaria flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <div class="flex items-center space-x-2">
+            <label class="text-sm font-medium text-gray-700">Desde:</label>
+            <input
+                type="time"
+                name=""
+                class="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                value="14:00"
+            >
+        </div>
+        
+        <div class="flex items-center space-x-2">
+            <label class="text-sm font-medium text-gray-700">Hasta:</label>
+            <input
+                type="time"
+                name=""
+                class="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                value="18:00"
+            >
+        </div>
+        
+        <div class="flex items-center space-x-2">
+            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                Adicional
+            </span>
+            <button 
+                type="button" 
+                class="btn-remove-ventana text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50"
+                title="Eliminar ventana"
+            >
+                <i class="ri-close-line text-sm"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
 <div id="saveSuccessMessage" class="fixed bottom-4 right-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md shadow-lg hidden">
     <div class="flex items-center">
         <i class="ri-check-line mr-2 text-green-500"></i>
         <span>Configuración guardada correctamente</span>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Contadores para nombrar los inputs únicamente
+    const ventanaCounters = {};
+    
+    // Inicializar contadores basados en ventanas existentes
+    document.querySelectorAll('.toggle-day').forEach(checkbox => {
+        const dia = checkbox.dataset.dia;
+        const ventanasContainer = document.getElementById(`ventanas_${dia}`);
+        const ventanasExistentes = ventanasContainer.querySelectorAll('.ventana-horaria').length;
+        ventanaCounters[dia] = ventanasExistentes;
+    });
+    
+    // Event listeners para toggle de días
+    document.querySelectorAll('.toggle-day').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const dia = this.dataset.dia;
+            const ventanasContainer = document.getElementById(`ventanas_${dia}`);
+            const addButton = document.querySelector(`[data-dia="${dia}"]`);
+            
+            if (this.checked) {
+                ventanasContainer.style.display = 'block';
+                if (addButton) addButton.style.display = 'flex';
+                
+                // Habilitar inputs
+                ventanasContainer.querySelectorAll('input').forEach(input => {
+                    input.disabled = false;
+                });
+            } else {
+                ventanasContainer.style.display = 'none';
+                if (addButton) addButton.style.display = 'none';
+                
+                // Deshabilitar inputs
+                ventanasContainer.querySelectorAll('input').forEach(input => {
+                    input.disabled = true;
+                });
+            }
+        });
+    });
+    
+    // Event listeners para añadir ventanas
+    document.querySelectorAll('.btn-add-ventana').forEach(button => {
+        button.addEventListener('click', function() {
+            const dia = this.dataset.dia;
+            addVentanaHoraria(dia);
+        });
+    });
+    
+    // Event listeners para eliminar ventanas existentes
+    document.querySelectorAll('.btn-remove-ventana').forEach(button => {
+        button.addEventListener('click', function() {
+            this.closest('.ventana-horaria').remove();
+        });
+    });
+    
+    // Función para añadir nueva ventana horaria
+    function addVentanaHoraria(dia) {
+        const template = document.getElementById('ventana-horaria-template');
+        const ventanasContainer = document.getElementById(`ventanas_${dia}`);
+        const clone = template.content.cloneNode(true);
+        
+        // Incrementar contador
+        ventanaCounters[dia]++;
+        const ventanaNum = ventanaCounters[dia];
+        
+        // Configurar nombres de los inputs
+        const inputs = clone.querySelectorAll('input[type="time"]');
+        inputs[0].name = `horario_${dia}_inicio_${ventanaNum}`;
+        inputs[1].name = `horario_${dia}_fin_${ventanaNum}`;
+        
+        // Event listener para eliminar ventana
+        const removeBtn = clone.querySelector('.btn-remove-ventana');
+        removeBtn.addEventListener('click', function() {
+            this.closest('.ventana-horaria').remove();
+        });
+        
+        // Añadir al contenedor
+        ventanasContainer.appendChild(clone);
+        
+        // Animación suave
+        const newVentana = ventanasContainer.lastElementChild;
+        newVentana.style.opacity = '0';
+        newVentana.style.transform = 'translateY(-10px)';
+        
+        setTimeout(() => {
+            newVentana.style.transition = 'all 0.3s ease';
+            newVentana.style.opacity = '1';
+            newVentana.style.transform = 'translateY(0)';
+        }, 10);
+    }
+    
+    // Toggle modo aceptación
+    const toggleModo = document.getElementById('toggleModo');
+    const modoLabel = document.getElementById('modoLabel');
+    const modoDescription = document.getElementById('modoDescription');
+    let modoAceptacion = modoLabel.textContent.trim() === 'Automático' ? 'automatico' : 'manual';
+    
+    if (toggleModo) {
+        toggleModo.addEventListener('click', function() {
+            const toggleButton = toggleModo.querySelector('span');
+            
+            if (toggleButton.classList.contains('translate-x-1')) {
+                // Cambiar a modo automático
+                toggleButton.classList.remove('translate-x-1');
+                toggleButton.classList.add('translate-x-6');
+                toggleModo.classList.remove('bg-gray-200');
+                toggleModo.classList.add('bg-blue-600');
+                modoLabel.textContent = 'Automático';
+                modoDescription.textContent = 'Las reservas se aceptan automáticamente en horarios disponibles';
+                modoAceptacion = 'automatico';
+            } else {
+                // Cambiar a modo manual
+                toggleButton.classList.remove('translate-x-6');
+                toggleButton.classList.add('translate-x-1');
+                toggleModo.classList.remove('bg-blue-600');
+                toggleModo.classList.add('bg-gray-200');
+                modoLabel.textContent = 'Manual';
+                modoDescription.textContent = 'Las reservas requieren aprobación manual';
+                modoAceptacion = 'manual';
+            }
+        });
+    }
+    
+    // Envío del formulario
+    const configForm = document.getElementById('configForm');
+    if (configForm) {
+        configForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const data = {};
+            
+            // Recopilar modo de aceptación
+            data['modo_aceptacion'] = modoAceptacion;
+            
+            // Recopilar intervalo de reservas
+            const intervaloReservas = document.getElementById('intervaloReservas');
+            if (intervaloReservas) data['intervalo_reservas'] = intervaloReservas.value;
+            
+            // Recopilar horarios con múltiples ventanas
+            const diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
+            
+            diasSemana.forEach(dia => {
+                const activoCheckbox = document.querySelector(`[name="horario_${dia}_activo"]`);
+                const activo = activoCheckbox ? activoCheckbox.checked : false;
+                
+                if (activo) {
+                    // Recopilar todas las ventanas horarias para este día
+                    const ventanas = [];
+                    const ventanasContainer = document.getElementById(`ventanas_${dia}`);
+                    const ventanasElements = ventanasContainer.querySelectorAll('.ventana-horaria');
+                    
+                    ventanasElements.forEach((ventana, index) => {
+                        const inicioInput = ventana.querySelector(`input[name*="_inicio_"]`);
+                        const finInput = ventana.querySelector(`input[name*="_fin_"]`);
+                        
+                        if (inicioInput && finInput && inicioInput.value && finInput.value) {
+                            ventanas.push({
+                                inicio: inicioInput.value,
+                                fin: finInput.value
+                            });
+                        }
+                    });
+                    
+                    // Guardar como JSON las múltiples ventanas
+                    data[`horario_${dia}`] = `true|${JSON.stringify(ventanas)}`;
+                } else {
+                    data[`horario_${dia}`] = 'false|[]';
+                }
+            });
+            
+            // Enviar la solicitud
+            fetch('api/actualizar-configuracion.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    // Mostrar mensaje de éxito
+                    const saveSuccessMessage = document.getElementById('saveSuccessMessage');
+                    if (saveSuccessMessage) {
+                        saveSuccessMessage.classList.remove('hidden');
+                        
+                        setTimeout(() => {
+                            saveSuccessMessage.classList.add('hidden');
+                        }, 3000);
+                    }
+                } else {
+                    alert('Error al guardar la configuración: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al procesar la solicitud');
+            });
+        });
+    }
+});
+</script>
 
 <?php 
 // Incluir el pie de página

@@ -1,6 +1,7 @@
 <?php
 /**
  * API para obtener horas disponibles para una fecha específica
+ * ACTUALIZADA para soportar múltiples ventanas horarias
  */
 
 // Cabeceras para JSON
@@ -40,7 +41,7 @@ if ($fecha < date('Y-m-d')) {
 }
 
 try {
-    // Obtener configuración de horarios - TABLA CORREGIDA
+    // Obtener configuración de horarios
     $stmt = $pdo->prepare("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'horario_%'");
     $stmt->execute();
     $configHorarios = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -58,31 +59,84 @@ try {
     $diaSemana = getDiaSemana($fecha);
     
     // Obtener configuración del día
-    $horarioConfig = $configHorarios["horario_{$diaSemana}"] ?? 'false|09:00|18:00';
-    list($activo, $horaInicio, $horaFin) = explode('|', $horarioConfig);
+    $horarioConfig = $configHorarios["horario_{$diaSemana}"] ?? 'false|[]';
+    $parts = explode('|', $horarioConfig, 2);
+    $activo = $parts[0] === 'true';
     
     // Verificar si el día está activo
-    if ($activo !== 'true') {
+    if (!$activo) {
         echo json_encode(['success' => false, 'message' => 'El día seleccionado no está disponible']);
         exit;
     }
     
-    // Obtener intervalo de reservas de la configuración - TABLA CORREGIDA
+    // Obtener ventanas horarias
+    $ventanas = [];
+    if (isset($parts[1])) {
+        // Intentar decodificar como JSON (nuevo formato)
+        $ventanasJson = json_decode($parts[1], true);
+        
+        if ($ventanasJson && is_array($ventanasJson)) {
+            $ventanas = $ventanasJson;
+        } else {
+            // Formato legacy: "09:00|18:00"
+            $tiempos = explode('|', $parts[1]);
+            if (count($tiempos) >= 2) {
+                $ventanas = [
+                    ['inicio' => $tiempos[0], 'fin' => $tiempos[1]]
+                ];
+            }
+        }
+    }
+    
+    // Si no hay ventanas válidas, usar valores por defecto
+    if (empty($ventanas)) {
+        $ventanas = [['inicio' => '09:00', 'fin' => '18:00']];
+    }
+    
+    // Obtener intervalo de reservas
     $stmt = $pdo->prepare("SELECT valor FROM configuraciones WHERE clave = 'intervalo_reservas'");
     $stmt->execute();
     $intervalo = intval($stmt->fetchColumn() ?: 30); // Por defecto 30 minutos
     
-    // Generar todas las horas posibles
-    $horas = [];
-    $current = strtotime($horaInicio);
-    $end = strtotime($horaFin);
+    // Generar todas las horas posibles para todas las ventanas
+    $horasDisponibles = [];
+    $horaInicioGlobal = null;
+    $horaFinGlobal = null;
     
-    while ($current < $end) {
-        $horas[] = date('H:i', $current);
-        $current += $intervalo * 60; // Convertir minutos a segundos
+    foreach ($ventanas as $ventana) {
+        $horaInicio = $ventana['inicio'];
+        $horaFin = $ventana['fin'];
+        
+        // Validar formato de horas
+        if (!preg_match('/^\d{2}:\d{2}$/', $horaInicio) || !preg_match('/^\d{2}:\d{2}$/', $horaFin)) {
+            continue;
+        }
+        
+        // Actualizar rango global para mostrar al usuario
+        if ($horaInicioGlobal === null || $horaInicio < $horaInicioGlobal) {
+            $horaInicioGlobal = $horaInicio;
+        }
+        if ($horaFinGlobal === null || $horaFin > $horaFinGlobal) {
+            $horaFinGlobal = $horaFin;
+        }
+        
+        // Generar horas para esta ventana
+        $current = strtotime($horaInicio);
+        $end = strtotime($horaFin);
+        
+        while ($current < $end) {
+            $hora = date('H:i', $current);
+            if (!in_array($hora, $horasDisponibles)) {
+                $horasDisponibles[] = $hora;
+            }
+            $current += $intervalo * 60; // Convertir minutos a segundos
+        }
     }
     
-    // Obtener horas ya reservadas para esta fecha - SOLUCIONADO problema de collation
+    // Ordenar las horas
+    sort($horasDisponibles);
+    
+    // Obtener horas ya reservadas para esta fecha
     $stmt = $pdo->prepare("SELECT TIME_FORMAT(hora, '%H:%i') as hora_reservada 
                            FROM reservas 
                            WHERE CAST(fecha AS CHAR) = CAST(? AS CHAR) 
@@ -91,7 +145,7 @@ try {
     $horasReservadas = $stmt->fetchAll(PDO::FETCH_COLUMN);
     
     // Filtrar horas ya reservadas
-    $horasDisponibles = array_diff($horas, $horasReservadas);
+    $horasDisponibles = array_diff($horasDisponibles, $horasReservadas);
     
     // Si es hoy, filtrar horas que ya pasaron
     if ($fecha === date('Y-m-d')) {
@@ -104,13 +158,21 @@ try {
     // Reindexar el array para mantener el orden correcto
     $horasDisponibles = array_values($horasDisponibles);
     
+    // Preparar información de las ventanas horarias para mostrar al usuario
+    $ventanasInfo = [];
+    foreach ($ventanas as $ventana) {
+        $ventanasInfo[] = $ventana['inicio'] . ' - ' . $ventana['fin'];
+    }
+    
     echo json_encode([
         'success' => true, 
         'horas' => $horasDisponibles,
         'dia_semana' => $diaSemana,
-        'horario_inicio' => $horaInicio,
-        'horario_fin' => $horaFin,
-        'intervalo' => $intervalo
+        'horario_inicio' => $horaInicioGlobal,
+        'horario_fin' => $horaFinGlobal,
+        'ventanas' => $ventanasInfo,
+        'intervalo' => $intervalo,
+        'total_ventanas' => count($ventanas)
     ]);
     
 } catch (\PDOException $e) {

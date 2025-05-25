@@ -461,23 +461,63 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                         
                         if (data.horas.length === 0) {
                             horaSelect.innerHTML += '<option value="">No hay horas disponibles</option>';
-                            horarioInfo.textContent = 'No hay horarios disponibles para esta fecha.';
+                            horarioInfo.innerHTML = '<span class="text-red-600">No hay horarios disponibles para esta fecha.</span>';
                         } else {
-                            data.horas.forEach(hora => {
-                                horaSelect.innerHTML += `<option value="${hora}">${hora}</option>`;
-                            });
-                            horarioInfo.textContent = `Horario de atención: ${data.horario_inicio} - ${data.horario_fin}`;
+                            // Agrupar horas por ventanas si hay múltiples
+                            if (data.total_ventanas && data.total_ventanas > 1) {
+                                // Mostrar información de múltiples ventanas
+                                let horarioTexto = `<div class="space-y-1">
+                                    <div class="text-sm font-medium text-gray-700">Horarios disponibles:</div>`;
+                                
+                                data.ventanas.forEach((ventana, index) => {
+                                    horarioTexto += `<div class="text-xs text-gray-600">• ${ventana}</div>`;
+                                });
+                                
+                                horarioTexto += `</div>`;
+                                horarioInfo.innerHTML = horarioTexto;
+                                
+                                // Agregar horas con separadores visuales si es necesario
+                                let currentVentana = '';
+                                data.horas.forEach(hora => {
+                                    // Determinar a qué ventana pertenece esta hora
+                                    let ventanaCorrespondiente = '';
+                                    data.ventanas.forEach(ventana => {
+                                        const [inicio, fin] = ventana.split(' - ');
+                                        if (hora >= inicio && hora < fin) {
+                                            ventanaCorrespondiente = ventana;
+                                        }
+                                    });
+                                    
+                                    // Agregar separador si es una nueva ventana
+                                    if (ventanaCorrespondiente !== currentVentana && data.total_ventanas > 1) {
+                                        if (currentVentana !== '') {
+                                            horaSelect.innerHTML += '<option disabled>────────────</option>';
+                                        }
+                                        horaSelect.innerHTML += `<option disabled style="font-weight: bold; color: #4F46E5;">📅 ${ventanaCorrespondiente}</option>`;
+                                        currentVentana = ventanaCorrespondiente;
+                                    }
+                                    
+                                    horaSelect.innerHTML += `<option value="${hora}">${hora}</option>`;
+                                });
+                            } else {
+                                // Una sola ventana, mostrar como antes
+                                data.horas.forEach(hora => {
+                                    horaSelect.innerHTML += `<option value="${hora}">${hora}</option>`;
+                                });
+                                
+                                horarioInfo.innerHTML = `<span class="text-green-600">Horario: ${data.horario_inicio} - ${data.horario_fin}</span>`;
+                            }
                         }
                     } else {
                         horaSelect.innerHTML = '<option value="">Error al cargar horas</option>';
-                        horarioInfo.textContent = data.message || 'Error al cargar las horas disponibles.';
+                        horarioInfo.innerHTML = `<span class="text-red-600">${data.message || 'Error al cargar las horas disponibles.'}</span>`;
                     }
                     horaSelect.disabled = false;
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     horaSelect.innerHTML = '<option value="">Error al cargar horas</option>';
-                    horarioInfo.textContent = 'Error de conexión. Por favor, intenta nuevamente.';
+                    horarioInfo.innerHTML = '<span class="text-red-600">Error de conexión. Por favor, intenta nuevamente.</span>';
                     horaSelect.disabled = false;
                 });
             }

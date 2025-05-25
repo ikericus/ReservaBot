@@ -19,6 +19,184 @@ function getBaseUrl() {
     return $protocol . $host . $publicPath;
 }
 
+/**
+ * Parsea la configuración de horarios con soporte para múltiples ventanas
+ *
+ * @param string $horarioConfig Configuración en formato "true|[{...}]" o legacy "true|09:00|18:00"
+ * @return array Array con 'activo' y 'ventanas'
+ */
+function parseHorarioConfig($horarioConfig) {
+    $parts = explode('|', $horarioConfig, 2);
+    $activo = $parts[0] === 'true';
+    $ventanas = [];
+    
+    if ($activo && isset($parts[1])) {
+        // Intentar decodificar como JSON (nuevo formato)
+        $ventanasJson = json_decode($parts[1], true);
+        
+        if ($ventanasJson && is_array($ventanasJson)) {
+            // Formato nuevo: JSON con múltiples ventanas
+            $ventanas = $ventanasJson;
+        } else {
+            // Formato legacy: "09:00|18:00"
+            $tiempos = explode('|', $parts[1]);
+            if (count($tiempos) >= 2) {
+                $ventanas = [
+                    ['inicio' => $tiempos[0], 'fin' => $tiempos[1]]
+                ];
+            }
+        }
+    }
+    
+    // Si no hay ventanas válidas, usar valores por defecto
+    if (empty($ventanas)) {
+        $ventanas = [['inicio' => '09:00', 'fin' => '18:00']];
+    }
+    
+    return [
+        'activo' => $activo,
+        'ventanas' => $ventanas
+    ];
+}
+
+/**
+ * Verifica si una hora específica está dentro de alguna ventana horaria
+ *
+ * @param string $hora Hora en formato HH:MM
+ * @param array $ventanas Array de ventanas con 'inicio' y 'fin'
+ * @return bool True si la hora está dentro de alguna ventana
+ */
+function horaEnVentanas($hora, $ventanas) {
+    foreach ($ventanas as $ventana) {
+        if ($hora >= $ventana['inicio'] && $hora < $ventana['fin']) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Genera todas las horas disponibles para un conjunto de ventanas horarias
+ *
+ * @param array $ventanas Array de ventanas con 'inicio' y 'fin'
+ * @param int $intervalo Intervalo en minutos entre horas
+ * @return array Array de horas en formato HH:MM
+ */
+function generarHorasDisponibles($ventanas, $intervalo = 30) {
+    $horas = [];
+    
+    foreach ($ventanas as $ventana) {
+        $current = strtotime($ventana['inicio']);
+        $end = strtotime($ventana['fin']);
+        
+        while ($current < $end) {
+            $hora = date('H:i', $current);
+            if (!in_array($hora, $horas)) {
+                $horas[] = $hora;
+            }
+            $current += $intervalo * 60; // Convertir minutos a segundos
+        }
+    }
+    
+    sort($horas);
+    return $horas;
+}
+
+/**
+ * Obtiene la información de horarios para un día específico
+ *
+ * @param string $dia Día de la semana (lun, mar, mie, etc.)
+ * @param PDO $pdo Conexión a la base de datos
+ * @return array Array con información del horario del día
+ */
+function getHorarioDia($dia, $pdo) {
+    try {
+        $stmt = $pdo->prepare("SELECT valor FROM configuraciones WHERE clave = ?");
+        $stmt->execute(["horario_{$dia}"]);
+        $horarioConfig = $stmt->fetchColumn();
+        
+        if (!$horarioConfig) {
+            // Valores por defecto
+            $horarioConfig = in_array($dia, ['lun', 'mar', 'mie', 'jue', 'vie']) 
+                ? 'true|[{"inicio":"09:00","fin":"18:00"}]' 
+                : 'false|[]';
+        }
+        
+        return parseHorarioConfig($horarioConfig);
+    } catch (\PDOException $e) {
+        error_log('Error al obtener horario del día: ' . $e->getMessage());
+        return [
+            'activo' => false,
+            'ventanas' => []
+        ];
+    }
+}
+
+/**
+ * Verifica si un día y hora específicos están disponibles para reservas
+ *
+ * @param string $fecha Fecha en formato Y-m-d
+ * @param string $hora Hora en formato H:i
+ * @param PDO $pdo Conexión a la base de datos
+ * @return bool True si está disponible
+ */
+function horaDisponible($fecha, $hora, $pdo) {
+    // Obtener día de la semana
+    $diasMap = [
+        1 => 'lun', 2 => 'mar', 3 => 'mie', 4 => 'jue', 
+        5 => 'vie', 6 => 'sab', 0 => 'dom'
+    ];
+    $diaSemana = date('w', strtotime($fecha));
+    $dia = $diasMap[$diaSemana];
+    
+    // Obtener configuración del día
+    $horarioDia = getHorarioDia($dia, $pdo);
+    
+    // Verificar si el día está activo
+    if (!$horarioDia['activo']) {
+        return false;
+    }
+    
+    // Verificar si la hora está en alguna ventana
+    if (!horaEnVentanas($hora, $horarioDia['ventanas'])) {
+        return false;
+    }
+    
+    // Verificar si ya hay una reserva para esa fecha y hora
+    try {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM reservas WHERE fecha = ? AND TIME_FORMAT(hora, "%H:%i") = ? AND estado IN ("pendiente", "confirmada")');
+        $stmt->execute([$fecha, $hora]);
+        $existeReserva = $stmt->fetchColumn();
+        
+        return $existeReserva == 0;
+    } catch (\PDOException $e) {
+        error_log('Error al verificar disponibilidad: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Obtiene un resumen legible de las ventanas horarias
+ *
+ * @param array $ventanas Array de ventanas con 'inicio' y 'fin'
+ * @return string Resumen legible de las ventanas
+ */
+function getResumenVentanas($ventanas) {
+    if (empty($ventanas)) {
+        return 'Sin horarios configurados';
+    }
+    
+    if (count($ventanas) == 1) {
+        return $ventanas[0]['inicio'] . ' - ' . $ventanas[0]['fin'];
+    }
+    
+    $resumen = [];
+    foreach ($ventanas as $ventana) {
+        $resumen[] = $ventana['inicio'] . ' - ' . $ventana['fin'];
+    }
+    
+    return implode(', ', $resumen);
+}
 
 // Función para obtener todas las reservas
 function getReservas() {

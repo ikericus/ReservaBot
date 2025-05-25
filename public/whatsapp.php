@@ -9,7 +9,11 @@ $currentPage = 'whatsapp';
 $pageTitle = 'ReservaBot - WhatsApp';
 $pageScript = 'whatsapp';
 
-// Obtener la configuración de WhatsApp
+// Obtener el estado actual de la conexión de WhatsApp
+$whatsappStatus = getWhatsAppConnectionStatus();
+$isConnected = $whatsappStatus['status'] === 'connected';
+
+// Obtener configuraciones de mensajes de WhatsApp
 try {
     $stmt = $pdo->query("SELECT * FROM configuraciones WHERE clave LIKE 'whatsapp_%'");
     $whatsappConfig = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -17,17 +21,17 @@ try {
     $whatsappConfig = [];
 }
 
-// Establecer valores predeterminados si no existen
-$whatsappEnabled = $whatsappConfig['whatsapp_enabled'] ?? 'false';
-$whatsappServerUrl = $whatsappConfig['whatsapp_server_url'] ?? 'http://localhost:3000';
-$whatsappApiKey = $whatsappConfig['whatsapp_api_key'] ?? '';
-$notifyNuevaReserva = $whatsappConfig['whatsapp_notify_nueva_reserva'] ?? 'true';
-$notifyConfirmacion = $whatsappConfig['whatsapp_notify_confirmacion'] ?? 'true';
-$notifyRecordatorio = $whatsappConfig['whatsapp_notify_recordatorio'] ?? 'true';
-$tiempoRecordatorio = $whatsappConfig['whatsapp_tiempo_recordatorio'] ?? '24';
+// Configuraciones de mensajes WhatsApp
+$whatsappMensajeNuevaReserva = $whatsappConfig['whatsapp_mensaje_nueva_reserva'] ?? 'Has realizado una nueva reserva para el {fecha} a las {hora}. Te confirmaremos pronto.';
+$whatsappMensajeConfirmacion = $whatsappConfig['whatsapp_mensaje_confirmacion'] ?? 'Tu reserva para el {fecha} a las {hora} ha sido confirmada. ¡Te esperamos!';
+$whatsappMensajeRecordatorio = $whatsappConfig['whatsapp_mensaje_recordatorio'] ?? 'Recordatorio: Tienes una cita mañana {fecha} a las {hora}. ¡Te esperamos!';
+$whatsappMensajeCancelacion = $whatsappConfig['whatsapp_mensaje_cancelacion'] ?? 'Tu reserva para el {fecha} a las {hora} ha sido cancelada.';
 
-// Obtener estado actual de la conexión de WhatsApp
-$whatsappStatus = checkWhatsAppStatus($whatsappServerUrl, $whatsappApiKey);
+// Configuraciones de notificaciones
+$notifyNuevaReserva = $whatsappConfig['whatsapp_notify_nueva_reserva'] ?? '1';
+$notifyConfirmacion = $whatsappConfig['whatsapp_notify_confirmacion'] ?? '1';
+$notifyRecordatorio = $whatsappConfig['whatsapp_notify_recordatorio'] ?? '1';
+$notifyCancelacion = $whatsappConfig['whatsapp_notify_cancelacion'] ?? '1';
 
 // Incluir la cabecera
 include 'includes/header.php';
@@ -39,14 +43,23 @@ include 'includes/header.php';
 
 <!-- Estado de la conexión -->
 <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-    <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-        <i class="ri-whatsapp-line mr-2 text-green-600"></i>
-        Estado de la conexión
-    </h2>
-    
-    <div class="flex items-center mb-4">
-        <div class="mr-3">
-            <?php if ($whatsappStatus['connected'] ?? false): ?>
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h2 class="text-lg font-medium text-gray-900 flex items-center">
+                <i class="ri-whatsapp-line mr-2 text-green-600"></i>
+                Estado de la conexión
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">
+                <?php if ($isConnected): ?>
+                    WhatsApp está conectado y funcionando correctamente
+                <?php else: ?>
+                    Conecta WhatsApp para enviar notificaciones automáticas a tus clientes
+                <?php endif; ?>
+            </p>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+            <?php if ($isConnected): ?>
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                     <span class="w-2 h-2 mr-2 bg-green-500 rounded-full"></span>
                     Conectado
@@ -57,202 +70,206 @@ include 'includes/header.php';
                     Desconectado
                 </span>
             <?php endif; ?>
+            
+            <button id="refreshBtn" class="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-50">
+                <i class="ri-refresh-line text-lg"></i>
+            </button>
         </div>
-        
-        <button id="refreshStatus" class="text-blue-600 hover:text-blue-800">
-            <i class="ri-refresh-line"></i> Actualizar
-        </button>
     </div>
     
-    <?php if ($whatsappStatus['connected'] ?? false): ?>
-        <div class="bg-gray-50 rounded-lg p-4">
-            <div class="flex flex-col md:flex-row md:justify-between">
-                <div class="mb-3 md:mb-0">
-                    <div class="text-sm text-gray-500">Número registrado</div>
-                    <div class="font-medium"><?php echo htmlspecialchars($whatsappStatus['phone'] ?? 'No disponible'); ?></div>
-                </div>
-                <div class="mb-3 md:mb-0">
-                    <div class="text-sm text-gray-500">Nombre del usuario</div>
-                    <div class="font-medium"><?php echo htmlspecialchars($whatsappStatus['name'] ?? 'No disponible'); ?></div>
-                </div>
-                <div>
-                    <div class="text-sm text-gray-500">Última actualización</div>
-                    <div class="font-medium"><?php echo date('d/m/Y H:i:s'); ?></div>
-                </div>
+    <?php if ($isConnected): ?>
+        <!-- Información de conexión activa -->
+        <div class="bg-green-50 rounded-lg p-4 mb-4">
+            <div class="flex items-center mb-2">
+                <i class="ri-check-circle-line text-green-600 mr-2"></i>
+                <span class="font-medium text-green-800">WhatsApp conectado correctamente</span>
             </div>
+            <?php if (isset($whatsappStatus['lastActivity'])): ?>
+                <p class="text-sm text-green-700">
+                    Última actividad: <?php echo $whatsappStatus['lastActivity']; ?>
+                </p>
+            <?php endif; ?>
         </div>
         
-        <div class="mt-4 text-sm text-gray-500">
-            Para cerrar sesión y conectar otro número, haga clic en el botón de abajo.
-        </div>
-        
-        <div class="mt-2">
-            <button id="logoutBtn" class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+        <div class="flex space-x-3">
+            <button id="disconnectBtn" class="inline-flex items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                 <i class="ri-logout-box-line mr-2"></i>
-                Cerrar sesión en WhatsApp
+                Desconectar WhatsApp
             </button>
         </div>
     <?php else: ?>
-        <div class="mt-4 text-sm text-gray-500">
-            Para conectarse a WhatsApp, haga clic en el botón de abajo y escanee el código QR con su teléfono.
-        </div>
-        
-        <div class="mt-4">
-            <button id="connectBtn" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                <i class="ri-qr-code-line mr-2"></i>
-                Conectar WhatsApp
-            </button>
-        </div>
-        
-        <!-- Contenedor para el código QR (inicialmente oculto) -->
-        <div id="qrContainer" class="mt-6 hidden">
-            <div class="bg-white p-4 rounded-lg border border-gray-300 inline-block">
-                <div id="qrCode" class="w-64 h-64 flex items-center justify-center text-gray-500">
-                    Cargando código QR...
+        <!-- Proceso de conexión -->
+        <div class="space-y-4">
+            <?php if ($whatsappStatus['status'] === 'qr_ready' && isset($whatsappStatus['qrCode'])): ?>
+                <!-- Mostrar código QR -->
+                <div id="qrContainer" class="text-center">
+                    <div class="inline-block p-4 bg-white border border-gray-300 rounded-lg shadow-sm">
+                        <img id="qrCode" src="<?php echo $whatsappStatus['qrCode']; ?>" alt="Código QR de WhatsApp" class="w-64 h-64">
+                    </div>
+                    <p class="mt-3 text-sm text-gray-600">
+                        <strong>Instrucciones:</strong>
+                    </p>
+                    <ol class="mt-2 text-sm text-gray-600 text-left max-w-md mx-auto space-y-1">
+                        <li>1. Abre WhatsApp en tu teléfono</li>
+                        <li>2. Ve a <strong>Configuración > Dispositivos vinculados</strong></li>
+                        <li>3. Toca <strong>Vincular un dispositivo</strong></li>
+                        <li>4. Escanea este código QR</li>
+                    </ol>
                 </div>
-            </div>
-            <p class="mt-2 text-sm text-gray-500">
-                Escanee este código con la aplicación de WhatsApp en su teléfono para conectarse.
-            </p>
+            <?php elseif ($whatsappStatus['status'] === 'connecting'): ?>
+                <!-- Estado de conexión -->
+                <div class="text-center">
+                    <div class="inline-flex items-center px-4 py-2 bg-yellow-50 text-yellow-800 rounded-lg">
+                        <i class="ri-loader-line animate-spin mr-2"></i>
+                        Conectando WhatsApp...
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Iniciando el proceso de conexión, espera un momento
+                    </p>
+                </div>
+            <?php else: ?>
+                <!-- Botón para iniciar conexión -->
+                <div class="text-center">
+                    <button id="connectBtn" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-sm">
+                        <i class="ri-whatsapp-line mr-2 text-xl"></i>
+                        Conectar WhatsApp
+                    </button>
+                    <p class="mt-3 text-sm text-gray-600">
+                        Conecta tu cuenta de WhatsApp para enviar notificaciones automáticas
+                    </p>
+                </div>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 </div>
 
-<!-- Configuración de WhatsApp -->
-<div class="bg-white rounded-lg shadow-sm p-6">
+<?php if ($isConnected): ?>
+<!-- Configuración de mensajes de WhatsApp -->
+<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
     <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-        <i class="ri-settings-line mr-2 text-blue-600"></i>
-        Configuración de WhatsApp
+        <i class="ri-message-3-line mr-2 text-blue-600"></i>
+        Mensajes de WhatsApp
     </h2>
     
-    <form id="whatsappConfigForm" class="space-y-6">
-        <!-- Activar/Desactivar integración -->
-        <div class="border-b border-gray-200 pb-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h3 class="text-base font-medium text-gray-900">Integración con WhatsApp</h3>
-                    <p class="text-sm text-gray-500" id="whatsappEnabledDescription">
-                        <?php echo $whatsappEnabled === 'true' 
-                            ? 'La integración con WhatsApp está activada' 
-                            : 'La integración con WhatsApp está desactivada'; ?>
-                    </p>
-                </div>
-                <div class="flex items-center">
-                    <span class="mr-3 text-sm font-medium text-gray-700" id="whatsappEnabledLabel">
-                        <?php echo $whatsappEnabled === 'true' ? 'Activado' : 'Desactivado'; ?>
-                    </span>
-                    <button 
-                        id="toggleWhatsapp" 
-                        type="button"
-                        class="relative inline-flex h-6 w-11 items-center rounded-full 
-                        <?php echo $whatsappEnabled === 'true' ? 'bg-blue-600' : 'bg-gray-200'; ?> 
-                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                        <span 
-                            class="inline-block h-4 w-4 transform rounded-full bg-white 
-                            <?php echo $whatsappEnabled === 'true' ? 'translate-x-6' : 'translate-x-1'; ?> 
-                            transition-transform"
-                        ></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Configuración del servidor -->
+    <form id="whatsappMessagesForm" class="space-y-6">
         <div class="space-y-4">
             <div>
-                <label for="whatsappServerUrl" class="block text-sm font-medium text-gray-700 mb-1">
-                    URL del servidor WhatsApp
+                <label for="whatsappMensajeNuevaReserva" class="block text-sm font-medium text-gray-700 mb-1">
+                    Mensaje de nueva reserva
                 </label>
-                <input
-                    type="url"
-                    id="whatsappServerUrl"
-                    name="whatsapp_server_url"
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    value="<?php echo htmlspecialchars($whatsappServerUrl); ?>"
-                    placeholder="http://localhost:3000"
-                >
+                <textarea
+                    id="whatsappMensajeNuevaReserva"
+                    name="whatsapp_mensaje_nueva_reserva"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                    rows="2"
+                ><?php echo htmlspecialchars($whatsappMensajeNuevaReserva); ?></textarea>
                 <p class="mt-1 text-xs text-gray-500">
-                    Dirección del servidor Node.js que maneja la conexión con WhatsApp
+                    Variables disponibles: {nombre}, {fecha}, {hora}
                 </p>
             </div>
             
             <div>
-                <label for="whatsappApiKey" class="block text-sm font-medium text-gray-700 mb-1">
-                    Clave API del servidor (opcional)
+                <label for="whatsappMensajeConfirmacion" class="block text-sm font-medium text-gray-700 mb-1">
+                    Mensaje de confirmación
                 </label>
-                <input
-                    type="password"
-                    id="whatsappApiKey"
-                    name="whatsapp_api_key"
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    value="<?php echo htmlspecialchars($whatsappApiKey); ?>"
-                    placeholder="Clave secreta del servidor"
-                >
+                <textarea
+                    id="whatsappMensajeConfirmacion"
+                    name="whatsapp_mensaje_confirmacion"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                    rows="2"
+                ><?php echo htmlspecialchars($whatsappMensajeConfirmacion); ?></textarea>
+                <p class="mt-1 text-xs text-gray-500">
+                    Variables disponibles: {nombre}, {fecha}, {hora}
+                </p>
+            </div>
+            
+            <div>
+                <label for="whatsappMensajeRecordatorio" class="block text-sm font-medium text-gray-700 mb-1">
+                    Mensaje de recordatorio
+                </label>
+                <textarea
+                    id="whatsappMensajeRecordatorio"
+                    name="whatsapp_mensaje_recordatorio"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                    rows="2"
+                ><?php echo htmlspecialchars($whatsappMensajeRecordatorio); ?></textarea>
+                <p class="mt-1 text-xs text-gray-500">
+                    Variables disponibles: {nombre}, {fecha}, {hora}
+                </p>
+            </div>
+            
+            <div>
+                <label for="whatsappMensajeCancelacion" class="block text-sm font-medium text-gray-700 mb-1">
+                    Mensaje de cancelación
+                </label>
+                <textarea
+                    id="whatsappMensajeCancelacion"
+                    name="whatsapp_mensaje_cancelacion"
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                    rows="2"
+                ><?php echo htmlspecialchars($whatsappMensajeCancelacion); ?></textarea>
+                <p class="mt-1 text-xs text-gray-500">
+                    Variables disponibles: {nombre}, {fecha}, {hora}
+                </p>
             </div>
         </div>
         
-        <!-- Configuración de notificaciones -->
-        <div class="space-y-4 border-t border-gray-200 pt-6">
-            <h3 class="text-base font-medium text-gray-900">Notificaciones automáticas</h3>
+        <!-- Configuración de notificaciones automáticas -->
+        <div class="border-t border-gray-200 pt-6">
+            <h3 class="text-base font-medium text-gray-900 mb-4">Notificaciones automáticas</h3>
             
-            <div class="flex items-center">
-                <input
-                    type="checkbox"
-                    id="whatsappNotifyNuevaReserva"
-                    name="whatsapp_notify_nueva_reserva"
-                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    <?php echo $notifyNuevaReserva === 'true' ? 'checked' : ''; ?>
-                >
-                <label for="whatsappNotifyNuevaReserva" class="ml-2 block text-sm text-gray-700">
-                    Enviar notificación al crear una nueva reserva
-                </label>
-            </div>
-            
-            <div class="flex items-center">
-                <input
-                    type="checkbox"
-                    id="whatsappNotifyConfirmacion"
-                    name="whatsapp_notify_confirmacion"
-                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    <?php echo $notifyConfirmacion === 'true' ? 'checked' : ''; ?>
-                >
-                <label for="whatsappNotifyConfirmacion" class="ml-2 block text-sm text-gray-700">
-                    Enviar notificación al confirmar una reserva
-                </label>
-            </div>
-            
-            <div class="flex items-center">
-                <input
-                    type="checkbox"
-                    id="whatsappNotifyRecordatorio"
-                    name="whatsapp_notify_recordatorio"
-                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    <?php echo $notifyRecordatorio === 'true' ? 'checked' : ''; ?>
-                >
-                <label for="whatsappNotifyRecordatorio" class="ml-2 block text-sm text-gray-700">
-                    Enviar recordatorio antes de la cita
-                </label>
-            </div>
-            
-            <div class="pl-6">
-                <label for="whatsappTiempoRecordatorio" class="block text-sm font-medium text-gray-700 mb-1">
-                    Horas de antelación para el recordatorio
-                </label>
-                <select
-                    id="whatsappTiempoRecordatorio"
-                    name="whatsapp_tiempo_recordatorio"
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    <?php echo $notifyRecordatorio === 'true' ? '' : 'disabled'; ?>
-                >
-                    <option value="1" <?php echo $tiempoRecordatorio == 1 ? 'selected' : ''; ?>>1 hora antes</option>
-                    <option value="2" <?php echo $tiempoRecordatorio == 2 ? 'selected' : ''; ?>>2 horas antes</option>
-                    <option value="3" <?php echo $tiempoRecordatorio == 3 ? 'selected' : ''; ?>>3 horas antes</option>
-                    <option value="6" <?php echo $tiempoRecordatorio == 6 ? 'selected' : ''; ?>>6 horas antes</option>
-                    <option value="12" <?php echo $tiempoRecordatorio == 12 ? 'selected' : ''; ?>>12 horas antes</option>
-                    <option value="24" <?php echo $tiempoRecordatorio == 24 ? 'selected' : ''; ?>>24 horas antes</option>
-                    <option value="48" <?php echo $tiempoRecordatorio == 48 ? 'selected' : ''; ?>>2 días antes</option>
-                </select>
+            <div class="space-y-3">
+                <div class="flex items-center">
+                    <input
+                        type="checkbox"
+                        id="notifyNuevaReserva"
+                        name="whatsapp_notify_nueva_reserva"
+                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        <?php echo $notifyNuevaReserva === '1' ? 'checked' : ''; ?>
+                    >
+                    <label for="notifyNuevaReserva" class="ml-2 block text-sm text-gray-700">
+                        Enviar mensaje cuando se cree una nueva reserva
+                    </label>
+                </div>
+                
+                <div class="flex items-center">
+                    <input
+                        type="checkbox"
+                        id="notifyConfirmacion"
+                        name="whatsapp_notify_confirmacion"
+                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        <?php echo $notifyConfirmacion === '1' ? 'checked' : ''; ?>
+                    >
+                    <label for="notifyConfirmacion" class="ml-2 block text-sm text-gray-700">
+                        Enviar mensaje cuando se confirme una reserva
+                    </label>
+                </div>
+                
+                <div class="flex items-center">
+                    <input
+                        type="checkbox"
+                        id="notifyRecordatorio"
+                        name="whatsapp_notify_recordatorio"
+                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        <?php echo $notifyRecordatorio === '1' ? 'checked' : ''; ?>
+                    >
+                    <label for="notifyRecordatorio" class="ml-2 block text-sm text-gray-700">
+                        Enviar recordatorio antes de la cita
+                    </label>
+                </div>
+                
+                <div class="flex items-center">
+                    <input
+                        type="checkbox"
+                        id="notifyCancelacion"
+                        name="whatsapp_notify_cancelacion"
+                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        <?php echo $notifyCancelacion === '1' ? 'checked' : ''; ?>
+                    >
+                    <label for="notifyCancelacion" class="ml-2 block text-sm text-gray-700">
+                        Enviar mensaje cuando se cancele una reserva
+                    </label>
+                </div>
             </div>
         </div>
         
@@ -263,32 +280,74 @@ include 'includes/header.php';
                 class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
                 <i class="ri-save-line mr-2"></i>
-                Guardar configuración
+                Guardar configuración de mensajes
             </button>
         </div>
     </form>
 </div>
+<?php endif; ?>
+
+<!-- Información adicional sobre WhatsApp -->
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+        <i class="ri-information-line mr-2 text-blue-600"></i>
+        Información sobre WhatsApp
+    </h2>
+    
+    <div class="space-y-4 text-sm text-gray-600">
+        <div class="flex items-start">
+            <i class="ri-check-line text-green-500 mt-0.5 mr-3 flex-shrink-0"></i>
+            <div>
+                <p class="font-medium text-gray-900">Notificaciones automáticas</p>
+                <p>Envía mensajes automáticamente cuando se crean, confirman o cancelan reservas.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start">
+            <i class="ri-robot-line text-blue-500 mt-0.5 mr-3 flex-shrink-0"></i>
+            <div>
+                <p class="font-medium text-gray-900">Respuestas automáticas</p>
+                <p>Configura respuestas automáticas en la sección <a href="/autorespuestas" class="text-blue-600 hover:text-blue-800 underline">Respuestas Automáticas</a>.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start">
+            <i class="ri-history-line text-purple-500 mt-0.5 mr-3 flex-shrink-0"></i>
+            <div>
+                <p class="font-medium text-gray-900">Historial de mensajes</p>
+                <p>Revisa todos los mensajes enviados y recibidos en la sección <a href="/mensajes" class="text-blue-600 hover:text-blue-800 underline">Historial de Mensajes</a>.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start">
+            <i class="ri-shield-check-line text-green-500 mt-0.5 mr-3 flex-shrink-0"></i>
+            <div>
+                <p class="font-medium text-gray-900">Seguridad y privacidad</p>
+                <p>Tu conexión de WhatsApp es segura y privada. Solo tú tienes acceso a los mensajes de tu cuenta.</p>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Mensajes de estado -->
-<div id="saveSuccessMessage" class="fixed bottom-4 right-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md shadow-lg hidden">
+<div id="successMessage" class="fixed bottom-4 right-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md shadow-lg hidden">
     <div class="flex items-center">
         <i class="ri-check-line mr-2 text-green-500"></i>
-        <span>Configuración guardada correctamente</span>
+        <span id="successText">Operación completada correctamente</span>
     </div>
 </div>
 
 <div id="errorMessage" class="fixed bottom-4 right-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md shadow-lg hidden">
     <div class="flex items-center">
         <i class="ri-error-warning-line mr-2 text-red-500"></i>
-        <span id="errorText">Error al guardar la configuración</span>
+        <span id="errorText">Error al realizar la operación</span>
     </div>
 </div>
 
 <script>
     // Datos para el JavaScript
-    const initialWhatsappStatus = <?php echo json_encode($whatsappStatus); ?>;
-    const whatsappServerUrl = <?php echo json_encode($whatsappServerUrl); ?>;
-    const whatsappApiKey = <?php echo json_encode($whatsappApiKey); ?>;
+    const whatsappStatus = <?php echo json_encode($whatsappStatus); ?>;
+    const isConnected = <?php echo json_encode($isConnected); ?>;
 </script>
 
 <?php 
