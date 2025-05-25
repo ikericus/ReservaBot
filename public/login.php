@@ -233,7 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="mt-6 text-center space-y-2">
                     <p class="text-gray-600 text-sm">
                         ¿No tienes cuenta?
-                        <a href="/registro" class="text-purple-600 hover:text-purple-500 font-medium">
+                        <a href="/signup" class="text-purple-600 hover:text-purple-500 font-medium">
                             Regístrate aquí
                         </a>
                     </p>

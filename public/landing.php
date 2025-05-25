@@ -90,6 +90,36 @@
         .btn-shine:hover::before {
             left: 100%;
         }
+        
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        
+        .modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .modal.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .price-old {
+            text-decoration: line-through;
+            color: #9ca3af;
+        }
+        
+        .price-beta {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -110,14 +140,15 @@
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-8">
                         <a href="#inicio" class="text-gray-700 hover:text-blue-600 transition-colors">Inicio</a>
-                        <a href="#precios" class="text-gray-700 hover:text-blue-600 transition-colors">Precios</a>
+                        <a href="#planes" class="text-gray-700 hover:text-blue-600 transition-colors">Planes</a>
+                        <button onclick="openContactModal()" class="text-gray-700 hover:text-blue-600 transition-colors">Contacto</button>
                     </div>
                 </div>
                 
                 <div class="flex items-center space-x-4">
                     <a href="/login" class="text-gray-700 hover:text-blue-600 transition-colors">Iniciar Sesión</a>
-                    <a href="#demo" class="btn-shine gradient-bg text-white px-6 py-2 rounded-full hover:shadow-lg transition-all">
-                        Demo Gratis
+                    <a href="/signup" class="btn-shine gradient-bg text-white px-6 py-2 rounded-full hover:shadow-lg transition-all">
+                        Probar Demo
                     </a>
                 </div>
                 
@@ -145,7 +176,7 @@
                 <div class="text-white fade-in-up">
                     <h1 class="text-5xl lg:text-7xl font-bold leading-tight mb-6">
                         Automatiza tus
-                        <!-- Reservas<span class="block text-yellow-300">Reservas</span> -->
+                        <span class="block text-yellow-300">Reservas</span>
                         con WhatsApp
                     </h1>
                     
@@ -154,14 +185,14 @@
                     </p>
                     
                     <div class="flex flex-col sm:flex-row gap-4 mb-8">
-                        <a href="#demo" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all">
+                        <a href="/signup" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all">
                             <i class="ri-play-circle-line mr-2"></i>
-                            Ver Demo
+                            Probar Demo
                         </a>
-                        <a href="#demo" class="glass-effect text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/20 transition-all">
-                            <i class="ri-information-line mr-2"></i>
-                            Saber Más
-                        </a>
+                        <button onclick="openContactModal()" class="glass-effect text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/20 transition-all">
+                            <i class="ri-mail-line mr-2"></i>
+                            Contactar
+                        </button>
                     </div>
                     
                     <div class="flex items-center space-x-8 text-blue-100">
@@ -171,11 +202,11 @@
                         </div>
                         <div class="flex items-center">
                             <i class="ri-check-line text-green-300 mr-2"></i>
-                            <span>100% en español</span>
+                            <span>Gratis en Beta</span>
                         </div>
                         <div class="flex items-center">
                             <i class="ri-check-line text-green-300 mr-2"></i>
-                            <span>Soporte 24/7</span>
+                            <span>Soporte incluido</span>
                         </div>
                     </div>
                 </div>
@@ -243,7 +274,7 @@
     </section>
 
     <!-- Features Section -->
-    <section id="caracteristicas" class="py-20 bg-gray-50">
+    <section id="planes" class="py-20 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
@@ -269,19 +300,19 @@
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Hasta 50 reservas/mes</span>
+                            <span>Reservas manuales y por formulario</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>1 formulario de reserva</span>
+                            <span>Confirmación automática básica</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Calendario básico</span>
+                            <span>Calendario de reservas</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Gestión de clientes</span>
+                            <span>Agenda de clientes básica</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-close-line text-red-500 mr-3"></i>
@@ -293,16 +324,16 @@
                         </li>
                     </ul>
                     
-                    <button class="w-full py-3 px-6 border-2 border-gray-300 rounded-full font-semibold text-gray-700 hover:border-gray-400 transition-all">
+                    <a href="/signup?plan=gratis" class="w-full block text-center py-3 px-6 border-2 border-gray-300 rounded-full font-semibold text-gray-700 hover:border-gray-400 transition-all">
                         Empezar Gratis
-                    </button>
+                    </a>
                 </div>
                 
                 <!-- Plan Estándar -->
                 <div class="bg-white rounded-2xl p-8 shadow-xl border-2 border-blue-500 relative transform scale-105">
                     <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
                         <span class="bg-blue-500 text-white px-6 py-2 rounded-full text-sm font-semibold">
-                            Más Popular
+                            Recomendado
                         </span>
                     </div>
                     
@@ -310,7 +341,10 @@
                         <h3 class="text-2xl font-bold text-gray-900 mb-2">Estándar</h3>
                         <p class="text-gray-600 mb-6">Para negocios activos</p>
                         <div class="mb-8">
-                            <span class="text-5xl font-bold gradient-text">29€</span>
+                            <div class="flex items-center justify-center gap-2 mb-2">
+                                <span class="text-2xl font-bold price-old">9€</span>
+                                <span class="price-beta">Gratis en Beta</span>
+                            </div>
                             <span class="text-gray-600">/mes</span>
                         </div>
                     </div>
@@ -318,11 +352,11 @@
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Hasta 300 reservas/mes</span>
+                            <span>Todo del plan Gratis</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Formularios ilimitados</span>
+                            <span>Agenda de clientes completa</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
@@ -330,7 +364,7 @@
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Base de datos de clientes</span>
+                            <span>Comunicación con clientes</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
@@ -338,7 +372,7 @@
                         </li>
                         <li class="flex items-center">
                             <i class="ri-close-line text-red-500 mr-3"></i>
-                            <span class="text-gray-400">Sin respuestas automáticas</span>
+                            <span class="text-gray-400">Sin IA automática</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
@@ -346,9 +380,9 @@
                         </li>
                     </ul>
                     
-                    <button class="btn-shine w-full py-3 px-6 gradient-bg text-white rounded-full font-semibold hover:shadow-lg transition-all">
-                        Probar 14 Días Gratis
-                    </button>
+                    <a href="/signup?plan=estandar" class="btn-shine w-full block text-center py-3 px-6 gradient-bg text-white rounded-full font-semibold hover:shadow-lg transition-all">
+                        Empezar Gratis
+                    </a>
                 </div>
                 
                 <!-- Plan Premium -->
@@ -357,7 +391,10 @@
                         <h3 class="text-2xl font-bold text-gray-900 mb-2">Premium</h3>
                         <p class="text-gray-600 mb-6">Automatización completa</p>
                         <div class="mb-8">
-                            <span class="text-5xl font-bold text-gray-900">59€</span>
+                            <div class="flex items-center justify-center gap-2 mb-2">
+                                <span class="text-2xl font-bold price-old">19€</span>
+                                <span class="price-beta">Gratis en Beta</span>
+                            </div>
                             <span class="text-gray-600">/mes</span>
                         </div>
                     </div>
@@ -365,11 +402,11 @@
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Reservas ilimitadas</span>
+                            <span>Todo del plan Estándar</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Todo del plan Estándar</span>
+                            <span>IA para reservas automáticas</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
@@ -393,17 +430,22 @@
                         </li>
                     </ul>
                     
-                    <button class="w-full py-3 px-6 border-2 border-gray-300 rounded-full font-semibold text-gray-700 hover:border-gray-400 transition-all">
-                        Contactar Ventas
-                    </button>
+                    <div class="text-center">
+                        <span class="inline-block bg-red-100 text-red-800 text-sm px-4 py-2 rounded-full font-semibold mb-4">
+                            Próximamente
+                        </span>
+                        <button disabled class="w-full py-3 px-6 border-2 border-gray-300 rounded-full font-semibold text-gray-400 cursor-not-allowed opacity-60">
+                            No Disponible
+                        </button>
+                    </div>
                 </div>
             </div>
             
             <div class="text-center mt-12">
-                <p class="text-gray-600 mb-4">¿Necesitas algo diferente?</p>
-                <a href="#contacto" class="text-blue-600 hover:text-blue-700 font-semibold">
-                    Hablemos de un plan personalizado →
-                </a>
+                <p class="text-gray-600 mb-4">¿Tienes dudas sobre los planes?</p>
+                <button onclick="openContactModal()" class="text-blue-600 hover:text-blue-700 font-semibold">
+                    Escríbenos y te ayudamos →
+                </button>
             </div>
         </div>
     </section>
@@ -471,12 +513,12 @@
                 
                 <div class="bg-gray-50 rounded-2xl p-6">
                     <button class="w-full text-left flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-gray-900">¿Ofrecen soporte en español?</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">¿Qué pasa cuando termine la fase beta?</h3>
                         <i class="ri-arrow-down-s-line text-gray-600"></i>
                     </button>
                     <div class="mt-4">
                         <p class="text-gray-600">
-                            Sí, somos una empresa española y todo nuestro soporte es en español. Entendemos las necesidades del mercado local.
+                            Los usuarios que se registren durante la beta mantendrán precios especiales. Te notificaremos con tiempo suficiente antes de cualquier cambio.
                         </p>
                     </div>
                 </div>
@@ -495,24 +537,24 @@
                 ¿Listo para automatizar tu negocio?
             </h2>
             <p class="text-xl lg:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
-                Únete a miles de negocios que ya han revolucionado su gestión de reservas con ReservaBot
+                Prueba ReservaBot gratis y descubre cómo puede transformar la gestión de reservas de tu negocio
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-                <a href="#signup" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all">
+                <a href="/signup" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all">
                     <i class="ri-rocket-line mr-2"></i>
-                    Empezar Prueba Gratuita
+                    Probar Demo Gratis
                 </a>
-                <a href="#contact" class="glass-effect text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/20 transition-all">
-                    <i class="ri-phone-line mr-2"></i>
-                    Hablar con un Experto
-                </a>
+                <button onclick="openContactModal()" class="glass-effect text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/20 transition-all">
+                    <i class="ri-mail-line mr-2"></i>
+                    Contáctanos
+                </button>
             </div>
             
             <div class="flex flex-wrap justify-center items-center gap-8 text-blue-100">
                 <div class="flex items-center">
                     <i class="ri-check-line text-green-300 mr-2"></i>
-                    <span>14 días gratis</span>
+                    <span>Setup en 5 minutos</span>
                 </div>
                 <div class="flex items-center">
                     <i class="ri-check-line text-green-300 mr-2"></i>
@@ -520,11 +562,7 @@
                 </div>
                 <div class="flex items-center">
                     <i class="ri-check-line text-green-300 mr-2"></i>
-                    <span>Configuración incluida</span>
-                </div>
-                <div class="flex items-center">
-                    <i class="ri-check-line text-green-300 mr-2"></i>
-                    <span>Soporte en español</span>
+                    <span>Soporte incluido</span>
                 </div>
             </div>
         </div>
@@ -563,9 +601,9 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-6">Producto</h3>
                     <ul class="space-y-3 text-gray-400">
-                        <li><a href="#" class="hover:text-white transition-colors">Características</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Precios</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Demo</a></li>
+                        <li><a href="#planes" class="hover:text-white transition-colors">Características</a></li>
+                        <li><a href="#planes" class="hover:text-white transition-colors">Precios</a></li>
+                        <li><a href="/signup" class="hover:text-white transition-colors">Demo</a></li>
                         <li><a href="#" class="hover:text-white transition-colors">API</a></li>
                     </ul>
                 </div>
@@ -574,7 +612,7 @@
                     <h3 class="text-lg font-semibold mb-6">Soporte</h3>
                     <ul class="space-y-3 text-gray-400">
                         <li><a href="#" class="hover:text-white transition-colors">Centro de Ayuda</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Contacto</a></li>
+                        <li><button onclick="openContactModal()" class="hover:text-white transition-colors">Contacto</button></li>
                         <li><a href="#" class="hover:text-white transition-colors">Tutoriales</a></li>
                         <li><a href="#" class="hover:text-white transition-colors">Estado del Sistema</a></li>
                     </ul>
@@ -594,8 +632,107 @@
         </div>
     </footer>
 
+    <!-- Contact Modal -->
+    <div id="contactModal" class="modal hide fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full transform transition-all">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900">Contáctanos</h3>
+                <button onclick="closeContactModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="ri-close-line text-2xl"></i>
+                </button>
+            </div>
+            
+            <form id="contactForm" class="space-y-4">
+                <div>
+                    <label for="contactName" class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                    <input type="text" id="contactName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Tu nombre">
+                </div>
+                
+                <div>
+                    <label for="contactEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="contactEmail" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="tu@email.com">
+                </div>
+                
+                <div>
+                    <label for="contactSubject" class="block text-sm font-medium text-gray-700 mb-2">Asunto</label>
+                    <select id="contactSubject" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <option value="consulta">Consulta general</option>
+                        <option value="demo">Solicitar demo personalizada</option>
+                        <option value="soporte">Soporte técnico</option>
+                        <option value="ventas">Información de ventas</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="contactMessage" class="block text-sm font-medium text-gray-700 mb-2">Mensaje</label>
+                    <textarea id="contactMessage" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Cuéntanos en qué podemos ayudarte..."></textarea>
+                </div>
+                
+                <button type="submit" class="w-full gradient-bg text-white py-3 px-4 rounded-xl font-semibold hover:shadow-lg transition-all">
+                    <i class="ri-send-plane-line mr-2"></i>
+                    Enviar Mensaje
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    O escríbenos directamente a:
+                    <a href="mailto:contacto@reservabot.io" class="text-purple-600 font-medium">contacto@reservabot.io</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script>
+        // Contact Modal Functions
+        function openContactModal() {
+            const modal = document.getElementById('contactModal');
+            modal.classList.remove('hide');
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeContactModal() {
+            const modal = document.getElementById('contactModal');
+            modal.classList.remove('show');
+            modal.classList.add('hide');
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('contactModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeContactModal();
+            }
+        });
+        
+        // Handle contact form submission
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('contactName').value,
+                email: document.getElementById('contactEmail').value,
+                subject: document.getElementById('contactSubject').value,
+                message: document.getElementById('contactMessage').value
+            };
+            
+            // Create mailto link
+            const mailtoLink = `mailto:contacto@reservabot.io?subject=${encodeURIComponent('Contacto Web - ' + formData.subject)}&body=${encodeURIComponent(`Nombre: ${formData.name}\nEmail: ${formData.email}\n\nMensaje:\n${formData.message}`)}`;
+            
+            // Open email client
+            window.location.href = mailtoLink;
+            
+            // Show success message
+            alert('Se ha abierto tu cliente de email. Si no se abre automáticamente, puedes escribirnos a contacto@reservabot.io');
+            
+            // Close modal and reset form
+            closeContactModal();
+            this.reset();
+        });
+        
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
@@ -658,7 +795,8 @@
         mobileMenu.className = 'md:hidden bg-white border-t border-gray-200 px-4 py-2 space-y-2 hidden';
         mobileMenu.innerHTML = `
             <a href="#inicio" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Inicio</a>
-            <a href="#precios" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Precios</a>
+            <a href="#planes" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Planes</a>
+            <a href="/signup" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Demo</a>
         `;
         
         if (mobileMenuBtn) {
@@ -691,7 +829,7 @@
         // Parallax effect for floating elements
         window.addEventListener('scroll', function() {
             const scrolled = window.pageYOffset;
-            const rate = scrolled * -0.5;
+            const rate = scrolled * -0.2;
             
             document.querySelectorAll('.floating').forEach(element => {
                 element.style.transform = `translateY(${rate}px)`;
@@ -701,48 +839,52 @@
         // Add typing effect to hero title
         const heroTitle = document.querySelector('h1');
         if (heroTitle) {
-            const originalText = heroTitle.innerHTML;
+            const words = heroTitle.innerHTML.split(' ');
             heroTitle.innerHTML = '';
             
             setTimeout(() => {
-                let i = 0;
+                let wordIndex = 0;
                 const typeWriter = () => {
-                    if (i < originalText.length) {
-                        heroTitle.innerHTML += originalText.charAt(i);
-                        i++;
-                        setTimeout(typeWriter, 50);
+                    if (wordIndex < words.length) {
+                        heroTitle.innerHTML += words[wordIndex] + ' ';
+                        wordIndex++;
+                        setTimeout(typeWriter, 200);
                     }
                 };
                 typeWriter();
             }, 500);
         }
         
-        // Add counter animation for stats
+        // Add counter animation for pricing
         const animateCounters = () => {
-            const counters = document.querySelectorAll('.text-5xl');
+            const counters = document.querySelectorAll('.text-5xl, .text-2xl');
             counters.forEach(counter => {
-                const target = parseInt(counter.textContent);
-                const duration = 2000;
-                const start = performance.now();
-                
-                const updateCounter = (currentTime) => {
-                    const elapsed = currentTime - start;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const current = Math.floor(progress * target);
-                    
-                    counter.textContent = current + counter.textContent.replace(/\d+/, '');
-                    
-                    if (progress < 1) {
+                if (counter.textContent.includes('€')) {
+                    const target = parseInt(counter.textContent);
+                    if (target > 0) {
+                        const duration = 1500;
+                        const start = performance.now();
+                        
+                        const updateCounter = (currentTime) => {
+                            const elapsed = currentTime - start;
+                            const progress = Math.min(elapsed / duration, 1);
+                            const current = Math.floor(progress * target);
+                            
+                            counter.innerHTML = counter.innerHTML.replace(/\d+/, current);
+                            
+                            if (progress < 1) {
+                                requestAnimationFrame(updateCounter);
+                            }
+                        };
+                        
                         requestAnimationFrame(updateCounter);
                     }
-                };
-                
-                requestAnimationFrame(updateCounter);
+                }
             });
         };
         
         // Trigger counter animation when pricing section is visible
-        const pricingSection = document.getElementById('precios');
+        const pricingSection = document.getElementById('planes');
         if (pricingSection) {
             const pricingObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -754,6 +896,26 @@
             });
             pricingObserver.observe(pricingSection);
         }
+        
+        // Add subtle hover effects to pricing cards
+        document.querySelectorAll('.grid.lg\\:grid-cols-3 > div').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('scale-105')) {
+                    this.style.transform = 'translateY(0)';
+                }
+            });
+        });
+        
+        // Keyboard navigation for modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeContactModal();
+            }
+        });
     </script>
 </body>
 </html>
