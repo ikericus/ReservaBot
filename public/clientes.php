@@ -68,12 +68,330 @@ try {
 include 'includes/header.php';
 ?>
 
+<style>
+/* Estilos específicos para móvil - Clientes */
+@media (max-width: 768px) {
+    .client-mobile-card {
+        margin: 0.75rem 0;
+        border-radius: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .client-mobile-card:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+    
+    .client-card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .client-avatar {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .client-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .client-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0 0 0.25rem 0;
+        line-height: 1.3;
+    }
+    
+    .client-phone {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .client-phone i {
+        margin-right: 0.375rem;
+        color: #9ca3af;
+    }
+    
+    .client-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0;
+    }
+    
+    .client-stat {
+        background: rgba(102, 126, 234, 0.05);
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        text-align: center;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    
+    .client-stat-number {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #667eea;
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .client-stat-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin: 0.25rem 0 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 500;
+    }
+    
+    .client-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 1rem 0;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    
+    .client-meta-item {
+        font-size: 0.75rem;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .client-meta-item i {
+        margin-bottom: 0.25rem;
+        color: #9ca3af;
+        font-size: 1rem;
+    }
+    
+    .client-meta-value {
+        font-weight: 500;
+        color: #374151;
+        margin-top: 0.125rem;
+    }
+    
+    .client-action-btn {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-align: center;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        text-decoration: none;
+        margin-top: 1rem;
+    }
+    
+    .client-action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    /* Estilos para las estadísticas superiores en móvil */
+    .mobile-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .mobile-stat-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        padding: 1rem;
+        border-radius: 1rem;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .mobile-stat-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .mobile-stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .mobile-stat-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin: 0.25rem 0 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 500;
+    }
+    
+    /* Búsqueda móvil optimizada */
+    .mobile-search {
+        margin-bottom: 1.5rem;
+    }
+    
+    .mobile-search-input {
+        width: 100%;
+        padding: 0.875rem 3rem 0.875rem 2.5rem;
+        border-radius: 1rem;
+        border: 2px solid #e5e7eb;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: white;
+    }
+    
+    .mobile-search-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+    
+    .mobile-search-icon {
+        position: absolute;
+        left: 0.875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 1.125rem;
+    }
+    
+    .mobile-search-btn {
+        position: absolute;
+        right: 0.375rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 0.625rem;
+        padding: 0.5rem 0.875rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Paginación móvil */
+    .mobile-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .mobile-page-btn {
+        min-width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid #e5e7eb;
+        background: white;
+        color: #6b7280;
+        text-decoration: none;
+    }
+    
+    .mobile-page-btn:hover {
+        background: #f3f4f6;
+        color: #374151;
+        text-decoration: none;
+    }
+    
+    .mobile-page-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .mobile-page-info {
+        font-size: 0.875rem;
+        color: #6b7280;
+        text-align: center;
+        margin: 1rem 0;
+    }
+    
+    /* Animaciones */
+    .fade-in-mobile {
+        animation: fadeInMobile 0.4s ease-out;
+    }
+    
+    @keyframes fadeInMobile {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+/* Estilos para desktop - mantener diseño original */
+@media (min-width: 769px) {
+    .desktop-view {
+        display: block;
+    }
+    
+    .mobile-view {
+        display: none;
+    }
+}
+
+/* Estilos para móvil - usar diseño de tarjetas */
+@media (max-width: 768px) {
+    .desktop-view {
+        display: none;
+    }
+    
+    .mobile-view {
+        display: block;
+    }
+}
+</style>
+
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Clientes</h1>
 </div>
 
-<!-- Estadísticas generales -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+<!-- Estadísticas generales - Vista Desktop -->
+<div class="desktop-view grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
     <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="p-5">
             <div class="flex items-center">
@@ -154,8 +472,17 @@ include 'includes/header.php';
     </div>
 </div>
 
-<!-- Búsqueda -->
-<div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+<!-- Estadísticas generales - Vista Mobile -->
+<div class="mobile-view mobile-stats-grid">
+    <div class="mobile-stat-card">
+        <i class="ri-user-line mobile-stat-icon text-blue-600"></i>
+        <div class="mobile-stat-number text-blue-900"><?php echo number_format($totalClientes); ?></div>
+        <div class="mobile-stat-label">Total Clientes</div>
+    </div>
+</div>
+
+<!-- Búsqueda - Vista Desktop -->
+<div class="desktop-view bg-white rounded-lg shadow-sm p-4 mb-6">
     <form method="GET" class="flex flex-wrap gap-4">
         <div class="flex-grow min-w-[200px]">
             <div class="relative rounded-md shadow-sm">
@@ -194,6 +521,32 @@ include 'includes/header.php';
     </form>
 </div>
 
+<!-- Búsqueda - Vista Mobile -->
+<div class="mobile-view mobile-search">
+    <form method="GET" class="relative">
+        <i class="ri-search-line mobile-search-icon"></i>
+        <input
+            type="text"
+            name="search"
+            class="mobile-search-input"
+            placeholder="Buscar clientes..."
+            value="<?php echo htmlspecialchars($search); ?>"
+        >
+        <button type="submit" class="mobile-search-btn">
+            Buscar
+        </button>
+    </form>
+    
+    <?php if (!empty($search)): ?>
+        <div class="mt-2 text-center">
+            <a href="/clientes" class="text-blue-600 text-sm">
+                <i class="ri-refresh-line mr-1"></i>
+                Limpiar búsqueda
+            </a>
+        </div>
+    <?php endif; ?>
+</div>
+
 <!-- Lista de clientes -->
 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
     <?php if (empty($clientes)): ?>
@@ -205,7 +558,9 @@ include 'includes/header.php';
             <?php endif; ?>
         </div>
     <?php else: ?>
-        <div class="overflow-x-auto">
+        
+        <!-- Vista Desktop - Tabla -->
+        <div class="desktop-view overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -276,9 +631,66 @@ include 'includes/header.php';
             </table>
         </div>
         
+        <!-- Vista Mobile - Tarjetas -->
+        <div class="mobile-view p-4">
+            <div class="space-y-4">
+                <?php foreach ($clientes as $cliente): ?>
+                    <div class="client-mobile-card p-4 fade-in-mobile">
+                        <div class="client-card-header">
+                            <div class="client-avatar">
+                                <?php echo strtoupper(substr($cliente['ultimo_nombre'], 0, 1)); ?>
+                            </div>
+                            <div class="client-info">
+                                <h3 class="client-name"><?php echo htmlspecialchars($cliente['ultimo_nombre']); ?></h3>
+                                <p class="client-phone">
+                                    <i class="ri-phone-line"></i>
+                                    <?php echo htmlspecialchars($cliente['telefono']); ?>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="client-stats">
+                            <div class="client-stat">
+                                <div class="client-stat-number"><?php echo $cliente['total_reservas']; ?></div>
+                                <div class="client-stat-label">Total</div>
+                            </div>
+                            <div class="client-stat">
+                                <div class="client-stat-number text-green-600"><?php echo $cliente['reservas_confirmadas']; ?></div>
+                                <div class="client-stat-label">Confirmadas</div>
+                            </div>
+                        </div>
+                        
+                        <div class="client-meta">
+                            <div class="client-meta-item">
+                                <i class="ri-calendar-line"></i>
+                                <span>Última reserva</span>
+                                <div class="client-meta-value">
+                                    <?php echo $cliente['ultima_reserva'] ? date('d/m/Y', strtotime($cliente['ultima_reserva'])) : 'N/A'; ?>
+                                </div>
+                            </div>
+                            <div class="client-meta-item">
+                                <i class="ri-user-add-line"></i>
+                                <span>Cliente desde</span>
+                                <div class="client-meta-value">
+                                    <?php echo date('d/m/Y', strtotime($cliente['primer_contacto'])); ?>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <a href="/cliente-detail?telefono=<?php echo urlencode($cliente['telefono']); ?>" 
+                           class="client-action-btn">
+                            <i class="ri-eye-line"></i>
+                            Ver Detalle Completo
+                        </a>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        
         <!-- Paginación -->
         <?php if ($totalPages > 1): ?>
-            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <!-- Paginación Desktop -->
+            <div class="desktop-view bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
                 <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                     <div>
                         <p class="text-sm text-gray-700">
@@ -322,6 +734,57 @@ include 'includes/header.php';
                             <?php endif; ?>
                         </nav>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Paginación Mobile -->
+            <div class="mobile-view p-4 border-t border-gray-200">
+                <div class="mobile-page-info">
+                    Mostrando <?php echo $offset + 1; ?> - <?php echo min($offset + $perPage, $totalClientes); ?> de <?php echo $totalClientes; ?> clientes
+                </div>
+                
+                <div class="mobile-pagination">
+                    <?php if ($page > 1): ?>
+                        <a href="/clientes?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>" 
+                           class="mobile-page-btn">
+                            <i class="ri-arrow-left-s-line"></i>
+                        </a>
+                    <?php endif; ?>
+                    
+                    <?php
+                    // Mostrar páginas simplificado para móvil
+                    $startPage = max(1, $page - 1);
+                    $endPage = min($totalPages, $page + 1);
+                    
+                    if ($startPage > 1) {
+                        echo '<a href="/clientes?page=1&search=' . urlencode($search) . '" class="mobile-page-btn">1</a>';
+                        if ($startPage > 2) {
+                            echo '<span class="mobile-page-btn">...</span>';
+                        }
+                    }
+                    
+                    for ($i = $startPage; $i <= $endPage; $i++) {
+                        if ($i == $page) {
+                            echo '<span class="mobile-page-btn active">' . $i . '</span>';
+                        } else {
+                            echo '<a href="/clientes?page=' . $i . '&search=' . urlencode($search) . '" class="mobile-page-btn">' . $i . '</a>';
+                        }
+                    }
+                    
+                    if ($endPage < $totalPages) {
+                        if ($endPage < $totalPages - 1) {
+                            echo '<span class="mobile-page-btn">...</span>';
+                        }
+                        echo '<a href="/clientes?page=' . $totalPages . '&search=' . urlencode($search) . '" class="mobile-page-btn">' . $totalPages . '</a>';
+                    }
+                    ?>
+                    
+                    <?php if ($page < $totalPages): ?>
+                        <a href="/clientes?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>" 
+                           class="mobile-page-btn">
+                            <i class="ri-arrow-right-s-line"></i>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endif; ?>
