@@ -13,6 +13,10 @@
     <!-- Estilos personalizados -->
     <link rel="stylesheet" href="assets/css/styles.css">
     
+    <link rel="icon" type="image/png" sizes="16x16"  href="/favicon-16x16.png">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="theme-color" content="#ffffff">
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;

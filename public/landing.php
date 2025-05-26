@@ -120,6 +120,20 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+        
+        /* Mobile menu styles */
+        .mobile-menu {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            visibility: hidden;
+        }
+        
+        .mobile-menu.open {
+            transform: translateX(0);
+            visibility: visible;
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -145,21 +159,82 @@
                     </div>
                 </div>
                 
-                <div class="flex items-center space-x-4">
+                <div class="hidden md:flex items-center space-x-6">
                     <a href="/login" class="text-gray-700 hover:text-blue-600 transition-colors">Iniciar Sesión</a>
-                    <a href="/signup" class="btn-shine gradient-bg text-white px-6 py-2 rounded-full hover:shadow-lg transition-all">
-                        Probar Demo
+                    <a href="/login" class="btn-shine gradient-bg text-white px-6 py-2 rounded-full hover:shadow-lg transition-all">
+                        Iniciar Demo
                     </a>
                 </div>
                 
                 <!-- Mobile menu button -->
                 <div class="md:hidden">
-                    <button class="text-gray-700 hover:text-blue-600">
-                        <i class="ri-menu-line text-2xl"></i>
+                    <button id="mobileMenuBtn" class="text-gray-700 hover:text-blue-600">
+                        <i class="ri-menu-line text-2xl" id="menuIcon"></i>
                     </button>
                 </div>
             </div>
         </div>
+        
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="mobile-menu md:hidden fixed inset-y-0 right-0 w-80 bg-white shadow-xl z-50 border-l border-gray-200">
+            <div class="h-full flex flex-col bg-white">
+                <!-- Header del menú -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-100">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                            <i class="ri-calendar-line text-white text-lg"></i>
+                        </div>
+                        <span class="ml-2 text-lg font-bold gradient-text">ReservaBot</span>
+                    </div>
+                    <button id="closeMobileMenu" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i class="ri-close-line text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Navegación principal -->
+                <div class="flex-1 px-6 py-4">
+                    <nav class="space-y-2">
+                        <a href="#inicio" class="flex items-center px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors group" onclick="closeMobileMenu()">
+                            <i class="ri-home-line mr-3 text-gray-400 group-hover:text-blue-600"></i>
+                            <span class="font-medium">Inicio</span>
+                        </a>
+                        <a href="#planes" class="flex items-center px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors group" onclick="closeMobileMenu()">
+                            <i class="ri-price-tag-3-line mr-3 text-gray-400 group-hover:text-blue-600"></i>
+                            <span class="font-medium">Planes</span>
+                        </a>
+                        <button onclick="openContactModal(); closeMobileMenu();" class="w-full flex items-center px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors group text-left">
+                            <i class="ri-mail-line mr-3 text-gray-400 group-hover:text-blue-600"></i>
+                            <span class="font-medium">Contacto</span>
+                        </button>
+                    </nav>
+                </div>
+                
+                <!-- Acciones del footer -->
+                <div class="p-6 border-t border-gray-100 bg-gray-50">
+                    <div class="space-y-3">
+                        <a href="/login" class="w-full flex items-center justify-center px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-colors border border-gray-200">
+                            <i class="ri-login-circle-line mr-2"></i>
+                            <span class="font-medium">Iniciar Sesión</span>
+                        </a>
+                        <a href="/login" class="w-full flex items-center justify-center gradient-bg text-white py-3 rounded-xl hover:shadow-lg transition-all font-semibold">
+                            <i class="ri-play-circle-line mr-2"></i>
+                            <span>Iniciar Demo</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Info adicional -->
+                    <div class="mt-4 text-center">
+                        <p class="text-xs text-gray-500">
+                            <i class="ri-shield-check-line mr-1"></i>
+                            100% Gratis en Beta
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu overlay -->
+        <div id="mobileMenuOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden transition-opacity duration-300" style="opacity: 0;" onclick="closeMobileMenu()"></div>
     </nav>
 
     <!-- Hero Section -->
@@ -185,9 +260,9 @@
                     </p>
                     
                     <div class="flex flex-col sm:flex-row gap-4 mb-8">
-                        <a href="/signup" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all">
+                        <a href="/login" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all">
                             <i class="ri-play-circle-line mr-2"></i>
-                            Probar Demo
+                            Iniciar Demo
                         </a>
                         <button onclick="openContactModal()" class="glass-effect text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/20 transition-all">
                             <i class="ri-mail-line mr-2"></i>
@@ -541,9 +616,9 @@
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-                <a href="/signup" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all">
+                <a href="/login" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all">
                     <i class="ri-rocket-line mr-2"></i>
-                    Probar Demo Gratis
+                    Iniciar Demo Gratis
                 </a>
                 <button onclick="openContactModal()" class="glass-effect text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/20 transition-all">
                     <i class="ri-mail-line mr-2"></i>
@@ -603,7 +678,7 @@
                     <ul class="space-y-3 text-gray-400">
                         <li><a href="#planes" class="hover:text-white transition-colors">Características</a></li>
                         <li><a href="#planes" class="hover:text-white transition-colors">Precios</a></li>
-                        <li><a href="/signup" class="hover:text-white transition-colors">Demo</a></li>
+                        <li><a href="/login" class="hover:text-white transition-colors">Demo</a></li>
                         <li><a href="#" class="hover:text-white transition-colors">API</a></li>
                     </ul>
                 </div>
@@ -686,6 +761,68 @@
 
     <!-- Scripts -->
     <script>
+        // Mobile menu functions
+        function openMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            const menuIcon = document.getElementById('menuIcon');
+            
+            // Mostrar el menú y overlay
+            menu.style.visibility = 'visible';
+            overlay.classList.remove('hidden');
+            
+            // Pequeño delay para la animación
+            setTimeout(() => {
+                menu.classList.add('open');
+                overlay.style.opacity = '1';
+            }, 10);
+            
+            menuIcon.classList.remove('ri-menu-line');
+            menuIcon.classList.add('ri-close-line');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            const menuIcon = document.getElementById('menuIcon');
+            
+            menu.classList.remove('open');
+            overlay.style.opacity = '0';
+            menuIcon.classList.remove('ri-close-line');
+            menuIcon.classList.add('ri-menu-line');
+            document.body.style.overflow = 'auto';
+            
+            // Ocultar menú y overlay después de la animación
+            setTimeout(() => {
+                menu.style.visibility = 'hidden';
+                overlay.classList.add('hidden');
+            }, 300);
+        }
+        
+        // Asegurar que el menú esté cerrado al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            
+            menu.classList.remove('open');
+            menu.style.visibility = 'hidden';
+            overlay.classList.add('hidden');
+            overlay.style.opacity = '0';
+        });
+        
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            const menu = document.getElementById('mobileMenu');
+            if (menu.classList.contains('open')) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
+        });
+        
+        document.getElementById('closeMobileMenu').addEventListener('click', closeMobileMenu);
+        
         // Contact Modal Functions
         function openContactModal() {
             const modal = document.getElementById('contactModal');
@@ -743,6 +880,8 @@
                         behavior: 'smooth',
                         block: 'start'
                     });
+                    // Close mobile menu if open
+                    closeMobileMenu();
                 }
             });
         });
@@ -786,134 +925,6 @@
                 button.classList.add('ri-arrow-up-s-line');
             } else {
                 content.style.display = 'none';
-            }
-        });
-        
-        // Mobile menu toggle
-        const mobileMenuBtn = document.querySelector('.md\\:hidden button');
-        const mobileMenu = document.createElement('div');
-        mobileMenu.className = 'md:hidden bg-white border-t border-gray-200 px-4 py-2 space-y-2 hidden';
-        mobileMenu.innerHTML = `
-            <a href="#inicio" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Inicio</a>
-            <a href="#planes" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Planes</a>
-            <a href="/signup" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Demo</a>
-        `;
-        
-        if (mobileMenuBtn) {
-            mobileMenuBtn.parentNode.parentNode.parentNode.appendChild(mobileMenu);
-            
-            mobileMenuBtn.addEventListener('click', function() {
-                mobileMenu.classList.toggle('hidden');
-            });
-        }
-        
-        // Add entrance animations on scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-        
-        const observer = new IntersectionObserver(function(entries) {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('fade-in-up');
-                }
-            });
-        }, observerOptions);
-        
-        // Observe all feature cards and sections
-        document.querySelectorAll('.feature-card, .grid > div, section > div').forEach(el => {
-            observer.observe(el);
-        });
-        
-        // Parallax effect for floating elements
-        window.addEventListener('scroll', function() {
-            const scrolled = window.pageYOffset;
-            const rate = scrolled * -0.2;
-            
-            document.querySelectorAll('.floating').forEach(element => {
-                element.style.transform = `translateY(${rate}px)`;
-            });
-        });
-        
-        // Add typing effect to hero title
-        const heroTitle = document.querySelector('h1');
-        if (heroTitle) {
-            const words = heroTitle.innerHTML.split(' ');
-            heroTitle.innerHTML = '';
-            
-            setTimeout(() => {
-                let wordIndex = 0;
-                const typeWriter = () => {
-                    if (wordIndex < words.length) {
-                        heroTitle.innerHTML += words[wordIndex] + ' ';
-                        wordIndex++;
-                        setTimeout(typeWriter, 200);
-                    }
-                };
-                typeWriter();
-            }, 500);
-        }
-        
-        // Add counter animation for pricing
-        const animateCounters = () => {
-            const counters = document.querySelectorAll('.text-5xl, .text-2xl');
-            counters.forEach(counter => {
-                if (counter.textContent.includes('€')) {
-                    const target = parseInt(counter.textContent);
-                    if (target > 0) {
-                        const duration = 1500;
-                        const start = performance.now();
-                        
-                        const updateCounter = (currentTime) => {
-                            const elapsed = currentTime - start;
-                            const progress = Math.min(elapsed / duration, 1);
-                            const current = Math.floor(progress * target);
-                            
-                            counter.innerHTML = counter.innerHTML.replace(/\d+/, current);
-                            
-                            if (progress < 1) {
-                                requestAnimationFrame(updateCounter);
-                            }
-                        };
-                        
-                        requestAnimationFrame(updateCounter);
-                    }
-                }
-            });
-        };
-        
-        // Trigger counter animation when pricing section is visible
-        const pricingSection = document.getElementById('planes');
-        if (pricingSection) {
-            const pricingObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        animateCounters();
-                        pricingObserver.unobserve(entry.target);
-                    }
-                });
-            });
-            pricingObserver.observe(pricingSection);
-        }
-        
-        // Add subtle hover effects to pricing cards
-        document.querySelectorAll('.grid.lg\\:grid-cols-3 > div').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-5px)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                if (!this.classList.contains('scale-105')) {
-                    this.style.transform = 'translateY(0)';
-                }
-            });
-        });
-        
-        // Keyboard navigation for modal
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeContactModal();
             }
         });
     </script>

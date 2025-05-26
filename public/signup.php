@@ -1,8 +1,4 @@
-// Get plan from URL parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        const planParam = urlParams.get('plan');
-        
-        if (planParam && (planParam === 'gratis'<?php
+<?php
 // Procesar registro si se envía el formulario
 $error = '';
 $success = '';
@@ -139,20 +135,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .strength-fair { background-color: #f59e0b; width: 50%; }
         .strength-good { background-color: #10b981; width: 75%; }
         .strength-strong { background-color: #059669; width: 100%; }
+        
+        /* Asegurar que la página tenga scroll si es necesario */
+        .min-h-screen-scroll {
+            min-height: 100vh;
+            height: auto;
+        }
     </style>
 </head>
-<body class="min-h-screen gradient-bg relative">
+<body class="gradient-bg relative overflow-y-auto">
     
     <!-- Animated Background Elements -->
-    <div class="absolute inset-0">
+    <div class="fixed inset-0 pointer-events-none">
         <div class="absolute top-20 left-20 w-64 h-64 bg-white/10 rounded-full floating"></div>
         <div class="absolute top-60 right-32 w-48 h-48 bg-white/5 rounded-full floating" style="animation-delay: -1s;"></div>
         <div class="absolute bottom-32 left-1/3 w-72 h-72 bg-white/10 rounded-full floating" style="animation-delay: -2s;"></div>
         <div class="absolute bottom-20 right-20 w-56 h-56 bg-white/5 rounded-full floating" style="animation-delay: -0.5s;"></div>
     </div>
     
-    <div class="relative min-h-screen flex items-center justify-center px-4 py-8">
-        <div class="max-w-2xl w-full">"
+    <div class="relative min-h-screen-scroll flex items-center justify-center px-4 py-8">
+        <div class="max-w-2xl w-full">
             
             <!-- Logo y título -->
             <div class="text-center mb-8">
@@ -660,7 +662,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Restore button if there's an error (page doesn't redirect)
             setTimeout(() => {
-                if (window.location.pathname === '/registro') {
+                if (window.location.pathname.includes('signup')) {
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                 }
@@ -716,22 +718,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 this.classList.remove('border-red-300');
                 this.classList.add('border-gray-300');
             }
-        });
-        
-        // Show plan benefits on hover
-        document.querySelectorAll('.plan-card').forEach(card => {
-            const plan = card.dataset.plan;
-            
-            card.addEventListener('mouseenter', function() {
-                // Could show a tooltip or additional info here
-                this.style.transform = 'translateY(-4px)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                if (!this.classList.contains('selected')) {
-                    this.style.transform = 'translateY(0)';
-                }
-            });
         });
         
         // Form validation before submission
@@ -805,6 +791,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             el.style.opacity = '0';
             el.style.transform = 'translateY(20px)';
             el.style.transition = 'all 0.6s ease';
+        });
+        
+        // Gestión del scroll suave
+        document.addEventListener('DOMContentLoaded', function() {
+            // Asegurar que el scroll funcione correctamente
+            document.body.style.overflow = 'auto';
+            document.documentElement.style.overflow = 'auto';
         });
     </script>
 </body>
