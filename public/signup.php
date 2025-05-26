@@ -1,40 +1,22 @@
 <?php
-// Procesar registro si se envía el formulario
-$error = '';
-$success = '';
+// Iniciar sesión para manejar mensajes
+session_start();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nombre = trim($_POST['nombre'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $telefono = trim($_POST['telefono'] ?? '');
-    $negocio = trim($_POST['negocio'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $confirmPassword = $_POST['confirm_password'] ?? '';
-    $plan = $_POST['plan'] ?? 'gratis';
-    $terminos = isset($_POST['terminos']);
-    
-    // Validaciones
-    if (empty($nombre) || empty($email) || empty($telefono) || empty($negocio) || empty($password) || empty($confirmPassword)) {
-        $error = 'Por favor completa todos los campos obligatorios';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'El formato del email no es válido';
-    } elseif (strlen($password) < 6) {
-        $error = 'La contraseña debe tener al menos 6 caracteres';
-    } elseif ($password !== $confirmPassword) {
-        $error = 'Las contraseñas no coinciden';
-    } elseif (!$terminos) {
-        $error = 'Debes aceptar los términos y condiciones';
-    } else {
-        // Aquí iría el registro en la base de datos
-        // Por ahora, simulamos un registro exitoso
-        $success = 'Cuenta creada exitosamente. Te hemos enviado un email de confirmación.';
-        
-        // Limpiar formulario en caso de éxito
-        if ($success) {
-            $nombre = $email = $telefono = $negocio = '';
-        }
-    }
+// Si ya está autenticado, redirigir al dashboard
+require_once 'includes/db-config.php';
+require_once 'includes/auth.php';
+
+if (isAuthenticated()) {
+    header('Location: /');
+    exit;
 }
+
+// Obtener mensajes y datos de la sesión
+$errors = $_SESSION['register_errors'] ?? [];
+$formData = $_SESSION['register_data'] ?? [];
+
+// Limpiar mensajes de la sesión
+unset($_SESSION['register_errors'], $_SESSION['register_data']);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -115,16 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
         }
         
-        .plan-card.disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            background-color: #f9fafb;
-        }
-        
-        .plan-card.disabled:hover {
-            transform: none;
-        }
-        
         .strength-meter {
             height: 4px;
             border-radius: 2px;
@@ -135,15 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .strength-fair { background-color: #f59e0b; width: 50%; }
         .strength-good { background-color: #10b981; width: 75%; }
         .strength-strong { background-color: #059669; width: 100%; }
-        
-        /* Asegurar que la página tenga scroll si es necesario */
-        .min-h-screen-scroll {
-            min-height: 100vh;
-            height: auto;
-        }
     </style>
 </head>
-<body class="gradient-bg relative overflow-y-auto">
+<body class="gradient-bg relative overflow-y-auto min-h-screen">
     
     <!-- Animated Background Elements -->
     <div class="fixed inset-0 pointer-events-none">
@@ -153,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="absolute bottom-20 right-20 w-56 h-56 bg-white/5 rounded-full floating" style="animation-delay: -0.5s;"></div>
     </div>
     
-    <div class="relative min-h-screen-scroll flex items-center justify-center px-4 py-8">
+    <div class="relative min-h-screen flex items-center justify-center px-4 py-8">
         <div class="max-w-2xl w-full">
             
             <!-- Logo y título -->
@@ -170,25 +136,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Formulario de registro -->
             <div class="glass-effect rounded-2xl p-8 shadow-2xl">
                 
-                <?php if (!empty($error)): ?>
+                <?php if (!empty($errors)): ?>
                     <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <i class="ri-error-warning-line text-red-400 mr-2"></i>
-                            <span class="text-red-800 text-sm"><?php echo htmlspecialchars($error); ?></span>
+                        <div class="flex items-start">
+                            <i class="ri-error-warning-line text-red-400 mr-2 mt-0.5"></i>
+                            <div>
+                                <?php foreach ($errors as $error): ?>
+                                    <p class="text-red-800 text-sm"><?php echo htmlspecialchars($error); ?></p>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     </div>
                 <?php endif; ?>
                 
-                <?php if (!empty($success)): ?>
-                    <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <i class="ri-check-line text-green-400 mr-2"></i>
-                            <span class="text-green-800 text-sm"><?php echo htmlspecialchars($success); ?></span>
-                        </div>
-                    </div>
-                <?php endif; ?>
-                
-                <form method="POST" class="space-y-6" id="registroForm">
+                <form action="register-handler.php" method="POST" class="space-y-6" id="registroForm">
                     
                     <!-- Información personal -->
                     <div class="grid md:grid-cols-2 gap-6">
@@ -209,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     required
                                     class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                                     placeholder="Tu nombre completo"
-                                    value="<?php echo htmlspecialchars($_POST['nombre'] ?? ''); ?>"
+                                    value="<?php echo htmlspecialchars($formData['nombre'] ?? ''); ?>"
                                 >
                             </div>
                         </div>
@@ -230,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     required
                                     class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                                     placeholder="tu@email.com"
-                                    value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
+                                    value="<?php echo htmlspecialchars($formData['email'] ?? ''); ?>"
                                 >
                             </div>
                         </div>
@@ -256,7 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     required
                                     class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                                     placeholder="+34 600 123 456"
-                                    value="<?php echo htmlspecialchars($_POST['telefono'] ?? ''); ?>"
+                                    value="<?php echo htmlspecialchars($formData['telefono'] ?? ''); ?>"
                                 >
                             </div>
                         </div>
@@ -277,7 +238,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     required
                                     class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                                     placeholder="Nombre de tu negocio"
-                                    value="<?php echo htmlspecialchars($_POST['negocio'] ?? ''); ?>"
+                                    value="<?php echo htmlspecialchars($formData['negocio'] ?? ''); ?>"
                                 >
                             </div>
                         </div>
@@ -366,7 +327,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
                             
-                            <!-- Plan Estándar - Seleccionable en Beta -->
+                            <!-- Plan Estándar -->
                             <div class="plan-card border-2 border-gray-200 rounded-xl p-4" data-plan="estandar">
                                 <input type="radio" name="plan" value="estandar" id="plan-estandar" class="hidden">
                                 <div class="text-center">
@@ -382,7 +343,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
                             
-                            <!-- Plan Premium - No seleccionable -->
+                            <!-- Plan Premium -->
                             <div class="plan-card border-2 border-gray-300 rounded-xl p-4 opacity-75 cursor-not-allowed" data-plan="premium">
                                 <div class="text-center">
                                     <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
@@ -446,13 +407,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="mt-6 text-center space-y-2">
                     <p class="text-gray-600 text-sm">
                         ¿Ya tienes cuenta?
-                        <a href="/login" class="text-purple-600 hover:text-purple-500 font-medium">
+                        <a href="/login.php" class="text-purple-600 hover:text-purple-500 font-medium">
                             Inicia sesión aquí
-                        </a>
-                    </p>
-                    <p class="text-gray-600 text-sm">
-                        <a href="/landing" class="text-gray-500 hover:text-gray-700">
-                            ← Volver al inicio
                         </a>
                     </p>
                 </div>
@@ -513,7 +469,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const strengthMeter = document.getElementById('strengthMeter');
             const strengthText = document.getElementById('strengthText');
             
-            // Reset classes
             strengthMeter.className = 'strength-meter';
             
             if (password.length === 0) {
@@ -523,13 +478,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             let strength = 0;
-            let feedback = '';
             
-            // Length check
             if (password.length >= 6) strength++;
             if (password.length >= 8) strength++;
-            
-            // Character variety
             if (/[a-z]/.test(password)) strength++;
             if (/[A-Z]/.test(password)) strength++;
             if (/[0-9]/.test(password)) strength++;
@@ -537,23 +488,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (strength <= 2) {
                 strengthMeter.classList.add('strength-weak');
-                feedback = 'Contraseña débil';
+                strengthText.textContent = 'Contraseña débil';
                 strengthText.className = 'text-xs text-red-500 mt-1';
             } else if (strength <= 3) {
                 strengthMeter.classList.add('strength-fair');
-                feedback = 'Contraseña regular';
+                strengthText.textContent = 'Contraseña regular';
                 strengthText.className = 'text-xs text-orange-500 mt-1';
             } else if (strength <= 4) {
                 strengthMeter.classList.add('strength-good');
-                feedback = 'Contraseña buena';
+                strengthText.textContent = 'Contraseña buena';
                 strengthText.className = 'text-xs text-green-600 mt-1';
             } else {
                 strengthMeter.classList.add('strength-strong');
-                feedback = 'Contraseña excelente';
+                strengthText.textContent = 'Contraseña excelente';
                 strengthText.className = 'text-xs text-green-600 mt-1';
             }
-            
-            strengthText.textContent = feedback;
         });
         
         // Password confirmation
@@ -580,79 +529,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
         
-        // Plan selection - Allow free and standard plans during beta
+        // Plan selection
         document.querySelectorAll('.plan-card').forEach(card => {
             card.addEventListener('click', function() {
                 const planValue = this.dataset.plan;
                 
-                // Allow selection of free and standard plans during beta
                 if (planValue === 'gratis' || planValue === 'estandar') {
-                    // Remove selected class from all cards
                     document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-                    
-                    // Add selected class to clicked card
                     this.classList.add('selected');
-                    
-                    // Update radio button
                     document.querySelector(`input[value="${planValue}"]`).checked = true;
                 } else {
-                    // Show message for premium plan
-                    alert('El plan Premium estará disponible próximamente. Por ahora puedes elegir entre Gratis y Estándar.');
+                    alert('El plan Premium estará disponible próximamente.');
                 }
             });
         });
         
-        // Get plan from URL parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        const planParam = urlParams.get('plan');
-        
-        if (planParam && (planParam === 'gratis' || planParam === 'estandar')) {
-            // Remove selected class from all cards
-            document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-            
-            // Select the plan from URL parameter
-            const targetCard = document.querySelector(`[data-plan="${planParam}"]`);
-            const targetRadio = document.querySelector(`input[value="${planParam}"]`);
-            
-            if (targetCard && targetRadio) {
-                targetCard.classList.add('selected');
-                targetRadio.checked = true;
-            }
-        }
-        
-        // Auto-focus en el primer campo
-        document.getElementById('nombre').focus();
-        
-        // Email validation
-        document.getElementById('email').addEventListener('blur', function() {
-            const email = this.value.trim();
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            
-            if (email && !emailRegex.test(email)) {
-                this.classList.add('border-red-300', 'focus:ring-red-500');
-                this.classList.remove('border-gray-300', 'focus:ring-purple-500');
-            } else {
-                this.classList.remove('border-red-300', 'focus:ring-red-500');
-                this.classList.add('border-gray-300', 'focus:ring-purple-500');
-            }
-        });
-        
-        // Phone number formatting
-        document.getElementById('telefono').addEventListener('input', function() {
-            let value = this.value.replace(/\D/g, '');
-            
-            // Basic Spanish phone formatting
-            if (value.startsWith('34')) {
-                value = value.substring(2);
-            }
-            
-            if (value.length <= 9) {
-                value = value.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
-                this.value = value.trim();
-            }
-        });
-        
-        // Form submission with loading state
+        // Form submission
         document.getElementById('registroForm').addEventListener('submit', function(e) {
             const submitBtn = document.getElementById('submitBtn');
             const originalText = submitBtn.innerHTML;
@@ -660,144 +552,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             submitBtn.innerHTML = '<i class="ri-loader-line animate-spin mr-2"></i>Creando cuenta...';
             submitBtn.disabled = true;
             
-            // Restore button if there's an error (page doesn't redirect)
             setTimeout(() => {
                 if (window.location.pathname.includes('signup')) {
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                 }
             }, 3000);
-        });
-        
-        // Parallax effect for floating elements
-        document.addEventListener('mousemove', function(e) {
-            const mouseX = e.clientX / window.innerWidth;
-            const mouseY = e.clientY / window.innerHeight;
-            
-            document.querySelectorAll('.floating').forEach((element, index) => {
-                const speed = (index + 1) * 0.3;
-                const x = (mouseX - 0.5) * speed;
-                const y = (mouseY - 0.5) * speed;
-                
-                element.style.transform = `translate(${x}px, ${y}px)`;
-            });
-        });
-        
-        // Real-time form validation feedback
-        document.querySelectorAll('input[required]').forEach(input => {
-            input.addEventListener('blur', function() {
-                if (this.value.trim() === '') {
-                    this.classList.add('border-red-300');
-                    this.classList.remove('border-gray-300');
-                } else {
-                    this.classList.remove('border-red-300');
-                    this.classList.add('border-gray-300');
-                }
-            });
-        });
-        
-        // Business name suggestions based on common types
-        document.getElementById('negocio').addEventListener('focus', function() {
-            if (this.value === '') {
-                this.placeholder = 'Ej: Barbería Style, Clínica Dental, Restaurante...';
-            }
-        });
-        
-        document.getElementById('negocio').addEventListener('blur', function() {
-            this.placeholder = 'Nombre de tu negocio';
-        });
-        
-        // Phone validation
-        document.getElementById('telefono').addEventListener('blur', function() {
-            const phone = this.value.replace(/\D/g, '');
-            
-            if (phone.length < 9) {
-                this.classList.add('border-red-300');
-                this.classList.remove('border-gray-300');
-            } else {
-                this.classList.remove('border-red-300');
-                this.classList.add('border-gray-300');
-            }
-        });
-        
-        // Form validation before submission
-        document.getElementById('registroForm').addEventListener('submit', function(e) {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
-            const terminos = document.getElementById('terminos').checked;
-            
-            let hasErrors = false;
-            
-            // Clear previous error states
-            document.querySelectorAll('.border-red-500').forEach(el => {
-                el.classList.remove('border-red-500');
-                el.classList.add('border-gray-300');
-            });
-            
-            // Validate password match
-            if (password !== confirmPassword) {
-                document.getElementById('confirm_password').classList.add('border-red-500');
-                hasErrors = true;
-            }
-            
-            // Validate password strength
-            if (password.length < 6) {
-                document.getElementById('password').classList.add('border-red-500');
-                hasErrors = true;
-            }
-            
-            // Validate terms
-            if (!terminos) {
-                // Highlight the checkbox area
-                document.getElementById('terminos').focus();
-                hasErrors = true;
-            }
-            
-            if (hasErrors) {
-                e.preventDefault();
-                // Scroll to first error
-                const firstError = document.querySelector('.border-red-500');
-                if (firstError) {
-                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    firstError.focus();
-                }
-            }
-        });
-        
-        // Add smooth transitions when fields are focused
-        document.querySelectorAll('input').forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.style.transform = 'scale(1.02)';
-            });
-            
-            input.addEventListener('blur', function() {
-                this.parentElement.style.transform = 'scale(1)';
-            });
-        });
-        
-        // Welcome animation on page load
-        window.addEventListener('load', function() {
-            const elements = document.querySelectorAll('.glass-effect, .text-center');
-            elements.forEach((el, index) => {
-                setTimeout(() => {
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateY(0)';
-                }, index * 200);
-            });
-        });
-        
-        // Set initial styles for animation
-        document.querySelectorAll('.glass-effect, .text-center').forEach(el => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(20px)';
-            el.style.transition = 'all 0.6s ease';
-        });
-        
-        // Gestión del scroll suave
-        document.addEventListener('DOMContentLoaded', function() {
-            // Asegurar que el scroll funcione correctamente
-            document.body.style.overflow = 'auto';
-            document.documentElement.style.overflow = 'auto';
         });
     </script>
 </body>

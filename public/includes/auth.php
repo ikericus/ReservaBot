@@ -1,8 +1,8 @@
 <?php
-// === ARCHIVO: includes/auth.php ===
+// === ARCHIVO: public/includes/auth.php ===
 /**
  * Sistema de autenticación para ReservaBot
- * Maneja login, logout, verificación de sesiones y seguridad
+ * Versión actualizada con soporte de base de datos y multi-tenancy
  */
 
 // Configuración de seguridad
@@ -15,20 +15,12 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Configuración de usuarios (en producción, esto debería estar en base de datos)
-// Por ahora usamos un array para el MVP
-const USERS = [
+// Usuarios hardcodeados (mantener para compatibilidad y emergencia)
+const FALLBACK_USERS = [
     'admin@reservabot.com' => [
         'password_hash' => '$2y$12$LQv3c1yqBWVHxkjrjQG.ROinVIc8/6XJPb8T.Zj8s8qBsHwqQf8.W', // demo123
         'name' => 'Administrador',
         'role' => 'admin',
-        'created_at' => '2024-01-01 00:00:00'
-    ],
-    // Agregar más usuarios aquí si es necesario
-    'demo@reservabot.com' => [
-        'password_hash' => '$2y$12$LQv3c1yqBWVHxkjrjQG.ROinVIc8/6XJPb8T.Zj8s8qBsHwqQf8.W', // demo123
-        'name' => 'Usuario Demo',
-        'role' => 'user',
         'created_at' => '2024-01-01 00:00:00'
     ]
 ];
@@ -49,9 +41,12 @@ function getAuthenticatedUser() {
     }
     
     return [
+        'id' => $_SESSION['user_id'] ?? null,
         'email' => $_SESSION['user_email'] ?? '',
         'name' => $_SESSION['user_name'] ?? '',
         'role' => $_SESSION['user_role'] ?? 'user',
+        'negocio' => $_SESSION['user_negocio'] ?? '',
+        'plan' => $_SESSION['user_plan'] ?? 'gratis',
         'login_time' => $_SESSION['login_time'] ?? '',
         'last_activity' => $_SESSION['last_activity'] ?? ''
     ];
@@ -63,6 +58,21 @@ function getAuthenticatedUser() {
 function updateLastActivity() {
     if (isAuthenticated()) {
         $_SESSION['last_activity'] = time();
+        
+        // Actualizar en base de datos cada 5 minutos
+        $lastUpdate = $_SESSION['last_db_update'] ?? 0;
+        if (time() - $lastUpdate > 300) { // 5 minutos
+            global $pdo;
+            try {
+                if (isset($_SESSION['user_id']) && $pdo) {
+                    $stmt = $pdo->prepare("UPDATE usuarios SET last_activity = NOW() WHERE id = ?");
+                    $stmt->execute([$_SESSION['user_id']]);
+                    $_SESSION['last_db_update'] = time();
+                }
+            } catch (Exception $e) {
+                error_log("Error actualizando última actividad: " . $e->getMessage());
+            }
+        }
     }
 }
 
@@ -74,7 +84,7 @@ function isSessionExpired() {
         return true;
     }
     
-    $timeout = 1440 * 60; // 24 horas en segundos
+    $timeout = 24 * 60 * 60; // 24 horas en segundos
     $lastActivity = $_SESSION['last_activity'] ?? 0;
     
     return (time() - $lastActivity) > $timeout;
@@ -82,25 +92,91 @@ function isSessionExpired() {
 
 /**
  * Autentica un usuario con email y contraseña
+ * Prioriza base de datos, fallback a usuarios hardcodeados
  */
 function authenticateUser($email, $password) {
+    global $pdo;
+    
     // Limpiar email
     $email = trim(strtolower($email));
     
-    // Verificar que el usuario existe
-    if (!isset(USERS[$email])) {
+    // Primero intentar con base de datos (si está disponible)
+    if (isset($pdo)) {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT id, nombre, email, password_hash, plan, negocio, activo, intentos_login, ultimo_intento_login 
+                FROM usuarios 
+                WHERE email = ?
+            ");
+            $stmt->execute([$email]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($user) {
+                return authenticateFromDatabase($user, $password, $pdo);
+            }
+        } catch (Exception $e) {
+            error_log("Error en autenticación DB: " . $e->getMessage());
+            // Continuar con fallback
+        }
+    }
+    
+    // Fallback a usuarios hardcodeados
+    return authenticateFromFallback($email, $password);
+}
+
+/**
+ * Autenticación desde base de datos
+ */
+function authenticateFromDatabase($user, $password, $pdo) {
+    $email = $user['email'];
+    
+    // Verificar si la cuenta está activa
+    if (!$user['activo']) {
         return [
             'success' => false,
-            'message' => 'Credenciales incorrectas',
-            'error_code' => 'INVALID_CREDENTIALS'
+            'message' => 'Cuenta desactivada. Contacta al soporte.',
+            'error_code' => 'ACCOUNT_DISABLED'
         ];
     }
     
-    $user = USERS[$email];
+    // Verificar bloqueo por intentos fallidos
+    $intentosMaximos = 5;
+    $tiempoBloqueo = 15 * 60; // 15 minutos
+    
+    if ($user['intentos_login'] >= $intentosMaximos) {
+        $ultimoIntento = strtotime($user['ultimo_intento_login']);
+        if (time() - $ultimoIntento < $tiempoBloqueo) {
+            $tiempoRestante = $tiempoBloqueo - (time() - $ultimoIntento);
+            return [
+                'success' => false,
+                'message' => 'Cuenta bloqueada temporalmente. Intenta en ' . ceil($tiempoRestante / 60) . ' minutos.',
+                'error_code' => 'ACCOUNT_LOCKED'
+            ];
+        } else {
+            // Resetear intentos si ha pasado el tiempo de bloqueo
+            try {
+                $stmt = $pdo->prepare("UPDATE usuarios SET intentos_login = 0 WHERE id = ?");
+                $stmt->execute([$user['id']]);
+            } catch (Exception $e) {
+                error_log("Error reseteando intentos: " . $e->getMessage());
+            }
+        }
+    }
     
     // Verificar contraseña
     if (!password_verify($password, $user['password_hash'])) {
-        // Log intento fallido
+        // Incrementar intentos fallidos
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE usuarios 
+                SET intentos_login = intentos_login + 1, ultimo_intento_login = NOW() 
+                WHERE id = ?
+            ");
+            $stmt->execute([$user['id']]);
+        } catch (Exception $e) {
+            error_log("Error incrementando intentos: " . $e->getMessage());
+        }
+        
         error_log("Login fallido para email: $email desde IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
         
         return [
@@ -111,18 +187,83 @@ function authenticateUser($email, $password) {
     }
     
     // Login exitoso - crear sesión
-    session_regenerate_id(true); // Prevenir session fixation
+    session_regenerate_id(true);
     
     $_SESSION['user_authenticated'] = true;
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['user_email'] = $user['email'];
+    $_SESSION['user_name'] = $user['nombre'];
+    $_SESSION['user_role'] = 'user'; // Todos los usuarios DB son 'user'
+    $_SESSION['user_negocio'] = $user['negocio'];
+    $_SESSION['user_plan'] = $user['plan'];
+    $_SESSION['login_time'] = time();
+    $_SESSION['last_activity'] = time();
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    
+    // Resetear intentos de login y actualizar última actividad
+    try {
+        $stmt = $pdo->prepare("
+            UPDATE usuarios 
+            SET intentos_login = 0, ultimo_intento_login = NULL, last_activity = NOW() 
+            WHERE id = ?
+        ");
+        $stmt->execute([$user['id']]);
+    } catch (Exception $e) {
+        error_log("Error actualizando login exitoso: " . $e->getMessage());
+    }
+    
+    // Log login exitoso
+    error_log("Login exitoso para email: $email (ID: {$user['id']}) desde IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+    
+    return [
+        'success' => true,
+        'message' => 'Login exitoso',
+        'user' => getAuthenticatedUser()
+    ];
+}
+
+/**
+ * Autenticación fallback con usuarios hardcodeados
+ */
+function authenticateFromFallback($email, $password) {
+    // Verificar que el usuario existe en fallback
+    if (!isset(FALLBACK_USERS[$email])) {
+        return [
+            'success' => false,
+            'message' => 'Credenciales incorrectas',
+            'error_code' => 'INVALID_CREDENTIALS'
+        ];
+    }
+    
+    $user = FALLBACK_USERS[$email];
+    
+    // Verificar contraseña
+    if (!password_verify($password, $user['password_hash'])) {
+        error_log("Login fallido (fallback) para email: $email desde IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+        
+        return [
+            'success' => false,
+            'message' => 'Credenciales incorrectas',
+            'error_code' => 'INVALID_CREDENTIALS'
+        ];
+    }
+    
+    // Login exitoso - crear sesión
+    session_regenerate_id(true);
+    
+    $_SESSION['user_authenticated'] = true;
+    $_SESSION['user_id'] = 0; // ID especial para usuarios fallback
     $_SESSION['user_email'] = $email;
     $_SESSION['user_name'] = $user['name'];
     $_SESSION['user_role'] = $user['role'];
+    $_SESSION['user_negocio'] = 'ReservaBot Admin';
+    $_SESSION['user_plan'] = 'premium';
     $_SESSION['login_time'] = time();
     $_SESSION['last_activity'] = time();
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     
     // Log login exitoso
-    error_log("Login exitoso para email: $email desde IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+    error_log("Login exitoso (fallback) para email: $email desde IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
     
     return [
         'success' => true,
@@ -137,6 +278,21 @@ function authenticateUser($email, $password) {
 function logout() {
     if (isAuthenticated()) {
         $email = $_SESSION['user_email'] ?? 'unknown';
+        $userId = $_SESSION['user_id'] ?? null;
+        
+        // Actualizar última actividad en base de datos (solo para usuarios DB)
+        if ($userId && $userId > 0) {
+            global $pdo;
+            try {
+                if (isset($pdo)) {
+                    $stmt = $pdo->prepare("UPDATE usuarios SET last_activity = NOW() WHERE id = ?");
+                    $stmt->execute([$userId]);
+                }
+            } catch (Exception $e) {
+                error_log("Error actualizando logout: " . $e->getMessage());
+            }
+        }
+        
         error_log("Logout para email: $email desde IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
     }
     
@@ -182,6 +338,7 @@ function requireAuth($redirectTo = '/login.php') {
  */
 function redirectToLogin($loginUrl = '/login.php', $message = null) {
     if ($message) {
+        session_start();
         $_SESSION['login_message'] = $message;
     }
     
@@ -222,10 +379,154 @@ function verifyCSRFToken($token) {
 
 /**
  * Función helper para generar hash de contraseña
- * (usar solo durante desarrollo para crear nuevos usuarios)
  */
 function hashPassword($password) {
     return password_hash($password, PASSWORD_DEFAULT);
+}
+
+/**
+ * Obtiene configuración específica del usuario autenticado
+ * Fallback a tabla global si no existe configuración de usuario
+ */
+function getUserConfig($key, $default = null) {
+    if (!isAuthenticated()) {
+        return $default;
+    }
+    
+    global $pdo;
+    $userId = $_SESSION['user_id'] ?? 0;
+    
+    // Para usuarios fallback (ID 0), usar tabla global
+    if ($userId == 0 || !isset($pdo)) {
+        return getGlobalConfig($key, $default);
+    }
+    
+    try {
+        // Primero buscar configuración específica del usuario
+        $stmt = $pdo->prepare("
+            SELECT valor FROM configuraciones_usuario 
+            WHERE usuario_id = ? AND clave = ?
+        ");
+        $stmt->execute([$userId, $key]);
+        $result = $stmt->fetchColumn();
+        
+        if ($result !== false) {
+            return $result;
+        }
+        
+        // Si no existe, buscar en configuración global
+        return getGlobalConfig($key, $default);
+        
+    } catch (Exception $e) {
+        error_log("Error obteniendo configuración de usuario: " . $e->getMessage());
+        return getGlobalConfig($key, $default);
+    }
+}
+
+/**
+ * Obtiene configuración global (tabla configuraciones)
+ */
+function getGlobalConfig($key, $default = null) {
+    global $pdo;
+    
+    if (!isset($pdo)) {
+        return $default;
+    }
+    
+    try {
+        $stmt = $pdo->prepare("SELECT valor FROM configuraciones WHERE clave = ?");
+        $stmt->execute([$key]);
+        $result = $stmt->fetchColumn();
+        
+        return $result !== false ? $result : $default;
+    } catch (Exception $e) {
+        error_log("Error obteniendo configuración global: " . $e->getMessage());
+        return $default;
+    }
+}
+
+/**
+ * Establece configuración específica del usuario autenticado
+ */
+function setUserConfig($key, $value) {
+    if (!isAuthenticated()) {
+        return false;
+    }
+    
+    global $pdo;
+    $userId = $_SESSION['user_id'] ?? 0;
+    
+    // Para usuarios fallback (ID 0), usar tabla global
+    if ($userId == 0 || !isset($pdo)) {
+        return setGlobalConfig($key, $value);
+    }
+    
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO configuraciones_usuario (usuario_id, clave, valor, updated_at) 
+            VALUES (?, ?, ?, NOW())
+            ON DUPLICATE KEY UPDATE valor = VALUES(valor), updated_at = NOW()
+        ");
+        $stmt->execute([$userId, $key, $value]);
+        return true;
+    } catch (Exception $e) {
+        error_log("Error guardando configuración de usuario: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Establece configuración global
+ */
+function setGlobalConfig($key, $value) {
+    global $pdo;
+    
+    if (!isset($pdo)) {
+        return false;
+    }
+    
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO configuraciones (clave, valor, updated_at) 
+            VALUES (?, ?, NOW())
+            ON DUPLICATE KEY UPDATE valor = VALUES(valor), updated_at = NOW()
+        ");
+        $stmt->execute([$key, $value]);
+        return true;
+    } catch (Exception $e) {
+        error_log("Error guardando configuración global: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Verifica si el usuario actual tiene permisos de administrador
+ */
+function isAdmin() {
+    $user = getAuthenticatedUser();
+    return $user && $user['role'] === 'admin';
+}
+
+/**
+ * Obtiene el ID del usuario actual (0 para usuarios fallback)
+ */
+function getCurrentUserId() {
+    return $_SESSION['user_id'] ?? null;
+}
+
+/**
+ * Verifica si un usuario puede acceder a un recurso específico
+ */
+function canAccessResource($resourceUserId) {
+    $currentUserId = getCurrentUserId();
+    
+    // Admins pueden acceder a todo
+    if (isAdmin()) {
+        return true;
+    }
+    
+    // Usuarios pueden acceder solo a sus propios recursos
+    return $currentUserId == $resourceUserId;
 }
 
 /**
@@ -241,168 +542,42 @@ function getSessionInfo() {
         'session_id' => session_id(),
         'login_time' => date('Y-m-d H:i:s', $_SESSION['login_time'] ?? 0),
         'last_activity' => date('Y-m-d H:i:s', $_SESSION['last_activity'] ?? 0),
-        'time_remaining' => max(0, 1440 * 60 - (time() - ($_SESSION['last_activity'] ?? 0))),
-        'csrf_token' => $_SESSION['csrf_token'] ?? null
+        'time_remaining' => max(0, 24 * 60 * 60 - (time() - ($_SESSION['last_activity'] ?? 0))),
+        'csrf_token' => $_SESSION['csrf_token'] ?? null,
+        'is_fallback_user' => ($_SESSION['user_id'] ?? null) == 0
     ];
 }
 
-// === ARCHIVO: login-handler.php ===
-<?php
 /**
- * Procesamiento del formulario de login
+ * Función para migrar usuario fallback a base de datos (útil para setup inicial)
  */
-
-require_once 'includes/db-config.php';
-require_once 'includes/auth.php';
-
-// Solo procesar POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /login.php');
-    exit;
-}
-
-// Obtener datos del formulario
-$email = trim($_POST['email'] ?? '');
-$password = $_POST['password'] ?? '';
-$remember = isset($_POST['remember']);
-
-// Validaciones básicas
-$errors = [];
-
-if (empty($email)) {
-    $errors[] = 'El email es obligatorio';
-}
-
-if (empty($password)) {
-    $errors[] = 'La contraseña es obligatoria';
-}
-
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $errors[] = 'El formato del email no es válido';
-}
-
-// Si hay errores, redirigir con errores
-if (!empty($errors)) {
-    $_SESSION['login_errors'] = $errors;
-    $_SESSION['login_email'] = $email;
-    header('Location: /login.php');
-    exit;
-}
-
-// Intentar autenticar
-$authResult = authenticateUser($email, $password);
-
-if ($authResult['success']) {
-    // Login exitoso
+function migrateFallbackUserToDatabase($email, $password) {
+    global $pdo;
     
-    // Si marcó "recordar sesión", extender duración de cookie
-    if ($remember) {
-        $cookieLifetime = 30 * 24 * 60 * 60; // 30 días
-        $params = session_get_cookie_params();
-        setcookie(session_name(), session_id(), time() + $cookieLifetime,
-            $params["path"], $params["domain"],
-            $params["secure"], $params["httponly"]
-        );
+    if (!isset(FALLBACK_USERS[$email]) || !isset($pdo)) {
+        return false;
     }
     
-    // Limpiar errores previos
-    unset($_SESSION['login_errors'], $_SESSION['login_email'], $_SESSION['login_message']);
+    $user = FALLBACK_USERS[$email];
     
-    // Redirigir al dashboard
-    $redirectTo = $_SESSION['intended_url'] ?? '/';
-    unset($_SESSION['intended_url']);
-    
-    header("Location: $redirectTo");
-    exit;
-    
-} else {
-    // Login fallido
-    $_SESSION['login_errors'] = [$authResult['message']];
-    $_SESSION['login_email'] = $email;
-    
-    header('Location: /login.php');
-    exit;
-}
-
-// === ARCHIVO: logout.php ===
-<?php
-/**
- * Página de logout
- */
-
-require_once 'includes/auth.php';
-
-// Cerrar sesión
-logout();
-
-// Redirigir al login con mensaje
-$_SESSION['login_message'] = 'Has cerrado sesión correctamente';
-header('Location: /login.php');
-exit;
-
-// === ARCHIVO: api/auth-check.php ===
-<?php
-/**
- * API para verificar estado de autenticación (para AJAX)
- */
-
-require_once '../includes/auth.php';
-
-header('Content-Type: application/json');
-
-// Verificar si está autenticado
-if (!isAuthenticated()) {
-    echo json_encode([
-        'authenticated' => false,
-        'message' => 'No autenticado'
-    ]);
-    exit;
-}
-
-// Verificar si la sesión ha expirado
-if (isSessionExpired()) {
-    logout();
-    echo json_encode([
-        'authenticated' => false,
-        'expired' => true,
-        'message' => 'Sesión expirada'
-    ]);
-    exit;
-}
-
-// Actualizar actividad y devolver info
-updateLastActivity();
-
-echo json_encode([
-    'authenticated' => true,
-    'user' => getAuthenticatedUser(),
-    'session_info' => getSessionInfo()
-]);
-
-// === ARCHIVO: middleware/auth-middleware.php ===
-<?php
-/**
- * Middleware de autenticación para incluir en todas las páginas protegidas
- */
-
-require_once __DIR__ . '/../includes/auth.php';
-
-// Aplicar middleware de autenticación
-requireAuth();
-
-// Actualizar última actividad
-updateLastActivity();
-
-// Verificar CSRF en peticiones POST (opcional, para mayor seguridad)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {
-    $csrfToken = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
-    if (!verifyCSRFToken($csrfToken)) {
-        // Por ahora solo log, en producción podrías ser más estricto
-        error_log('CSRF token inválido desde IP: ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+    try {
+        $stmt = $pdo->prepare("
+            INSERT IGNORE INTO usuarios (nombre, email, password_hash, plan, activo, email_verificado, api_key)
+            VALUES (?, ?, ?, 'premium', 1, 1, ?)
+        ");
+        
+        $apiKey = bin2hex(random_bytes(32));
+        $stmt->execute([
+            $user['name'],
+            $email,
+            $user['password_hash'],
+            $apiKey
+        ]);
+        
+        return $stmt->rowCount() > 0;
+    } catch (Exception $e) {
+        error_log("Error migrando usuario fallback: " . $e->getMessage());
+        return false;
     }
 }
-
-// Hacer disponible la información del usuario para las páginas
-$currentUser = getAuthenticatedUser();
-$csrfToken = generateCSRFToken();
 ?>

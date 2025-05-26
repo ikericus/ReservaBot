@@ -1,32 +1,23 @@
 <?php
-// Procesar login si se envía el formulario
-$error = '';
-$success = '';
+// Iniciar sesión para manejar mensajes
+session_start();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    
-    // Validaciones básicas
-    if (empty($email) || empty($password)) {
-        $error = 'Por favor completa todos los campos';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'El formato del email no es válido';
-    } else {
-        // Aquí iría la validación real con base de datos
-        // Por ahora, credenciales de ejemplo
-        if ($email === 'admin@reservabot.com' && $password === 'demo123') {
-            // Login exitoso - redirigir al dashboard
-            session_start();
-            $_SESSION['user_logged_in'] = true;
-            $_SESSION['user_email'] = $email;
-            header('Location: /');
-            exit;
-        } else {
-            $error = 'Credenciales incorrectas';
-        }
-    }
+// Si ya está autenticado, redirigir al dashboard
+require_once 'includes/db-config.php';
+require_once 'includes/auth.php';
+
+if (isAuthenticated()) {
+    header('Location: /');
+    exit;
 }
+
+// Obtener mensajes de la sesión
+$errors = $_SESSION['login_errors'] ?? [];
+$message = $_SESSION['login_message'] ?? '';
+$email = $_SESSION['login_email'] ?? '';
+
+// Limpiar mensajes de la sesión
+unset($_SESSION['login_errors'], $_SESSION['login_message'], $_SESSION['login_email']);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -121,25 +112,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Formulario de login -->
             <div class="glass-effect rounded-2xl p-8 shadow-2xl">
                 
-                <?php if (!empty($error)): ?>
+                <?php if (!empty($errors)): ?>
                     <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <i class="ri-error-warning-line text-red-400 mr-2"></i>
-                            <span class="text-red-800 text-sm"><?php echo htmlspecialchars($error); ?></span>
+                        <div class="flex items-start">
+                            <i class="ri-error-warning-line text-red-400 mr-2 mt-0.5"></i>
+                            <div>
+                                <?php foreach ($errors as $error): ?>
+                                    <p class="text-red-800 text-sm"><?php echo htmlspecialchars($error); ?></p>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     </div>
                 <?php endif; ?>
                 
-                <?php if (!empty($success)): ?>
-                    <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                <?php if (!empty($message)): ?>
+                    <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <div class="flex items-center">
-                            <i class="ri-check-line text-green-400 mr-2"></i>
-                            <span class="text-green-800 text-sm"><?php echo htmlspecialchars($success); ?></span>
+                            <i class="ri-information-line text-blue-400 mr-2"></i>
+                            <span class="text-blue-800 text-sm"><?php echo htmlspecialchars($message); ?></span>
                         </div>
                     </div>
                 <?php endif; ?>
                 
-                <form method="POST" class="space-y-6">
+                <form action="login-handler.php" method="POST" class="space-y-6" id="loginForm">
                     
                     <!-- Email -->
                     <div>
@@ -157,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 required
                                 class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                                 placeholder="tu@email.com"
-                                value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
+                                value="<?php echo htmlspecialchars($email); ?>"
                             >
                         </div>
                     </div>
@@ -204,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         
                         <div class="text-sm">
-                            <a href="#" class="text-purple-600 hover:text-purple-500 font-medium">
+                            <a href="/password-reset.php" class="text-purple-600 hover:text-purple-500 font-medium">
                                 ¿Olvidaste tu contraseña?
                             </a>
                         </div>
@@ -214,6 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button
                         type="submit"
                         class="btn-shine w-full gradient-bg text-white py-3 px-4 rounded-xl font-semibold text-lg hover:shadow-lg transition-all duration-300"
+                        id="submitBtn"
                     >
                         <i class="ri-login-circle-line mr-2"></i>
                         Iniciar Sesión
@@ -233,13 +229,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="mt-6 text-center space-y-2">
                     <p class="text-gray-600 text-sm">
                         ¿No tienes cuenta?
-                        <a href="/signup" class="text-purple-600 hover:text-purple-500 font-medium">
+                        <a href="/signup.php" class="text-purple-600 hover:text-purple-500 font-medium">
                             Regístrate aquí
-                        </a>
-                    </p>
-                    <p class="text-gray-600 text-sm">
-                        <a href="/landing" class="text-gray-500 hover:text-gray-700">
-                            ← Volver al inicio
                         </a>
                     </p>
                 </div>
@@ -291,18 +282,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Auto-focus en el primer campo
         document.getElementById('email').focus();
         
-        // Efecto de parallax suave en elementos flotantes
-        document.addEventListener('mousemove', function(e) {
-            const mouseX = e.clientX / window.innerWidth;
-            const mouseY = e.clientY / window.innerHeight;
+        // Efecto de loading en el botón al enviar
+        document.getElementById('loginForm').addEventListener('submit', function() {
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
             
-            document.querySelectorAll('.floating').forEach((element, index) => {
-                const speed = (index + 1) * 0.5;
-                const x = (mouseX - 0.5) * speed;
-                const y = (mouseY - 0.5) * speed;
-                
-                element.style.transform = `translate(${x}px, ${y}px)`;
-            });
+            submitBtn.innerHTML = '<i class="ri-loader-line animate-spin mr-2"></i>Iniciando sesión...';
+            submitBtn.disabled = true;
+            
+            // Si hay error, restaurar el botón después de un momento
+            setTimeout(() => {
+                if (window.location.pathname.includes('login')) {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            }, 3000);
         });
         
         // Validación en tiempo real
@@ -320,35 +314,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 this.classList.remove('border-red-300', 'focus:ring-red-500');
                 this.classList.add('border-gray-300', 'focus:ring-purple-500');
             }
-        });
-        
-        passwordInput.addEventListener('input', function() {
-            const password = this.value;
-            
-            if (password.length > 0 && password.length < 6) {
-                this.classList.add('border-orange-300', 'focus:ring-orange-500');
-                this.classList.remove('border-gray-300', 'focus:ring-purple-500');
-            } else {
-                this.classList.remove('border-orange-300', 'focus:ring-orange-500');
-                this.classList.add('border-gray-300', 'focus:ring-purple-500');
-            }
-        });
-        
-        // Efecto de loading en el botón al enviar
-        document.querySelector('form').addEventListener('submit', function() {
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            
-            submitBtn.innerHTML = '<i class="ri-loader-line animate-spin mr-2"></i>Iniciando sesión...';
-            submitBtn.disabled = true;
-            
-            // Si hay error, restaurar el botón después de un momento
-            setTimeout(() => {
-                if (window.location.pathname === '/login') {
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                }
-            }, 2000);
         });
     </script>
 </body>
