@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($token)) {
                 $stmt->execute([$resetToken, $expiry, $user['id']]);
                 
                 // Aquí enviarías el email con el token
-                // sendPasswordResetEmail($email, $resetToken);
+                sendPasswordResetEmail($email, $resetToken);
                 
                 $success = 'Se ha enviado un enlace de restablecimiento a tu email.';
                 error_log("Solicitud de restablecimiento de contraseña para: $email");
