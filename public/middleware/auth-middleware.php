@@ -1,3 +1,4 @@
+
 <?php
 /**
  * Middleware de autenticación para incluir en todas las páginas protegidas
