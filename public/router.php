@@ -1,8 +1,23 @@
 <?php
 /**
- * Router centralizado para ReservaBot
- * Maneja todas las rutas de la aplicación
+ * Router centralizado para ReservaBot - Versión final
+ * Usa el sistema de debug centralizado, sin constantes viejas
  */
+
+// El sistema de debug ya fue inicializado en index.php
+// Solo configuramos el contexto específico del router
+debug_context('ROUTER', [
+    'method' => $_SERVER['REQUEST_METHOD'],
+    'uri' => $_SERVER['REQUEST_URI'],
+    'timestamp' => date('Y-m-d H:i:s')
+]);
+
+// Configurar debug específico para el router
+debug_configure([
+    'enabled' => true,
+    'show_panel' => true,
+    'panel_position' => 'top-right'
+]);
 
 class Router {
     private $routes = [];
@@ -10,23 +25,27 @@ class Router {
     private $currentRoute = null;
     
     public function __construct() {
+        debug_log("🚀 Router iniciado");
         $this->defineRoutes();
     }
     
-    /**
-     * Definir todas las rutas de la aplicación
-     */
     private function defineRoutes() {
-
+        debug_log("📋 Definiendo rutas...");
+        
+        // Rutas de debug (sin middleware)
+        $this->addRoute('GET', '/debug-auth', 'debug-auth.php');
+        $this->addRoute('GET', '/test-clientes', 'test-clientes.php');
+        
         // Rutas principales
         $this->addRoute('GET', '/', 'dashboard.php', ['auth']);
         $this->addRoute('GET', '/dashboard', 'dashboard.php', ['auth']);
-        
-        // Rutas de autenticación (sin middleware)
         $this->addRoute('GET', '/landing', 'landing.php');
+        
+        // Rutas de autenticación
         $this->addRoute('GET', '/login', 'login.php');
         $this->addRoute('POST', '/login-handler', 'login-handler.php');
         $this->addRoute('GET', '/signup', 'signup.php');
+        $this->addRoute('POST', '/signup', 'register-handler.php');
         $this->addRoute('POST', '/register-handler', 'register-handler.php');
         $this->addRoute('GET', '/logout', 'logout.php');
         $this->addRoute('GET', '/password-reset', 'password-reset.php');
@@ -40,7 +59,7 @@ class Router {
         $this->addRoute('GET', '/perfil', 'perfil.php', ['auth']);
         $this->addRoute('GET', '/estadisticas', 'estadisticas.php', ['auth']);
         
-        // API routes (mantener las existentes)
+        // API routes
         $this->addRoute('POST', '/api/login', 'api/login.php');
         $this->addRoute('POST', '/api/register', 'api/register.php');
         $this->addRoute('POST', '/api/logout', 'api/logout.php');
@@ -56,11 +75,10 @@ class Router {
         // Formulario público de reservas
         $this->addRoute('GET', '/reserva/{slug}', 'public-booking.php');
         $this->addRoute('POST', '/reserva/{slug}', 'public-booking.php');
+        
+        debug_log("✅ " . count($this->routes) . " rutas definidas", 'SUCCESS');
     }
     
-    /**
-     * Agregar una ruta
-     */
     private function addRoute($method, $path, $file, $middlewares = []) {
         $this->routes[] = [
             'method' => strtoupper($method),
@@ -71,89 +89,81 @@ class Router {
         ];
     }
     
-    /**
-     * Convertir path con parámetros a patrón regex
-     */
     private function pathToPattern($path) {
         $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $path);
         return '#^' . $pattern . '$#';
     }
     
-    /**
-     * Resolver la ruta actual
-     */
     public function resolve() {
         $method = $_SERVER['REQUEST_METHOD'];
         $path = $this->getCurrentPath();
         
-        // Log de la request
-        error_log("Router: Procesando {$method} {$path}");
+        debug_log("🔍 Resolviendo: $method $path");
         
         // Buscar ruta coincidente
         foreach ($this->routes as $route) {
             if ($route['method'] === $method && preg_match($route['pattern'], $path, $matches)) {
+                debug_log("✅ Ruta encontrada: {$route['path']} -> {$route['file']}", 'SUCCESS');
                 $this->currentRoute = $route;
                 
-                // Extraer parámetros de la URL
-                array_shift($matches); // Remover match completo
+                array_shift($matches);
                 $route['params'] = $matches;
                 
                 return $this->executeRoute($route);
             }
         }
         
-        // Ruta no encontrada
+        debug_log("❌ Ruta no encontrada: $method $path", 'ERROR');
         return $this->handleNotFound();
     }
     
-    /**
-     * Obtener path actual limpio
-     */
     private function getCurrentPath() {
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         return rtrim($path, '/') ?: '/';
     }
     
-    /**
-     * Ejecutar la ruta encontrada
-     */
     private function executeRoute($route) {
         try {
+            debug_log("🔧 Ejecutando ruta: {$route['file']}");
+            
             // Aplicar middlewares
             foreach ($route['middlewares'] as $middleware) {
+                debug_log("🛡️ Aplicando middleware: $middleware");
                 if (!$this->applyMiddleware($middleware)) {
-                    return false; // Middleware bloqueó la ejecución
+                    debug_log("❌ Middleware $middleware bloqueó la ejecución", 'ERROR');
+                    return false;
                 }
+                debug_log("✅ Middleware $middleware exitoso", 'SUCCESS');
             }
             
-            // Establecer parámetros globales para el archivo
+            // Establecer parámetros
             if (!empty($route['params'])) {
                 $GLOBALS['route_params'] = $route['params'];
+                debug_log("📝 Parámetros establecidos", 'INFO', $route['params']);
             }
             
-            // Verificar que el archivo existe
+            // Verificar archivo
             $filePath = __DIR__ . '/' . $route['file'];
-            if (!file_exists($filePath)) {
-                error_log("Router: Archivo no encontrado - " . $filePath);
+            debug_log("📄 Verificando archivo: $filePath");
+            
+            if (!debug_check_file($filePath, $route['file'])) {
                 return $this->handleNotFound();
             }
             
-            // Log de la ruta ejecutada
-            error_log("Router: Ejecutando {$route['method']} {$route['path']} -> {$route['file']}");
+            debug_log("✅ Incluyendo archivo...");
             
             // Incluir el archivo
             require_once $filePath;
+            
+            debug_log("🎉 Archivo incluido exitosamente", 'SUCCESS');
             return true;
             
         } catch (Exception $e) {
-            error_log("Router: Error ejecutando ruta - " . $e->getMessage());
+            debug_log("💥 Error ejecutando ruta: " . $e->getMessage(), 'ERROR');
             return $this->handleError($e);
         }
     }
     
-    /**
-     * Aplicar middleware específico
-     */
     private function applyMiddleware($middleware) {
         switch ($middleware) {
             case 'auth':
@@ -163,52 +173,109 @@ class Router {
         }
     }
     
-    /**
-     * Middleware de autenticación
-     */
     private function authMiddleware() {
-        require_once __DIR__ . '/includes/db-config.php';
-        require_once __DIR__ . '/includes/auth.php';
-        
-        error_log("Router: Aplicando middleware de autenticación");
-        
-        // Actualizar última actividad
-        updateLastActivity();
-        
-        // Verificar autenticación
-        if (!isAuthenticated()) {
-            error_log("Router: Usuario no autenticado, redirigiendo");
-            $this->redirectToLogin();
-            return false;
+        try {
+            debug_context('AUTH_MIDDLEWARE');
+            debug_log("🔐 === INICIO MIDDLEWARE AUTH ===");
+            
+            // Verificar archivos
+            $dbConfigPath = __DIR__ . '/includes/db-config.php';
+            $authPath = __DIR__ . '/includes/auth.php';
+            
+            if (!debug_check_file($dbConfigPath, 'db-config.php')) {
+                throw new Exception("db-config.php no encontrado");
+            }
+            
+            if (!debug_check_file($authPath, 'auth.php')) {
+                throw new Exception("auth.php no encontrado");
+            }
+            
+            // Incluir archivos
+            debug_log("📥 Incluyendo dependencias...");
+            require_once $dbConfigPath;
+            require_once $authPath;
+            debug_log("✅ Dependencias incluidas", 'SUCCESS');
+            
+            // Verificar funciones
+            $funciones = ['updateLastActivity', 'isAuthenticated', 'isSessionExpired', 'getAuthenticatedUser', 'generateCSRFToken'];
+            $allFunctionsOk = true;
+            foreach ($funciones as $funcion) {
+                if (!debug_check_function($funcion)) {
+                    $allFunctionsOk = false;
+                }
+            }
+            
+            if (!$allFunctionsOk) {
+                throw new Exception("Funciones de autenticación faltantes");
+            }
+            
+            // Estado de sesión
+            debug_log("🔍 Session status: " . session_status(), 'INFO');
+            debug_log("🔍 Session ID: " . session_id(), 'INFO');
+            debug_log("🔍 Variables de sesión: " . json_encode(array_keys($_SESSION)), 'INFO');
+            
+            // Actualizar actividad
+            debug_checkpoint('Actualizando actividad');
+            updateLastActivity();
+            
+            // Verificar autenticación
+            debug_checkpoint('Verificando autenticación');
+            $isAuth = isAuthenticated();
+            debug_log("🔍 isAuthenticated(): " . ($isAuth ? "TRUE" : "FALSE"), $isAuth ? 'SUCCESS' : 'ERROR');
+            
+            if (!$isAuth) {
+                debug_log("❌ Usuario no autenticado, redirigiendo al login", 'ERROR');
+                $this->redirectToLogin();
+                return false;
+            }
+            
+            // Verificar expiración
+            debug_checkpoint('Verificando expiración');
+            $isExpired = isSessionExpired();
+            debug_log("⏱️ isSessionExpired(): " . ($isExpired ? "TRUE" : "FALSE"), $isExpired ? 'ERROR' : 'SUCCESS');
+            
+            if ($isExpired) {
+                debug_log("⏰ Sesión expirada, cerrando y redirigiendo", 'ERROR');
+                logout();
+                $this->redirectToLogin('Tu sesión ha expirado.');
+                return false;
+            }
+            
+            // Obtener usuario
+            debug_checkpoint('Obteniendo usuario');
+            $user = getAuthenticatedUser();
+            if (!$user) {
+                throw new Exception("No se pudieron obtener datos del usuario");
+            }
+            
+            debug_log("👤 Usuario autenticado: " . $user['email'] . " (" . $user['name'] . ")", 'SUCCESS');
+            
+            // Variables globales
+            $GLOBALS['currentUser'] = $user;
+            $GLOBALS['csrfToken'] = generateCSRFToken();
+            
+            debug_check_global('currentUser');
+            debug_check_global('csrfToken');
+            
+            debug_log("🎉 === MIDDLEWARE AUTH EXITOSO ===", 'SUCCESS');
+            return true;
+            
+        } catch (Exception $e) {
+            debug_log("💥 === ERROR EN MIDDLEWARE AUTH ===", 'ERROR');
+            debug_log("💥 Error: " . $e->getMessage(), 'ERROR');
+            debug_log("💥 Archivo: " . $e->getFile(), 'ERROR');
+            debug_log("💥 Línea: " . $e->getLine(), 'ERROR');
+            throw $e;
         }
-        
-        // Verificar expiración
-        if (isSessionExpired()) {
-            error_log("Router: Sesión expirada, cerrando sesión");
-            logout();
-            $this->redirectToLogin('Tu sesión ha expirado.');
-            return false;
-        }
-        
-        // Hacer disponible el usuario actual
-        $GLOBALS['currentUser'] = getAuthenticatedUser();
-        $GLOBALS['csrfToken'] = generateCSRFToken();
-        
-        error_log("Router: Middleware de autenticación exitoso para " . $GLOBALS['currentUser']['email']);
-        return true;
     }
     
-    /**
-     * Redirigir al login
-     */
     private function redirectToLogin($message = null) {
         if ($message) {
             $_SESSION['login_message'] = $message;
         }
         
-        error_log("Router: Redirigiendo al login" . ($message ? " - $message" : ""));
+        debug_log("🔄 Redirigiendo al login" . ($message ? " - $message" : ""));
         
-        // Si es petición AJAX o API, responder JSON
         if ($this->isAjaxRequest() || $this->isApiRequest()) {
             header('Content-Type: application/json');
             echo json_encode([
@@ -220,32 +287,22 @@ class Router {
             exit;
         }
         
-        // Redirección normal
         header('Location: /login');
         exit;
     }
     
-    /**
-     * Verificar si es petición AJAX
-     */
     private function isAjaxRequest() {
         return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     }
     
-    /**
-     * Verificar si es petición API
-     */
     private function isApiRequest() {
         return strpos($this->getCurrentPath(), '/api/') === 0;
     }
     
-    /**
-     * Manejar 404
-     */
     private function handleNotFound() {
         http_response_code(404);
-        error_log("Router: 404 - " . $this->getCurrentPath());
+        debug_log("🔍 404 - Página no encontrada", 'ERROR');
         
         if ($this->isApiRequest()) {
             header('Content-Type: application/json');
@@ -257,7 +314,6 @@ class Router {
             exit;
         }
         
-        // Página 404 personalizada
         echo "<!DOCTYPE html>
         <html lang='es'>
         <head>
@@ -271,8 +327,11 @@ class Router {
                 <h1 class='text-6xl font-bold text-gray-800 mb-4'>404</h1>
                 <h2 class='text-2xl font-semibold text-gray-600 mb-4'>Página no encontrada</h2>
                 <p class='text-gray-500 mb-8'>La página que buscas no existe.</p>
-                <a href='/' class='bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors'>
+                <a href='/' class='bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors mr-4'>
                     Volver al dashboard
+                </a>
+                <a href='/debug-auth' class='bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors'>
+                    Debug Auth
                 </a>
             </div>
         </body>
@@ -281,19 +340,21 @@ class Router {
         return false;
     }
     
-    /**
-     * Manejar errores
-     */
     private function handleError(Exception $e) {
         http_response_code(500);
-        error_log("Router: Error 500 - " . $e->getMessage());
+        debug_log("💥 Error 500: " . $e->getMessage(), 'ERROR');
         
         if ($this->isApiRequest()) {
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => false,
                 'error' => 'INTERNAL_ERROR',
-                'message' => 'Error interno del servidor'
+                'message' => 'Error interno del servidor',
+                'debug' => [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
             ]);
             exit;
         }
@@ -306,14 +367,33 @@ class Router {
             <title>Error - ReservaBot</title>
             <script src='https://cdn.tailwindcss.com'></script>
         </head>
-        <body class='bg-gray-100 min-h-screen flex items-center justify-center'>
-            <div class='text-center'>
-                <h1 class='text-6xl font-bold text-red-600 mb-4'>Error</h1>
-                <h2 class='text-2xl font-semibold text-gray-600 mb-4'>Algo salió mal</h2>
-                <p class='text-gray-500 mb-8'>Ha ocurrido un error interno. Por favor, intenta nuevamente.</p>
-                <a href='/' class='bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors'>
-                    Volver al dashboard
-                </a>
+        <body class='bg-gray-100 min-h-screen p-8'>
+            <div class='max-w-4xl mx-auto'>
+                <div class='bg-red-50 border border-red-200 rounded-lg p-6'>
+                    <h1 class='text-2xl font-bold text-red-800 mb-4'>Error del Router</h1>
+                    <div class='space-y-4'>
+                        <div>
+                            <h3 class='font-semibold text-red-700'>Mensaje:</h3>
+                            <p class='text-red-600 font-mono text-sm bg-red-100 p-3 rounded mt-1'>" . htmlspecialchars($e->getMessage()) . "</p>
+                        </div>
+                        <div>
+                            <h3 class='font-semibold text-red-700'>Archivo:</h3>
+                            <p class='text-red-600 font-mono text-sm'>" . htmlspecialchars($e->getFile()) . "</p>
+                        </div>
+                        <div>
+                            <h3 class='font-semibold text-red-700'>Línea:</h3>
+                            <p class='text-red-600 font-mono text-sm'>" . $e->getLine() . "</p>
+                        </div>
+                    </div>
+                </div>
+                <div class='text-center mt-6'>
+                    <a href='/' class='bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 mr-4'>
+                        Volver al dashboard
+                    </a>
+                    <a href='/debug-auth' class='bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700'>
+                        Debug Auth
+                    </a>
+                </div>
             </div>
         </body>
         </html>";
@@ -321,23 +401,15 @@ class Router {
         return false;
     }
     
-    /**
-     * Obtener parámetro de ruta
-     */
+    // Métodos helper estáticos
     public static function getParam($index = 0) {
         return $GLOBALS['route_params'][$index] ?? null;
     }
     
-    /**
-     * Obtener todos los parámetros
-     */
     public static function getParams() {
         return $GLOBALS['route_params'] ?? [];
     }
     
-    /**
-     * Generar URL
-     */
     public static function url($path) {
         return rtrim($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'], '/') . $path;
     }
@@ -352,9 +424,6 @@ function url($path) {
     return Router::url($path);
 }
 
-// Ejecutar el router si se incluye directamente
-if (basename($_SERVER['SCRIPT_NAME']) === 'router.php') {
-    $router = new Router();
-    $router->resolve();
-}
+// No ejecutar automáticamente el router aquí
+// El router se ejecuta desde index.php
 ?>

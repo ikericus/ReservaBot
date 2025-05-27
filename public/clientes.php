@@ -1,12 +1,52 @@
 <?php
+
+
+// Incluir el sistema de debug centralizado
+require_once __DIR__ . '/includes/debug-system.php';
+
+// Configurar debug para esta página
+debug_configure([
+    'enabled' => true,
+    'show_panel' => true,
+    'panel_position' => 'top-left' // Diferente posición que el router
+]);
+
+// Inicializar contexto de la página
+debug_context('CLIENTES_PAGE', [
+    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+    'referer' => $_SERVER['HTTP_REFERER'] ?? 'direct'
+]);
+
+debug_log("🏢 Iniciando página de clientes");
+
+// Verificar dependencias
+debug_checkpoint('Verificando dependencias');
+debug_check_file(__DIR__ . '/includes/db-config.php', 'DB Config');
+debug_check_file(__DIR__ . '/includes/functions.php', 'Functions');
+
 // Incluir configuración y funciones
+debug_log("📥 Incluyendo dependencias...");
 require_once 'includes/db-config.php';
 require_once 'includes/functions.php';
+debug_log("✅ Dependencias incluidas", 'SUCCESS');
+
+// Verificar variables del middleware
+debug_checkpoint('Verificando middleware');
+debug_check_global('currentUser');
+debug_check_global('csrfToken');
+
+if (isset($currentUser)) {
+    debug_log("👤 Usuario autenticado: " . $currentUser['email'], 'SUCCESS');
+} else {
+    debug_log("❌ Usuario no disponible - posible problema de middleware", 'ERROR');
+}
 
 // Configurar la página actual
+debug_checkpoint('Configurando página');
 $currentPage = 'clientes';
 $pageTitle = 'ReservaBot - Clientes';
 $pageScript = 'clientes';
+
 
 // Parámetros de búsqueda y paginación
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -61,7 +101,7 @@ try {
     $clientes = [];
     $totalClientes = 0;
     $totalPages = 1;
-    error_log('Error al obtener clientes: ' . $e->getMessage());
+    debug_log('Error al obtener clientes: ' . $e->getMessage());
 }
 
 // Incluir la cabecera
