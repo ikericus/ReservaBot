@@ -149,7 +149,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                     </div>
                 <?php endif; ?>
                 
-                <form action="register-handler.php" method="POST" class="space-y-6" id="registroForm">
+                <form action="register-handler" method="POST" class="space-y-6" id="registroForm">
                     
                     <!-- Información personal -->
                     <div class="grid md:grid-cols-2 gap-6">
@@ -407,7 +407,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                 <div class="mt-6 text-center space-y-2">
                     <p class="text-gray-600 text-sm">
                         ¿Ya tienes cuenta?
-                        <a href="/login.php" class="text-purple-600 hover:text-purple-500 font-medium">
+                        <a href="/login" class="text-purple-600 hover:text-purple-500 font-medium">
                             Inicia sesión aquí
                         </a>
                     </p>

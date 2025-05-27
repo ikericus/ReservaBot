@@ -8,7 +8,7 @@ require_once 'includes/auth.php';
 
 // Solo procesar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /signup.php');
+    header('Location: /signup');
     exit;
 }
 
@@ -53,7 +53,7 @@ if (!empty($errors)) {
     session_start();
     $_SESSION['register_errors'] = $errors;
     $_SESSION['register_data'] = $_POST;
-    header('Location: /signup.php');
+    header('Location: /signup');
     exit;
 }
 
@@ -66,7 +66,7 @@ try {
         session_start();
         $_SESSION['register_errors'] = ['Ya existe una cuenta con este email'];
         $_SESSION['register_data'] = $_POST;
-        header('Location: /signup.php');
+        header('Location: /signup');
         exit;
     }
     
@@ -130,7 +130,7 @@ try {
     session_start();
     $_SESSION['register_errors'] = ['Error interno del servidor. Por favor, intenta nuevamente.'];
     $_SESSION['register_data'] = $_POST;
-    header('Location: /signup.php');
+    header('Location: /signup');
     exit;
 }
 ?>

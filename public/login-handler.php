@@ -10,7 +10,7 @@ require_once 'includes/auth.php';
 
 // Solo procesar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /login.php');
+    header('Location: /login');
     exit;
 }
 
@@ -39,7 +39,7 @@ if (!empty($errors)) {
     session_start();
     $_SESSION['login_errors'] = $errors;
     $_SESSION['login_email'] = $email;
-    header('Location: /login.php');
+    header('Location: /login');
     exit;
 }
 
@@ -76,6 +76,6 @@ if ($authResult['success']) {
     $_SESSION['login_errors'] = [$authResult['message']];
     $_SESSION['login_email'] = $email;
     
-    header('Location: /login.php');
+    header('Location: /login');
     exit;
 }

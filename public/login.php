@@ -134,7 +134,7 @@ unset($_SESSION['login_errors'], $_SESSION['login_message'], $_SESSION['login_em
                     </div>
                 <?php endif; ?>
                 
-                <form action="login-handler.php" method="POST" class="space-y-6" id="loginForm">
+                <form action="login-handler" method="POST" class="space-y-6" id="loginForm">
                     
                     <!-- Email -->
                     <div>
@@ -229,7 +229,7 @@ unset($_SESSION['login_errors'], $_SESSION['login_message'], $_SESSION['login_em
                 <div class="mt-6 text-center space-y-2">
                     <p class="text-gray-600 text-sm">
                         ¿No tienes cuenta?
-                        <a href="/signup.php" class="text-purple-600 hover:text-purple-500 font-medium">
+                        <a href="/signup" class="text-purple-600 hover:text-purple-500 font-medium">
                             Regístrate aquí
                         </a>
                     </p>

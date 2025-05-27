@@ -92,19 +92,19 @@ if (!empty($token)) {
             
             <div class="space-y-3">
                 <?php if ($success): ?>
-                    <a href="/login.php" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all font-semibold">
+                    <a href="/login" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all font-semibold">
                         <i class="ri-login-circle-line mr-2"></i>
                         Iniciar Sesión
                     </a>
                 <?php else: ?>
-                    <a href="/login.php" class="inline-flex items-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold">
+                    <a href="/login" class="inline-flex items-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold">
                         <i class="ri-arrow-left-line mr-2"></i>
                         Volver al Login
                     </a>
                 <?php endif; ?>
                 
                 <div>
-                    <a href="/signup.php" class="text-purple-600 hover:text-purple-500 text-sm font-medium">
+                    <a href="/signup" class="text-purple-600 hover:text-purple-500 text-sm font-medium">
                         ¿No tienes cuenta? Regístrate aquí
                     </a>
                 </div>

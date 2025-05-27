@@ -8,5 +8,5 @@ logout();
 echo json_encode([
     'success' => true,
     'message' => 'Sesión cerrada correctamente',
-    'redirect' => '/login.php'
+    'redirect' => '/login'
 ]);

@@ -3,34 +3,35 @@ php_flag display_errors Off
 php_flag log_errors On
 php_value error_log /home/uXXXXXXX/public_html/php-error.log
 
-# Configuración para URLs limpias
+# Configuración de sesiones PHP
+php_value session.cookie_httponly 1
+php_value session.use_strict_mode 0
+php_value session.cookie_secure 0
+
+# Habilitar reescritura de URLs
 RewriteEngine On
 
-# Excluir específicamente carpetas que NO deben ser reescritas
-RewriteRule ^api/ - [L]
+# Excluir archivos estáticos y directorios especiales
 RewriteRule ^assets/ - [L]
 RewriteRule ^uploads/ - [L]
 RewriteRule ^includes/ - [L]
+RewriteRule ^\.well-known/ - [L]
 
-# Redirigir URLs con .php a URLs limpias (301 permanente)
-# Solo para archivos que no están en carpetas excluidas
-RewriteCond %{THE_REQUEST} \s/+([^/\s]+)\.php[\s?] [NC]
-RewriteCond %1 !^(api|assets|uploads|includes)/
-RewriteRule ^ /%1 [R=301,L]
+# Excluir archivos que deben ser accesibles directamente
+RewriteRule ^robots\.txt$ - [L]
+RewriteRule ^sitemap\.xml$ - [L]
+RewriteRule ^favicon\.ico$ - [L]
 
-# Manejar la página de inicio primero
-RewriteRule ^$ index.php [L]
+# Proteger archivos PHP directos (excepto router.php)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_URI} \.php$
+RewriteCond %{REQUEST_URI} !^/router\.php$
+RewriteRule . /router.php [L]
 
-# Rutas específicas para clientes
-RewriteRule ^clientes/?$ clientes.php [L]
-RewriteRule ^cliente-detail/?$ cliente-detail.php [L]
-
-# Reescribir URLs limpias a archivos .php
-# Solo si no es un archivo o directorio existente
+# Redirigir todo el tráfico al router
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-# Solo para URLs de un nivel (sin barras adicionales)
-RewriteRule ^([^/]+)/?$ $1.php [L]
+RewriteRule ^(.*)$ router.php [QSA,L]
 
 # Proteger archivos sensibles
 <Files "*.log">
@@ -43,14 +44,51 @@ RewriteRule ^([^/]+)/?$ $1.php [L]
     Deny from all
 </Files>
 
+<Files "*.php">
+    # Permitir solo router.php y archivos en api/
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} !^/router\.php$
+    RewriteCond %{REQUEST_URI} !^/api/
+    RewriteRule . /router.php [L]
+</Files>
+
+# Configuración de seguridad adicional
+<IfModule mod_headers.c>
+    # Prevenir clickjacking
+    Header always append X-Frame-Options SAMEORIGIN
+    
+    # Prevenir XSS
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Prevenir MIME sniffing
+    Header set X-Content-Type-Options nosniff
+    
+    # Política de referrer
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
 # Configuración de caché para assets estáticos
-# <IfModule mod_expires.c>
-#     ExpiresActive On
-#     ExpiresByType text/css "access plus 1 month"
-#     ExpiresByType application/javascript "access plus 1 month"
-#     ExpiresByType image/png "access plus 1 month"
-#     ExpiresByType image/jpg "access plus 1 month"
-#     ExpiresByType image/jpeg "access plus 1 month"
-#     ExpiresByType image/gif "access plus 1 month"
-#     ExpiresByType image/svg+xml "access plus 1 month"
-# </IfModule>
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType application/json "access plus 0 seconds"
+</IfModule>
+
+# Compresión GZIP
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
