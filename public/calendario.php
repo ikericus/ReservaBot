@@ -10,7 +10,7 @@ $pageScript = 'calendar';
 
 // Obtener reservas para el mes actual (el mes se filtrará en JS)
 try {
-    $stmt = $pdo->query('SELECT * FROM reservas ORDER BY fecha, hora');
+    $stmt = getPDO()->prepare('SELECT * FROM reservas ORDER BY fecha, hora');
     $todasReservas = $stmt->fetchAll();
 } catch (\PDOException $e) {
     $todasReservas = [];

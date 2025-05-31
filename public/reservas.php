@@ -1,27 +1,37 @@
 <?php
-// Incluir middleware de autenticación
-require_once 'middleware/auth-middleware.php';
 
-// Incluir configuración y funciones
+/// Iniciar sesión
+session_start();
+
+// Cargar dependencias
 require_once 'includes/db-config.php';
+require_once 'includes/auth.php';
 require_once 'includes/functions.php';
+
+// Proteger la página
+requireAuth();
+
+// Obtener usuario
+$currentUser = getAuthenticatedUser();
 
 // Configurar la página actual
 $currentPage = 'dashboard';
-$pageTitle = 'ReservaBot - Reservas';
+$pageTitle = 'ReservaBot - Dashboard';
 $pageScript = 'dashboard';
 
 // Obtener las reservas del usuario autenticado
-$userId = $currentUser['id'];
+$userId =  $currentUser['id'];
+
+// Obtener reservas
 $reservasPendientes = [];
 $reservasConfirmadas = [];
 
 try {
-    $stmt = $pdo->prepare("SELECT * FROM reservas WHERE usuario_id = ? AND estado = 'pendiente' ORDER BY fecha, hora");
+    $stmt = getPDO()->prepare("SELECT * FROM reservas WHERE usuario_id = ? AND estado = 'pendiente' ORDER BY fecha, hora");
     $stmt->execute([$userId]);
     $reservasPendientes = $stmt->fetchAll();
     
-    $stmt = $pdo->prepare("SELECT * FROM reservas WHERE usuario_id = ? AND estado = 'confirmada' ORDER BY fecha, hora");
+    $stmt = getPDO()->prepare("SELECT * FROM reservas WHERE usuario_id = ? AND estado = 'confirmada' ORDER BY fecha, hora");
     $stmt->execute([$userId]);
     $reservasConfirmadas = $stmt->fetchAll();
 } catch (\PDOException $e) {
@@ -34,8 +44,8 @@ try {
 $welcomeMessage = $_SESSION['welcome_message'] ?? '';
 unset($_SESSION['welcome_message']);
 
-// Incluir la cabecera
 include 'includes/header.php';
+
 ?>
 
 <?php if (!empty($welcomeMessage)): ?>
@@ -47,7 +57,6 @@ include 'includes/header.php';
 </div>
 <?php endif; ?>
 
-<!-- Resto del contenido igual que antes -->
 <style>
 /* Estilos específicos para móvil */
 @media (max-width: 768px) {
@@ -130,6 +139,12 @@ include 'includes/header.php';
         align-items: center;
         justify-content: center;
         gap: 0.25rem;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    
+    .mobile-btn:hover {
+        text-decoration: none;
     }
     
     .mobile-btn-primary {
@@ -140,6 +155,7 @@ include 'includes/header.php';
     
     .mobile-btn-primary:hover {
         background-color: #047857;
+        color: white;
     }
     
     .mobile-btn-secondary {
@@ -161,6 +177,7 @@ include 'includes/header.php';
     
     .mobile-btn-danger:hover {
         background-color: #fef2f2;
+        color: #dc2626;
     }
     
     .mobile-btn-blue {
@@ -171,6 +188,7 @@ include 'includes/header.php';
     
     .mobile-btn-blue:hover {
         background-color: #eff6ff;
+        color: #2563eb;
     }
     
     .mobile-tab-counter {
@@ -220,7 +238,7 @@ include 'includes/header.php';
 
 <div class="flex justify-between items-center mb-6">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Reservas</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p class="text-gray-600 mt-1">Bienvenido, <?php echo htmlspecialchars($currentUser['name']); ?></p>
     </div>
     <div class="text-right text-sm text-gray-500">
@@ -235,6 +253,7 @@ include 'includes/header.php';
         <button 
             id="pendientesTab" 
             class="border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center"
+            onclick="showTab('pendientes')"
         >
             <i class="ri-time-line mr-2"></i>
             <span class="hidden sm:inline">Solicitudes Pendientes</span>
@@ -246,6 +265,7 @@ include 'includes/header.php';
         <button 
             id="confirmadasTab" 
             class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center"
+            onclick="showTab('confirmadas')"
         >
             <i class="ri-check-line mr-2"></i>
             <span class="hidden sm:inline">Reservas Confirmadas</span>
@@ -257,7 +277,6 @@ include 'includes/header.php';
     </nav>
 </div>
 
-<!-- Resto del contenido igual que antes... -->
 <div class="mt-6">
     <!-- Solicitudes Pendientes -->
     <div id="pendientesContent" class="block">
@@ -278,7 +297,7 @@ include 'includes/header.php';
                                 <h3 class="font-medium text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></h3>
                                 <div class="mt-1 flex items-center text-sm text-gray-500">
                                     <i class="ri-calendar-line mr-1"></i>
-                                    <?php echo htmlspecialchars($reserva['fecha']); ?> - <?php echo htmlspecialchars($reserva['hora']); ?>
+                                    <?php echo date('d/m/Y', strtotime($reserva['fecha'])); ?> - <?php echo substr($reserva['hora'], 0, 5); ?>
                                 </div>
                                 <div class="mt-1 flex items-center text-sm text-gray-500">
                                     <i class="ri-phone-line mr-1"></i>
@@ -361,11 +380,143 @@ include 'includes/header.php';
         </div>
     </div>
     
-    <!-- Reservas Confirmadas (similar structure) -->
+    <!-- Reservas Confirmadas -->
     <div id="confirmadasContent" class="hidden">
-        <!-- Contenido similar pero para reservas confirmadas -->
+        <h2 class="text-lg font-medium text-gray-900 mb-4 hidden sm:block">Reservas Confirmadas</h2>
+        
+        <!-- Vista Desktop -->
+        <div class="desktop-view">
+            <?php if (empty($reservasConfirmadas)): ?>
+                <div class="text-center py-8 text-gray-500">
+                    <i class="ri-check-double-line text-4xl text-gray-400 mb-2"></i>
+                    <p>No hay reservas confirmadas</p>
+                </div>
+            <?php else: ?>
+                <?php foreach ($reservasConfirmadas as $reserva): ?>
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-4 border-l-4 border-green-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <h3 class="font-medium text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></h3>
+                                <div class="mt-1 flex items-center text-sm text-gray-500">
+                                    <i class="ri-calendar-line mr-1"></i>
+                                    <?php echo date('d/m/Y', strtotime($reserva['fecha'])); ?> - <?php echo substr($reserva['hora'], 0, 5); ?>
+                                </div>
+                                <div class="mt-1 flex items-center text-sm text-gray-500">
+                                    <i class="ri-phone-line mr-1"></i>
+                                    <?php echo htmlspecialchars($reserva['telefono']); ?>
+                                </div>
+                                <?php if (!empty($reserva['mensaje'])): ?>
+                                    <p class="mt-2 text-sm text-gray-600 italic">"<?php echo htmlspecialchars($reserva['mensaje']); ?>"</p>
+                                <?php endif; ?>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="ri-check-line mr-1"></i>
+                                    Confirmada
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+        
+        <!-- Vista Mobile -->
+        <div class="mobile-view">
+            <?php if (empty($reservasConfirmadas)): ?>
+                <div class="text-center py-8 text-gray-500">
+                    <i class="ri-check-double-line text-4xl text-gray-400 mb-2"></i>
+                    <p class="text-sm">No hay reservas confirmadas</p>
+                </div>
+            <?php else: ?>
+                <div class="space-y-3">
+                    <?php foreach ($reservasConfirmadas as $reserva): ?>
+                        <div class="bg-white p-4 mobile-card border-l-4 border-green-500 fade-in-mobile">
+                            <div class="mobile-card-header">
+                                <h3 class="mobile-card-title"><?php echo htmlspecialchars($reserva['nombre']); ?></h3>
+                                <span class="mobile-card-status inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Confirmada
+                                </span>
+                            </div>
+                            
+                            <div class="mobile-card-content">
+                                <div class="mobile-card-info">
+                                    <i class="ri-calendar-line"></i>
+                                    <span><?php echo date('d/m/Y', strtotime($reserva['fecha'])); ?></span>
+                                </div>
+                                <div class="mobile-card-info">
+                                    <i class="ri-time-line"></i>
+                                    <span><?php echo substr($reserva['hora'], 0, 5); ?></span>
+                                </div>
+                                <div class="mobile-card-info">
+                                    <i class="ri-phone-line"></i>
+                                    <span><?php echo htmlspecialchars($reserva['telefono']); ?>
+                                </div>
+                                
+                                <?php if (!empty($reserva['mensaje'])): ?>
+                                    <div class="mobile-card-message">
+                                        <i class="ri-chat-1-line mr-1"></i>
+                                        <?php echo htmlspecialchars($reserva['mensaje']); ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 </div>
+
+<script>
+// Funciones para los tabs
+function showTab(tabName) {
+    // Ocultar todos los contenidos
+    document.getElementById('pendientesContent').classList.add('hidden');
+    document.getElementById('confirmadasContent').classList.add('hidden');
+    
+    // Mostrar el contenido seleccionado
+    document.getElementById(tabName + 'Content').classList.remove('hidden');
+    
+    // Actualizar estilos de tabs
+    const tabs = ['pendientes', 'confirmadas'];
+    tabs.forEach(tab => {
+        const tabButton = document.getElementById(tab + 'Tab');
+        if (tab === tabName) {
+            tabButton.className = 'border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center';
+        } else {
+            tabButton.className = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center';
+        }
+    });
+}
+
+// Funciones para aceptar/rechazar reservas (placeholder)
+document.addEventListener('DOMContentLoaded', function() {
+    // Botones aceptar
+    document.querySelectorAll('.btn-aceptar').forEach(button => {
+        button.addEventListener('click', function() {
+            const reservaId = this.getAttribute('data-id');
+            if (confirm('¿Confirmar esta reserva?')) {
+                // Aquí iría la llamada AJAX para aceptar la reserva
+                console.log('Aceptar reserva ID:', reservaId);
+                alert('Reserva confirmada (funcionalidad pendiente)');
+            }
+        });
+    });
+    
+    // Botones rechazar
+    document.querySelectorAll('.btn-rechazar').forEach(button => {
+        button.addEventListener('click', function() {
+            const reservaId = this.getAttribute('data-id');
+            if (confirm('¿Rechazar esta reserva?')) {
+                // Aquí iría la llamada AJAX para rechazar la reserva
+                console.log('Rechazar reserva ID:', reservaId);
+                alert('Reserva rechazada (funcionalidad pendiente)');
+            }
+        });
+    });
+});
+</script>
 
 <?php 
 // Incluir el pie de página

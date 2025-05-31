@@ -1,7 +1,7 @@
 # Configuración de PHP (mantener existente)
 php_flag display_errors Off
 php_flag log_errors On
-php_value error_log /home/uXXXXXXX/public_html/php-error.log
+php_value error_log /home/u329673490/domains/reservabot.es/php-error.log
 
 # Configuración de sesiones PHP
 php_value session.cookie_httponly 1
@@ -10,6 +10,9 @@ php_value session.cookie_secure 0
 
 # Habilitar reescritura de URLs
 RewriteEngine On
+
+# Permitir acceso directo a la carpeta debug/
+RewriteRule ^debug/ - [L]
 
 # Excluir archivos estáticos y directorios especiales
 RewriteRule ^assets/ - [L]
@@ -44,13 +47,13 @@ RewriteRule ^(.*)$ router.php [QSA,L]
     Deny from all
 </Files>
 
-<Files "*.php">
-    # Permitir solo router.php y archivos en api/
-    RewriteEngine On
-    RewriteCond %{REQUEST_URI} !^/router\.php$
-    RewriteCond %{REQUEST_URI} !^/api/
-    RewriteRule . /router.php [L]
-</Files>
+; <Files "*.php">
+;     # Permitir solo router.php y archivos en api/
+;     RewriteEngine On
+;     RewriteCond %{REQUEST_URI} !^/router\.php$
+;     RewriteCond %{REQUEST_URI} !^/api/
+;     RewriteRule . /router.php [L]
+; </Files>
 
 # Configuración de seguridad adicional
 <IfModule mod_headers.c>

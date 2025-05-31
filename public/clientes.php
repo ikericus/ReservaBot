@@ -30,7 +30,7 @@ try {
                    FROM reservas r 
                    $whereClause";
     
-    $stmt = $pdo->prepare($countQuery);
+    $stmt = getPDO()->prepare($countQuery);
     $stmt->execute($params);
     $totalClientes = $stmt->fetchColumn();
     
@@ -51,7 +51,7 @@ try {
               LIMIT ?, ?";
     
     $fullParams = array_merge($params, [$offset, $perPage]);
-    $stmt = $pdo->prepare($query);
+    $stmt = getPDO()->prepare($query);
     $stmt->execute($fullParams);
     $clientes = $stmt->fetchAll();
     
@@ -411,7 +411,7 @@ include 'includes/header.php';
     <?php
     // Obtener estadísticas adicionales
     try {
-        $stmt = $pdo->query("SELECT 
+        $stmt = getPDO()->query("SELECT 
             COUNT(*) as total_reservas,
             COUNT(DISTINCT telefono) as clientes_activos,
             SUM(CASE WHEN estado = 'confirmada' THEN 1 ELSE 0 END) as confirmadas

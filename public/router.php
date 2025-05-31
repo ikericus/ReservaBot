@@ -17,13 +17,13 @@ class Router {
      * Definir todas las rutas de la aplicación
      */
     private function defineRoutes() {
-
+        
         // Rutas principales
-        $this->addRoute('GET', '/', 'dashboard.php', ['auth']);
-        $this->addRoute('GET', '/dashboard', 'dashboard.php', ['auth']);
+        $this->addRoute('GET', '/test-db', 'test-db.php');
         
         // Rutas de autenticación (sin middleware)
         $this->addRoute('GET', '/landing', 'landing.php');
+
         $this->addRoute('GET', '/login', 'login.php');
         $this->addRoute('POST', '/login-handler', 'login-handler.php');
         $this->addRoute('GET', '/signup', 'signup.php');
@@ -32,7 +32,10 @@ class Router {
         $this->addRoute('GET', '/password-reset', 'password-reset.php');
         $this->addRoute('POST', '/password-reset', 'password-reset.php');
         
-        // Rutas protegidas
+        // Rutas protegidas        
+        $this->addRoute('GET', '/', 'reservas.php', ['auth']);
+        $this->addRoute('GET', '/dashboard', 'dashboard.php', ['auth']);
+        $this->addRoute('GET', '/calendario', 'calendar.php', ['auth']);
         $this->addRoute('GET', '/reservas', 'reservas.php', ['auth']);
         $this->addRoute('GET', '/clientes', 'clientes.php', ['auth']);
         $this->addRoute('GET', '/cliente-detail', 'cliente-detail.php', ['auth']);
