@@ -843,7 +843,7 @@ include 'includes/header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-<script src="assets/js/formularios-mejorado.js"></script>
+<script src="assets/js/formularios.js"></script>
 
 <script>
 // JavaScript específico para móvil
