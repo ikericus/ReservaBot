@@ -4,9 +4,9 @@ require_once 'includes/db-config.php';
 require_once 'includes/functions.php';
 
 // Configurar la página actual
-$currentPage = 'configuracion';
 $pageTitle = 'ReservaBot - Configuración';
-$pageScript = 'dashboard';
+$currentPage = 'configuracion';
+$pageScript = 'configuracion';
 
 // Obtener la configuración actual
 try {

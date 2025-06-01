@@ -15,9 +15,9 @@ requireAuth();
 $currentUser = getAuthenticatedUser();
 
 // Configurar la página actual
-$currentPage = 'dashboard';
-$pageTitle = 'ReservaBot - Dashboard';
-$pageScript = 'dashboard';
+$currentPage = 'reservas';
+$pageTitle = 'ReservaBot - Reservas';
+$pageScript = 'reservas';
 
 // Obtener las reservas del usuario autenticado
 $userId =  $currentUser['id'];
@@ -467,56 +467,6 @@ include 'includes/header.php';
         </div>
     </div>
 </div>
-
-<script>
-// Funciones para los tabs
-function showTab(tabName) {
-    // Ocultar todos los contenidos
-    document.getElementById('pendientesContent').classList.add('hidden');
-    document.getElementById('confirmadasContent').classList.add('hidden');
-    
-    // Mostrar el contenido seleccionado
-    document.getElementById(tabName + 'Content').classList.remove('hidden');
-    
-    // Actualizar estilos de tabs
-    const tabs = ['pendientes', 'confirmadas'];
-    tabs.forEach(tab => {
-        const tabButton = document.getElementById(tab + 'Tab');
-        if (tab === tabName) {
-            tabButton.className = 'border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center';
-        } else {
-            tabButton.className = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center';
-        }
-    });
-}
-
-// Funciones para aceptar/rechazar reservas (placeholder)
-document.addEventListener('DOMContentLoaded', function() {
-    // Botones aceptar
-    document.querySelectorAll('.btn-aceptar').forEach(button => {
-        button.addEventListener('click', function() {
-            const reservaId = this.getAttribute('data-id');
-            if (confirm('¿Confirmar esta reserva?')) {
-                // Aquí iría la llamada AJAX para aceptar la reserva
-                console.log('Aceptar reserva ID:', reservaId);
-                alert('Reserva confirmada (funcionalidad pendiente)');
-            }
-        });
-    });
-    
-    // Botones rechazar
-    document.querySelectorAll('.btn-rechazar').forEach(button => {
-        button.addEventListener('click', function() {
-            const reservaId = this.getAttribute('data-id');
-            if (confirm('¿Rechazar esta reserva?')) {
-                // Aquí iría la llamada AJAX para rechazar la reserva
-                console.log('Rechazar reserva ID:', reservaId);
-                alert('Reserva rechazada (funcionalidad pendiente)');
-            }
-        });
-    });
-});
-</script>
 
 <?php 
 // Incluir el pie de página

@@ -6,7 +6,7 @@ require_once 'includes/functions.php';
 // Configurar la página actual
 $currentPage = 'calendario';
 $pageTitle = 'ReservaBot - Calendario';
-$pageScript = 'calendar';
+$pageScript = 'calendario';
 
 // Obtener reservas para el mes actual (el mes se filtrará en JS)
 try {

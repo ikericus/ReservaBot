@@ -179,10 +179,10 @@
                     
                     <div class="flex items-center space-x-3">
                         <!-- Notificaciones móvil -->
-                        <button class="relative p-2 text-gray-600 hover:text-purple-600 transition-colors">
+                        <a href="/notificaciones" class="relative p-2 text-gray-600 hover:text-purple-600 transition-colors">
                             <i class="ri-notification-line text-xl"></i>
                             <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
-                        </button>
+                        </a>
                         
                         <!-- Botón de menú móvil -->
                         <button id="menuButton" class="p-2 text-gray-600 hover:text-purple-600 transition-colors focus:outline-none">
@@ -225,7 +225,7 @@
                                 Clientes
                             </a>
 
-                            <div class="section-divider">
+                            <!-- <div class="section-divider">
                                 <div class="section-label">WhatsApp</div>
                             </div>
                             
@@ -246,7 +246,7 @@
                             
                             <div class="section-divider">
                                 <div class="section-label">Sistema</div>
-                            </div>
+                            </div> -->
                             
                             <a href="/formularios" class="mobile-nav-item <?php echo $currentPage === 'formularios' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
                                 <i class="ri-survey-fill mr-3 text-lg nav-icon"></i>
@@ -354,16 +354,16 @@
                             </div>
                             
                             <!-- Notificaciones -->
-                            <button class="relative p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all">
+                            <a href="/notificaciones" class="relative p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all">
                                 <i class="ri-notification-line text-xl"></i>
                                 <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
-                            </button>
+                            </a>
                             
                             <!-- Estado de WhatsApp -->
-                            <div class="flex items-center space-x-2 px-3 py-1 bg-green-50 rounded-lg">
+                            <!-- <div class="flex items-center space-x-2 px-3 py-1 bg-green-50 rounded-lg">
                                 <span class="w-2 h-2 bg-green-500 rounded-full"></span>
                                 <span class="text-sm font-medium text-green-800">WhatsApp Online</span>
-                            </div>
+                            </div> -->
                             
                             <!-- Usuario -->
                             <div class="user-avatar h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-semibold">

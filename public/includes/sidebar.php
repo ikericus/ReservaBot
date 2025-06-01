@@ -42,7 +42,7 @@
             </div>
 
             <!-- Sección WhatsApp -->
-            <div class="section-divider">
+            <!-- <div class="section-divider">
                 <div class="section-label">
                     <i class="ri-whatsapp-line text-green-500 mr-1"></i>
                     WhatsApp
@@ -75,15 +75,15 @@
                         </span>
                     </div>
                 </a>
-            </div>
+            </div>-->
 
             <!-- Sección Sistema -->
-            <div class="section-divider">
+            <!-- <div class="section-divider">
                 <div class="section-label">
                     <i class="ri-settings-4-line mr-1"></i>
                     Sistema
                 </div>
-            </div>
+            </div> -->
 
             <div class="space-y-1">
                 <a href="/formularios" class="nav-item <?php echo $currentPage === 'formularios' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">

@@ -2,10 +2,10 @@
 // Iniciar sesión para manejar mensajes
 session_start();
 
-// Si ya está autenticado, redirigir al dashboard
 require_once 'includes/db-config.php';
 require_once 'includes/auth.php';
 
+// Si ya está autenticado, redirigir al inicio
 if (isAuthenticated()) {
     header('Location: /');
     exit;

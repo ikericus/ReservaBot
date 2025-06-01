@@ -63,10 +63,10 @@ if ($authResult['success']) {
     session_start();
     unset($_SESSION['login_errors'], $_SESSION['login_email'], $_SESSION['login_message']);
     
-    // Redirigir al dashboard
     $redirectTo = $_SESSION['intended_url'] ?? '/';
     unset($_SESSION['intended_url']);
     
+    // Redirigir
     header("Location: $redirectTo");
     exit;
     

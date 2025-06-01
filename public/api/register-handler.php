@@ -121,7 +121,7 @@ try {
     // Log del registro
     error_log("Nuevo usuario registrado: $email (ID: $userId)");
     
-    // Redirigir al dashboard
+    // Redirigir al inicio
     header('Location: /');
     exit;
     

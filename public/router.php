@@ -31,12 +31,13 @@ class Router {
         $this->addRoute('POST', '/password-reset',  'password-reset.php');
         
         // Rutas protegidas        
-        $this->addRoute('GET', '/',             'reservas.php',         ['auth']);
-        $this->addRoute('GET', '/dashboard',    'dashboard.php',        ['auth']);
-        $this->addRoute('GET', '/calendario',   'calendario.php',       ['auth']);
-        $this->addRoute('GET', '/reservas',     'reservas.php',         ['auth']);
-        $this->addRoute('GET', '/clientes',     'clientes.php',         ['auth']);
-        $this->addRoute('GET', '/formularios',  'formularios.php',      ['auth']);
+        $this->addRoute('GET', '/',                 'reservas.php',         ['auth']);
+        $this->addRoute('GET', '/dashboard',        'dashboard.php',        ['auth']);
+        $this->addRoute('GET', '/calendario',       'calendario.php',       ['auth']);
+        $this->addRoute('GET', '/reservas',         'reservas.php',         ['auth']);
+        $this->addRoute('GET', '/clientes',         'clientes.php',         ['auth']);
+        $this->addRoute('GET', '/formularios',      'formularios.php',      ['auth']);
+        $this->addRoute('GET', '/notificaciones',   'notificaciones.php',   ['auth']);
 
         
         $this->addRoute('GET', '/day',              'day.php',              ['auth']);
@@ -52,10 +53,11 @@ class Router {
         $this->addRoute('POST', '/api/login',               'api/login.php');
         $this->addRoute('POST', '/api/register',            'api/register.php');
         $this->addRoute('POST', '/api/logout',              'api/logout.php');
-        $this->addRoute('GET',  '/api/reservas',            'api/reservas.php',     ['auth']);
-        $this->addRoute('POST', '/api/reservas',            'api/reservas.php',     ['auth']);
-        $this->addRoute('PUT',  '/api/reservas/{id}',       'api/reservas.php',     ['auth']);
-        $this->addRoute('DELETE', '/api/reservas/{id}',     'api/reservas.php',     ['auth']);
+        $this->addRoute('GET',  '/api/reservas',            'api/reservas.php',             ['auth']);
+        $this->addRoute('POST', '/api/reservas',            'api/reservas.php',             ['auth']);
+        $this->addRoute('POST', '/api/actualizar-reserva',  'api/actualizar-reserva.php',   ['auth']);
+        $this->addRoute('PUT',  '/api/reservas/{id}',       'api/reservas.php',             ['auth']);
+        $this->addRoute('DELETE', '/api/reservas/{id}',     'api/reservas.php',             ['auth']);
         
         // Webhook para WhatsApp
         $this->addRoute('POST', '/webhook/whatsapp', 'webhook/whatsapp.php');
@@ -280,7 +282,7 @@ class Router {
                 <h2 class='text-2xl font-semibold text-gray-600 mb-4'>Página no encontrada</h2>
                 <p class='text-gray-500 mb-8'>La página que buscas no existe.</p>
                 <a href='/' class='bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors'>
-                    Volver al dashboard
+                    Volver al inicio
                 </a>
             </div>
         </body>
@@ -320,7 +322,7 @@ class Router {
                 <h2 class='text-2xl font-semibold text-gray-600 mb-4'>Algo salió mal</h2>
                 <p class='text-gray-500 mb-8'>Ha ocurrido un error interno. Por favor, intenta nuevamente.</p>
                 <a href='/' class='bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors'>
-                    Volver al dashboard
+                    Volver al inicio
                 </a>
             </div>
         </body>

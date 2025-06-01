@@ -4,8 +4,9 @@ require_once 'includes/db-config.php';
 require_once 'includes/functions.php';
 
 // Configurar la página actual
-$currentPage = 'formularios';
 $pageTitle = 'ReservaBot - Enlaces de Reserva';
+$currentPage = 'formularios';
+$pageScript = 'formularios';
 
 // Mensaje de estado
 $mensaje = '';
