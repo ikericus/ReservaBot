@@ -4,13 +4,13 @@ require_once 'includes/db-config.php';
 require_once 'includes/functions.php';
 
 // Configurar la página actual
-$currentPage = 'config';
+$currentPage = 'configuracion';
 $pageTitle = 'ReservaBot - Configuración';
 $pageScript = 'dashboard';
 
 // Obtener la configuración actual
 try {
-    $stmt = $pdo->query('SELECT * FROM configuraciones');
+    $stmt = getPDO()->query('SELECT * FROM configuraciones');
     $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 } catch (\PDOException $e) {
     error_log('Error al obtener configuraciones: ' . $e->getMessage());

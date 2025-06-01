@@ -4,7 +4,7 @@ require_once 'includes/db-config.php';
 require_once 'includes/functions.php';
 
 // Configurar la página actual
-$currentPage = 'calendar';
+$currentPage = 'calendario';
 $pageTitle = 'ReservaBot - Calendario';
 $pageScript = 'calendar';
 

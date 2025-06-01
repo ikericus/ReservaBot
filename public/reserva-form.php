@@ -23,7 +23,7 @@ if ($isEditMode) {
         
         if (!$reserva) {
             // Si la reserva no existe, redirigir al calendario
-            header('Location: /calendar');
+            header('Location: /calendario');
             exit;
         }
         
@@ -31,7 +31,7 @@ if ($isEditMode) {
         $fecha = $reserva['fecha'];
     } catch (\PDOException $e) {
         // Si hay un error, redirigir al calendario
-        header('Location: /calendar');
+        header('Location: /calendario');
         exit;
     }
 }

@@ -31,7 +31,7 @@ include 'includes/header.php';
 ?>
 
 <div class="flex items-center mb-6">
-    <a href="/calendar" class="mr-4 p-2 rounded-full hover:bg-gray-100">
+    <a href="/calendario" class="mr-4 p-2 rounded-full hover:bg-gray-100">
         <i class="ri-arrow-left-line text-gray-600 text-xl"></i>
     </a>
     <h1 class="text-2xl font-bold text-gray-900">Reservas del <?php echo formatearFecha($fecha); ?></h1>

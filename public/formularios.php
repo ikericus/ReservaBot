@@ -18,22 +18,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eliminar_enlace'])) {
     if ($id > 0) {
         try {
             // Eliminar el formulario (simplificado - ya no hay tablas relacionadas complejas)
-            $pdo->beginTransaction();
+            getPDO()->beginTransaction();
             
             // Eliminar referencias en origen_reservas (opcional)
-            $stmt = $pdo->prepare("DELETE FROM origen_reservas WHERE formulario_id = ?");
+            $stmt = getPDO()->prepare("DELETE FROM origen_reservas WHERE formulario_id = ?");
             $stmt->execute([$id]);
             
             // Eliminar el formulario
-            $stmt = $pdo->prepare("DELETE FROM formularios_publicos WHERE id = ?");
+            $stmt = getPDO()->prepare("DELETE FROM formularios_publicos WHERE id = ?");
             $stmt->execute([$id]);
             
-            $pdo->commit();
+            getPDO()->commit();
             
             $mensaje = 'Enlace eliminado correctamente';
             $tipoMensaje = 'success';
         } catch (Exception $e) {
-            $pdo->rollBack();
+            getPDO()->rollBack();
             $mensaje = 'Error al eliminar el enlace: ' . $e->getMessage();
             $tipoMensaje = 'error';
         }
@@ -57,14 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_enlace'])) {
             $slug = $slug ?: 'reserva-' . time();
             
             // Verificar que el slug sea único
-            $stmt = $pdo->prepare("SELECT id FROM formularios_publicos WHERE slug = ?");
+            $stmt = getPDO()->prepare("SELECT id FROM formularios_publicos WHERE slug = ?");
             $stmt->execute([$slug]);
             if ($stmt->fetch()) {
                 $slug .= '-' . time();
             }
             
             // Insertar en base de datos (simplificado)
-            $stmt = $pdo->prepare("INSERT INTO formularios_publicos 
+            $stmt = getPDO()->prepare("INSERT INTO formularios_publicos 
                 (nombre, descripcion, slug, confirmacion_automatica, activo) 
                 VALUES (?, ?, ?, ?, 1)");
             
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_enlace'])) {
 
 // Obtener enlaces existentes
 try {
-    $stmt = $pdo->query("SELECT * FROM formularios_publicos ORDER BY created_at DESC");
+    $stmt = getPDO()->query("SELECT * FROM formularios_publicos ORDER BY created_at DESC");
     $enlaces = $stmt->fetchAll();
 } catch (Exception $e) {
     $enlaces = [];
