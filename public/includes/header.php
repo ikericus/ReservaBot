@@ -204,7 +204,7 @@
                                 </div>
                                 <span class="font-bold gradient-text">ReservaBot</span>
                             </div>
-                            <button onclick="closeMobileMenu()" class="p-2 text-gray-500 hover:text-gray-700">
+                            <button id="closeMobileMenu" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                                 <i class="ri-close-line text-xl"></i>
                             </button>
                         </div>
@@ -263,15 +263,48 @@
                         <div class="mt-8 px-4 pt-4 border-t border-gray-100">
                             <div class="flex items-center p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
                                 <div class="user-avatar h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold mr-3">
-                                    A
+                                    <?php 
+                                    $user = getAuthenticatedUser();
+                                    echo strtoupper(substr($user['name'] ?? 'U', 0, 1));
+                                    ?>
                                 </div>
                                 <div class="flex-1">
-                                    <p class="text-sm font-semibold text-gray-900">Admin</p>
-                                    <p class="text-xs text-gray-500">admin@reservabot.com</p>
+                                    <p class="text-sm font-semibold text-gray-900"><?php echo htmlspecialchars($user['name'] ?? 'Usuario'); ?></p>
+                                    <p class="text-xs text-gray-500"><?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
                                 </div>
-                                <button class="text-gray-400 hover:text-gray-600">
-                                    <i class="ri-more-2-line"></i>
-                                </button>
+                                <div class="relative">
+                                    <button id="mobileUserMenuBtn" class="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors">
+                                        <i class="ri-more-2-line text-lg"></i>
+                                    </button>
+                                    
+                                    <!-- Menú desplegable del usuario móvil -->
+                                    <div id="mobileUserDropdown" class="hidden absolute right-0 bottom-full mb-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                                        <a href="/perfil" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors" onclick="closeMobileMenu()">
+                                            <i class="ri-user-line mr-3 text-gray-400"></i>
+                                            Mi Perfil
+                                        </a>
+                                        
+                                        <a href="/configuracion" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors" onclick="closeMobileMenu()">
+                                            <i class="ri-settings-line mr-3 text-gray-400"></i>
+                                            Configuración
+                                        </a>
+                                        
+                                        <div class="border-t border-gray-100 my-1"></div>
+                                        
+                                        <a href="/logout" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors" onclick="closeMobileMenu()">
+                                            <i class="ri-logout-box-line mr-3 text-red-500"></i>
+                                            Cerrar Sesión
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Información del plan -->
+                            <div class="mt-3 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800">
+                                    <i class="ri-vip-crown-line mr-1"></i>
+                                    Plan <?php echo ucfirst($user['plan'] ?? 'Gratis'); ?>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -333,14 +366,15 @@
                             </div>
                             
                             <!-- Usuario -->
-                            <div class="flex items-center space-x-3">
-                                <div class="user-avatar h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                                    A
-                                </div>
-                                <div class="hidden xl:block">
-                                    <p class="text-sm font-medium text-gray-900">Admin</p>
-                                    <p class="text-xs text-gray-500">Plan Premium</p>
-                                </div>
+                            <div class="user-avatar h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                                <?php 
+                                $user = getAuthenticatedUser();
+                                echo strtoupper(substr($user['name'] ?? 'U', 0, 1));
+                                ?>
+                            </div>
+                            <div class="hidden xl:block">
+                                <p class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($user['name'] ?? 'Usuario'); ?></p>
+                                <p class="text-xs text-gray-500">Plan <?php echo ucfirst($user['plan'] ?? 'Gratis'); ?></p>
                             </div>
                         </div>
                     </div>
