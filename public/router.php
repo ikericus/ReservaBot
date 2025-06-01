@@ -24,37 +24,38 @@ class Router {
         // Rutas de autenticación (sin middleware)
         $this->addRoute('GET', '/landing', 'landing.php');
 
-        $this->addRoute('GET', '/login', 'login.php');
-        $this->addRoute('POST', '/login-handler', 'login-handler.php');
-        $this->addRoute('GET', '/signup', 'signup.php');
-        $this->addRoute('POST', '/register-handler', 'register-handler.php');
-        $this->addRoute('GET', '/logout', 'logout.php');
-        $this->addRoute('GET', '/password-reset', 'password-reset.php');
-        $this->addRoute('POST', '/password-reset', 'password-reset.php');
+        $this->addRoute('GET', '/login',            'login.php');
+        $this->addRoute('GET', '/signup',           'signup.php');
+        $this->addRoute('GET', '/logout',           'logout.php');
+        $this->addRoute('GET', '/password-reset',   'password-reset.php');
+        $this->addRoute('POST', '/password-reset',  'password-reset.php');
         
         // Rutas protegidas        
-        $this->addRoute('GET', '/', 'reservas.php', ['auth']);
-        $this->addRoute('GET', '/dashboard', 'dashboard.php', ['auth']);
-        $this->addRoute('GET', '/calendario', 'calendario.php', ['auth']);
-        $this->addRoute('GET', '/reservas', 'reservas.php', ['auth']);
-        $this->addRoute('GET', '/clientes', 'clientes.php', ['auth']);
-        $this->addRoute('GET', '/formularios', 'formularios.php', ['auth']);
+        $this->addRoute('GET', '/',             'reservas.php',         ['auth']);
+        $this->addRoute('GET', '/dashboard',    'dashboard.php',        ['auth']);
+        $this->addRoute('GET', '/calendario',   'calendario.php',       ['auth']);
+        $this->addRoute('GET', '/reservas',     'reservas.php',         ['auth']);
+        $this->addRoute('GET', '/clientes',     'clientes.php',         ['auth']);
+        $this->addRoute('GET', '/formularios',  'formularios.php',      ['auth']);
 
         
-        $this->addRoute('GET', '/day', 'day.php', ['auth']);
-        $this->addRoute('GET', '/cliente-detail', 'cliente-detail.php', ['auth']);
-        $this->addRoute('GET', '/configuracion', 'configuracion.php', ['auth']);
-        $this->addRoute('GET', '/perfil', 'perfil.php', ['auth']);
-        $this->addRoute('GET', '/estadisticas', 'estadisticas.php', ['auth']);
+        $this->addRoute('GET', '/day',              'day.php',              ['auth']);
+        $this->addRoute('GET', '/cliente-detail',   'cliente-detail.php',   ['auth']);
+        $this->addRoute('GET', '/configuracion',    'configuracion.php',    ['auth']);
+        $this->addRoute('GET', '/perfil',           'perfil.php',           ['auth']);
+        $this->addRoute('GET', '/estadisticas',     'estadisticas.php',     ['auth']);
+        $this->addRoute('GET', '/perfil',           'perfil.php',           ['auth']);
         
-        // API routes (mantener las existentes)
-        $this->addRoute('POST', '/api/login', 'api/login.php');
-        $this->addRoute('POST', '/api/register', 'api/register.php');
-        $this->addRoute('POST', '/api/logout', 'api/logout.php');
-        $this->addRoute('GET', '/api/reservas', 'api/reservas.php', ['auth']);
-        $this->addRoute('POST', '/api/reservas', 'api/reservas.php', ['auth']);
-        $this->addRoute('PUT', '/api/reservas/{id}', 'api/reservas.php', ['auth']);
-        $this->addRoute('DELETE', '/api/reservas/{id}', 'api/reservas.php', ['auth']);
+        // API routes        
+        $this->addRoute('POST', '/api/login-handler',       'api/login-handler.php');        
+        $this->addRoute('POST', '/api/register-handler',    'aapi/register-handler.php');
+        $this->addRoute('POST', '/api/login',               'api/login.php');
+        $this->addRoute('POST', '/api/register',            'api/register.php');
+        $this->addRoute('POST', '/api/logout',              'api/logout.php');
+        $this->addRoute('GET',  '/api/reservas',            'api/reservas.php',     ['auth']);
+        $this->addRoute('POST', '/api/reservas',            'api/reservas.php',     ['auth']);
+        $this->addRoute('PUT',  '/api/reservas/{id}',       'api/reservas.php',     ['auth']);
+        $this->addRoute('DELETE', '/api/reservas/{id}',     'api/reservas.php',     ['auth']);
         
         // Webhook para WhatsApp
         $this->addRoute('POST', '/webhook/whatsapp', 'webhook/whatsapp.php');

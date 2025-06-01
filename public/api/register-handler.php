@@ -3,8 +3,8 @@
  * Procesamiento del formulario de registro
  */
 
-require_once 'includes/db-config.php';
-require_once 'includes/auth.php';
+require_once '../includes/db-config.php';
+require_once '../includes/auth.php';
 
 // Solo procesar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

@@ -134,7 +134,7 @@ unset($_SESSION['login_errors'], $_SESSION['login_message'], $_SESSION['login_em
                     </div>
                 <?php endif; ?>
                 
-                <form action="login-handler" method="POST" class="space-y-6" id="loginForm">
+                <form action="api/login-handler" method="POST" class="space-y-6" id="loginForm">
                     
                     <!-- Email -->
                     <div>

@@ -91,8 +91,8 @@
                     <span>Formularios</span>
                 </a>
 
-                <a href="/configuracion" class="nav-item <?php echo $currentPage === 'config' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
-                    <i class="ri-settings-line nav-icon mr-4 h-5 w-5 <?php echo $currentPage === 'config' ? 'text-purple-600' : 'text-gray-400'; ?>"></i>
+                <a href="/configuracion" class="nav-item <?php echo $currentPage === 'configuracion' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
+                    <i class="ri-settings-line nav-icon mr-4 h-5 w-5 <?php echo $currentPage === 'configuracion' ? 'text-purple-600' : 'text-gray-400'; ?>"></i>
                     <span>Configuración</span>
                 </a>
             </div>
@@ -109,26 +109,56 @@
         </div>
     </div>
 
-    <!-- Panel de usuario mejorado -->
+      <!-- Panel de usuario mejorado -->
     <div class="p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50">
-        <div class="flex items-center group cursor-pointer p-3 rounded-xl hover:bg-white hover:shadow-md transition-all duration-300">
-            <div class="user-avatar h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold mr-3">
-                A
+        <div class="relative">
+            <!-- Usuario principal -->
+            <div id="userMenuTrigger" class="flex items-center group cursor-pointer p-3 rounded-xl hover:bg-white hover:shadow-md transition-all duration-300">
+                <div class="user-avatar h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold mr-3">
+                    <?php 
+                    $user = getAuthenticatedUser();
+                    echo strtoupper(substr($user['name'] ?? 'U', 0, 1));
+                    ?>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-900 truncate"><?php echo htmlspecialchars($user['name'] ?? 'Usuario'); ?></p>
+                    <p class="text-xs text-gray-500 truncate"><?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
+                </div>
+                <div class="flex items-center">
+                    <i class="ri-arrow-up-s-line text-gray-400 transition-transform group-hover:rotate-180" id="userMenuIcon"></i>
+                </div>
             </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-900 truncate">Admin</p>
-                <p class="text-xs text-gray-500 truncate">admin@reservabot.com</p>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button class="p-1 text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="ri-notification-line"></i>
-                </button>
-                <button class="p-1 text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="ri-settings-line"></i>
-                </button>
-                <button class="p-1 text-gray-400 hover:text-red-600 transition-colors">
-                    <i class="ri-logout-box-line"></i>
-                </button>
+            
+            <!-- Menú desplegable del usuario -->
+            <div id="userDropdownMenu" class="hidden absolute bottom-full left-0 right-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                <a href="/perfil" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                    <i class="ri-user-line mr-3 text-gray-400"></i>
+                    Mi Perfil
+                </a>
+                
+                <a href="/configuracion" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                    <i class="ri-settings-line mr-3 text-gray-400"></i>
+                    Configuración
+                </a>
+                
+                <div class="border-t border-gray-100 my-1"></div>
+                
+                <a href="#" id="helpBtn" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                    <i class="ri-question-line mr-3 text-gray-400"></i>
+                    Centro de Ayuda
+                </a>
+                
+                <a href="mailto:soporte@reservabot.es" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                    <i class="ri-mail-line mr-3 text-gray-400"></i>
+                    Contactar Soporte
+                </a>
+                
+                <div class="border-t border-gray-100 my-1"></div>
+                
+                <a href="/logout" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                    <i class="ri-logout-box-line mr-3 text-red-500"></i>
+                    Cerrar Sesión
+                </a>
             </div>
         </div>
         
@@ -136,7 +166,7 @@
         <div class="mt-3 text-center">
             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800">
                 <i class="ri-vip-crown-line mr-1"></i>
-                Plan Premium
+                Plan <?php echo ucfirst($user['plan'] ?? 'Gratis'); ?>
             </span>
         </div>
     </div>
