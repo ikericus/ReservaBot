@@ -1,55 +1,58 @@
 <?php
-// Cabeceras para JSON
-header('Content-Type: application/json');
 
 // Incluir configuración y funciones
 require_once dirname(__DIR__) . '/includes/db-config.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
+
+// Establecer el estado según el rol del usuario
+$estado = isAdmin() ? 'confirmada' : 'pendiente';
+
+// Iniciar sesión para manejar mensajes de error
+session_start();
 
 // Verificar método de solicitud
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+    $_SESSION['error'] = 'Método no permitido';
+    header('Location: /nueva-reserva');
     exit;
 }
 
-// Obtener los datos enviados
-$input = file_get_contents('php://input');
-$data = json_decode($input, true);
+// Obtener los datos del formulario
+$data = $_POST;
 
-// Verificar que los datos se decodificaron correctamente
-if (json_last_error() !== JSON_ERROR_NONE) {
-    echo json_encode(['success' => false, 'message' => 'Datos JSON inválidos']);
+// Función para redirigir con error
+function redirectWithError($message, $data = []) {
+    $_SESSION['error'] = $message;
+    $_SESSION['form_data'] = $data;
+    $fecha = isset($data['fecha']) ? $data['fecha'] : date('Y-m-d');
+    header("Location: /nueva-reserva?date={$fecha}");
     exit;
 }
 
 // Verificar que los datos requeridos estén presentes
 if (!isset($data['nombre']) || !isset($data['telefono']) || !isset($data['fecha']) || !isset($data['hora'])) {
-    echo json_encode(['success' => false, 'message' => 'Faltan datos requeridos']);
-    exit;
+    redirectWithError('Faltan datos requeridos', $data);
 }
 
 // Validar los datos
 if (empty(trim($data['nombre'])) || empty(trim($data['telefono'])) || empty($data['fecha']) || empty($data['hora'])) {
-    echo json_encode(['success' => false, 'message' => 'Todos los campos obligatorios deben estar completos']);
-    exit;
+    redirectWithError('Todos los campos obligatorios deben estar completos', $data);
 }
 
 // Validar el formato de la fecha
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data['fecha'])) {
-    echo json_encode(['success' => false, 'message' => 'Formato de fecha inválido']);
-    exit;
+    redirectWithError('Formato de fecha inválido', $data);
 }
 
 // Validar el formato de la hora
 if (!preg_match('/^\d{2}:\d{2}$/', $data['hora'])) {
-    echo json_encode(['success' => false, 'message' => 'Formato de hora inválido']);
-    exit;
+    redirectWithError('Formato de hora inválido', $data);
 }
 
 // Validar que la fecha no sea anterior a hoy
 if ($data['fecha'] < date('Y-m-d')) {
-    echo json_encode(['success' => false, 'message' => 'La fecha no puede ser anterior a hoy']);
-    exit;
+    redirectWithError('La fecha no puede ser anterior a hoy', $data);
 }
 
 try {
@@ -64,16 +67,23 @@ try {
     $existeReserva = $stmt->fetchColumn();
     
     if ($existeReserva > 0) {
-        echo json_encode(['success' => false, 'message' => 'Ya existe una reserva para esa fecha y hora']);
-        exit;
+        redirectWithError('Ya existe una reserva para esa fecha y hora', $data);
     }
     
-    // Preparar la consulta de inserción
-    $sql = 'INSERT INTO reservas (nombre, telefono, fecha, hora, mensaje, estado) VALUES (?, ?, ?, ?, ?, ?)';
+    // Preparar la consulta de inserción (incluir whatsapp_id si está presente)
+    $campos = ['nombre', 'telefono', 'fecha', 'hora', 'mensaje', 'estado', 'usuario_id'];
+    $valores = ['?', '?', '?', '?', '?', '?', '?'];
+    
+    if (isset($data['whatsapp_id']) && !empty(trim($data['whatsapp_id']))) {
+        $campos[] = 'whatsapp_id';
+        $valores[] = '?';
+    }
+    
+    $sql = 'INSERT INTO reservas (' . implode(', ', $campos) . ') VALUES (' . implode(', ', $valores) . ')';
     $stmt = getPDO()->prepare($sql);
     
-    // Establecer el estado predeterminado
-    $estado = 'pendiente';
+    // Establecer el estado según el rol del usuario
+    $estado = isAdmin() ? 'confirmada' : 'pendiente';
     
     // Convertir la hora al formato de MySQL (HH:MM:SS)
     $hora = $data['hora'] . ':00';
@@ -83,36 +93,43 @@ try {
     $telefono = trim($data['telefono']);
     $mensaje = isset($data['mensaje']) ? trim($data['mensaje']) : '';
     
-    // Ejecutar la consulta
-    $result = $stmt->execute([
+    // Obtener el ID del usuario actual (NULL si no está autenticado)
+    $usuarioId = getCurrentUserId();
+
+    // Preparar parámetros para la ejecución
+    $params = [
         $nombre,
         $telefono,
         $data['fecha'],
         $hora,
         $mensaje,
-        $estado
-    ]);
+        $estado,
+        $usuarioId
+    ];
+    
+    // Agregar whatsapp_id si está presente
+    if (isset($data['whatsapp_id']) && !empty(trim($data['whatsapp_id']))) {
+        $params[] = trim($data['whatsapp_id']);
+    }
+    
+    // Ejecutar la consulta
+    $result = $stmt->execute($params);
     
     if ($result) {
         $id = getPDO()->lastInsertId();
-        echo json_encode([
-            'success' => true, 
-            'id' => $id,
-            'message' => 'Reserva creada correctamente'
-        ]);
+        // Limpiar datos del formulario y mensaje de error
+        unset($_SESSION['form_data']);
+        unset($_SESSION['error']);
+        // Redirigir al detalle de la reserva
+        header("Location: /reserva-detail?id={$id}");
+        exit;
     } else {
-        echo json_encode(['success' => false, 'message' => 'Error al crear la reserva en la base de datos']);
+        redirectWithError('Error al crear la reserva en la base de datos', $data);
     }
     
 } catch (\PDOException $e) {
-    echo json_encode([
-        'success' => false, 
-        'message' => 'Error en la base de datos: ' . $e->getMessage()
-    ]);
+    redirectWithError('Error en la base de datos: ' . $e->getMessage(), $data);
 } catch (\Exception $e) {
-    echo json_encode([
-        'success' => false, 
-        'message' => 'Error interno del servidor: ' . $e->getMessage()
-    ]);
+    redirectWithError('Error interno del servidor: ' . $e->getMessage(), $data);
 }
 ?>

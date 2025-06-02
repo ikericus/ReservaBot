@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Hacer la celda clickable
         dayCell.addEventListener('click', function() {
-            window.location.href = `day.php?date=${formattedDate}`;
+            window.location.href = `day?date=${formattedDate}`;
         });
         
         // Agregar la celda al grid
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hacer que el item sea clickable y evitar que el click se propague al día
             reservaItem.addEventListener('click', function(e) {
                 e.stopPropagation();
-                window.location.href = `reserva-detail.php?id=${reserva.id}`;
+                window.location.href = `reserva-detail?id=${reserva.id}`;
             });
             
             reservasContainer.appendChild(reservaItem);

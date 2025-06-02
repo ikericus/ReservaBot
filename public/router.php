@@ -42,16 +42,17 @@ class Router {
         $this->addRoute('GET',  '/reservas',         'reservas.php',         ['auth']);
         $this->addRoute('GET',  '/clientes',         'clientes.php',         ['auth']);
         $this->addRoute('GET',  '/formularios',      'formularios.php',      ['auth']);
-        $this->addRoute('GET',  '/notificaciones',   'notificaciones.php',   ['auth']);
-        
-        $this->addRoute('GET',  '/day',              'day.php',              ['auth']);
-        $this->addRoute('GET',  '/cliente-detail',   'cliente-detail.php',   ['auth']);
+        $this->addRoute('GET',  '/notificaciones',   'notificaciones.php',   ['auth']);        
         $this->addRoute('GET',  '/configuracion',    'configuracion.php',    ['auth']);
         $this->addRoute('GET',  '/perfil',           'perfil.php',           ['auth']);
         $this->addRoute('GET',  '/estadisticas',     'estadisticas.php',     ['auth']);
-        $this->addRoute('GET',  '/perfil',           'perfil.php',           ['auth']);        
+        $this->addRoute('GET',  '/perfil',           'perfil.php',           ['auth']);  
+        $this->addRoute('GET',  '/day',              'day.php',              ['auth']);
+        $this->addRoute('GET',  '/cliente-detail',   'cliente-detail.php',   ['auth']);        
+        $this->addRoute('GET',  '/reserva-form',     'reserva-form.php',     ['auth']);    
+        $this->addRoute('GET',  '/reserva-detail',   'reserva-detail.php',   ['auth']);          
 
-
+        $this->addRoute('POST',     '/api/crear-reserva',               'api/crear-reserva.php',            ['auth']);
         $this->addRoute('POST',     '/api/actualizar-reserva',          'api/actualizar-reserva.php',       ['auth']);
         $this->addRoute('POST',     '/api/eliminar-reserva',            'api/eliminar-reserva.php',         ['auth']);
         $this->addRoute('POST',     '/api/actualizar-configuracion',    'api/actualizar-configuracion.php', ['auth']);

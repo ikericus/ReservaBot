@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (confirmarBtn) {
         confirmarBtn.addEventListener('click', function() {
             if (confirm('¿Confirmar esta reserva?')) {
-                fetch('api/actualizar-reserva.php', {
+                fetch('api/actualizar-reserva', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (cancelarStatusBtn) {
         cancelarStatusBtn.addEventListener('click', function() {
             if (confirm('¿Marcar esta reserva como pendiente?')) {
-                fetch('api/actualizar-reserva.php', {
+                fetch('api/actualizar-reserva', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Confirmar eliminación
     confirmDeleteBtn.addEventListener('click', function() {
-        fetch('api/eliminar-reserva.php', {
+        fetch('api/eliminar-reserva', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.href = `day.php?date=${reservaFecha}`;
+                window.location.href = `day?date=${reservaFecha}`;
             } else {
                 alert('Error al eliminar la reserva: ' + data.message);
             }

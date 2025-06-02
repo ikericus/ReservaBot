@@ -574,7 +574,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                     }
                     
                     // Enviar vía AJAX a la nueva API
-                    fetch('api/crear-reserva-publica.php', {
+                    fetch('api/crear-reserva-publica', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -585,7 +585,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                         // Verificar si la respuesta es válida
                         if (!response.ok) {
                             if (response.status === 404) {
-                                throw new Error('API no encontrada. Verifica que el archivo api/crear-reserva-publica.php existe.');
+                                throw new Error('API no encontrada. Verifica que el archivo api/crear-reserva-publica existe.');
                             } else if (response.status === 500) {
                                 throw new Error('Error interno del servidor. Revisa los logs de PHP.');
                             } else {

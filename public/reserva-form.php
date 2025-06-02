@@ -3,10 +3,21 @@
 require_once 'includes/db-config.php';
 require_once 'includes/functions.php';
 
+// Iniciar sesión para manejar mensajes
+session_start();
+
 // Configurar la página actual
-$currentPage = 'calendar';
+$currentPage = 'reserva-form';
 $pageTitle = 'ReservaBot - Formulario de Reserva';
 $pageScript = 'reserva-form';
+
+// Obtener mensajes de error y datos del formulario si existen
+$error = isset($_SESSION['error']) ? $_SESSION['error'] : null;
+$formData = isset($_SESSION['form_data']) ? $_SESSION['form_data'] : [];
+
+// Limpiar los mensajes de la sesión después de obtenerlos
+if (isset($_SESSION['error'])) unset($_SESSION['error']);
+if (isset($_SESSION['form_data'])) unset($_SESSION['form_data']);
 
 // Comprobar si es modo edición o creación
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -49,9 +60,19 @@ include 'includes/header.php';
     </h1>
 </div>
 
+<!-- Mostrar mensaje de error si existe -->
+<?php if ($error): ?>
+<div class="mb-6 bg-red-50 border border-red-300 rounded-lg p-4">
+    <div class="flex items-center">
+        <i class="ri-error-warning-line text-red-500 mr-2"></i>
+        <span class="text-red-700"><?php echo htmlspecialchars($error); ?></span>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Formulario -->
 <div class="bg-white rounded-lg shadow-sm p-6">
-    <form id="reservaForm" class="space-y-6" method="post" action="api/<?php echo $isEditMode ? 'actualizar-reserva-completa.php' : 'crear-reserva.php'; ?>">
+    <form id="reservaForm" class="space-y-6" method="post" action="api/<?php echo $isEditMode ? 'actualizar-reserva' : 'crear-reserva'; ?>">
         <?php if ($isEditMode): ?>
             <input type="hidden" name="id" value="<?php echo $reserva['id']; ?>">
         <?php endif; ?>
@@ -73,7 +94,7 @@ include 'includes/header.php';
                         required
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         placeholder="Nombre del cliente"
-                        value="<?php echo $isEditMode ? htmlspecialchars($reserva['nombre']) : ''; ?>"
+                        value="<?php echo $isEditMode ? htmlspecialchars($reserva['nombre']) : (isset($formData['nombre']) ? htmlspecialchars($formData['nombre']) : ''); ?>"
                     >
                 </div>
             </div>
@@ -94,7 +115,7 @@ include 'includes/header.php';
                         required
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         placeholder="+34 600 123 456"
-                        value="<?php echo $isEditMode ? htmlspecialchars($reserva['telefono']) : ''; ?>"
+                        value="<?php echo $isEditMode ? htmlspecialchars($reserva['telefono']) : (isset($formData['telefono']) ? htmlspecialchars($formData['telefono']) : ''); ?>"
                     >
                 </div>
             </div>
@@ -116,7 +137,7 @@ include 'includes/header.php';
                         id="whatsapp_id"
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         placeholder="+34600123456"
-                        value="<?php echo $isEditMode && isset($reserva['whatsapp_id']) ? htmlspecialchars($reserva['whatsapp_id']) : ''; ?>"
+                        value="<?php echo $isEditMode && isset($reserva['whatsapp_id']) ? htmlspecialchars($reserva['whatsapp_id']) : (isset($formData['whatsapp_id']) ? htmlspecialchars($formData['whatsapp_id']) : ''); ?>"
                     >
                 </div>
                 <p class="mt-1 text-xs text-gray-500">
@@ -139,7 +160,7 @@ include 'includes/header.php';
                         id="fecha"
                         required
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        value="<?php echo $isEditMode ? $reserva['fecha'] : $fecha; ?>"
+                        value="<?php echo $isEditMode ? $reserva['fecha'] : (isset($formData['fecha']) ? $formData['fecha'] : $fecha); ?>"
                     >
                 </div>
             </div>
@@ -165,7 +186,12 @@ include 'includes/header.php';
                         $horarios = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'];
                         
                         foreach ($horarios as $horario):
-                            $selected = $isEditMode && substr($reserva['hora'], 0, 5) === $horario ? 'selected' : '';
+                            $selected = '';
+                            if ($isEditMode && substr($reserva['hora'], 0, 5) === $horario) {
+                                $selected = 'selected';
+                            } elseif (!$isEditMode && isset($formData['hora']) && $formData['hora'] === $horario) {
+                                $selected = 'selected';
+                            }
                         ?>
                             <option value="<?php echo $horario; ?>" <?php echo $selected; ?>><?php echo $horario; ?></option>
                         <?php endforeach; ?>
@@ -206,7 +232,7 @@ include 'includes/header.php';
                     rows="4"
                     class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     placeholder="Notas adicionales para la reserva"
-                ><?php echo $isEditMode ? htmlspecialchars($reserva['mensaje']) : ''; ?></textarea>
+                ><?php echo $isEditMode ? htmlspecialchars($reserva['mensaje']) : (isset($formData['mensaje']) ? htmlspecialchars($formData['mensaje']) : ''); ?></textarea>
             </div>
         </div>
         

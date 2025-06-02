@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = this.getAttribute('data-id');
             
             if (confirm('¿Confirmar esta reserva?')) {
-                fetch('api/actualizar-reserva.php', {
+                fetch('api/actualizar-reserva', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
             // Redirige a la vista de detalle donde se puede enviar un mensaje
-            window.location.href = `reserva-detail.php?id=${id}&action=message`;
+            window.location.href = `reserva-detail?id=${id}&action=message`;
         });
     });
     
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = this.getAttribute('data-id');
             
             if (confirm('¿Estás seguro de eliminar esta reserva? Esta acción no se puede deshacer.')) {
-                fetch('api/eliminar-reserva.php', {
+                fetch('api/eliminar-reserva', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

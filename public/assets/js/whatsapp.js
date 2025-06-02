@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function initiateConnection() {
         setLoadingState(connectBtn, true, 'Conectando...');
         
-        fetch('api/whatsapp-connect.php')
+        fetch('api/whatsapp-connect')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         setLoadingState(disconnectBtn, true, 'Desconectando...');
         
-        fetch('api/whatsapp-disconnect.php')
+        fetch('api/whatsapp-disconnect')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Enviar configuración
-        fetch('api/actualizar-configuracion.php', {
+        fetch('api/actualizar-configuracion', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Verificar el estado cada 3 segundos
         const statusInterval = setInterval(() => {
-            fetch('api/whatsapp-status.php')
+            fetch('api/whatsapp-status')
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'connected') {

@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Redirigir con los filtros aplicados
-            window.location.href = 'mensajes.php?' + searchParams.toString();
+            window.location.href = 'mensajes?' + searchParams.toString();
         });
     }
     
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const chat = urlParams.get('chat') || '';
         
         // Construir URL para la API de estadísticas
-        const apiUrl = 'api/mensajes-stats.php?' + new URLSearchParams({
+        const apiUrl = 'api/mensajes-stats?' + new URLSearchParams({
             search: search,
             chat: chat
         }).toString();
