@@ -28,9 +28,7 @@ if (!isset($GLOBALS['pdo_initialized'])) {
         
         // Crear PDO y guardarlo en $GLOBALS para que sea accesible desde cualquier scope
         $GLOBALS['pdo'] = new PDO($dsn, $user, $pass, $options);
-        
-        error_log("db-config: PDO inicializado correctamente en \$GLOBALS");
-        
+                
     } catch (PDOException $e) {
         error_log("db-config: Error inicializando PDO - " . $e->getMessage());
         $GLOBALS['pdo'] = null;

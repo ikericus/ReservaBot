@@ -95,7 +95,7 @@ class Router {
         $path = $this->getCurrentPath();
         
         // Log de la request
-        error_log("Router: Procesando {$method} {$path}");
+        //error_log("Router: Procesando {$method} {$path}");
         
         // Buscar ruta coincidente
         foreach ($this->routes as $route) {
@@ -147,7 +147,7 @@ class Router {
             }
             
             // Log de la ruta ejecutada
-            error_log("Router: Ejecutando {$route['method']} {$route['path']} -> {$route['file']}");
+            //error_log("Router: Ejecutando {$route['method']} {$route['path']} -> {$route['file']}");
             
             // Incluir el archivo
             require_once $filePath;
@@ -178,7 +178,7 @@ class Router {
         require_once __DIR__ . '/includes/db-config.php';
         require_once __DIR__ . '/includes/auth.php';
         
-        error_log("Router: Aplicando middleware de autenticación");
+        //error_log("Router: Aplicando middleware de autenticación");
         
         // Actualizar última actividad
         updateLastActivity();
@@ -192,7 +192,7 @@ class Router {
         
         // Verificar expiración
         if (isSessionExpired()) {
-            error_log("Router: Sesión expirada, cerrando sesión");
+            //error_log("Router: Sesión expirada, cerrando sesión");
             logout();
             $this->redirectToLogin('Tu sesión ha expirado.');
             return false;
@@ -202,7 +202,7 @@ class Router {
         $GLOBALS['currentUser'] = getAuthenticatedUser();
         $GLOBALS['csrfToken'] = generateCSRFToken();
         
-        error_log("Router: Middleware de autenticación exitoso para " . $GLOBALS['currentUser']['email']);
+        //error_log("Router: Middleware de autenticación exitoso para " . $GLOBALS['currentUser']['email']);
         return true;
     }
     
@@ -214,7 +214,7 @@ class Router {
             $_SESSION['login_message'] = $message;
         }
         
-        error_log("Router: Redirigiendo al login" . ($message ? " - $message" : ""));
+        //error_log("Router: Redirigiendo al login" . ($message ? " - $message" : ""));
         
         // Si es petición AJAX o API, responder JSON
         if ($this->isAjaxRequest() || $this->isApiRequest()) {

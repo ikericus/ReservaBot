@@ -16,9 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
-// Log para debugging (opcional, comentar en producción)
-// error_log('Datos recibidos en crear-reserva: ' . $input);
-
 // Verificar que los datos se decodificaron correctamente
 if (json_last_error() !== JSON_ERROR_NONE) {
     echo json_encode(['success' => false, 'message' => 'Datos JSON inválidos']);

@@ -199,8 +199,7 @@ include 'includes/header.php';
                 </div>
             </div>
             
-            <?php if ($isEditMode): ?>
-            <!-- Estado (solo en modo edición) -->
+            <!-- Estado -->
             <div>
                 <label for="estado" class="block text-sm font-medium text-gray-700 mb-1">
                     Estado
@@ -214,7 +213,6 @@ include 'includes/header.php';
                     <option value="confirmada" <?php echo $reserva['estado'] === 'confirmada' ? 'selected' : ''; ?>>Confirmada</option>
                 </select>
             </div>
-            <?php endif; ?>
         </div>
         
         <!-- Mensaje -->
