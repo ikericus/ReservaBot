@@ -212,7 +212,7 @@
                     
                     <div class="py-4 max-h-full overflow-y-auto">
                         <nav class="space-y-1 px-4">
-                            <a href="/" class="mobile-nav-item <?php echo $currentPage === 'dashboard' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
+                            <a href="/" class="mobile-nav-item <?php echo $currentPage === 'reservas' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
                                 <i class="ri-home-line mr-3 text-lg nav-icon"></i>
                                 Reservas
                             </a>
@@ -325,16 +325,17 @@
                                 <span class="text-gray-900 font-medium">
                                     <?php 
                                     $pageNames = [
-                                        'dashboard' => 'Reservas',
+                                        'reservas' => 'Reservas',
                                         'calendario' => 'Calendario',
                                         'clientes' => 'Clientes',
                                         'whatsapp' => 'WhatsApp',
                                         'autorespuestas' => 'Respuestas Automáticas',
                                         'mensajes' => 'Mensajes',
                                         'formularios' => 'Formularios',
-                                        'configuracion' => 'Configuración'
+                                        'configuracion' => 'Configuración',
+                                        'notificaciones' => 'Notificaciones'
                                     ];
-                                    echo $pageNames[$currentPage] ?? 'Dashboard';
+                                    echo $pageNames[$currentPage] ?? 'Reservas';
                                     ?>
                                 </span>
                             </nav>
@@ -342,7 +343,7 @@
                         
                         <div class="flex items-center space-x-4">
                             <!-- Búsqueda rápida -->
-                            <div class="relative hidden lg:block">
+                            <!-- <div class="relative hidden lg:block">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <i class="ri-search-line text-gray-400"></i>
                                 </div>
@@ -351,7 +352,7 @@
                                     placeholder="Buscar reservas, clientes..."
                                     class="block w-64 pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 text-sm transition-all"
                                 >
-                            </div>
+                            </div> -->
                             
                             <!-- Notificaciones -->
                             <a href="/notificaciones" class="relative p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all">

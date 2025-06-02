@@ -32,7 +32,6 @@ class Router {
         
         // Rutas protegidas        
         $this->addRoute('GET', '/',                 'reservas.php',         ['auth']);
-        $this->addRoute('GET', '/dashboard',        'dashboard.php',        ['auth']);
         $this->addRoute('GET', '/calendario',       'calendario.php',       ['auth']);
         $this->addRoute('GET', '/reservas',         'reservas.php',         ['auth']);
         $this->addRoute('GET', '/clientes',         'clientes.php',         ['auth']);

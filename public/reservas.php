@@ -238,7 +238,7 @@ include 'includes/header.php';
 
 <div class="flex justify-between items-center mb-6">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Reservas</h1>
         <p class="text-gray-600 mt-1">Bienvenido, <?php echo htmlspecialchars($currentUser['name']); ?></p>
     </div>
     <div class="text-right text-sm text-gray-500">

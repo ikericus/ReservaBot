@@ -22,16 +22,16 @@
         <nav class="flex-1 px-4 space-y-2">
             <!-- Sección principal -->
             <div class="space-y-1">
-                <a href="/" class="nav-item <?php echo $currentPage === 'dashboard' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
-                    <i class="ri-home-line nav-icon mr-4 h-5 w-5 <?php echo $currentPage === 'dashboard' ? 'text-purple-600' : 'text-gray-400'; ?>"></i>
+                <a href="/" class="nav-item <?php echo $currentPage === 'reservas' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
+                    <i class="ri-home-line nav-icon mr-4 h-5 w-5 <?php echo $currentPage === 'reservas' ? 'text-purple-600' : 'text-gray-400'; ?>"></i>
                     <span>Reservas</span>
-                    <?php if ($currentPage === 'dashboard'): ?>
+                    <?php if ($currentPage === 'reservas'): ?>
                         <div class="ml-auto w-2 h-2 bg-purple-600 rounded-full notification-badge"></div>
                     <?php endif; ?>
                 </a>
 
                 <a href="/calendario" class="nav-item <?php echo $currentPage === 'calendario' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
-                    <i class="ri-calendar-line nav-icon mr-4 h-5 w-5 <?php echo $currentPage === 'calendar' ? 'text-purple-600' : 'text-gray-400'; ?>"></i>
+                    <i class="ri-calendar-line nav-icon mr-4 h-5 w-5 <?php echo $currentPage === 'calendario' ? 'text-purple-600' : 'text-gray-400'; ?>"></i>
                     <span>Calendario</span>
                 </a>
 

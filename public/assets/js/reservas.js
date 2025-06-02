@@ -21,7 +21,7 @@ function showTab(tabName) {
 
 // Funciones para aceptar/rechazar reservas
 document.addEventListener('DOMContentLoaded', function() {
-    // Referencias a elementos del DOM - Solo para dashboard/reservas
+    // Referencias a elementos del DOM - Solo para reservas
     const pendientesTab = document.getElementById('pendientesTab');
     const confirmadasTab = document.getElementById('confirmadasTab');
     const pendientesContent = document.getElementById('pendientesContent');
