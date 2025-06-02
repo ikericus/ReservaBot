@@ -1,3 +1,95 @@
+<?php
+// Obtener estadísticas en tiempo real
+$user = getAuthenticatedUser();
+$userId = $user['id'];
+
+// Inicializar estadísticas
+$estadisticas = [
+    'hoy_confirmadas' => 0,
+    'hoy_pendientes' => 0,
+    'hoy_total' => 0,
+    'semana_total' => 0,
+    'mes_total' => 0,
+    'proxima_reserva' => null
+];
+
+try {
+    $pdo = getPDO();
+    
+    // Reservas confirmadas de hoy
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM reservas 
+        WHERE usuario_id = ? 
+        AND DATE(fecha) = CURDATE() 
+        AND estado = 'confirmada'
+    ");
+    $stmt->execute([$userId]);
+    $estadisticas['hoy_confirmadas'] = (int)$stmt->fetchColumn();
+    
+    // Reservas pendientes de hoy
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM reservas 
+        WHERE usuario_id = ? 
+        AND DATE(fecha) = CURDATE() 
+        AND estado = 'pendiente'
+    ");
+    $stmt->execute([$userId]);
+    $estadisticas['hoy_pendientes'] = (int)$stmt->fetchColumn();
+    
+    // Total de hoy
+    $estadisticas['hoy_total'] = $estadisticas['hoy_confirmadas'] + $estadisticas['hoy_pendientes'];
+    
+    // Reservas de esta semana
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM reservas 
+        WHERE usuario_id = ? 
+        AND YEARWEEK(fecha, 1) = YEARWEEK(CURDATE(), 1)
+        AND estado IN ('confirmada', 'pendiente')
+    ");
+    $stmt->execute([$userId]);
+    $estadisticas['semana_total'] = (int)$stmt->fetchColumn();
+    
+    // Reservas de este mes
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM reservas 
+        WHERE usuario_id = ? 
+        AND YEAR(fecha) = YEAR(CURDATE()) 
+        AND MONTH(fecha) = MONTH(CURDATE())
+        AND estado IN ('confirmada', 'pendiente')
+    ");
+    $stmt->execute([$userId]);
+    $estadisticas['mes_total'] = (int)$stmt->fetchColumn();
+    
+    // Próxima reserva confirmada
+    $stmt = $pdo->prepare("
+        SELECT nombre, fecha, hora 
+        FROM reservas 
+        WHERE usuario_id = ? 
+        AND CONCAT(fecha, ' ', hora) > NOW()
+        AND estado = 'confirmada'
+        ORDER BY fecha, hora 
+        LIMIT 1
+    ");
+    $stmt->execute([$userId]);
+    $proximaReserva = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($proximaReserva) {
+        $estadisticas['proxima_reserva'] = [
+            'nombre' => $proximaReserva['nombre'],
+            'fecha' => $proximaReserva['fecha'],
+            'hora' => substr($proximaReserva['hora'], 0, 5)
+        ];
+    }
+    
+} catch (PDOException $e) {
+    error_log('Error obteniendo estadísticas del sidebar: ' . $e->getMessage());
+}
+?>
+
 <!-- Sidebar Mejorado -->
 <div class="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 sidebar-glass shadow-2xl">
     <!-- Header del sidebar con gradiente -->
@@ -27,6 +119,11 @@
                     <span>Reservas</span>
                     <?php if ($currentPage === 'reservas'): ?>
                         <div class="ml-auto w-2 h-2 bg-purple-600 rounded-full notification-badge"></div>
+                    <?php endif; ?>
+                    <?php if ($estadisticas['hoy_pendientes'] > 0): ?>
+                        <span class="ml-auto bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                            <?php echo $estadisticas['hoy_pendientes']; ?>
+                        </span>
                     <?php endif; ?>
                 </a>
 
@@ -98,14 +195,68 @@
             </div>
         </nav>
 
-        <!-- Tarjeta de estadísticas rápidas -->
-        <div class="mx-4 mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
-            <div class="flex items-center mb-2">
-                <i class="ri-calendar-check-line text-blue-600 mr-2"></i>
-                <span class="text-sm font-medium text-gray-700">Hoy</span>
+        <!-- Tarjetas de estadísticas mejoradas -->
+        <div class="mx-4 mt-6 space-y-3">
+            <!-- Estadísticas de hoy -->
+            <div class="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center">
+                        <i class="ri-calendar-check-line text-blue-600 mr-2"></i>
+                        <span class="text-sm font-medium text-gray-700">Hoy</span>
+                    </div>
+                    <?php if ($estadisticas['hoy_pendientes'] > 0): ?>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <?php echo $estadisticas['hoy_pendientes']; ?> pendientes
+                        </span>
+                    <?php endif; ?>
+                </div>
+                <div class="text-2xl font-bold text-gray-900"><?php echo $estadisticas['hoy_confirmadas']; ?></div>
+                <div class="text-xs text-gray-500">
+                    <?php if ($estadisticas['hoy_total'] > $estadisticas['hoy_confirmadas']): ?>
+                        de <?php echo $estadisticas['hoy_total']; ?> reservas totales
+                    <?php else: ?>
+                        reservas confirmadas
+                    <?php endif; ?>
+                </div>
             </div>
-            <div class="text-2xl font-bold text-gray-900">8</div>
-            <div class="text-xs text-gray-500">reservas confirmadas</div>
+
+            <!-- Próxima reserva -->
+            <?php if ($estadisticas['proxima_reserva']): ?>
+                <div class="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
+                    <div class="flex items-center mb-2">
+                        <i class="ri-time-line text-green-600 mr-2"></i>
+                        <span class="text-sm font-medium text-gray-700">Próxima</span>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-900">
+                        <?php echo htmlspecialchars($estadisticas['proxima_reserva']['nombre']); ?>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        <?php 
+                        $fecha = date('d/m', strtotime($estadisticas['proxima_reserva']['fecha']));
+                        $hora = $estadisticas['proxima_reserva']['hora'];
+                        echo "$fecha a las $hora";
+                        ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Resumen semanal/mensual (compacto) -->
+            <div class="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+                <div class="flex items-center mb-2">
+                    <i class="ri-bar-chart-line text-purple-600 mr-2"></i>
+                    <span class="text-sm font-medium text-gray-700">Resumen</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <div class="font-semibold text-gray-900"><?php echo $estadisticas['semana_total']; ?></div>
+                        <div class="text-gray-500">Esta semana</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900"><?php echo $estadisticas['mes_total']; ?></div>
+                        <div class="text-gray-500">Este mes</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
