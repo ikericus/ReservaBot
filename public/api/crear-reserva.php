@@ -3,8 +3,8 @@
 header('Content-Type: application/json');
 
 // Incluir configuración y funciones
-require_once '../includes/db-config.php';
-require_once '../includes/functions.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Verificar método de solicitud
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -54,7 +54,7 @@ if ($data['fecha'] < date('Y-m-d')) {
 
 try {
     // Verificar reservas existentes usando CAST para evitar problemas de collation
-    $stmt = $pdo->prepare('
+    $stmt = getPDO()->prepare('
         SELECT COUNT(*) FROM reservas 
         WHERE CAST(fecha AS CHAR) = CAST(? AS CHAR) 
         AND TIME_FORMAT(hora, "%H:%i") = CAST(? AS CHAR) 
@@ -70,7 +70,7 @@ try {
     
     // Preparar la consulta de inserción
     $sql = 'INSERT INTO reservas (nombre, telefono, fecha, hora, mensaje, estado) VALUES (?, ?, ?, ?, ?, ?)';
-    $stmt = $pdo->prepare($sql);
+    $stmt = getPDO()->prepare($sql);
     
     // Establecer el estado predeterminado
     $estado = 'pendiente';
@@ -94,7 +94,7 @@ try {
     ]);
     
     if ($result) {
-        $id = $pdo->lastInsertId();
+        $id = getPDO()->lastInsertId();
         echo json_encode([
             'success' => true, 
             'id' => $id,

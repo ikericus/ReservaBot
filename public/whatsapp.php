@@ -15,7 +15,7 @@ $isConnected = $whatsappStatus['status'] === 'connected';
 
 // Obtener configuraciones de mensajes de WhatsApp
 try {
-    $stmt = $pdo->query("SELECT * FROM configuraciones WHERE clave LIKE 'whatsapp_%'");
+    $stmt = getPDO()->query("SELECT * FROM configuraciones WHERE clave LIKE 'whatsapp_%'");
     $whatsappConfig = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 } catch (\PDOException $e) {
     $whatsappConfig = [];

@@ -3,8 +3,8 @@
 header('Content-Type: application/json');
 
 // Incluir configuración y funciones
-require_once '../includes/db-config.php';
-require_once '../includes/functions.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Verificar método de solicitud
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -57,7 +57,7 @@ if ($data['fecha'] < date('Y-m-d')) {
 
 try {
     // Verificar que no exista ya una reserva para esa fecha y hora
-    $stmt = $pdo->prepare('SELECT COUNT(*) FROM reservas WHERE fecha = ? AND TIME_FORMAT(hora, "%H:%i") = ? AND estado IN ("pendiente", "confirmada")');
+    $stmt = getPDO()->prepare('SELECT COUNT(*) FROM reservas WHERE fecha = ? AND TIME_FORMAT(hora, "%H:%i") = ? AND estado IN ("pendiente", "confirmada")');
     $stmt->execute([$data['fecha'], $data['hora']]);
     $existeReserva = $stmt->fetchColumn();
     
@@ -68,7 +68,7 @@ try {
     
     // Preparar la consulta
     $sql = 'INSERT INTO reservas (nombre, telefono, fecha, hora, mensaje, estado, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())';
-    $stmt = $pdo->prepare($sql);
+    $stmt = getPDO()->prepare($sql);
     
     // Establecer el estado predeterminado si no se proporciona
     $estado = isset($data['estado']) ? $data['estado'] : 'pendiente';
@@ -92,7 +92,7 @@ try {
     ]);
     
     if ($result) {
-        $id = $pdo->lastInsertId();
+        $id = getPDO()->lastInsertId();
         echo json_encode([
             'success' => true, 
             'id' => $id,

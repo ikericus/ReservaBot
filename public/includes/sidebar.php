@@ -13,11 +13,9 @@ $estadisticas = [
     'proxima_reserva' => null
 ];
 
-try {
-    $pdo = getPDO();
-    
+try {    
     // Reservas confirmadas de hoy
-    $stmt = $pdo->prepare("
+    $stmt = getPDO()->prepare("
         SELECT COUNT(*) 
         FROM reservas 
         WHERE usuario_id = ? 
@@ -28,7 +26,7 @@ try {
     $estadisticas['hoy_confirmadas'] = (int)$stmt->fetchColumn();
     
     // Reservas pendientes de hoy
-    $stmt = $pdo->prepare("
+    $stmt = getPDO()->prepare("
         SELECT COUNT(*) 
         FROM reservas 
         WHERE usuario_id = ? 
@@ -42,7 +40,7 @@ try {
     $estadisticas['hoy_total'] = $estadisticas['hoy_confirmadas'] + $estadisticas['hoy_pendientes'];
     
     // Reservas de esta semana
-    $stmt = $pdo->prepare("
+    $stmt = getPDO()->prepare("
         SELECT COUNT(*) 
         FROM reservas 
         WHERE usuario_id = ? 
@@ -53,7 +51,7 @@ try {
     $estadisticas['semana_total'] = (int)$stmt->fetchColumn();
     
     // Reservas de este mes
-    $stmt = $pdo->prepare("
+    $stmt = getPDO()->prepare("
         SELECT COUNT(*) 
         FROM reservas 
         WHERE usuario_id = ? 
@@ -65,7 +63,7 @@ try {
     $estadisticas['mes_total'] = (int)$stmt->fetchColumn();
     
     // Próxima reserva confirmada
-    $stmt = $pdo->prepare("
+    $stmt = getPDO()->prepare("
         SELECT nombre, fecha, hora 
         FROM reservas 
         WHERE usuario_id = ? 

@@ -55,12 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (empty($errors)) {
-        try {
-            $pdo = getPDO();
-            
+        try {            
             // Si hay cambio de contraseña, verificar la actual
             if (!empty($new_password)) {
-                $stmt = $pdo->prepare("SELECT password_hash FROM usuarios WHERE id = ?");
+                $stmt = getPDO()->prepare("SELECT password_hash FROM usuarios WHERE id = ?");
                 $stmt->execute([$usuario['id']]);
                 $currentHash = $stmt->fetchColumn();
                 
@@ -71,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (empty($errors)) {
                 // Verificar si el email ya existe (para otro usuario)
-                $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ? AND id != ?");
+                $stmt = getPDO()->prepare("SELECT id FROM usuarios WHERE email = ? AND id != ?");
                 $stmt->execute([$email, $usuario['id']]);
                 if ($stmt->fetch()) {
                     $errors[] = 'Este email ya está siendo usado por otro usuario';
@@ -79,10 +77,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Actualizar datos del usuario
                     if (!empty($new_password)) {
                         $passwordHash = password_hash($new_password, PASSWORD_DEFAULT);
-                        $stmt = $pdo->prepare("UPDATE usuarios SET nombre = ?, email = ?, telefono = ?, negocio = ?, password_hash = ?, updated_at = NOW() WHERE id = ?");
+                        $stmt = getPDO()->prepare("UPDATE usuarios SET nombre = ?, email = ?, telefono = ?, negocio = ?, password_hash = ?, updated_at = NOW() WHERE id = ?");
                         $stmt->execute([$nombre, $email, $telefono, $negocio, $passwordHash, $usuario['id']]);
                     } else {
-                        $stmt = $pdo->prepare("UPDATE usuarios SET nombre = ?, email = ?, telefono = ?, negocio = ?, updated_at = NOW() WHERE id = ?");
+                        $stmt = getPDO()->prepare("UPDATE usuarios SET nombre = ?, email = ?, telefono = ?, negocio = ?, updated_at = NOW() WHERE id = ?");
                         $stmt->execute([$nombre, $email, $telefono, $negocio, $usuario['id']]);
                     }
                     

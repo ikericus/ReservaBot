@@ -8,8 +8,8 @@
 header('Content-Type: application/json');
 
 // Incluir configuración y funciones
-require_once '../includes/db-config.php';
-require_once '../includes/functions.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Verificar método de solicitud
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -42,7 +42,7 @@ if ($fecha < date('Y-m-d')) {
 
 try {
     // Obtener configuración de horarios
-    $stmt = $pdo->prepare("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'horario_%'");
+    $stmt = getPDO()->prepare("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'horario_%'");
     $stmt->execute();
     $configHorarios = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     
@@ -94,7 +94,7 @@ try {
     }
     
     // Obtener intervalo de reservas
-    $stmt = $pdo->prepare("SELECT valor FROM configuraciones WHERE clave = 'intervalo_reservas'");
+    $stmt = getPDO()->prepare("SELECT valor FROM configuraciones WHERE clave = 'intervalo_reservas'");
     $stmt->execute();
     $intervalo = intval($stmt->fetchColumn() ?: 30); // Por defecto 30 minutos
     
@@ -137,7 +137,7 @@ try {
     sort($horasDisponibles);
     
     // Obtener horas ya reservadas para esta fecha
-    $stmt = $pdo->prepare("SELECT TIME_FORMAT(hora, '%H:%i') as hora_reservada 
+    $stmt = getPDO()->prepare("SELECT TIME_FORMAT(hora, '%H:%i') as hora_reservada 
                            FROM reservas 
                            WHERE CAST(fecha AS CHAR) = CAST(? AS CHAR) 
                            AND estado IN ('pendiente', 'confirmada')");

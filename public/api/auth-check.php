@@ -5,8 +5,8 @@
  * API para verificar estado de autenticación (para AJAX)
  */
 
-require_once '../includes/db-config.php';
-require_once '../includes/auth.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');

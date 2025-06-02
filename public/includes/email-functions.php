@@ -10,14 +10,15 @@ use PHPMailer\PHPMailer\Exception;
 
 // Instalar PHPMailer con: composer require phpmailer/phpmailer
 
+require_once '../includes/db-config.php';
+
 /**
  * Configuración de email desde base de datos
  */
 function getEmailConfig() {
-    global $pdo;
     
     try {
-        $stmt = $pdo->prepare("
+        $stmt = getPDO()->prepare("
             SELECT clave, valor FROM configuraciones 
             WHERE clave IN ('email_smtp_host', 'email_smtp_port', 'email_smtp_user', 'email_smtp_pass', 'email_from_address', 'email_from_name')
         ");
@@ -228,10 +229,9 @@ function getVerificationEmailTemplate($verifyUrl, $email) {
  * Configurar email desde panel de administración
  */
 function updateEmailConfig($config) {
-    global $pdo;
     
     try {
-        $stmt = $pdo->prepare("
+        $stmt = getPDO()->prepare("
             INSERT INTO configuraciones (clave, valor, updated_at) 
             VALUES (?, ?, NOW())
             ON DUPLICATE KEY UPDATE valor = VALUES(valor), updated_at = NOW()

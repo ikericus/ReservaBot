@@ -3,8 +3,8 @@
 header('Content-Type: application/json');
 
 // Incluir configuración y funciones
-require_once '../includes/db-config.php';
-require_once '../includes/functions.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Obtener los datos enviados
 $data = json_decode(file_get_contents('php://input'), true);
@@ -23,7 +23,7 @@ if (!in_array($data['estado'], ['pendiente', 'confirmada'])) {
 
 try {
     // Preparar la consulta
-    $stmt = $pdo->prepare('UPDATE reservas SET estado = ? WHERE id = ?');
+    $stmt = getPDO()->prepare('UPDATE reservas SET estado = ? WHERE id = ?');
     
     // Ejecutar la consulta
     $result = $stmt->execute([$data['estado'], $data['id']]);

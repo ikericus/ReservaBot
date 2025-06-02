@@ -19,7 +19,7 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
 
 // Obtener reservas del día
 try {
-    $stmt = $pdo->prepare('SELECT * FROM reservas WHERE fecha = ? ORDER BY hora');
+    $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE fecha = ? ORDER BY hora');
     $stmt->execute([$fecha]);
     $reservasDelDia = $stmt->fetchAll();
 } catch (\PDOException $e) {

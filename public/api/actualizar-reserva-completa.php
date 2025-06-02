@@ -3,8 +3,8 @@
 header('Content-Type: application/json');
 
 // Incluir configuración y funciones
-require_once '../includes/db-config.php';
-require_once '../includes/functions.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Obtener los datos enviados
 $data = json_decode(file_get_contents('php://input'), true);
@@ -36,7 +36,7 @@ if (!preg_match('/^\d{2}:\d{2}$/', $data['hora'])) {
 try {
     // Preparar la consulta
     $sql = 'UPDATE reservas SET nombre = ?, telefono = ?, fecha = ?, hora = ?, mensaje = ?, estado = ? WHERE id = ?';
-    $stmt = $pdo->prepare($sql);
+    $stmt = getPDO()->prepare($sql);
     
     // Establecer el estado predeterminado si no se proporciona
     $estado = isset($data['estado']) ? $data['estado'] : 'pendiente';

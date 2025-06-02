@@ -12,7 +12,7 @@ if (empty($slug)) {
     $error = 'Enlace no válido';
 } else {
     try {
-        $stmt = $pdo->prepare("SELECT * FROM formularios_publicos WHERE slug = ? AND activo = 1");
+        $stmt = getPDO()->prepare("SELECT * FROM formularios_publicos WHERE slug = ? AND activo = 1");
         $stmt->execute([$slug]);
         $formulario = $stmt->fetch();
         
@@ -30,7 +30,7 @@ $diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
 
 if ($formulario) {
     try {
-        $stmt = $pdo->prepare("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'horario_%' OR clave = 'intervalo_reservas' OR clave = 'modo_aceptacion'");
+        $stmt = getPDO()->prepare("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'horario_%' OR clave = 'intervalo_reservas' OR clave = 'modo_aceptacion'");
         $stmt->execute();
         $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
         

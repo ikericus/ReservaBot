@@ -236,17 +236,6 @@ include 'includes/header.php';
 }
 </style>
 
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Reservas</h1>
-        <p class="text-gray-600 mt-1">Bienvenido, <?php echo htmlspecialchars($currentUser['name']); ?></p>
-    </div>
-    <div class="text-right text-sm text-gray-500">
-        <p><?php echo htmlspecialchars($currentUser['negocio']); ?></p>
-        <p>Plan: <span class="font-medium text-blue-600"><?php echo ucfirst($currentUser['plan']); ?></span></p>
-    </div>
-</div>
-
 <!-- Tabs de navegación -->
 <div class="border-b border-gray-200">
     <nav class="-mb-px flex space-x-8">

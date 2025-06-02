@@ -13,7 +13,7 @@ $tokenValid = false;
 // Verificar token si se proporciona
 if (!empty($token)) {
     try {
-        $stmt = $pdo->prepare("
+        $stmt = getPDO()->prepare("
             SELECT id, email, nombre FROM usuarios 
             WHERE reset_token = ? AND reset_token_expiry > NOW()
         ");
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenValid) {
         try {
             $passwordHash = password_hash($password, PASSWORD_DEFAULT);
             
-            $stmt = $pdo->prepare("
+            $stmt = getPDO()->prepare("
                 UPDATE usuarios 
                 SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL, updated_at = NOW()
                 WHERE id = ?
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($token)) {
         $error = 'El formato del email no es válido';
     } else {
         try {
-            $stmt = $pdo->prepare("SELECT id, nombre FROM usuarios WHERE email = ? AND activo = 1");
+            $stmt = getPDO()->prepare("SELECT id, nombre FROM usuarios WHERE email = ? AND activo = 1");
             $stmt->execute([$email]);
             $user = $stmt->fetch();
             
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($token)) {
                 $resetToken = bin2hex(random_bytes(32));
                 $expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
                 
-                $stmt = $pdo->prepare("
+                $stmt = getPDO()->prepare("
                     UPDATE usuarios 
                     SET reset_token = ?, reset_token_expiry = ?, updated_at = NOW()
                     WHERE id = ?

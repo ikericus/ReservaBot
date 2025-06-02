@@ -55,12 +55,12 @@ $params[] = $perPage;
 // Ejecutar consultas
 try {
     // Contar total de mensajes filtrados
-    $stmtCount = $pdo->prepare($countQuery);
+    $stmtCount = getPDO()->prepare($countQuery);
     $stmtCount->execute(array_slice($params, 0, count($params) - 2)); // Sin límites
     $totalMensajes = $stmtCount->fetchColumn();
     
     // Obtener mensajes paginados
-    $stmt = $pdo->prepare($query);
+    $stmt = getPDO()->prepare($query);
     $stmt->execute($params);
     $mensajes = $stmt->fetchAll();
     
@@ -68,7 +68,7 @@ try {
     $totalPages = ceil($totalMensajes / $perPage);
     
     // Obtener chats disponibles para filtrado
-    $stmtChats = $pdo->query('SELECT DISTINCT chat_id, nombre FROM chats_whatsapp ORDER BY nombre');
+    $stmtChats = getPDO()->query('SELECT DISTINCT chat_id, nombre FROM chats_whatsapp ORDER BY nombre');
     $chats = $stmtChats->fetchAll();
 } catch (\PDOException $e) {
     $mensajes = [];

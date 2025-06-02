@@ -3,6 +3,8 @@
  * Funciones relacionadas con WhatsApp - VERSIÓN CORREGIDA
  */
 
+require_once '../includes/db-config.php';
+
 /**
  * Verifica el estado de conexión de WhatsApp con parámetros opcionales
  * 
@@ -11,11 +13,10 @@
  * @return array Estado actual de la conexión
  */
 function checkWhatsAppStatus($serverUrl = null, $apiKey = null) {
-    global $pdo;
-    
+        
     try {
         // Obtener configuración del servidor WhatsApp
-        $stmt = $pdo->query("SELECT * FROM configuraciones WHERE clave IN ('whatsapp_server_url', 'whatsapp_status', 'whatsapp_last_activity', 'whatsapp_api_key')");
+        $stmt = getPDO()->query("SELECT * FROM configuraciones WHERE clave IN ('whatsapp_server_url', 'whatsapp_status', 'whatsapp_last_activity', 'whatsapp_api_key')");
         $config = [];
         
         while ($row = $stmt->fetch()) {
@@ -67,11 +68,10 @@ function checkWhatsAppStatus($serverUrl = null, $apiKey = null) {
  * @return array Estado actual de la conexión
  */
 function getWhatsAppConnectionStatus() {
-    global $pdo;
     
     try {
         // Obtener configuración del servidor WhatsApp
-        $stmt = $pdo->query("SELECT * FROM configuraciones WHERE clave IN ('whatsapp_server_url', 'whatsapp_status', 'whatsapp_last_activity')");
+        $stmt = getPDO()->query("SELECT * FROM configuraciones WHERE clave IN ('whatsapp_server_url', 'whatsapp_status', 'whatsapp_last_activity')");
         $config = [];
         
         while ($row = $stmt->fetch()) {
@@ -95,7 +95,7 @@ function getWhatsAppConnectionStatus() {
                     
                     // Actualizar estado si ha cambiado
                     if ($newStatus !== $currentStatus) {
-                        $stmt = $pdo->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', ?) 
+                        $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', ?) 
                                               ON DUPLICATE KEY UPDATE valor = ?");
                         $stmt->execute([$newStatus, $newStatus]);
                         
@@ -106,7 +106,7 @@ function getWhatsAppConnectionStatus() {
         }
         
         // Obtener configuración de notificaciones
-        $stmt = $pdo->query("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'whatsapp_notify_%'");
+        $stmt = getPDO()->query("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'whatsapp_notify_%'");
         $settings = [];
         
         while ($row = $stmt->fetch()) {
@@ -150,9 +150,7 @@ function getWhatsAppConnectionStatus() {
  * @param array $data Datos del evento
  * @return array Resultado del proceso
  */
-function handleQRUpdate($data) {
-    global $pdo;
-    
+function handleQRUpdate($data) {    
     try {
         $qrCode = $data['qrCode'] ?? '';
         
@@ -174,7 +172,7 @@ function handleQRUpdate($data) {
             file_put_contents($qrCodePath, $imageData);
             
             // Actualizar estado a 'qr_ready'
-            $stmt = $pdo->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'qr_ready') 
+            $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'qr_ready') 
                                   ON DUPLICATE KEY UPDATE valor = 'qr_ready'");
             $stmt->execute();
             
@@ -194,11 +192,10 @@ function handleQRUpdate($data) {
  * @return array Datos del estado actual
  */
 function getWhatsAppStatus() {
-    global $pdo;
     
     try {
         // Obtener configuración del servidor WhatsApp
-        $stmt = $pdo->query("SELECT * FROM configuraciones WHERE clave IN ('whatsapp_server_url', 'whatsapp_status', 'whatsapp_last_activity')");
+        $stmt = getPDO()->query("SELECT * FROM configuraciones WHERE clave IN ('whatsapp_server_url', 'whatsapp_status', 'whatsapp_last_activity')");
         $config = [];
         
         while ($row = $stmt->fetch()) {
@@ -223,7 +220,7 @@ function getWhatsAppStatus() {
         }
         
         // Obtener configuración de notificaciones
-        $stmt = $pdo->query("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'whatsapp_notify_%'");
+        $stmt = getPDO()->query("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'whatsapp_notify_%'");
         $settings = [];
         
         while ($row = $stmt->fetch()) {
@@ -254,11 +251,10 @@ function getWhatsAppStatus() {
  * @return array Resultado del proceso
  */
 function connectWhatsApp() {
-    global $pdo;
     
     try {
         // Obtener URL del servidor
-        $stmt = $pdo->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_server_url'");
+        $stmt = getPDO()->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_server_url'");
         $serverUrl = $stmt->fetchColumn() ?: 'http://localhost:3000';
         
         // Realizar petición al servidor Node.js
@@ -266,7 +262,7 @@ function connectWhatsApp() {
         
         if ($response === false) {
             // Si no se puede conectar, simular proceso para desarrollo
-            $stmt = $pdo->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'qr_ready') 
+            $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'qr_ready') 
                                   ON DUPLICATE KEY UPDATE valor = 'qr_ready'");
             $stmt->execute();
             
@@ -280,7 +276,7 @@ function connectWhatsApp() {
         }
         
         // Actualizar estado en la base de datos
-        $stmt = $pdo->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'connecting') 
+        $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'connecting') 
                               ON DUPLICATE KEY UPDATE valor = 'connecting'");
         $stmt->execute();
         
@@ -303,7 +299,7 @@ function connectWhatsApp() {
                 file_put_contents($qrCodePath, $imageData);
                 
                 // Actualizar estado a 'qr_ready'
-                $stmt = $pdo->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'qr_ready') 
+                $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'qr_ready') 
                                       ON DUPLICATE KEY UPDATE valor = 'qr_ready'");
                 $stmt->execute();
                 
@@ -316,7 +312,7 @@ function connectWhatsApp() {
         error_log('Error al conectar WhatsApp: ' . $e->getMessage());
         
         // Actualizar estado a 'error' en la base de datos
-        $stmt = $pdo->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'error') 
+        $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'error') 
                               ON DUPLICATE KEY UPDATE valor = 'error'");
         $stmt->execute();
         
@@ -330,18 +326,17 @@ function connectWhatsApp() {
  * @return array Resultado del proceso
  */
 function disconnectWhatsApp() {
-    global $pdo;
     
     try {
         // Obtener URL del servidor
-        $stmt = $pdo->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_server_url'");
+        $stmt = getPDO()->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_server_url'");
         $serverUrl = $stmt->fetchColumn() ?: 'http://localhost:3000';
         
         // Realizar petición al servidor Node.js
         $response = @file_get_contents($serverUrl . '/stop');
         
         // Actualizar estado en la base de datos (independientemente de la respuesta)
-        $stmt = $pdo->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'disconnected') 
+        $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'disconnected') 
                               ON DUPLICATE KEY UPDATE valor = 'disconnected'");
         $stmt->execute();
         
@@ -366,7 +361,6 @@ function disconnectWhatsApp() {
  * @return array Resultado del proceso
  */
 function updateWhatsAppNotificationSetting($setting, $enabled) {
-    global $pdo;
     
     try {
         // Validar configuración
@@ -377,7 +371,7 @@ function updateWhatsAppNotificationSetting($setting, $enabled) {
         }
         
         // Actualizar en la base de datos
-        $stmt = $pdo->prepare("INSERT INTO configuraciones (clave, valor) VALUES (?, ?) 
+        $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES (?, ?) 
                               ON DUPLICATE KEY UPDATE valor = ?");
         $key = 'whatsapp_notify_' . $setting;
         $value = $enabled ? '1' : '0';
@@ -400,18 +394,17 @@ function updateWhatsAppNotificationSetting($setting, $enabled) {
  * @return array Resultado del envío
  */
 function sendWhatsAppMessage($to, $message, $isAuto = false) {
-    global $pdo;
     
     try {
         // Formatear número si es necesario
         $to = formatWhatsappNumber($to);
         
         // Obtener URL del servidor
-        $stmt = $pdo->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_server_url'");
+        $stmt = getPDO()->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_server_url'");
         $serverUrl = $stmt->fetchColumn() ?: 'http://localhost:3000';
         
         // Comprobar estado de conexión
-        $stmt = $pdo->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_status'");
+        $stmt = getPDO()->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_status'");
         $status = $stmt->fetchColumn();
         
         if ($status !== 'connected') {
@@ -466,7 +459,6 @@ function sendWhatsAppMessage($to, $message, $isAuto = false) {
  * @return array Resultado del procesamiento
  */
 function processIncomingWhatsAppMessage($messageData) {
-    global $pdo;
     
     try {
         // Extraer datos del mensaje
@@ -481,7 +473,7 @@ function processIncomingWhatsAppMessage($messageData) {
         }
         
         // Buscar posibles respuestas automáticas
-        $stmtResponses = $pdo->query("SELECT * FROM autorespuestas_whatsapp WHERE is_active = 1 ORDER BY created_at");
+        $stmtResponses = getPDO()->query("SELECT * FROM autorespuestas_whatsapp WHERE is_active = 1 ORDER BY created_at");
         $autoResponses = $stmtResponses->fetchAll();
         
         $matchedResponse = null;

@@ -1,12 +1,13 @@
-
-// ===== ARCHIVO: public/login-handler.php =====
 <?php
+
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
+
+
 /**
  * Procesamiento del formulario de login
  */
 
-require_once '../includes/db-config.php';
-require_once '../includes/auth.php';
 
 // Solo procesar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

@@ -1,9 +1,9 @@
 <?php
-// ===== ARCHIVO: public/api/login.php =====
-<?php
+
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
+
 header('Content-Type: application/json');
-require_once '../includes/db-config.php';
-require_once '../includes/auth.php';
 
 // Solo permitir POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

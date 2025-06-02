@@ -458,7 +458,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Enviar la solicitud
-            fetch('api/actualizar-configuracion.php', {
+            fetch('api/actualizar-configuracion', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

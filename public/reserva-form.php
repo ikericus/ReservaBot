@@ -17,7 +17,7 @@ $isEditMode = $id > 0;
 $reserva = null;
 if ($isEditMode) {
     try {
-        $stmt = $pdo->prepare('SELECT * FROM reservas WHERE id = ?');
+        $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE id = ?');
         $stmt->execute([$id]);
         $reserva = $stmt->fetch();
         

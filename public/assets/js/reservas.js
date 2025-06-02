@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = this.getAttribute('data-id');
             
             if (confirm('¿Estás seguro de eliminar esta reserva?')) {
-                fetch('api/eliminar-reserva.php', {
+                fetch('api/eliminar-reserva', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

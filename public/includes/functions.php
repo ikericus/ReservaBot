@@ -1,5 +1,7 @@
 <?php
 
+require_once 'db-config.php';
+
 /**
  * Obtiene la URL base del sitio web
  *
@@ -106,12 +108,12 @@ function generarHorasDisponibles($ventanas, $intervalo = 30) {
  * Obtiene la información de horarios para un día específico
  *
  * @param string $dia Día de la semana (lun, mar, mie, etc.)
- * @param PDO $pdo Conexión a la base de datos
+ * @param PDO getPDO() Conexión a la base de datos
  * @return array Array con información del horario del día
  */
-function getHorarioDia($dia, $pdo) {
+function getHorarioDia($dia) {
     try {
-        $stmt = $pdo->prepare("SELECT valor FROM configuraciones WHERE clave = ?");
+        $stmt = getPDO()->prepare("SELECT valor FROM configuraciones WHERE clave = ?");
         $stmt->execute(["horario_{$dia}"]);
         $horarioConfig = $stmt->fetchColumn();
         
@@ -137,10 +139,10 @@ function getHorarioDia($dia, $pdo) {
  *
  * @param string $fecha Fecha en formato Y-m-d
  * @param string $hora Hora en formato H:i
- * @param PDO $pdo Conexión a la base de datos
+ * @param PDO getPDO() Conexión a la base de datos
  * @return bool True si está disponible
  */
-function horaDisponible($fecha, $hora, $pdo) {
+function horaDisponible($fecha, $hora) {
     // Obtener día de la semana
     $diasMap = [
         1 => 'lun', 2 => 'mar', 3 => 'mie', 4 => 'jue', 
@@ -150,7 +152,7 @@ function horaDisponible($fecha, $hora, $pdo) {
     $dia = $diasMap[$diaSemana];
     
     // Obtener configuración del día
-    $horarioDia = getHorarioDia($dia, $pdo);
+    $horarioDia = getHorarioDia($dia);
     
     // Verificar si el día está activo
     if (!$horarioDia['activo']) {
@@ -164,7 +166,7 @@ function horaDisponible($fecha, $hora, $pdo) {
     
     // Verificar si ya hay una reserva para esa fecha y hora
     try {
-        $stmt = $pdo->prepare('SELECT COUNT(*) FROM reservas WHERE fecha = ? AND TIME_FORMAT(hora, "%H:%i") = ? AND estado IN ("pendiente", "confirmada")');
+        $stmt = getPDO()->prepare('SELECT COUNT(*) FROM reservas WHERE fecha = ? AND TIME_FORMAT(hora, "%H:%i") = ? AND estado IN ("pendiente", "confirmada")');
         $stmt->execute([$fecha, $hora]);
         $existeReserva = $stmt->fetchColumn();
         
@@ -200,33 +202,29 @@ function getResumenVentanas($ventanas) {
 
 // Función para obtener todas las reservas
 function getReservas() {
-    global $pdo;
-    $stmt = $pdo->query('SELECT * FROM reservas ORDER BY fecha, hora');
+    $stmt = getPDO()->query('SELECT * FROM reservas ORDER BY fecha, hora');
     return $stmt->fetchAll();
 }
 
 // Función para obtener reservas por fecha
 function getReservasByFecha($fecha) {
-    global $pdo;
-    $stmt = $pdo->prepare('SELECT * FROM reservas WHERE fecha = ? ORDER BY hora');
+    $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE fecha = ? ORDER BY hora');
     $stmt->execute([$fecha]);
     return $stmt->fetchAll();
 }
 
 // Función para obtener una reserva por ID
 function getReservaById($id) {
-    global $pdo;
-    $stmt = $pdo->prepare('SELECT * FROM reservas WHERE id = ?');
+    $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE id = ?');
     $stmt->execute([$id]);
     return $stmt->fetch();
 }
 
 // Función para crear una nueva reserva
 function createReserva($data) {
-    global $pdo;
     $sql = 'INSERT INTO reservas (nombre, telefono, fecha, hora, mensaje, estado) 
             VALUES (?, ?, ?, ?, ?, ?)';
-    $stmt = $pdo->prepare($sql);
+    $stmt = getPDO()->prepare($sql);
     $stmt->execute([
         $data['nombre'],
         $data['telefono'],
@@ -235,12 +233,11 @@ function createReserva($data) {
         $data['mensaje'],
         $data['estado'] ?? 'pendiente'
     ]);
-    return $pdo->lastInsertId();
+    return getPDO()->lastInsertId();
 }
 
 // Función para actualizar una reserva
 function updateReserva($id, $data) {
-    global $pdo;
     $sql = 'UPDATE reservas SET 
             nombre = ?, 
             telefono = ?, 
@@ -249,7 +246,7 @@ function updateReserva($id, $data) {
             mensaje = ?, 
             estado = ? 
             WHERE id = ?';
-    $stmt = $pdo->prepare($sql);
+    $stmt = getPDO()->prepare($sql);
     $result = $stmt->execute([
         $data['nombre'],
         $data['telefono'],
@@ -264,8 +261,7 @@ function updateReserva($id, $data) {
 
 // Función para eliminar una reserva
 function deleteReserva($id) {
-    global $pdo;
-    $stmt = $pdo->prepare('DELETE FROM reservas WHERE id = ?');
+    $stmt = getPDO()->prepare('DELETE FROM reservas WHERE id = ?');
     return $stmt->execute([$id]);
 }
 

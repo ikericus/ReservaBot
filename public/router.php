@@ -53,6 +53,7 @@ class Router {
 
 
         $this->addRoute('POST',     '/api/actualizar-reserva',          'api/actualizar-reserva.php',       ['auth']);
+        $this->addRoute('POST',     '/api/eliminar-reserva',            'api/eliminar-reserva.php',         ['auth']);
         $this->addRoute('POST',     '/api/actualizar-configuracion',    'api/actualizar-configuracion.php', ['auth']);
         $this->addRoute('GET',      '/api/reservas',                    'api/reservas.php',                 ['auth']);
         $this->addRoute('POST',     '/api/reservas',                    'api/reservas.php',                 ['auth']);

@@ -1,8 +1,9 @@
-// ===== ARCHIVO: public/api/register.php =====
 <?php
+
 header('Content-Type: application/json');
-require_once '../includes/db-config.php';
-require_once '../includes/auth.php';
+
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
 
 // Solo permitir POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -63,7 +64,7 @@ if (!empty($errors)) {
 
 try {
     // Verificar si el usuario ya existe
-    $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ?");
+    $stmt = getPDO()->prepare("SELECT id FROM usuarios WHERE email = ?");
     $stmt->execute([$email]);
     
     if ($stmt->fetch()) {
@@ -78,7 +79,7 @@ try {
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
     $apiKey = bin2hex(random_bytes(32));
     
-    $stmt = $pdo->prepare("
+    $stmt = getPDO()->prepare("
         INSERT INTO usuarios (nombre, email, telefono, negocio, password_hash, plan, api_key, created_at, activo) 
         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 1)
     ");
@@ -93,7 +94,7 @@ try {
         $apiKey
     ]);
     
-    $userId = $pdo->lastInsertId();
+    $userId = getPDO()->lastInsertId();
     
     // Crear configuraciones iniciales para el usuario
     $configuracionesIniciales = [
@@ -112,7 +113,7 @@ try {
     ];
     
     foreach ($configuracionesIniciales as $clave => $valor) {
-        $stmt = $pdo->prepare("
+        $stmt = getPDO()->prepare("
             INSERT INTO configuraciones_usuario (usuario_id, clave, valor) 
             VALUES (?, ?, ?)
         ");

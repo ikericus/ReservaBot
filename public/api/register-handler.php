@@ -1,10 +1,11 @@
 <?php
+
 /**
  * Procesamiento del formulario de registro
  */
 
-require_once '../includes/db-config.php';
-require_once '../includes/auth.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
 
 // Solo procesar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -59,7 +60,7 @@ if (!empty($errors)) {
 
 try {
     // Verificar si el usuario ya existe
-    $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ?");
+    $stmt = getPDO()->prepare("SELECT id FROM usuarios WHERE email = ?");
     $stmt->execute([$email]);
     
     if ($stmt->fetch()) {
@@ -75,7 +76,7 @@ try {
     $apiKey = bin2hex(random_bytes(32));
     $verificationToken = bin2hex(random_bytes(32));
     
-    $stmt = $pdo->prepare("
+    $stmt = getPDO()->prepare("
         INSERT INTO usuarios (nombre, email, telefono, negocio, password_hash, plan, api_key, verificacion_token, created_at, activo) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 1)
     ");
@@ -91,7 +92,7 @@ try {
         $verificationToken
     ]);
     
-    $userId = $pdo->lastInsertId();
+    $userId = getPDO()->lastInsertId();
     
     // Las configuraciones iniciales se crean automáticamente por el trigger
     

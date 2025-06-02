@@ -3,8 +3,8 @@
 header('Content-Type: application/json');
 
 // Incluir configuración y funciones
-require_once '../includes/db-config.php';
-require_once '../includes/functions.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Obtener los datos enviados
 $data = json_decode(file_get_contents('php://input'), true);
@@ -17,7 +17,7 @@ if (!isset($data['id'])) {
 
 try {
     // Preparar la consulta
-    $stmt = $pdo->prepare('DELETE FROM reservas WHERE id = ?');
+    $stmt = getPDO()->prepare('DELETE FROM reservas WHERE id = ?');
     
     // Ejecutar la consulta
     $result = $stmt->execute([$data['id']]);

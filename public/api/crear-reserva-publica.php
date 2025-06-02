@@ -3,8 +3,8 @@
 header('Content-Type: application/json');
 
 // Incluir configuración y funciones
-require_once '../includes/db-config.php';
-require_once '../includes/functions.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Verificar método de solicitud
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -54,7 +54,7 @@ if ($data['fecha'] < date('Y-m-d')) {
 
 try {
     // Verificar que no exista ya una reserva para esa fecha y hora
-    $stmt = $pdo->prepare('SELECT COUNT(*) FROM reservas WHERE CAST(fecha AS CHAR) = CAST(? AS CHAR) AND TIME_FORMAT(hora, "%H:%i") = CAST(? AS CHAR) AND estado IN ("pendiente", "confirmada")');
+    $stmt = getPDO()->prepare('SELECT COUNT(*) FROM reservas WHERE CAST(fecha AS CHAR) = CAST(? AS CHAR) AND TIME_FORMAT(hora, "%H:%i") = CAST(? AS CHAR) AND estado IN ("pendiente", "confirmada")');
     $stmt->execute([$data['fecha'], $data['hora']]);
     $existeReserva = $stmt->fetchColumn();
     
@@ -64,7 +64,7 @@ try {
     }
     
     // Obtener configuración del modo de aceptación
-    $stmt = $pdo->prepare("SELECT valor FROM configuraciones WHERE CAST(clave AS CHAR) = CAST('modo_aceptacion' AS CHAR)");
+    $stmt = getPDO()->prepare("SELECT valor FROM configuraciones WHERE CAST(clave AS CHAR) = CAST('modo_aceptacion' AS CHAR)");
     $stmt->execute();
     $modoAceptacion = $stmt->fetchColumn() ?: 'manual';
     
@@ -73,7 +73,7 @@ try {
     
     // Preparar la consulta
     $sql = 'INSERT INTO reservas (nombre, telefono, fecha, hora, mensaje, estado, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())';
-    $stmt = $pdo->prepare($sql);
+    $stmt = getPDO()->prepare($sql);
     
     // Convertir la hora al formato de MySQL (HH:MM:SS)
     $hora = $data['hora'] . ':00';
@@ -94,7 +94,7 @@ try {
     ]);
     
     if ($result) {
-        $id = $pdo->lastInsertId();
+        $id = getPDO()->lastInsertId();
         
         // Respuesta de éxito con toda la información necesaria
         echo json_encode([

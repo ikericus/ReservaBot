@@ -1,4 +1,5 @@
 <?php
+
 // Incluir configuración y funciones
 require_once 'includes/db-config.php';
 require_once 'includes/functions.php';
@@ -19,7 +20,7 @@ if (empty($telefono)) {
 // Obtener información del cliente
 try {
     // Datos generales del cliente
-    $stmt = $pdo->prepare("SELECT 
+    $stmt = getPDO()->prepare("SELECT 
         telefono,
         nombre as ultimo_nombre,
         COUNT(id) as total_reservas,
@@ -42,7 +43,7 @@ try {
     }
     
     // Obtener historial de reservas
-    $stmt = $pdo->prepare("SELECT * FROM reservas WHERE telefono = ? ORDER BY fecha DESC, hora DESC");
+    $stmt = getPDO()->prepare("SELECT * FROM reservas WHERE telefono = ? ORDER BY fecha DESC, hora DESC");
     $stmt->execute([$telefono]);
     $reservas = $stmt->fetchAll();
     
@@ -59,7 +60,7 @@ try {
         
         $placeholders = str_repeat('?,', count($telefonoFormats) - 1) . '?';
         
-        $stmt = $pdo->prepare("SELECT mw.*, cw.nombre as chat_nombre 
+        $stmt = getPDO()->prepare("SELECT mw.*, cw.nombre as chat_nombre 
                                FROM mensajes_whatsapp mw
                                LEFT JOIN chats_whatsapp cw ON mw.chat_id = cw.chat_id
                                WHERE mw.chat_id IN ($placeholders)
