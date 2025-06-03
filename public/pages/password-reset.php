@@ -3,7 +3,7 @@
  * Página para restablecer contraseña
  */
 
-require_once 'includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
 
 $token = $_GET['token'] ?? '';
 $error = '';

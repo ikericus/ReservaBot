@@ -1,8 +1,8 @@
 <?php
 // Incluir configuración y funciones
-require_once 'includes/db-config.php';
-require_once 'includes/functions.php';
-require_once 'includes/auth.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
 
 // Configurar la página actual
 $currentPage = 'calendar';

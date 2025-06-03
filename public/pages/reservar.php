@@ -1,7 +1,7 @@
 <?php
 // Página pública para reservas de clientes
-require_once 'includes/db-config.php';
-require_once 'includes/functions.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Obtener el formulario por slug
 $slug = $_GET['f'] ?? '';

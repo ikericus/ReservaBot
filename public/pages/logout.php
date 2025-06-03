@@ -3,7 +3,7 @@
  * Página de logout
  */
 
-require_once 'includes/auth.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
 
 // Cerrar sesión
 logout();
