@@ -2,6 +2,7 @@
 // Incluir configuración y funciones
 require_once 'includes/db-config.php';
 require_once 'includes/functions.php';
+require_once 'includes/auth.php';
 
 // Configurar la página actual
 $currentPage = 'calendar';
@@ -17,10 +18,14 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
     $fecha = date('Y-m-d');
 }
 
+// Obtener usuario
+$currentUser = getAuthenticatedUser();
+$userId =  $currentUser['id'];
+
 // Obtener reservas del día
 try {
-    $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE fecha = ? ORDER BY hora');
-    $stmt->execute([$fecha]);
+    $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE fecha = ? AND usuario_id = ? ORDER BY hora');
+    $stmt->execute([$fecha, $userId]);
     $reservasDelDia = $stmt->fetchAll();
 } catch (\PDOException $e) {
     $reservasDelDia = [];

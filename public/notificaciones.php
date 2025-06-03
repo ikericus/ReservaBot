@@ -4,9 +4,6 @@ require_once 'includes/db-config.php';
 require_once 'includes/functions.php';
 require_once 'includes/auth.php';
 
-// Proteger la página
-requireAuth();
-
 // Configurar la página actual
 $currentPage = 'notificaciones';
 $pageTitle = 'ReservaBot - Notificaciones';

@@ -3,9 +3,6 @@
 require_once 'includes/db-config.php';
 require_once 'includes/functions.php';
 
-// Iniciar sesión para manejar mensajes
-session_start();
-
 // Configurar la página actual
 $currentPage = 'reserva-form';
 $pageTitle = 'ReservaBot - Formulario de Reserva';

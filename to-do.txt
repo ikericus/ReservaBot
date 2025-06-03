@@ -1,0 +1,6 @@
+
+    * Gestión de usuarios
+        - Verificación de email en el registro
+        - rellenar el campo de last_activity en cada login
+    
+    * Formularios

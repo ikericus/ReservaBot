@@ -162,12 +162,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         dayReservas.forEach(reserva => {
             const reservaItem = document.createElement('div');
-            reservaItem.className = `text-xs p-1 rounded truncate cursor-pointer ${
+            reservaItem.className = `text-xs p-1 rounded truncate cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md ${
                 reserva.estado === 'confirmada' 
-                    ? 'bg-green-100 text-green-800 border-l-2 border-green-500' 
-                    : 'bg-amber-100 text-amber-800 border-l-2 border-amber-500'
+                    ? 'bg-green-100 text-green-800 border-l-2 border-green-500 hover:bg-green-200' 
+                    : 'bg-amber-100 text-amber-800 border-l-2 border-amber-500 hover:bg-amber-200'
             }`;
             reservaItem.textContent = `${reserva.hora.substring(0, 5)} - ${reserva.nombre}`;
+            reservaItem.title = `Ver detalles de la reserva de ${reserva.nombre}`;
             
             // Hacer que el item sea clickable y evitar propagación
             reservaItem.addEventListener('click', function(e) {

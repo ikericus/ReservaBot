@@ -511,6 +511,27 @@ include 'includes/header.php';
     .mobile-view {
         display: none;
     }
+    
+    #calendarGrid .cursor-pointer {
+        position: relative;
+        overflow: visible;
+    }
+    
+    #calendarGrid .cursor-pointer:hover {
+        z-index: 10;
+        transform: translateY(-1px);
+    }
+    
+    /* Mejorar la transición del día completo */
+    .mobile-day-cell,
+    #calendarGrid > div {
+        transition: all 0.2s ease;
+    }
+    
+    #calendarGrid > div:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
 }
 
 /* Estilos para móvil - usar diseño optimizado */

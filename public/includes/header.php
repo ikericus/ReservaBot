@@ -178,6 +178,11 @@
                     </div>
                     
                     <div class="flex items-center space-x-3">
+                        <!-- Botón nueva reserva móvil -->
+                        <a href="/reserva-form" class="relative p-2 text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
+                            <i class="ri-add-line text-lg"></i>
+                        </a>
+                                                
                         <!-- Notificaciones móvil -->
                         <a href="/notificaciones" class="relative p-2 text-gray-600 hover:text-purple-600 transition-colors">
                             <i class="ri-notification-line text-xl"></i>
@@ -354,6 +359,12 @@
                                 >
                             </div> -->
                             
+                            <!-- Botón Nueva Reserva -->
+                            <a href="/reserva-form" class="btn-nueva-reserva inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <i class="ri-add-line mr-2 text-lg"></i>
+                                Nueva Reserva
+                            </a>
+
                             <!-- Notificaciones -->
                             <a href="/notificaciones" class="relative p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all">
                                 <i class="ri-notification-line text-xl"></i>

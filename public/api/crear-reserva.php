@@ -81,10 +81,7 @@ try {
     
     $sql = 'INSERT INTO reservas (' . implode(', ', $campos) . ') VALUES (' . implode(', ', $valores) . ')';
     $stmt = getPDO()->prepare($sql);
-    
-    // Establecer el estado según el rol del usuario
-    $estado = isAdmin() ? 'confirmada' : 'pendiente';
-    
+        
     // Convertir la hora al formato de MySQL (HH:MM:SS)
     $hora = $data['hora'] . ':00';
     
@@ -92,6 +89,7 @@ try {
     $nombre = trim($data['nombre']);
     $telefono = trim($data['telefono']);
     $mensaje = isset($data['mensaje']) ? trim($data['mensaje']) : '';
+    $estado = trim($data['estado']);
     
     // Obtener el ID del usuario actual (NULL si no está autenticado)
     $usuarioId = getCurrentUserId();

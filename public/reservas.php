@@ -5,11 +5,8 @@ session_start();
 
 // Cargar dependencias
 require_once 'includes/db-config.php';
-require_once 'includes/auth.php';
 require_once 'includes/functions.php';
-
-// Proteger la página
-requireAuth();
+require_once 'includes/auth.php';
 
 // Obtener usuario
 $currentUser = getAuthenticatedUser();

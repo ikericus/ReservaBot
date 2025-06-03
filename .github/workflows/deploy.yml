@@ -1,0 +1,28 @@
+name: Deploy to FTP on push to main
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'public/**'
+
+
+jobs:
+  ftp-deploy:
+    name: Upload to FTP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir: ./public
+          server-dir: /public_html/
+          dangerous-clean-slate: false

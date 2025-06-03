@@ -1,13 +1,8 @@
 <?php
-// === ARCHIVO: public/includes/auth.php ===
 /**
  * Sistema de autenticación para ReservaBot - Versión con sesiones simplificadas
  */
 
-// Configuración básica de sesiones (sin restricciones estrictas)
-ini_set('session.cookie_httponly', '1');
-ini_set('session.use_strict_mode', '0'); // Cambiado a 0 para evitar problemas
-ini_set('session.cookie_secure', '0');   // Cambiado a 0 para HTTP
 
 // Iniciar sesión de forma segura
 if (session_status() !== PHP_SESSION_ACTIVE) {

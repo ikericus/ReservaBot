@@ -6,7 +6,7 @@ php_value error_log /home/u329673490/domains/reservabot.es/php-error.log
 # Configuración de sesiones PHP
 php_value session.cookie_httponly 1
 php_value session.use_strict_mode 0
-php_value session.cookie_secure 0
+php_value session.cookie_secure 1
 
 # Habilitar reescritura de URLs
 RewriteEngine On

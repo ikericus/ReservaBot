@@ -2,6 +2,7 @@
 // Incluir configuración y funciones
 require_once 'includes/db-config.php';
 require_once 'includes/functions.php';
+require_once 'includes/auth.php';
 
 // Configurar la página actual
 $pageTitle = 'ReservaBot - Enlaces de Reserva';
@@ -83,9 +84,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_enlace'])) {
     }
 }
 
+// Obtener usuario
+$currentUser = getAuthenticatedUser();
+$userId =  $currentUser['id'];
+
 // Obtener enlaces existentes
 try {
-    $stmt = getPDO()->query("SELECT * FROM formularios_publicos ORDER BY created_at DESC");
+    $stmt = getPDO()->query("SELECT * FROM formularios_publicos WHERE usuario_id = ? ORDER BY created_at DESC");
+    $stmt->execute([$userId]);
     $enlaces = $stmt->fetchAll();
 } catch (Exception $e) {
     $enlaces = [];
@@ -843,7 +849,7 @@ include 'includes/header.php';
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/lib/browser.min.js"></script>
 <script src="assets/js/formularios.js"></script>
 
 <script>

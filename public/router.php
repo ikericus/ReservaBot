@@ -42,6 +42,7 @@ class Router {
         $this->addRoute('GET',  '/reservas',         'reservas.php',         ['auth']);
         $this->addRoute('GET',  '/clientes',         'clientes.php',         ['auth']);
         $this->addRoute('GET',  '/formularios',      'formularios.php',      ['auth']);
+        $this->addRoute('POST', '/formularios',      'formularios.php',      ['auth']);
         $this->addRoute('GET',  '/notificaciones',   'notificaciones.php',   ['auth']);        
         $this->addRoute('GET',  '/configuracion',    'configuracion.php',    ['auth']);
         $this->addRoute('GET',  '/perfil',           'perfil.php',           ['auth']);

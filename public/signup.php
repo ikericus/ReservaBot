@@ -149,7 +149,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                     </div>
                 <?php endif; ?>
                 
-                <form action="register-handler" method="POST" class="space-y-6" id="registroForm">
+                <form action="api/register-handler" method="POST" class="space-y-6" id="registroForm">
                     
                     <!-- Información personal -->
                     <div class="grid md:grid-cols-2 gap-6">
