@@ -14,13 +14,17 @@ $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $perPage = 20;
 $offset = ($page - 1) * $perPage;
 
-// Consulta para obtener clientes únicos con estadísticas
-$whereClause = '';
-$params = [];
+// Obtener usuario
+$currentUser = getAuthenticatedUser();
+$userId =  $currentUser['id'];
+
+// Consulta para obtener clientes del negocio
+$whereClause = 'WHERE usuario_id = ?';
+$params = [$userId];
 
 if (!empty($search)) {
-    $whereClause = 'WHERE (r.nombre LIKE ? OR r.telefono LIKE ?)';
-    $params = ["%$search%", "%$search%"];
+    $whereClause = 'AND (r.nombre LIKE ? OR r.telefono LIKE ?)';
+    array_push($params, "%$search%", "%$search%");
 }
 
 // Obtener clientes con estadísticas

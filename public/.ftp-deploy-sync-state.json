@@ -1,0 +1,391 @@
+{
+    "description": "DO NOT DELETE THIS FILE. This file is used to keep track of which files have been synced in the most recent deployment. If you delete this file a resync will need to be done (which can take a while) - read more: https://github.com/SamKirkland/FTP-Deploy-Action",
+    "version": "1.0.0",
+    "generatedTime": 1748981474498,
+    "data": [
+        {
+            "type": "file",
+            "name": ".htaccess",
+            "size": 2953,
+            "hash": "41eb508e745efc3d338161462c13430c1863765498cff893b5988a045fd8bad1"
+        },
+        {
+            "type": "folder",
+            "name": "api"
+        },
+        {
+            "type": "folder",
+            "name": "assets"
+        },
+        {
+            "type": "file",
+            "name": "calendario.php",
+            "size": 19500,
+            "hash": "be37e86cdb79247a96c5fb649437a5391f494f52e8788871ce6236a5d9b8d3b0"
+        },
+        {
+            "type": "file",
+            "name": "cliente-detail.php",
+            "size": 18326,
+            "hash": "5c31a01b2c1f5ca23f4ec7ff1667c508ded1e43a4359ad1f48232aa85ff88d5e"
+        },
+        {
+            "type": "file",
+            "name": "clientes.php",
+            "size": 30394,
+            "hash": "ba4758066d52520aed143439c64833bf42609a41a60fd820bef9c052cac2f699"
+        },
+        {
+            "type": "file",
+            "name": "configuracion.php",
+            "size": 23031,
+            "hash": "a382cc0e8f89aeacb3dcd31aa662681cb9cc6d21e81e851c3ba2b54b87506c9a"
+        },
+        {
+            "type": "file",
+            "name": "day.php",
+            "size": 6999,
+            "hash": "d39f5372a0fee207902c743584de29f84056848e908b849e13107be6233c9541"
+        },
+        {
+            "type": "folder",
+            "name": "debug"
+        },
+        {
+            "type": "file",
+            "name": "favicon-16x16.png",
+            "size": 1157,
+            "hash": "04b63ac52e369e8bb391c009683f9eada299027622b6cf39e271e9ff4eb8ab88"
+        },
+        {
+            "type": "file",
+            "name": "formularios.php",
+            "size": 45433,
+            "hash": "ba186653da0672f0cf9e1067417a8a64a1c2ddb84e3b5d9420a29ec235c4dfad"
+        },
+        {
+            "type": "folder",
+            "name": "includes"
+        },
+        {
+            "type": "file",
+            "name": "index.php",
+            "size": 499,
+            "hash": "7aa3a844f0b9370e9e8c696048521a4db7d88c50c0cc2eb23d0054d24b67e3bd"
+        },
+        {
+            "type": "file",
+            "name": "landing.php",
+            "size": 47010,
+            "hash": "93d1dcc77d79e4a11d9e328103e3562132fd3042094ebaa4529d2394cd15f052"
+        },
+        {
+            "type": "file",
+            "name": "login.php",
+            "size": 13890,
+            "hash": "58d4dc9c2ae3d1fef6fced91548d4d9125437fb9fcd6f754cb07afdcec05dabf"
+        },
+        {
+            "type": "file",
+            "name": "logout.php",
+            "size": 253,
+            "hash": "dde56ca5a4ca44cf3322e01dbcd5e7b3024740a415b90f60a930715060d4889e"
+        },
+        {
+            "type": "file",
+            "name": "mensajes.php",
+            "size": 19224,
+            "hash": "dfbf1861e627c1baa48f17aacc4774cbcfda7c78a5bd727b20ee0bee36d6938a"
+        },
+        {
+            "type": "file",
+            "name": "notificaciones.php",
+            "size": 24290,
+            "hash": "ee2f333a714905ca747fe5e69096f2594a63c71f2a78e65b5557b317114ee90e"
+        },
+        {
+            "type": "file",
+            "name": "password-reset.php",
+            "size": 12519,
+            "hash": "9e14b1ddf399db1c66810f5608e08b90e6b0a904bdff73c3148ca9702eb9a2d4"
+        },
+        {
+            "type": "file",
+            "name": "perfil.php",
+            "size": 16119,
+            "hash": "ebe315464f2a10ee819952fb78190d964d44f66726c9f8083463b6235d1b58e6"
+        },
+        {
+            "type": "file",
+            "name": "reserva-detail.php",
+            "size": 10469,
+            "hash": "5ac177bacf97a25589f135c4c73090beb8196bfd1ec7764374ef69a5bae03ef1"
+        },
+        {
+            "type": "file",
+            "name": "reserva-form.php",
+            "size": 11888,
+            "hash": "bed40f62714b7ff6a8e1193b1d0cdee897490cae51cbeeb2b3b56c2e5936f4f8"
+        },
+        {
+            "type": "file",
+            "name": "reservar.php",
+            "size": 36882,
+            "hash": "c56cd0ae68fac148f9bd5ed8d2ef0dff9fc19ffbeceea505ab16b9ef04cf1b80"
+        },
+        {
+            "type": "file",
+            "name": "router.php",
+            "size": 13578,
+            "hash": "0cab8a8e7b68ba9b968126fd915149f22c8ea9fc861280d6e559ce34b8984763"
+        },
+        {
+            "type": "file",
+            "name": "signup.php",
+            "size": 27955,
+            "hash": "bbd39ed5ea538f9c503e543ff72016953a5eb5f9a2d0c5a81fa1f8870661a033"
+        },
+        {
+            "type": "file",
+            "name": "reservas.php",
+            "size": 18327,
+            "hash": "a33ee371daf848504b462945fcd3dec22578f3944088965bdaa66ad2b691ce39"
+        },
+        {
+            "type": "file",
+            "name": "whatsapp.php",
+            "size": 17103,
+            "hash": "6a99d7bede7ada06215c4720dfb7ecb2c73f8994dd6199c9f85d71216929f3a3"
+        },
+        {
+            "type": "file",
+            "name": "api/actualizar-configuracion.php",
+            "size": 4295,
+            "hash": "c315f10e22a4fd64a76de137e72f1d7accb4793bcbfb9115be2b4322999bccb6"
+        },
+        {
+            "type": "file",
+            "name": "api/actualizar-reserva.php",
+            "size": 2950,
+            "hash": "6a695a26d7d671a5092744c8c36793ebcf8b180f7a65e3f55c91c9171267cc75"
+        },
+        {
+            "type": "file",
+            "name": "api/auth-check.php",
+            "size": 1200,
+            "hash": "a51899d3c86a964d775565f61447c47a926dc2578187ebe72173b68e83fe291a"
+        },
+        {
+            "type": "file",
+            "name": "api/crear-reserva-publica.php",
+            "size": 4784,
+            "hash": "82457a99b620d5363aef88d638a268b9ef5b4aac5a583313446d999724518343"
+        },
+        {
+            "type": "file",
+            "name": "api/crear-reserva.php",
+            "size": 4435,
+            "hash": "ca1b79a8e672725f17f3247b40ad5e0abc207d0df87494d33d82e9d4f958ee2a"
+        },
+        {
+            "type": "file",
+            "name": "api/eliminar-reserva.php",
+            "size": 984,
+            "hash": "a5aca966cf45fec7f64ab437c68d678de102ff27f145041e8c0008dc535c9ecf"
+        },
+        {
+            "type": "file",
+            "name": "api/horas-disponibles.php",
+            "size": 6335,
+            "hash": "7640d2dfa4fecc9158e9a4530bfd62f1519515b5fc13746d2deff876163b6364"
+        },
+        {
+            "type": "file",
+            "name": "api/login-handler.php",
+            "size": 1959,
+            "hash": "4d818de6904eabbfa68cdd3bb66d5de5e0826c80ef690339d4bf0922b72b55f0"
+        },
+        {
+            "type": "file",
+            "name": "api/login.php",
+            "size": 1757,
+            "hash": "602f0edec68f3f35a3f2ea31344978484859748e20cc56126f158b87331267b7"
+        },
+        {
+            "type": "file",
+            "name": "api/logout.php",
+            "size": 257,
+            "hash": "bbe7f42d1095421bb6db5edca62d58053afed994396f9116380d5f83fcca8888"
+        },
+        {
+            "type": "file",
+            "name": "api/register-handler.php",
+            "size": 4159,
+            "hash": "0f158ec9deb00faa7f7cb0ad6d261b671c55d72e46c81712989d396cc7d006fc"
+        },
+        {
+            "type": "file",
+            "name": "api/register.php",
+            "size": 4168,
+            "hash": "a7585d941fa6956f90ee79259523e2cb20230ad8060340e37f48cd75cec27061"
+        },
+        {
+            "type": "file",
+            "name": "api/whatsapp-connect.php",
+            "size": 372,
+            "hash": "889588a495cb7a73175934af95b13eb30fa5264c0e43960d7fdf88110e8c0316"
+        },
+        {
+            "type": "file",
+            "name": "api/whatsapp-disconnect.php",
+            "size": 357,
+            "hash": "5b83652d35d09a67d61aa5af03e6b0542e79d2d460ec8ffc9c5f8fe62c76dde1"
+        },
+        {
+            "type": "file",
+            "name": "api/whatsapp-settings.php",
+            "size": 862,
+            "hash": "852b6eee0dfcda4a6c27fcc1cebd3042bae6d69e9d81eb046b21613d98ab5a46"
+        },
+        {
+            "type": "file",
+            "name": "api/whatsapp-status.php",
+            "size": 412,
+            "hash": "10dd502cf9dd099f88b501862b859870ec579f8fd72857367be2fcc293474222"
+        },
+        {
+            "type": "folder",
+            "name": "assets/css"
+        },
+        {
+            "type": "folder",
+            "name": "assets/js"
+        },
+        {
+            "type": "file",
+            "name": "debug/middleware-debug.php",
+            "size": 4061,
+            "hash": "190c529dad72bb96f37955f13007ae06925e3b49614ce84224c8b699e167bfde"
+        },
+        {
+            "type": "file",
+            "name": "debug/session-debug.php",
+            "size": 5848,
+            "hash": "ed6d37fb32acd50f45efc48ed46a87ad8fe44454251faacce9ce0c7645235abb"
+        },
+        {
+            "type": "file",
+            "name": "debug/test-db-config.php",
+            "size": 390,
+            "hash": "33407df54258da346023ba741e2bb83d27a8ec0cfd6994b5fc30c229a318420b"
+        },
+        {
+            "type": "file",
+            "name": "debug/test-db.php",
+            "size": 252,
+            "hash": "a0a90f871425afc10ca25c3da1ffa27c7d836c0ac3b7b94b40b15dd771f350c4"
+        },
+        {
+            "type": "file",
+            "name": "includes/auth.php",
+            "size": 8688,
+            "hash": "682d351f3bee65ee9b186aa1455873347c9144c9bb7fa088a4dfa639077e7be7"
+        },
+        {
+            "type": "file",
+            "name": "includes/db-config.php",
+            "size": 3263,
+            "hash": "ff71a3ac6d7b915d41d0630e40a35c3b91ef7bd1e20cb30dc3c362fb9e39e508"
+        },
+        {
+            "type": "file",
+            "name": "includes/email-functions.php",
+            "size": 9653,
+            "hash": "c33c4f7a20a8bd7832f0965e9b154fe52172e4dd7481be25ff4c725cbc1f7fbb"
+        },
+        {
+            "type": "file",
+            "name": "includes/footer.php",
+            "size": 7382,
+            "hash": "582020c5a0fbb3adf1eb021bd237c8351022ee26cb48a38c27eeceb7b70e3074"
+        },
+        {
+            "type": "file",
+            "name": "includes/functions.php",
+            "size": 8325,
+            "hash": "584330466714b72b618c869734194bab2cc8f9b20622dbc4e0d0201303b75ab1"
+        },
+        {
+            "type": "file",
+            "name": "includes/header.php",
+            "size": 21386,
+            "hash": "04b539fe870b5537cfdd3c25c6877824326381b0fcd03568725fcce482870e9f"
+        },
+        {
+            "type": "file",
+            "name": "includes/sidebar.php",
+            "size": 16303,
+            "hash": "c390bcdac37493737538490615f738879442908196c313960b4b7c6c0a9f3e22"
+        },
+        {
+            "type": "file",
+            "name": "includes/whatsapp-functions.php",
+            "size": 21187,
+            "hash": "d2e60c5caf6905507e51710aee71d399c776f9793de459371a68ad90bbb76371"
+        },
+        {
+            "type": "file",
+            "name": "assets/css/styles.css",
+            "size": 10958,
+            "hash": "ec25bb8f88bb4bb241bd5bc0c02b569d41cc6030e76d942ed42c00400687b517"
+        },
+        {
+            "type": "file",
+            "name": "assets/js/calendario.js",
+            "size": 24260,
+            "hash": "2179c8779cb46ae9b9c981fff059e1cdab9c2b54d166a247f169233515d12425"
+        },
+        {
+            "type": "file",
+            "name": "assets/js/configuracion.js",
+            "size": 6477,
+            "hash": "c15cf594fbedbf16798571b1f42b16f0f757ad86978d00bcf88c6ec94e538048"
+        },
+        {
+            "type": "file",
+            "name": "assets/js/day.js",
+            "size": 2655,
+            "hash": "6c4c418841dba8411f80b4945e9a17d51ca2af321308fcd6160d36db8f05cc25"
+        },
+        {
+            "type": "file",
+            "name": "assets/js/formularios.js",
+            "size": 14471,
+            "hash": "1543e1c0004722df0c473b80d3546dd943a81e668a21eb6f479051c8c42bf0b3"
+        },
+        {
+            "type": "file",
+            "name": "assets/js/mensajes.js",
+            "size": 7037,
+            "hash": "4b2bd76713b96d0bc8a427aa089ea959b717076742af9ff48d594ea01af4f5e0"
+        },
+        {
+            "type": "file",
+            "name": "assets/js/reserva-detail.js",
+            "size": 4831,
+            "hash": "afb5994c7fd2d7f4eae4d72cbe64a4165edb8216ef9f398e68b53d68e43237b4"
+        },
+        {
+            "type": "file",
+            "name": "assets/js/reservas.js",
+            "size": 5387,
+            "hash": "28903257b7f39360e8bd5117f8eb4da4df49307c644b78cdd44d82b12bba832c"
+        },
+        {
+            "type": "file",
+            "name": "assets/js/whatsapp.js",
+            "size": 8063,
+            "hash": "814a4fbcacb16f2a02f3704f72cd528f39712194eb3f374cc156257c540050dc"
+        }
+    ]
+}
