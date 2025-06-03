@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_enlace'])) {
             $tipoMensaje = 'success';
         } catch (Exception $e) {
             error_log('Error al crear formulario: ' . $e->getMessage());
-            $mensaje = 'Error al crear el enlace: ' . $e->getMessage();
+            $mensaje = 'Error al crear formulario: ' . $e->getMessage();
             $tipoMensaje = 'error';
         }
     } else {
