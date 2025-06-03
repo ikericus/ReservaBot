@@ -75,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_enlace'])) {
             $mensaje = 'Enlace de reserva creado correctamente';
             $tipoMensaje = 'success';
         } catch (Exception $e) {
+            error_log('Error al crear formulario: ' . $e->getMessage());
             $mensaje = 'Error al crear el enlace: ' . $e->getMessage();
             $tipoMensaje = 'error';
         }
