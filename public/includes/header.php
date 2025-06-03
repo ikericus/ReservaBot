@@ -184,10 +184,10 @@
                         </a>
                                                 
                         <!-- Notificaciones móvil -->
-                        <a href="/notificaciones" class="relative p-2 text-gray-600 hover:text-purple-600 transition-colors">
+                        <!-- <a href="/notificaciones" class="relative p-2 text-gray-600 hover:text-purple-600 transition-colors">
                             <i class="ri-notification-line text-xl"></i>
                             <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
-                        </a>
+                        </a> -->
                         
                         <!-- Botón de menú móvil -->
                         <button id="menuButton" class="p-2 text-gray-600 hover:text-purple-600 transition-colors focus:outline-none">
@@ -366,10 +366,10 @@
                             </a>
 
                             <!-- Notificaciones -->
-                            <a href="/notificaciones" class="relative p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all">
+                            <!-- <a href="/notificaciones" class="relative p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all">
                                 <i class="ri-notification-line text-xl"></i>
                                 <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
-                            </a>
+                            </a> -->
                             
                             <!-- Estado de WhatsApp -->
                             <!-- <div class="flex items-center space-x-2 px-3 py-1 bg-green-50 rounded-lg">
