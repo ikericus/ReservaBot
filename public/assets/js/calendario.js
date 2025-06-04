@@ -157,10 +157,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Agregar la celda al grid
         calendarGrid.appendChild(dayCell);
         
-        // Agregar las reservas a la celda
+        // Agregar las reservas a la celda (ordenadas por hora)
         const reservasContainer = dayCell.querySelector(`#reservas-${formattedDate}`);
-        
-        dayReservas.forEach(reserva => {
+
+        // Ordenar reservas por hora antes de mostrarlas
+        const reservasOrdenadas = dayReservas.sort((a, b) => {
+            // Comparar las horas (formato HH:MM:SS)
+            const horaA = a.hora.substring(0, 5); // Tomar solo HH:MM
+            const horaB = b.hora.substring(0, 5); // Tomar solo HH:MM
+            return horaA.localeCompare(horaB);
+        });
+
+        reservasOrdenadas.forEach(reserva => {
             const reservaItem = document.createElement('div');
             reservaItem.className = `text-xs p-1 rounded truncate cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md ${
                 reserva.estado === 'confirmada' 
