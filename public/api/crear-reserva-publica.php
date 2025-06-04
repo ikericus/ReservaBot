@@ -24,7 +24,7 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 }
 
 // Verificar que los datos requeridos estén presentes
-if (!isset($data['nombre']) || !isset($data['telefono']) || !isset($data['fecha']) || !isset($data['hora'])) {
+if (!isset($data['nombre']) || !isset($data['email']) || !isset($data['telefono']) || !isset($data['fecha']) || !isset($data['hora'])) {
     echo json_encode(['success' => false, 'message' => 'Faltan datos requeridos']);
     exit;
 }
@@ -82,7 +82,7 @@ try {
     // Determinar el estado de la reserva basado en la configuración del formulario
     $estado = ($confirmacionAutomatica == 1) ? 'confirmada' : 'pendiente';
     
-    $sql = 'INSERT INTO reservas (usuario_id, nombre, telefono, fecha, hora, mensaje, estado, access_token, token_expires, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY), NOW())';
+    $sql = 'INSERT INTO reservas (usuario_id, nombre, email, telefono, fecha, hora, mensaje, estado, access_token, token_expires, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY), NOW())';
     $stmt = getPDO()->prepare($sql);
     
     // Convertir la hora al formato de MySQL (HH:MM:SS)
@@ -90,6 +90,7 @@ try {
     
     // Limpiar y preparar datos
     $nombre = trim($data['nombre']);
+    $email = trim($data['email']);
     $telefono = trim($data['telefono']);
     $mensaje = isset($data['mensaje']) ? trim($data['mensaje']) : '';
     
@@ -100,6 +101,7 @@ try {
     $result = $stmt->execute([
         intval($data['usuario_id']),
         $nombre,
+        $email,
         $telefono,
         $data['fecha'],
         $hora,
@@ -148,6 +150,7 @@ try {
             'email_enviado' => $emailEnviado,
             'datos' => [
                 'nombre' => $nombre,
+                'email' => $email,
                 'telefono' => $telefono,
                 'fecha' => $data['fecha'],
                 'hora' => $data['hora'],

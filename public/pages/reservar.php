@@ -71,6 +71,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
     $reservaExitosa = true;
     $datosReserva = [
         'nombre' => $_GET['nombre'] ?? '',
+        'email' => $_GET['email'] ?? '',
         'telefono' => $_GET['telefono'] ?? '',
         'fecha' => $_GET['fecha'] ?? '',
         'hora' => $_GET['hora'] ?? '',
@@ -169,6 +170,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                         <h3 class="font-medium text-gray-900 mb-2">Detalles de tu reserva:</h3>
                         <div class="space-y-1 text-sm text-gray-600">
                             <p><span class="font-medium">Nombre:</span> <?php echo htmlspecialchars($datosReserva['nombre']); ?></p>
+                            <p><span class="font-medium">Email:</span> <?php echo htmlspecialchars($datosReserva['email']); ?></p>
                             <p><span class="font-medium">Teléfono:</span> <?php echo htmlspecialchars($datosReserva['telefono']); ?></p>
                             <p><span class="font-medium">Fecha:</span> <?php echo $datosReserva['fecha'] ? date('d/m/Y', strtotime($datosReserva['fecha'])) : ''; ?></p>
                             <p><span class="font-medium">Hora:</span> <?php echo htmlspecialchars($datosReserva['hora']); ?></p>
@@ -231,7 +233,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                         
                         <form id="reservaForm" class="space-y-6">
                             <!-- Información personal -->
-                            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div class="grid grid-cols-1 gap-6">
                                 <div>
                                     <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">
                                         Nombre completo *
@@ -251,22 +253,43 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                                     </div>
                                 </div>
                                 
-                                <div>
-                                    <label for="telefono" class="block text-sm font-medium text-gray-700 mb-1">
-                                        Teléfono *
-                                    </label>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <i class="ri-phone-line text-gray-400"></i>
+                                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                    <div>
+                                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                                            Email *
+                                        </label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="ri-mail-line text-gray-400"></i>
+                                            </div>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                id="email"
+                                                required
+                                                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                                placeholder="tu@email.com"
+                                            >
                                         </div>
-                                        <input
-                                            type="tel"
-                                            name="telefono"
-                                            id="telefono"
-                                            required
-                                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                            placeholder="+34 600 123 456"
-                                        >
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="telefono" class="block text-sm font-medium text-gray-700 mb-1">
+                                            Teléfono *
+                                        </label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="ri-phone-line text-gray-400"></i>
+                                            </div>
+                                            <input
+                                                type="tel"
+                                                name="telefono"
+                                                id="telefono"
+                                                required
+                                                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                                placeholder="+34 600 123 456"
+                                            >
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -360,8 +383,12 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                             </p>
                         </div>
                         <div class="flex items-start">
+                            <i class="ri-mail-line text-blue-500 mt-0.5 mr-3 flex-shrink-0"></i>
+                            <p>Recibirás un email de confirmación con los detalles y un enlace para gestionar tu reserva.</p>
+                        </div>
+                        <div class="flex items-start">
                             <i class="ri-phone-line text-green-500 mt-0.5 mr-3 flex-shrink-0"></i>
-                            <p>Te contactaremos al número proporcionado para cualquier comunicación necesaria.</p>
+                            <p>También te contactaremos al número proporcionado si es necesario.</p>
                         </div>
                         <div class="flex items-start">
                             <i class="ri-time-line text-orange-500 mt-0.5 mr-3 flex-shrink-0"></i>
@@ -567,8 +594,16 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                     data.formulario_id = config.formularioId;
                     
                     // Validaciones del lado cliente
-                    if (!data.nombre || !data.telefono || !data.fecha || !data.hora) {
+                    if (!data.nombre || !data.email || !data.telefono || !data.fecha || !data.hora) {
                         showError('Por favor completa todos los campos obligatorios');
+                        setLoadingState(false);
+                        return;
+                    }
+
+                    // Validar formato de email
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(data.email)) {
+                        showError('Por favor introduce un email válido');
                         setLoadingState(false);
                         return;
                     }
@@ -624,6 +659,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                             const successParams = new URLSearchParams({
                                 success: '1',
                                 nombre: result.datos.nombre,
+                                email: result.datos.email,
                                 telefono: result.datos.telefono,
                                 fecha: result.datos.fecha,
                                 hora: result.datos.hora,
@@ -670,26 +706,22 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                 });
             }
             
-            // Validación en tiempo real
-            const inputs = form.querySelectorAll('input[required], select[required]');
-            inputs.forEach(input => {
-                input.addEventListener('blur', function() {
-                    if (this.value.trim() === '') {
+            // Validación específica para email
+            const emailInput = document.getElementById('email');
+            if (emailInput) {
+                emailInput.addEventListener('blur', function() {
+                    const email = this.value.trim();
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    
+                    if (email && !emailRegex.test(email)) {
                         this.classList.add('border-red-300', 'focus:border-red-500', 'focus:ring-red-500');
                         this.classList.remove('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
-                    } else {
+                    } else if (email) {
                         this.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-500');
                         this.classList.add('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
                     }
                 });
-                
-                input.addEventListener('input', function() {
-                    if (this.value.trim() !== '') {
-                        this.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-500');
-                        this.classList.add('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
-                    }
-                });
-            });
+            }
         });
         
         // Función para resetear el formulario (llamada desde el botón de "Hacer otra reserva")
