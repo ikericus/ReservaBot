@@ -247,4 +247,138 @@ function updateEmailConfig($config) {
         return false;
     }
 }
+
+/**
+ * Envía email de confirmación al cliente
+ */
+function enviarEmailConfirmacion($reserva) {
+    // Generar URL de gestión
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+    $host = $_SERVER['HTTP_HOST'];
+    $gestionUrl = $protocol . $host . '/mi-reserva?token=' . $reserva['access_token'];
+    
+    // Asunto del email
+    $asunto = $reserva['estado'] === 'confirmada' 
+        ? '✅ Tu reserva está confirmada - ' . $reserva['formulario_nombre']
+        : '⏳ Tu solicitud de reserva - ' . $reserva['formulario_nombre'];
+    
+    // Contenido HTML del email
+    $htmlContent = generarHTMLEmail($reserva, $gestionUrl);
+    
+    // Headers del email
+    $headers = [
+        'MIME-Version: 1.0',
+        'Content-type: text/html; charset=UTF-8',
+        'From: ReservaBot <noreply@reservabot.com>',
+        'Reply-To: info@reservabot.com',
+        'X-Mailer: PHP/' . phpversion()
+    ];
+    
+    // Enviar email (puedes cambiar por otra librería de email)
+    $enviado = mail(
+        $reserva['telefono'], // Temporal - necesitarás el email real
+        $asunto,
+        $htmlContent,
+        implode("\r\n", $headers)
+    );
+    
+    // Log del resultado
+    if ($enviado) {
+        error_log("Email de confirmación enviado para reserva ID: " . $reserva['id']);
+    } else {
+        error_log("Error enviando email de confirmación para reserva ID: " . $reserva['id']);
+    }
+    
+    return $enviado;
+}
+
+/**
+ * Genera el HTML del email de confirmación
+ */
+function generarHTMLEmail($reserva, $gestionUrl) {
+    $fechaFormateada = date('d/m/Y', strtotime($reserva['fecha']));
+    $horaFormateada = substr($reserva['hora'], 0, 5);
+    
+    $estadoTexto = $reserva['estado'] === 'confirmada' 
+        ? 'confirmada automáticamente' 
+        : 'recibida y pendiente de confirmación';
+    
+    $estadoColor = $reserva['estado'] === 'confirmada' ? '#10b981' : '#f59e0b';
+    $estadoIcon = $reserva['estado'] === 'confirmada' ? '✅' : '⏳';
+    
+    return "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <title>Confirmación de Reserva</title>
+    </head>
+    <body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc;'>
+        <div style='max-width: 600px; margin: 0 auto; background-color: white;'>
+            <!-- Header -->
+            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center;'>
+                <h1 style='margin: 0; font-size: 24px;'>{$estadoIcon} Reserva {$reserva['estado']}</h1>
+                <p style='margin: 10px 0 0 0; opacity: 0.9;'>{$reserva['formulario_nombre']}</p>
+            </div>
+            
+            <!-- Content -->
+            <div style='padding: 30px 20px;'>
+                <h2 style='color: #374151; margin-top: 0;'>Hola {$reserva['nombre']},</h2>
+                <p style='color: #6b7280; line-height: 1.6;'>
+                    Tu reserva ha sido <strong style='color: {$estadoColor};'>{$estadoTexto}</strong>.
+                </p>
+                
+                <!-- Detalles de la reserva -->
+                <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid {$estadoColor};'>
+                    <h3 style='margin-top: 0; color: #374151;'>📅 Detalles de tu cita:</h3>
+                    <table style='width: 100%; border-collapse: collapse;'>
+                        <tr><td style='padding: 8px 0; color: #374151;'><strong>📅 Fecha:</strong></td><td style='padding: 8px 0; color: #6b7280;'>{$fechaFormateada}</td></tr>
+                        <tr><td style='padding: 8px 0; color: #374151;'><strong>🕐 Hora:</strong></td><td style='padding: 8px 0; color: #6b7280;'>{$horaFormateada}</td></tr>
+                        <tr><td style='padding: 8px 0; color: #374151;'><strong>👤 Nombre:</strong></td><td style='padding: 8px 0; color: #6b7280;'>{$reserva['nombre']}</td></tr>
+                        <tr><td style='padding: 8px 0; color: #374151;'><strong>📞 Teléfono:</strong></td><td style='padding: 8px 0; color: #6b7280;'>{$reserva['telefono']}</td></tr>
+                    </table>
+                    " . (!empty($reserva['mensaje']) ? "<p style='margin-top: 15px; color: #374151;'><strong>💬 Comentarios:</strong><br>{$reserva['mensaje']}</p>" : "") . "
+                </div>
+                
+                <!-- Botón de gestión -->
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='{$gestionUrl}' style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;'>
+                        🔗 Gestionar mi Reserva
+                    </a>
+                </div>
+                
+                <div style='background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #bfdbfe; margin: 20px 0;'>
+                    <p style='margin: 0; font-size: 14px; color: #1e40af;'>
+                        <strong>💡 ¿Qué puedes hacer?</strong><br>
+                        Desde el enlace de arriba podrás consultar, modificar o cancelar tu reserva hasta 24h antes de la cita.
+                    </p>
+                </div>
+                
+                " . ($reserva['estado'] === 'pendiente' ? "
+                <div style='background: #fef3c7; padding: 15px; border-radius: 8px; border: 1px solid #fbbf24; margin: 20px 0;'>
+                    <p style='margin: 0; font-size: 14px; color: #92400e;'>
+                        <strong>⏳ Confirmación pendiente</strong><br>
+                        Te contactaremos pronto para confirmar tu reserva.
+                    </p>
+                </div>
+                " : "
+                <div style='background: #d1fae5; padding: 15px; border-radius: 8px; border: 1px solid #10b981; margin: 20px 0;'>
+                    <p style='margin: 0; font-size: 14px; color: #065f46;'>
+                        <strong>✅ Reserva confirmada</strong><br>
+                        Tu reserva está confirmada. ¡Te esperamos!
+                    </p>
+                </div>
+                ") . "
+                
+                <hr style='border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;'>
+                <p style='font-size: 12px; color: #9ca3af; text-align: center; margin: 0;'>
+                    Este email fue enviado automáticamente. Si tienes dudas, contacta con nosotros.<br>
+                    <strong>ReservaBot</strong> - Sistema de gestión de reservas
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>";
+}
 ?>

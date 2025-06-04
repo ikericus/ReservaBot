@@ -61,9 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($nombre)) {
             try {
                 // Generar slug único
-                $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $nombre));
-                $slug = trim($slug, '-');
-                $slug = $slug ?: 'reserva-' . time();
+                $slug = bin2hex(random_bytes(2));
                 
                 // Verificar que el slug sea único
                 $stmt = getPDO()->prepare("SELECT id FROM formularios_publicos WHERE slug = ?");
