@@ -700,7 +700,8 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                                 fecha: result.datos.fecha,
                                 hora: result.datos.hora,
                                 mensaje: result.datos.mensaje || '',
-                                auto: result.confirmacion_automatica ? '1' : '0'
+                                auto: result.confirmacion_automatica ? '1' : '0',
+                                token: result.token || ''
                             });
                             
                             const successUrl = baseUrl + '&' + successParams.toString();
