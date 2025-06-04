@@ -33,6 +33,11 @@ if (!isset($data['usuario_id']) || empty($data['usuario_id'])) {
     exit;
 }
 
+if (!isset($data['formulario_id']) || empty($data['formulario_id'])) {
+    echo json_encode(['success' => false, 'message' => 'ID de formulario requerido']);
+    exit;
+}
+
 // Validar los datos
 if (empty(trim($data['nombre'])) || empty(trim($data['telefono'])) || empty($data['fecha']) || empty($data['hora'])) {
     echo json_encode(['success' => false, 'message' => 'Todos los campos obligatorios deben estar completos']);
@@ -68,13 +73,13 @@ try {
         exit;
     }
     
-    // Obtener configuración del modo de aceptación
-    $stmt = getPDO()->prepare("SELECT valor FROM configuraciones WHERE CAST(clave AS CHAR) = CAST('modo_aceptacion' AS CHAR)");
-    $stmt->execute();
-    $modoAceptacion = $stmt->fetchColumn() ?: 'manual';
-    
-    // Determinar el estado de la reserva
-    $estado = ($modoAceptacion === 'automatico') ? 'confirmada' : 'pendiente';
+    // Obtener la configuración específica del formulario
+    $stmt = getPDO()->prepare("SELECT confirmacion_automatica FROM formularios_publicos WHERE id = ?");
+    $stmt->execute([intval($data['formulario_id'])]);
+    $confirmacionAutomatica = $stmt->fetchColumn();
+
+    // Determinar el estado de la reserva basado en la configuración del formulario
+    $estado = ($confirmacionAutomatica == 1) ? 'confirmada' : 'pendiente';
     
     $sql = 'INSERT INTO reservas (usuario_id, nombre, telefono, fecha, hora, mensaje, estado, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())';
     $stmt = getPDO()->prepare($sql);
@@ -109,7 +114,7 @@ try {
                 ? 'Tu reserva ha sido confirmada automáticamente. ¡Te esperamos!' 
                 : 'Tu solicitud de reserva ha sido recibida. Te contactaremos pronto para confirmarla.',
             'estado' => $estado,
-            'confirmacion_automatica' => $estado === 'confirmada',
+            'confirmacion_automatica' => $confirmacionAutomatica == 1,
             'datos' => [
                 'nombre' => $nombre,
                 'telefono' => $telefono,
