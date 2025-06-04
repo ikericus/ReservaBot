@@ -155,7 +155,7 @@
         </script>
     
     <?php if (isset($pageScript)): ?>
-    <script src="assets/js/<?php echo $pageScript; ?>.js"></script>
+        <script src="assets/js/<?php echo $pageScript; ?>.js"></script>
     <?php endif; ?>
 </body>
 </html>

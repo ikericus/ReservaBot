@@ -447,7 +447,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                 }
                 
                 // Hacer petición para obtener horas disponibles
-                fetch('api/horas-disponibles.php', {
+                fetch('api/horas-disponibles', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

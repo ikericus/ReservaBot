@@ -13,85 +13,89 @@ $pageScript = 'formularios';
 $mensaje = '';
 $tipoMensaje = '';
 
-// Procesar eliminación de enlace
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eliminar_enlace'])) {
-    $id = intval($_POST['id'] ?? 0);
-    
-    if ($id > 0) {
-        try {
-            // Eliminar el formulario (simplificado - ya no hay tablas relacionadas complejas)
-            getPDO()->beginTransaction();
-            
-            // Eliminar referencias en origen_reservas (opcional)
-            $stmt = getPDO()->prepare("DELETE FROM origen_reservas WHERE formulario_id = ?");
-            $stmt->execute([$id]);
-            
-            // Eliminar el formulario
-            $stmt = getPDO()->prepare("DELETE FROM formularios_publicos WHERE id = ?");
-            $stmt->execute([$id]);
-            
-            getPDO()->commit();
-            
-            $mensaje = 'Enlace eliminado correctamente';
-            $tipoMensaje = 'success';
-        } catch (Exception $e) {
-            getPDO()->rollBack();
-            $mensaje = 'Error al eliminar el enlace: ' . $e->getMessage();
-            $tipoMensaje = 'error';
-        }
-    } else {
-        $mensaje = 'ID de enlace no válido';
-        $tipoMensaje = 'error';
-    }
-}
-
-// Procesar creación de enlace
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_enlace'])) {
-    $nombre = trim($_POST['nombre'] ?? '');
-    $descripcion = trim($_POST['descripcion'] ?? '');
-    $confirmacion_auto = isset($_POST['confirmacion_auto']) ? 1 : 0;
-    
-    if (!empty($nombre)) {
-        try {
-            // Generar slug único
-            $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $nombre));
-            $slug = trim($slug, '-');
-            $slug = $slug ?: 'reserva-' . time();
-            
-            // Verificar que el slug sea único
-            $stmt = getPDO()->prepare("SELECT id FROM formularios_publicos WHERE slug = ?");
-            $stmt->execute([$slug]);
-            if ($stmt->fetch()) {
-                $slug .= '-' . time();
-            }
-            
-            // Insertar en base de datos (simplificado)
-            $stmt = getPDO()->prepare("INSERT INTO formularios_publicos 
-                (nombre, descripcion, slug, confirmacion_automatica, activo) 
-                VALUES (?, ?, ?, ?, 1)");
-            
-            $stmt->execute([$nombre, $descripcion, $slug, $confirmacion_auto]);
-            
-            $mensaje = 'Enlace de reserva creado correctamente';
-            $tipoMensaje = 'success';
-        } catch (Exception $e) {
-            error_log('Error al crear formulario: ' . $e->getMessage());
-            $mensaje = 'Error al crear formulario: ' . $e->getMessage();
-            $tipoMensaje = 'error';
-        }
-    } else {
-        $mensaje = 'El nombre es obligatorio';
-        $tipoMensaje = 'error';
-    }
-}
-
 // Obtener usuario
 $currentUser = getAuthenticatedUser();
 $userId =  $currentUser['id'];
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
+    // Procesar eliminación de enlace
+    if(isset($_POST['eliminar_enlace'])) {
+
+        $id = intval($_POST['id'] ?? 0);
+    
+        if ($id > 0) {
+            try {
+                // Eliminar el formulario (simplificado - ya no hay tablas relacionadas complejas)
+                getPDO()->beginTransaction();
+                
+                // Eliminar referencias en origen_reservas (opcional)
+                $stmt = getPDO()->prepare("DELETE FROM origen_reservas WHERE formulario_id = ?");
+                $stmt->execute([$id]);
+                
+                // Eliminar el formulario
+                $stmt = getPDO()->prepare("DELETE FROM formularios_publicos WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                getPDO()->commit();
+                
+                $mensaje = 'Enlace eliminado correctamente';
+                $tipoMensaje = 'success';
+            } catch (Exception $e) {
+                getPDO()->rollBack();
+                $mensaje = 'Error al eliminar el enlace: ' . $e->getMessage();
+                $tipoMensaje = 'error';
+            }
+        } else {
+            $mensaje = 'ID de enlace no válido';
+            $tipoMensaje = 'error';
+        }
+    }
+    // Procesar creación de enlace
+    if (isset($_POST['crear_enlace'])) {
+
+        $nombre = trim($_POST['nombre'] ?? '');
+        $descripcion = trim($_POST['descripcion'] ?? '');
+        $confirmacion_auto = isset($_POST['confirmacion_auto']) ? 1 : 0;
+        
+        if (!empty($nombre)) {
+            try {
+                // Generar slug único
+                $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $nombre));
+                $slug = trim($slug, '-');
+                $slug = $slug ?: 'reserva-' . time();
+                
+                // Verificar que el slug sea único
+                $stmt = getPDO()->prepare("SELECT id FROM formularios_publicos WHERE slug = ?");
+                $stmt->execute([$slug]);
+                if ($stmt->fetch()) {
+                    $slug .= '-' . time();
+                }
+                
+                // Insertar en base de datos (simplificado)
+                $stmt = getPDO()->prepare("INSERT INTO formularios_publicos 
+                    (usuario_id, nombre, descripcion, slug, confirmacion_automatica, activo) 
+                    VALUES (?, ?, ?, ?, ?, 1)");
+                
+                $stmt->execute([$userId, $nombre, $descripcion, $slug, $confirmacion_auto]);
+                
+                $mensaje = 'Enlace de reserva creado correctamente';
+                $tipoMensaje = 'success';
+            } catch (Exception $e) {
+                error_log('Error al crear formulario: ' . $e->getMessage());
+                $mensaje = 'Error al crear formulario: ' . $e->getMessage();
+                $tipoMensaje = 'error';
+            }
+        } else {
+            $mensaje = 'El nombre es obligatorio';
+            $tipoMensaje = 'error';
+        }
+    }
+}
+
 // Obtener enlaces existentes
 try {
-    $stmt = getPDO()->query("SELECT * FROM formularios_publicos WHERE usuario_id = ? ORDER BY created_at DESC");
+    $stmt = getPDO()->prepare("SELECT * FROM formularios_publicos WHERE usuario_id = ? ORDER BY created_at DESC");
     $stmt->execute([$userId]);
     $enlaces = $stmt->fetchAll();
 } catch (Exception $e) {
@@ -539,13 +543,13 @@ include 'includes/header.php';
                 Confirmación automática (las reservas se confirman automáticamente)
             </label>
         </div>
-        
         <div class="flex justify-end">
-            <button type="submit" name="crear_enlace" 
+            <input type="text" name="crear_enlace" value="Crear Enlace" class="hidden">
+            <button type="submit"
                     class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 <i class="ri-add-line mr-2"></i>
                 Crear Enlace
-            </button>
+            </button>            
         </div>
     </form>
 </div>
@@ -575,6 +579,7 @@ include 'includes/header.php';
             </label>
         </div>
         
+        <input type="text" name="crear_enlace" value="Crear Enlace" class="hidden">
         <button type="submit" name="crear_enlace" class="mobile-submit-btn">
             <i class="ri-add-line"></i>
             Crear Enlace de Reserva
@@ -625,8 +630,8 @@ include 'includes/header.php';
                                 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
                                 $host = $_SERVER['HTTP_HOST'];
                                 $path = dirname($_SERVER['REQUEST_URI']);
-                                $baseUrl = $protocol . $host . $path . '/';
-                                $enlaceCompleto = $baseUrl . 'reservar.php?f=' . $enlace['slug'];
+                                $baseUrl = $protocol . $host . $path;
+                                $enlaceCompleto = $baseUrl . 'reservar?f=' . $enlace['slug'];
                                 ?>
                                 
                                 <a href="<?php echo $enlaceCompleto; ?>" 
@@ -714,8 +719,8 @@ include 'includes/header.php';
                             $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
                             $host = $_SERVER['HTTP_HOST'];
                             $path = dirname($_SERVER['REQUEST_URI']);
-                            $baseUrl = $protocol . $host . $path . '/';
-                            $enlaceCompleto = $baseUrl . 'reservar.php?f=' . $enlace['slug'];
+                            $baseUrl = $protocol . $host . $path;
+                            $enlaceCompleto = $baseUrl . 'reservar?f=' . $enlace['slug'];
                             ?>
                             
                             <div class="form-card-url">
@@ -837,7 +842,8 @@ include 'includes/header.php';
             <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                 <form method="post" id="formEliminar" class="inline">
                     <input type="hidden" name="id" id="idEnlaceEliminar">
-                    <button type="submit" name="eliminar_enlace" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <input type="hidden" name="eliminar_enlace" value="Eliminar Enlace">
+                    <button type="submit" name="eliminar_enlace" value="1" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
                         Eliminar
                     </button>
                 </form>
@@ -849,289 +855,9 @@ include 'includes/header.php';
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/lib/browser.min.js"></script>
-<script src="assets/js/formularios.js"></script>
-
-<script>
-// JavaScript específico para móvil
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Formularios responsive loaded');
-    
-    // Funcionalidad de copiado específica para móvil
-    if (typeof ClipboardJS !== 'undefined') {
-        // ClipboardJS para desktop
-        new ClipboardJS('.btn-copiar');
-        
-        // Feedback para desktop
-        document.querySelectorAll('.btn-copiar').forEach(button => {
-            button.addEventListener('click', function() {
-                const original = this.innerHTML;
-                this.innerHTML = '<i class="ri-check-line mr-1"></i>Copiado';
-                
-                setTimeout(() => {
-                    this.innerHTML = original;
-                }, 2000);
-            });
-        });
-        
-        // ClipboardJS específico para móvil
-        const clipboardMobile = new ClipboardJS('.btn-copiar-mobile');
-        
-        clipboardMobile.on('success', function(e) {
-            const button = e.trigger;
-            const original = button.innerHTML;
-            
-            // Feedback visual mejorado para móvil
-            button.classList.add('copy-feedback');
-            button.innerHTML = '<i class="ri-check-line"></i>¡Copiado!';
-            
-            // Vibración si está disponible
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
-            }
-            
-            setTimeout(() => {
-                button.classList.remove('copy-feedback');
-                button.innerHTML = original;
-            }, 2000);
-            
-            e.clearSelection();
-        });
-        
-        clipboardMobile.on('error', function(e) {
-            console.error('Error copiando:', e);
-            showMobileNotification('Error al copiar el enlace', 'error');
-        });
-    } else {
-        // Fallback para móvil sin ClipboardJS
-        document.querySelectorAll('.btn-copiar-mobile').forEach(button => {
-            button.addEventListener('click', function() {
-                const url = this.dataset.clipboardText;
-                fallbackCopyToClipboard(url, this);
-            });
-        });
-    }
-    
-    // Funcionalidad mejorada de QR para móvil
-    document.querySelectorAll('.btn-qr').forEach(button => {
-        button.addEventListener('click', function() {
-            const url = this.dataset.url;
-            const nombre = this.dataset.nombre;
-            showQRModal(url, nombre);
-        });
-    });
-    
-    // Funcionalidad de eliminación mejorada para móvil
-    document.querySelectorAll('.btn-eliminar').forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.dataset.id;
-            const nombre = this.dataset.nombre;
-            showDeleteModal(id, nombre);
-        });
-    });
-    
-    // Cerrar modales al tocar fuera (mejorado para móvil)
-    document.addEventListener('click', function(e) {
-        const qrModal = document.getElementById('qrModal');
-        const deleteModal = document.getElementById('eliminarModal');
-        
-        if (e.target === qrModal) {
-            qrModal.classList.add('hidden');
-        }
-        
-        if (e.target === deleteModal) {
-            deleteModal.classList.add('hidden');
-        }
-    });
-    
-    // Botones de cerrar modales
-    const closeQrBtn = document.getElementById('closeQrModal');
-    const cancelDeleteBtn = document.getElementById('cancelarEliminar');
-    
-    if (closeQrBtn) {
-        closeQrBtn.addEventListener('click', () => {
-            document.getElementById('qrModal').classList.add('hidden');
-        });
-    }
-    
-    if (cancelDeleteBtn) {
-        cancelDeleteBtn.addEventListener('click', () => {
-            document.getElementById('eliminarModal').classList.add('hidden');
-        });
-    }
-    
-    // Validación mejorada del formulario para móvil
-    const createForms = document.querySelectorAll('form[method="post"]');
-    createForms.forEach(form => {
-        if (!form.querySelector('input[name="eliminar_enlace"]')) {
-            form.addEventListener('submit', function(e) {
-                const nombreInput = form.querySelector('input[name="nombre"]');
-                const nombre = nombreInput ? nombreInput.value.trim() : '';
-                
-                if (nombre.length < 3) {
-                    e.preventDefault();
-                    showMobileNotification('El nombre debe tener al menos 3 caracteres', 'error');
-                    if (nombreInput) nombreInput.focus();
-                    return false;
-                }
-                
-                if (nombre.length > 100) {
-                    e.preventDefault();
-                    showMobileNotification('El nombre no puede tener más de 100 caracteres', 'error');
-                    if (nombreInput) nombreInput.focus();
-                    return false;
-                }
-                
-                // Loading state para el botón
-                const submitBtn = form.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    const originalText = submitBtn.innerHTML;
-                    submitBtn.innerHTML = '<i class="ri-loader-line animate-spin"></i>Creando...';
-                    submitBtn.disabled = true;
-                    
-                    // Restaurar después de 5 segundos si no se envía
-                    setTimeout(() => {
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
-                    }, 5000);
-                }
-            });
-        }
-    });
-});
-
-// Función auxiliar para copiar sin ClipboardJS
-function fallbackCopyToClipboard(text, button) {
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(() => {
-            const original = button.innerHTML;
-            button.innerHTML = '<i class="ri-check-line"></i>¡Copiado!';
-            
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
-            }
-            
-            setTimeout(() => {
-                button.innerHTML = original;
-            }, 2000);
-        }).catch(() => {
-            showMobileNotification('Error al copiar el enlace', 'error');
-        });
-    } else {
-        // Fallback para navegadores muy antiguos
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        
-        try {
-            document.execCommand('copy');
-            const original = button.innerHTML;
-            button.innerHTML = '<i class="ri-check-line"></i>¡Copiado!';
-            
-            setTimeout(() => {
-                button.innerHTML = original;
-            }, 2000);
-        } catch (err) {
-            showMobileNotification('Error al copiar el enlace', 'error');
-        } finally {
-            document.body.removeChild(textArea);
-        }
-    }
-}
-
-// Función para mostrar notificaciones móviles
-function showMobileNotification(message, type = 'info') {
-    // Crear elemento de notificación optimizado para móvil
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 left-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 transform -translate-y-full opacity-0`;
-    
-    // Aplicar estilos según el tipo
-    switch (type) {
-        case 'success':
-            notification.className += ' bg-green-500 text-white';
-            notification.innerHTML = `<div class="flex items-center"><i class="ri-check-line mr-2"></i><span>${message}</span></div>`;
-            break;
-        case 'error':
-            notification.className += ' bg-red-500 text-white';
-            notification.innerHTML = `<div class="flex items-center"><i class="ri-error-warning-line mr-2"></i><span>${message}</span></div>`;
-            break;
-        default:
-            notification.className += ' bg-blue-500 text-white';
-            notification.innerHTML = `<div class="flex items-center"><i class="ri-information-line mr-2"></i><span>${message}</span></div>`;
-    }
-    
-    // Añadir al DOM
-    document.body.appendChild(notification);
-    
-    // Mostrar notificación
-    setTimeout(() => {
-        notification.classList.remove('-translate-y-full', 'opacity-0');
-    }, 100);
-    
-    // Ocultar notificación después de 3 segundos
-    setTimeout(() => {
-        notification.classList.add('-translate-y-full', 'opacity-0');
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
-
-// Funciones para modales (reutilizadas del script original)
-function showQRModal(url, nombre) {
-    const modal = document.getElementById('qrModal');
-    const title = document.getElementById('qrModalTitle');
-    const container = document.getElementById('qrCodeContainer');
-    
-    if (!modal || !container) {
-        showMobileNotification('Error al abrir el modal de QR', 'error');
-        return;
-    }
-    
-    title.textContent = `Código QR - ${nombre}`;
-    container.innerHTML = '<div class="text-center p-4"><i class="ri-loader-line animate-spin text-2xl"></i><br>Generando código QR...</div>';
-    
-    // Mostrar modal
-    modal.classList.remove('hidden');
-    
-    // Generar QR usando el script original
-    if (typeof QRCode !== 'undefined') {
-        container.innerHTML = '';
-        QRCode.toCanvas(container, url, {
-            width: 256,
-            margin: 2,
-            color: {
-                dark: '#000000',
-                light: '#FFFFFF'
-            }
-        }, function (error) {
-            if (error) {
-                container.innerHTML = '<div class="text-red-500 p-4"><i class="ri-error-warning-line"></i><br>Error al generar código QR</div>';
-                console.error('Error generando QR:', error);
-            }
-        });
-    }
-}
-
-function showDeleteModal(id, nombre) {
-    const modal = document.getElementById('eliminarModal');
-    const nameSpan = document.getElementById('nombreEnlaceEliminar');
-    const idInput = document.getElementById('idEnlaceEliminar');
-    
-    if (modal && nameSpan && idInput) {
-        nameSpan.textContent = nombre;
-        idInput.value = id;
-        modal.classList.remove('hidden');
-    }
-}
-</script>
+<!-- ClipboardJS -->
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script>
+<!-- QRCode.js -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 
 <?php include 'includes/footer.php'; ?>
