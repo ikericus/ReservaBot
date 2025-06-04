@@ -28,6 +28,11 @@ if (!isset($data['nombre']) || !isset($data['telefono']) || !isset($data['fecha'
     exit;
 }
 
+if (!isset($data['usuario_id']) || empty($data['usuario_id'])) {
+    echo json_encode(['success' => false, 'message' => 'ID de usuario requerido']);
+    exit;
+}
+
 // Validar los datos
 if (empty(trim($data['nombre'])) || empty(trim($data['telefono'])) || empty($data['fecha']) || empty($data['hora'])) {
     echo json_encode(['success' => false, 'message' => 'Todos los campos obligatorios deben estar completos']);
@@ -71,8 +76,7 @@ try {
     // Determinar el estado de la reserva
     $estado = ($modoAceptacion === 'automatico') ? 'confirmada' : 'pendiente';
     
-    // Preparar la consulta
-    $sql = 'INSERT INTO reservas (nombre, telefono, fecha, hora, mensaje, estado, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())';
+    $sql = 'INSERT INTO reservas (usuario_id, nombre, telefono, fecha, hora, mensaje, estado, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())';
     $stmt = getPDO()->prepare($sql);
     
     // Convertir la hora al formato de MySQL (HH:MM:SS)
@@ -85,6 +89,7 @@ try {
     
     // Ejecutar la consulta
     $result = $stmt->execute([
+        intval($data['usuario_id']),
         $nombre,
         $telefono,
         $data['fecha'],

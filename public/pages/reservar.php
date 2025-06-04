@@ -379,7 +379,8 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
             horarios: <?php echo json_encode($horarios ?? []); ?>,
             intervalo: <?php echo json_encode($intervaloReservas ?? 30); ?>,
             slug: <?php echo json_encode($slug); ?>,
-            confirmacionAutomatica: <?php echo json_encode($formulario['confirmacion_automatica'] ?? 0); ?>
+            confirmacionAutomatica: <?php echo json_encode($formulario['confirmacion_automatica'] ?? 0); ?>,
+            usuarioId: <?php echo json_encode($formulario['usuario_id'] ?? null); ?>
         };
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -559,6 +560,9 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                     formData.forEach((value, key) => {
                         data[key] = value.trim();
                     });
+
+                    // Añadir el usuario_id del negocio
+                    data.usuario_id = config.usuarioId;
                     
                     // Validaciones del lado cliente
                     if (!data.nombre || !data.telefono || !data.fecha || !data.hora) {
