@@ -10,7 +10,7 @@ use PHPMailer\PHPMailer\Exception;
 
 // Instalar PHPMailer con: composer require phpmailer/phpmailer
 
-require_once '../includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/db-config.php';
 
 /**
  * Configuración de email desde base de datos
