@@ -76,7 +76,8 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
         'fecha' => $_GET['fecha'] ?? '',
         'hora' => $_GET['hora'] ?? '',
         'mensaje' => $_GET['mensaje'] ?? '',
-        'confirmacion_automatica' => isset($_GET['auto']) && $_GET['auto'] == '1'
+        'confirmacion_automatica' => isset($_GET['auto']) && $_GET['auto'] == '1',
+        'token' => $_GET['token'] ?? ''
     ];
     
     $mensaje = $datosReserva['confirmacion_automatica']
@@ -180,26 +181,61 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                         </div>
                     </div>
                     
+                    <!-- Enlace de gestión de reserva -->
+                    <?php if (!empty($datosReserva['token'])): ?>
+                        <div class="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-6">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="ri-link text-purple-600 text-lg"></i>
+                                </div>
+                                <div class="ml-3 flex-1">
+                                    <h4 class="text-sm font-medium text-purple-900 mb-2">📧 Email de confirmación enviado</h4>
+                                    <p class="text-sm text-purple-800 mb-3">
+                                        Hemos enviado un email a <strong><?php echo htmlspecialchars($datosReserva['email']); ?></strong> 
+                                        con todos los detalles y un enlace para gestionar tu reserva.
+                                    </p>
+                                    <a href="mi-reserva?token=<?php echo htmlspecialchars($datosReserva['token']); ?>" 
+                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
+                                        <i class="ri-external-link-line mr-2"></i>
+                                        Gestionar mi reserva
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Estado de la reserva -->
                     <?php if (!$datosReserva['confirmacion_automatica']): ?>
                         <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
                             <p class="text-sm text-blue-800">
                                 <i class="ri-information-line mr-1"></i>
-                                Te contactaremos pronto para confirmar tu reserva.
+                                Tu solicitud está pendiente. Te contactaremos pronto para confirmarla.
                             </p>
                         </div>
                     <?php else: ?>
                         <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-6">
                             <p class="text-sm text-green-800">
                                 <i class="ri-check-line mr-1"></i>
-                                Tu reserva está confirmada. No necesitas hacer nada más.
+                                ¡Tu reserva está confirmada! No necesitas hacer nada más.
                             </p>
                         </div>
                     <?php endif; ?>
-                    
-                    <button onclick="resetForm()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <i class="ri-add-line mr-2"></i>
-                        Hacer otra reserva
-                    </button>
+
+                    <!-- Botones de acción -->
+                    <div class="space-y-3">
+                        <?php if (!empty($datosReserva['token'])): ?>
+                            <a href="mi-reserva?token=<?php echo htmlspecialchars($datosReserva['token']); ?>" 
+                            class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all">
+                                <i class="ri-settings-line mr-2"></i>
+                                Ver y gestionar mi reserva
+                            </a>
+                        <?php endif; ?>
+                        
+                        <button onclick="resetForm()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            <i class="ri-add-line mr-2"></i>
+                            Hacer otra reserva
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

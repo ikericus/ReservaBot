@@ -124,6 +124,7 @@ try {
             $emailEnviado = enviarEmailConfirmacion([
                 'id' => $id,
                 'nombre' => $nombre,
+                'email' => $email,
                 'telefono' => $telefono,
                 'fecha' => $data['fecha'],
                 'hora' => $data['hora'],
@@ -142,6 +143,7 @@ try {
         echo json_encode([
             'success' => true, 
             'id' => $id,
+            'token' => $accessToken,
             'message' => $estado === 'confirmada' 
                 ? 'Tu reserva ha sido confirmada automáticamente. ¡Te esperamos!' 
                 : 'Tu solicitud de reserva ha sido recibida. Te contactaremos pronto para confirmarla.',

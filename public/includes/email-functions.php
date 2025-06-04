@@ -276,7 +276,7 @@ function enviarEmailConfirmacion($reserva) {
     
     // Enviar email (puedes cambiar por otra librería de email)
     $enviado = mail(
-        $reserva['telefono'], // Temporal - necesitarás el email real
+        $reserva['email'],
         $asunto,
         $htmlContent,
         implode("\r\n", $headers)
