@@ -299,15 +299,8 @@ if ($reserva && $puedeModificar) {
                             </div>
                         <?php endif; ?>
                         
-                        <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="ri-calendar-check-line text-3xl"></i>
-                        </div>
-                        
-                        <h1 class="text-3xl font-bold sm:text-4xl">Mi Reserva</h1>
-                        <p class="mt-2 text-lg text-blue-100">
-                            <?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre'] ?? 'Gestión de Reserva'); ?>
-                        </p>
-                        
+                        <h1 class="text-3xl font-bold sm:text-4xl"><?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre'] ?? 'Gestión de Reserva'); ?></h1>
+
                         <!-- Información de contacto -->
                         <?php if (!empty($reserva['direccion']) || !empty($reserva['telefono_contacto'])): ?>
                             <div class="flex flex-wrap justify-center items-center gap-4 mt-4 text-sm text-white text-opacity-80">

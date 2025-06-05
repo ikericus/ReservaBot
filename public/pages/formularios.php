@@ -532,18 +532,18 @@ include 'includes/header.php';
                     Nombre del enlace*
                 </label>
                 <input type="text" id="nombre" name="nombre" required
-                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                       placeholder="Ej: Reserva Consulta General">
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Ej: Reserva Consulta General">
                 <p class="mt-1 text-xs text-gray-500">Este nombre aparecerá en el formulario público</p>
             </div>
-            
+
             <div>
                 <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-1">
                     Descripción (opcional)
                 </label>
                 <input type="text" id="descripcion" name="descripcion"
-                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                       placeholder="Descripción interna del enlace">
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Descripción interna del enlace">
             </div>
         </div>
 

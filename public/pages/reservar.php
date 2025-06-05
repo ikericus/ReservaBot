@@ -226,11 +226,6 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                                         Hemos enviado un email a <strong><?php echo htmlspecialchars($datosReserva['email']); ?></strong> 
                                         con todos los detalles y un enlace para gestionar tu reserva.
                                     </p>
-                                    <a href="mi-reserva?token=<?php echo htmlspecialchars($datosReserva['token']); ?>" 
-                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
-                                        <i class="ri-external-link-line mr-2"></i>
-                                        Gestionar mi reserva
-                                    </a>
                                 </div>
                             </div>
                         </div>
