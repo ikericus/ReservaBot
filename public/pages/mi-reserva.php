@@ -16,10 +16,10 @@ if (empty($token)) {
     try {
         $stmt = getPDO()->prepare("
             SELECT r.*, fp.nombre as formulario_nombre, fp.empresa_nombre, fp.empresa_logo, 
-                   fp.color_primario, fp.color_secundario, fp.direccion, fp.telefono_contacto,
-                   fp.email_contacto, fp.mensaje_bienvenida
+                fp.color_primario, fp.color_secundario, fp.direccion, fp.telefono_contacto,
+                fp.email_contacto, fp.mensaje_bienvenida
             FROM reservas r
-            LEFT JOIN formularios_publicos fp ON r.formulario_id = fp.id
+            LEFT JOIN formularios_publicos fp ON r.usuario_id = fp.usuario_id
             WHERE r.access_token = ? 
             AND r.token_expires > NOW() 
             AND r.estado != 'cancelada'
