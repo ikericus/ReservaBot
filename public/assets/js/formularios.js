@@ -16,6 +16,15 @@ document.addEventListener('DOMContentLoaded', function() {
     initShareFunctionality();
     initFormValidation();
     initMobileEnhancements();
+    
+    // Sincronizar color pickers
+    document.getElementById('color_primario').addEventListener('input', function() {
+        document.getElementById('color_primario_text').value = this.value;
+    });
+
+    document.getElementById('color_secundario').addEventListener('input', function() {
+        document.getElementById('color_secundario_text').value = this.value;
+    });
 });
 
 /**
@@ -790,6 +799,7 @@ function debugFormularios() {
         testQR();
     }
 }
+
 
 // Exponer funciones globalmente para uso en otros scripts y debugging
 window.ReservaBot = {

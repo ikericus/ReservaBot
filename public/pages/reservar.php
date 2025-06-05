@@ -95,9 +95,41 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Iconos -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+        
     <style>
+        :root {
+            --primary-color: <?php echo htmlspecialchars($formulario['color_primario'] ?? '#667eea'); ?>;
+            --secondary-color: <?php echo htmlspecialchars($formulario['color_secundario'] ?? '#764ba2'); ?>;
+        }
+        
         .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, 
+                color-mix(in srgb, var(--primary-color) 90%, black) 0%, 
+                color-mix(in srgb, var(--secondary-color) 90%, black) 100%);
+        }
+        
+        .text-primary {
+            color: var(--primary-color);
+        }
+        
+        .border-primary {
+            border-color: var(--primary-color);
+        }
+        
+        .focus\:ring-primary:focus {
+            --tw-ring-color: var(--primary-color);
+        }
+        
+        .focus\:border-primary:focus {
+            border-color: var(--primary-color);
         }
         .fade-in {
             animation: fadeIn 0.5s ease-in;
@@ -247,9 +279,61 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
             <div class="gradient-bg">
                 <div class="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
                     <div class="text-center text-white fade-in">
-                        <h1 class="text-3xl font-bold sm:text-4xl"><?php echo htmlspecialchars($formulario['nombre']); ?></h1>
-                        <?php if (!empty($formulario['descripcion'])): ?>
-                            <p class="mt-2 text-lg text-blue-100"><?php echo htmlspecialchars($formulario['descripcion']); ?></p>
+                        
+                        <!-- Logo y nombre de empresa -->
+                        <div class="mb-6">
+                            <?php if (!empty($formulario['empresa_logo'])): ?>
+                                <div class="flex justify-center mb-4">
+                                    <img src="<?php echo htmlspecialchars($formulario['empresa_logo']); ?>" 
+                                        alt="<?php echo htmlspecialchars($formulario['empresa_nombre'] ?? $formulario['nombre']); ?>"
+                                        class="h-16 w-auto object-contain bg-white/10 rounded-lg p-2">
+                                </div>
+                            <?php endif; ?>
+                            
+                            <h1 class="text-4xl font-bold sm:text-5xl mb-2">
+                                <?php echo htmlspecialchars($formulario['empresa_nombre'] ?? $formulario['nombre']); ?>
+                            </h1>
+                            
+                            <?php if (!empty($formulario['nombre']) && $formulario['nombre'] !== ($formulario['empresa_nombre'] ?? '')): ?>
+                                <h2 class="text-xl font-medium text-white/90 mb-2">
+                                    <?php echo htmlspecialchars($formulario['nombre']); ?>
+                                </h2>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <!-- Mensaje de bienvenida personalizado -->
+                        <?php if (!empty($formulario['mensaje_bienvenida'])): ?>
+                            <div class="max-w-2xl mx-auto mb-6">
+                                <p class="text-lg text-white/90 leading-relaxed">
+                                    <?php echo htmlspecialchars($formulario['mensaje_bienvenida']); ?>
+                                </p>
+                            </div>
+                        <?php elseif (!empty($formulario['descripcion'])): ?>
+                            <p class="mt-2 text-lg text-white/90 max-w-2xl mx-auto">
+                                <?php echo htmlspecialchars($formulario['descripcion']); ?>
+                            </p>
+                        <?php endif; ?>
+                        
+                        <!-- Información de contacto -->
+                        <?php if (!empty($formulario['direccion']) || !empty($formulario['telefono_contacto'])): ?>
+                            <div class="flex flex-wrap justify-center items-center gap-4 mt-6 text-sm text-white/80">
+                                <?php if (!empty($formulario['direccion'])): ?>
+                                    <div class="flex items-center">
+                                        <i class="ri-map-pin-line mr-2"></i>
+                                        <?php echo htmlspecialchars($formulario['direccion']); ?>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($formulario['telefono_contacto'])): ?>
+                                    <div class="flex items-center">
+                                        <i class="ri-phone-line mr-2"></i>
+                                        <a href="tel:<?php echo htmlspecialchars($formulario['telefono_contacto']); ?>" 
+                                        class="hover:text-white transition-colors">
+                                            <?php echo htmlspecialchars($formulario['telefono_contacto']); ?>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -396,7 +480,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                                 <button
                                     type="submit"
                                     id="submitBtn"
-                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <i class="ri-calendar-check-line mr-2" id="submitIcon"></i>
                                     <span id="submitText">Reservar Cita</span>
@@ -420,7 +504,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                         </div>
                         <div class="flex items-start">
                             <i class="ri-mail-line text-blue-500 mt-0.5 mr-3 flex-shrink-0"></i>
-                            <p>Recibirás un email de confirmación con los detalles y un enlace para gestionar tu reserva.</p>
+                            <p>Recibirás un email con los detalles y un enlace para gestionar tu reserva.</p>
                         </div>
                         <div class="flex items-start">
                             <i class="ri-phone-line text-green-500 mt-0.5 mr-3 flex-shrink-0"></i>

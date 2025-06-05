@@ -357,7 +357,7 @@ if ($reserva && $puedeModificar) {
                                         </select>
                                     </div>
                                     
-                                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" id="btnModificar">
+                                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all" id="btnModificar">
                                         <i class="ri-calendar-check-line mr-2"></i>
                                         Confirmar cambio
                                     </button>
@@ -374,7 +374,7 @@ if ($reserva && $puedeModificar) {
                                 <p class="text-sm text-gray-600 mb-4">
                                     Si necesitas cancelar tu reserva, puedes hacerlo desde aquí. Esta acción no se puede deshacer.
                                 </p>
-                                <button type="button" onclick="confirmarCancelacion()" class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                <button type="button" onclick="confirmarCancelacion()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all">
                                     <i class="ri-close-line mr-2"></i>
                                     Cancelar mi reserva
                                 </button>

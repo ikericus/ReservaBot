@@ -70,12 +70,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $slug .= '-' . time();
                 }
                 
-                // Insertar en base de datos (simplificado)
-                $stmt = getPDO()->prepare("INSERT INTO formularios_publicos 
-                    (usuario_id, nombre, descripcion, slug, confirmacion_automatica, activo) 
-                    VALUES (?, ?, ?, ?, ?, 1)");
-                
-                $stmt->execute([$userId, $nombre, $descripcion, $slug, $confirmacion_auto]);
+                // Insertar en base de datos 
+                $sql = 'INSERT INTO formularios_publicos (usuario_id, nombre, descripcion, empresa_nombre, empresa_logo, color_primario, color_secundario, mensaje_bienvenida, direccion, telefono_contacto, email_contacto, slug, activo, confirmacion_automatica, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NOW())';
+
+                $result = $stmt->execute([
+                    $usuario_id,
+                    $nombre,
+                    $descripcion,
+                    $_POST['empresa_nombre'] ?? '',
+                    $_POST['empresa_logo'] ?? '',
+                    $_POST['color_primario'] ?? '#667eea',
+                    $_POST['color_secundario'] ?? '#764ba2',
+                    $_POST['mensaje_bienvenida'] ?? '',
+                    $_POST['direccion'] ?? '',
+                    $_POST['telefono_contacto'] ?? '',
+                    $_POST['email_contacto'] ?? '',
+                    $slug,
+                    $confirmacionAutomatica
+                ]);
                 
                 $mensaje = 'Enlace de reserva creado correctamente';
                 $tipoMensaje = 'success';
@@ -533,6 +545,132 @@ include 'includes/header.php';
                        placeholder="Descripción interna del enlace">
             </div>
         </div>
+
+        <!-- Buscar el formulario existente y añadir estos campos después del campo "descripcion" -->
+
+        <!-- Información de la empresa -->
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-6 pt-6 border-t border-gray-200">
+            <div class="sm:col-span-2">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">🏢 Información de la empresa</h3>
+            </div>
+            
+            <div>
+                <label for="empresa_nombre" class="block text-sm font-medium text-gray-700 mb-1">
+                    Nombre de la empresa *
+                </label>
+                <input
+                    type="text"
+                    name="empresa_nombre"
+                    id="empresa_nombre"
+                    required
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Ej: Clínica Dental López"
+                >
+            </div>
+            
+            <div>
+                <label for="empresa_logo" class="block text-sm font-medium text-gray-700 mb-1">
+                    URL del logo (opcional)
+                </label>
+                <input
+                    type="url"
+                    name="empresa_logo"
+                    id="empresa_logo"
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="https://ejemplo.com/logo.png"
+                >
+            </div>
+            
+            <div>
+                <label for="direccion" class="block text-sm font-medium text-gray-700 mb-1">
+                    Dirección
+                </label>
+                <input
+                    type="text"
+                    name="direccion"
+                    id="direccion"
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Calle Principal 123, Madrid"
+                >
+            </div>
+            
+            <div>
+                <label for="telefono_contacto" class="block text-sm font-medium text-gray-700 mb-1">
+                    Teléfono de contacto
+                </label>
+                <input
+                    type="tel"
+                    name="telefono_contacto"
+                    id="telefono_contacto"
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="+34 900 123 456"
+                >
+            </div>
+        </div>
+
+        <!-- Personalización visual -->
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-6 pt-6 border-t border-gray-200">
+            <div class="sm:col-span-2">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">🎨 Personalización visual</h3>
+            </div>
+            
+            <div>
+                <label for="color_primario" class="block text-sm font-medium text-gray-700 mb-1">
+                    Color primario
+                </label>
+                <div class="flex items-center space-x-3">
+                    <input
+                        type="color"
+                        name="color_primario"
+                        id="color_primario"
+                        value="#667eea"
+                        class="h-10 w-16 border border-gray-300 rounded cursor-pointer"
+                    >
+                    <input
+                        type="text"
+                        id="color_primario_text"
+                        value="#667eea"
+                        class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        readonly
+                    >
+                </div>
+            </div>
+            
+            <div>
+                <label for="color_secundario" class="block text-sm font-medium text-gray-700 mb-1">
+                    Color secundario
+                </label>
+                <div class="flex items-center space-x-3">
+                    <input
+                        type="color"
+                        name="color_secundario"
+                        id="color_secundario"
+                        value="#764ba2"
+                        class="h-10 w-16 border border-gray-300 rounded cursor-pointer"
+                    >
+                    <input
+                        type="text"
+                        id="color_secundario_text"
+                        value="#764ba2"
+                        class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        readonly
+                    >
+                </div>
+            </div>
+            
+            <div class="sm:col-span-2">
+                <label for="mensaje_bienvenida" class="block text-sm font-medium text-gray-700 mb-1">
+                    Mensaje de bienvenida personalizado
+                </label>
+                <textarea
+                    name="mensaje_bienvenida"
+                    id="mensaje_bienvenida"
+                    rows="3"
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Ej: Bienvenido a nuestra clínica. Reserva tu cita de forma rápida y sencilla."
+                ></textarea>
+            </div>
+        </div>
         
         <div class="flex items-center">
             <input type="checkbox" id="confirmacion_auto" name="confirmacion_auto" 
@@ -642,7 +780,7 @@ include 'includes/header.php';
                                 <button class="btn-copiar inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                                         data-clipboard-text="<?php echo $enlaceCompleto; ?>">
                                     <i class="ri-file-copy-line mr-1"></i>
-                                    Copiar
+                                    Copiar enlace
                                 </button>
                                 
                                 <button class="btn-qr inline-flex items-center px-3 py-1 border border-blue-300 shadow-sm text-xs font-medium rounded text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -738,7 +876,7 @@ include 'includes/header.php';
                                         data-clipboard-text="<?php echo $enlaceCompleto; ?>"
                                         data-enlace-id="<?php echo $enlace['id']; ?>">
                                     <i class="ri-file-copy-line"></i>
-                                    Copiar
+                                    Copiar enlace
                                 </button>
                                 
                                 <button class="form-action-btn form-btn-qr btn-qr"

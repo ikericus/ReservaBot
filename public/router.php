@@ -32,6 +32,7 @@ class Router {
         $this->addRoute('POST',     '/api/logout',              'api/logout.php');
         $this->addRoute('GET',      '/reservar',                'pages/reservar.php');
         $this->addRoute('POST',     '/reservar',                'pages/reservar.php');
+        $this->addRoute('GET',      '/mi-reserva',              'pages/mi-reserva.php');
 
         // Rutas protegidas        
         $this->addRoute('GET',      '/',                 'pages/reservas.php',         ['auth']);
