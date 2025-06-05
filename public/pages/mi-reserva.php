@@ -15,9 +15,11 @@ if (empty($token)) {
 } else {
     try {
         $stmt = getPDO()->prepare("
-            SELECT r.*, fp.nombre as formulario_nombre
+            SELECT r.*, fp.nombre as formulario_nombre, fp.empresa_nombre, fp.empresa_logo, 
+                   fp.color_primario, fp.color_secundario, fp.direccion, fp.telefono_contacto,
+                   fp.email_contacto, fp.mensaje_bienvenida
             FROM reservas r
-            LEFT JOIN formularios_publicos fp ON r.usuario_id = fp.usuario_id
+            LEFT JOIN formularios_publicos fp ON r.formulario_id = fp.id
             WHERE r.access_token = ? 
             AND r.token_expires > NOW() 
             AND r.estado != 'cancelada'
@@ -90,8 +92,8 @@ $horariosDisponibles = [];
 if ($reserva && $puedeModificar) {
     try {
         // Obtener configuración de horarios del usuario
-        $stmt = getPDO()->prepare("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'horario_%' OR clave = 'intervalo_reservas'");
-        $stmt->execute();
+        $stmt = getPDO()->prepare("SELECT clave, valor FROM configuraciones WHERE usuario_id = ? AND (clave LIKE 'horario_%' OR clave = 'intervalo_reservas')");
+        $stmt->execute([$reserva['usuario_id']]);
         $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
         
         $intervalo = intval($configuraciones['intervalo_reservas'] ?? 30);
@@ -152,13 +154,80 @@ if ($reserva && $puedeModificar) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Reserva - ReservaBot</title>
+    <title>Mi Reserva - <?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre'] ?? 'ReservaBot'); ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <?php if ($reserva): ?>
+    <style>
+        :root {
+            --primary-color: <?php echo htmlspecialchars($reserva['color_primario'] ?? '#667eea'); ?>;
+            --secondary-color: <?php echo htmlspecialchars($reserva['color_secundario'] ?? '#764ba2'); ?>;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, 
+                color-mix(in srgb, var(--primary-color) 90%, black) 0%, 
+                color-mix(in srgb, var(--secondary-color) 90%, black) 100%);
+        }
+        
+        .text-primary {
+            color: var(--primary-color);
+        }
+        
+        .border-primary {
+            border-color: var(--primary-color);
+        }
+        
+        .focus\:ring-primary:focus {
+            --tw-ring-color: var(--primary-color);
+        }
+        
+        .focus\:border-primary:focus {
+            border-color: var(--primary-color);
+        }
+        
+        .bg-primary-50 {
+            background-color: color-mix(in srgb, var(--primary-color) 10%, white);
+        }
+        
+        .border-primary-200 {
+            border-color: color-mix(in srgb, var(--primary-color) 30%, white);
+        }
+        
+        .text-primary-800 {
+            color: color-mix(in srgb, var(--primary-color) 80%, black);
+        }
+        
+        .text-primary-900 {
+            color: color-mix(in srgb, var(--primary-color) 90%, black);
+        }
+    </style>
+    <?php else: ?>
     <style>
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+    </style>
+    <?php endif; ?>
+    
+    <style>
         .fade-in {
             animation: fadeIn 0.5s ease-in;
         }
@@ -215,11 +284,47 @@ if ($reserva && $puedeModificar) {
         <div class="gradient-bg">
             <div class="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
                 <div class="text-center text-white fade-in">
-                    <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="ri-calendar-check-line text-3xl"></i>
+                    <!-- Logo y nombre de empresa -->
+                    <div class="mb-6">
+                        <?php if (!empty($reserva['empresa_logo'])): ?>
+                            <div class="flex justify-center mb-4">
+                                <img src="<?php echo htmlspecialchars($reserva['empresa_logo']); ?>" 
+                                     alt="<?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre']); ?>"
+                                     class="h-16 w-auto object-contain bg-white bg-opacity-20 rounded-lg p-2">
+                            </div>
+                        <?php endif; ?>
+                        
+                        <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="ri-calendar-check-line text-3xl"></i>
+                        </div>
+                        
+                        <h1 class="text-3xl font-bold sm:text-4xl">Mi Reserva</h1>
+                        <p class="mt-2 text-lg text-blue-100">
+                            <?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre'] ?? 'Gestión de Reserva'); ?>
+                        </p>
+                        
+                        <!-- Información de contacto -->
+                        <?php if (!empty($reserva['direccion']) || !empty($reserva['telefono_contacto'])): ?>
+                            <div class="flex flex-wrap justify-center items-center gap-4 mt-4 text-sm text-white text-opacity-80">
+                                <?php if (!empty($reserva['direccion'])): ?>
+                                    <div class="flex items-center">
+                                        <i class="ri-map-pin-line mr-2"></i>
+                                        <?php echo htmlspecialchars($reserva['direccion']); ?>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($reserva['telefono_contacto'])): ?>
+                                    <div class="flex items-center">
+                                        <i class="ri-phone-line mr-2"></i>
+                                        <a href="tel:<?php echo htmlspecialchars($reserva['telefono_contacto']); ?>" 
+                                           class="hover:text-white transition-colors">
+                                            <?php echo htmlspecialchars($reserva['telefono_contacto']); ?>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
-                    <h1 class="text-3xl font-bold sm:text-4xl">Mi Reserva</h1>
-                    <p class="mt-2 text-lg text-blue-100"><?php echo htmlspecialchars($reserva['formulario_nombre'] ?? 'Gestión de Reserva'); ?></p>
                 </div>
             </div>
         </div>
@@ -274,16 +379,20 @@ if ($reserva && $puedeModificar) {
                                 <dd class="mt-1 text-sm text-gray-900"><?php echo htmlspecialchars($reserva['telefono']); ?></dd>
                             </div>
                             <div>
+                                <dt class="text-sm font-medium text-gray-500">Email</dt>
+                                <dd class="mt-1 text-sm text-gray-900"><?php echo htmlspecialchars($reserva['email']); ?></dd>
+                            </div>
+                            <div>
                                 <dt class="text-sm font-medium text-gray-500">Fecha</dt>
                                 <dd class="mt-1 text-sm text-gray-900">
-                                    <i class="ri-calendar-line mr-2 text-blue-500"></i>
+                                    <i class="ri-calendar-line mr-2 text-primary"></i>
                                     <?php echo date('l, d \d\e F \d\e Y', strtotime($reserva['fecha'])); ?>
                                 </dd>
                             </div>
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Hora</dt>
                                 <dd class="mt-1 text-sm text-gray-900">
-                                    <i class="ri-time-line mr-2 text-blue-500"></i>
+                                    <i class="ri-time-line mr-2 text-primary"></i>
                                     <?php echo substr($reserva['hora'], 0, 5); ?>
                                 </dd>
                             </div>
@@ -301,9 +410,9 @@ if ($reserva && $puedeModificar) {
 
                         <!-- Información de modificación -->
                         <?php if ($puedeModificar): ?>
-                            <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                <h4 class="text-sm font-medium text-blue-900 mb-2">📝 Modificación disponible</h4>
-                                <p class="text-sm text-blue-800">
+                            <div class="mt-6 p-4 bg-primary-50 rounded-lg border border-primary-200">
+                                <h4 class="text-sm font-medium text-primary-900 mb-2">📝 Modificación disponible</h4>
+                                <p class="text-sm text-primary-800">
                                     Puedes modificar o cancelar tu reserva hasta 24 horas antes de la cita.
                                     <br><strong>Tiempo restante:</strong> <?php echo $tiempoRestante; ?>
                                 </p>
@@ -311,117 +420,6 @@ if ($reserva && $puedeModificar) {
                         <?php else: ?>
                             <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                 <h4 class="text-sm font-medium text-gray-700 mb-2">🔒 Modificación no disponible</h4>
-                                <p class="text-sm text-gray-600">
-                                    <?php if ($reserva['estado'] === 'cancelada'): ?>
-                                        Esta reserva ha sido cancelada.
-                                    <?php else: ?>
-                                        El plazo para modificar esta reserva ha expirado (24h antes de la cita).
-                                    <?php endif; ?>
-                                </p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <!-- Panel de acciones -->
-                <div class="space-y-6">
-                    
-                    <?php if ($puedeModificar): ?>
-                        <!-- Modificar fecha/hora -->
-                        <div class="bg-white rounded-lg shadow-sm fade-in">
-                            <div class="px-6 py-5 border-b border-gray-200">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900">Cambiar fecha y hora</h3>
-                            </div>
-                            <div class="px-6 py-5">
-                                <form id="modificarForm" class="space-y-4">
-                                    <input type="hidden" name="action" value="modificar">
-                                    <input type="hidden" name="reserva_id" value="<?php echo $reserva['id']; ?>">
-                                    <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nueva fecha</label>
-                                        <select name="nueva_fecha" id="nuevaFecha" class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
-                                            <option value="">Selecciona una fecha</option>
-                                            <?php foreach ($horariosDisponibles as $fecha => $info): ?>
-                                                <option value="<?php echo $fecha; ?>" data-horas="<?php echo htmlspecialchars(json_encode($info['horas'])); ?>">
-                                                    <?php echo $info['dia_semana'] . ', ' . $info['fecha_formateada']; ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nueva hora</label>
-                                        <select name="nueva_hora" id="nuevaHora" class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500" disabled>
-                                            <option value="">Selecciona una fecha primero</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all" id="btnModificar">
-                                        <i class="ri-calendar-check-line mr-2"></i>
-                                        Confirmar cambio
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <!-- Cancelar reserva -->
-                        <div class="bg-white rounded-lg shadow-sm fade-in">
-                            <div class="px-6 py-5 border-b border-gray-200">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900">Cancelar reserva</h3>
-                            </div>
-                            <div class="px-6 py-5">
-                                <p class="text-sm text-gray-600 mb-4">
-                                    Si necesitas cancelar tu reserva, puedes hacerlo desde aquí. Esta acción no se puede deshacer.
-                                </p>
-                                <button type="button" onclick="confirmarCancelacion()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all">
-                                    <i class="ri-close-line mr-2"></i>
-                                    Cancelar mi reserva
-                                </button>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <!-- Información de contacto -->
-                    <div class="bg-white rounded-lg shadow-sm fade-in">
-                        <div class="px-6 py-5 border-b border-gray-200">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900">¿Necesitas ayuda?</h3>
-                        </div>
-                        <div class="px-6 py-5">
-                            <div class="space-y-3 text-sm">
-                                <div class="flex items-center">
-                                    <i class="ri-phone-line text-green-500 mr-3"></i>
-                                    <span class="text-gray-700">Para cambios urgentes, llámanos directamente</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="ri-mail-line text-blue-500 mr-3"></i>
-                                    <span class="text-gray-700">info@reservabot.com</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="ri-time-line text-orange-500 mr-3"></i>
-                                    <span class="text-gray-700">Recuerda llegar 5 minutos antes</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de confirmación de cancelación -->
-    <div id="modalCancelacion" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                            <i class="ri-error-warning-line text-red-600"></i>
-                        </div>
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900">Cancelar reserva</h3>
-                            <div class="mt-2">
                                 <p class="text-sm text-gray-500">
                                     ¿Estás seguro de que deseas cancelar tu reserva? Esta acción no se puede deshacer.
                                 </p>
