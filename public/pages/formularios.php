@@ -15,7 +15,7 @@ $tipoMensaje = '';
 
 // Obtener usuario
 $currentUser = getAuthenticatedUser();
-$userId =  $currentUser['id'];
+$usuario_id =  $currentUser['id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $nombre = trim($_POST['nombre'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
-        $confirmacion_auto = isset($_POST['confirmacion_auto']) ? 1 : 0;
+        $confirmacionAutomatica = isset($_POST['confirmacion_auto']) ? 1 : 0;
         
         if (!empty($nombre)) {
             try {
@@ -73,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Insertar en base de datos 
                 $sql = 'INSERT INTO formularios_publicos (usuario_id, nombre, descripcion, empresa_nombre, empresa_logo, color_primario, color_secundario, mensaje_bienvenida, direccion, telefono_contacto, email_contacto, slug, activo, confirmacion_automatica, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NOW())';
 
+                $stmt = getPDO()->prepare($sql);
                 $result = $stmt->execute([
                     $usuario_id,
                     $nombre,
@@ -106,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Obtener enlaces existentes
 try {
     $stmt = getPDO()->prepare("SELECT * FROM formularios_publicos WHERE usuario_id = ? ORDER BY created_at DESC");
-    $stmt->execute([$userId]);
+    $stmt->execute([$usuario_id]);
     $enlaces = $stmt->fetchAll();
 } catch (Exception $e) {
     $enlaces = [];
