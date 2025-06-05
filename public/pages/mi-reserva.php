@@ -420,6 +420,145 @@ if ($reserva && $puedeModificar) {
                         <?php else: ?>
                             <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                 <h4 class="text-sm font-medium text-gray-700 mb-2">🔒 Modificación no disponible</h4>
+                                <p class="text-sm text-gray-600">
+                                    <?php if ($reserva['estado'] === 'cancelada'): ?>
+                                        Esta reserva ha sido cancelada.
+                                    <?php else: ?>
+                                        El plazo para modificar esta reserva ha expirado (24h antes de la cita).
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Panel de acciones -->
+                <div class="space-y-6">
+                    
+                    <?php if ($puedeModificar): ?>
+                        <!-- Modificar fecha/hora -->
+                        <div class="bg-white rounded-lg shadow-sm fade-in">
+                            <div class="px-6 py-5 border-b border-gray-200">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Cambiar fecha y hora</h3>
+                            </div>
+                            <div class="px-6 py-5">
+                                <form id="modificarForm" class="space-y-4">
+                                    <input type="hidden" name="action" value="modificar">
+                                    <input type="hidden" name="reserva_id" value="<?php echo $reserva['id']; ?>">
+                                    <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nueva fecha</label>
+                                        <select name="nueva_fecha" id="nuevaFecha" class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-primary focus:border-primary">
+                                            <option value="">Selecciona una fecha</option>
+                                            <?php foreach ($horariosDisponibles as $fecha => $info): ?>
+                                                <option value="<?php echo $fecha; ?>" data-horas="<?php echo htmlspecialchars(json_encode($info['horas'])); ?>">
+                                                    <?php echo $info['dia_semana'] . ', ' . $info['fecha_formateada']; ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nueva hora</label>
+                                        <select name="nueva_hora" id="nuevaHora" class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-primary focus:border-primary" disabled>
+                                            <option value="">Selecciona una fecha primero</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all" id="btnModificar">
+                                        <i class="ri-calendar-check-line mr-2"></i>
+                                        Confirmar cambio
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Cancelar reserva -->
+                        <div class="bg-white rounded-lg shadow-sm fade-in">
+                            <div class="px-6 py-5 border-b border-gray-200">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Cancelar reserva</h3>
+                            </div>
+                            <div class="px-6 py-5">
+                                <p class="text-sm text-gray-600 mb-4">
+                                    Si necesitas cancelar tu reserva, puedes hacerlo desde aquí. Esta acción no se puede deshacer.
+                                </p>
+                                <button type="button" onclick="confirmarCancelacion()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
+                                    <i class="ri-close-line mr-2"></i>
+                                    Cancelar mi reserva
+                                </button>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Información de contacto -->
+                    <div class="bg-white rounded-lg shadow-sm fade-in">
+                        <div class="px-6 py-5 border-b border-gray-200">
+                            <h3 class="text-lg font-medium text-gray-900">¿Necesitas ayuda?</h3>
+                        </div>
+                        <div class="px-6 py-5">
+                            <div class="space-y-3 text-sm">
+                                <?php if (!empty($reserva['telefono_contacto'])): ?>
+                                <div class="flex items-center">
+                                    <i class="ri-phone-line text-green-500 mr-3"></i>
+                                    <div>
+                                        <span class="text-gray-700">Para cambios urgentes: </span>
+                                        <a href="tel:<?php echo htmlspecialchars($reserva['telefono_contacto']); ?>" 
+                                           class="text-primary font-medium hover:underline">
+                                            <?php echo htmlspecialchars($reserva['telefono_contacto']); ?>
+                                        </a>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($reserva['email_contacto'])): ?>
+                                <div class="flex items-center">
+                                    <i class="ri-mail-line text-blue-500 mr-3"></i>
+                                    <div>
+                                        <span class="text-gray-700">Email: </span>
+                                        <a href="mailto:<?php echo htmlspecialchars($reserva['email_contacto']); ?>" 
+                                           class="text-primary font-medium hover:underline">
+                                            <?php echo htmlspecialchars($reserva['email_contacto']); ?>
+                                        </a>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <div class="flex items-center">
+                                    <i class="ri-time-line text-orange-500 mr-3"></i>
+                                    <span class="text-gray-700">Recuerda llegar 5 minutos antes</span>
+                                </div>
+                                
+                                <?php if (!empty($reserva['direccion'])): ?>
+                                <div class="flex items-start">
+                                    <i class="ri-map-pin-line text-red-500 mr-3 mt-0.5"></i>
+                                    <div>
+                                        <span class="text-gray-700">Dirección: </span>
+                                        <span class="text-gray-900"><?php echo htmlspecialchars($reserva['direccion']); ?></span>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación de cancelación -->
+    <div id="modalCancelacion" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="ri-error-warning-line text-red-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Cancelar reserva</h3>
+                            <div class="mt-2">
                                 <p class="text-sm text-gray-500">
                                     ¿Estás seguro de que deseas cancelar tu reserva? Esta acción no se puede deshacer.
                                 </p>
