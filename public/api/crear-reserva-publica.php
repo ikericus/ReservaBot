@@ -82,13 +82,15 @@ try {
     // Determinar el estado de la reserva basado en la configuración del formulario
     $estado = ($confirmacionAutomatica == 1) ? 'confirmada' : 'pendiente';
     
-    $sql = 'INSERT INTO reservas (usuario_id, nombre, email, telefono, fecha, hora, mensaje, estado, access_token, token_expires, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY), NOW())';
+    $sql = 'INSERT INTO reservas (usuario_id, formulario_id, nombre, email, telefono, fecha, hora, mensaje, estado, access_token, token_expires, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY), NOW())';
     $stmt = getPDO()->prepare($sql);
     
     // Convertir la hora al formato de MySQL (HH:MM:SS)
     $hora = $data['hora'] . ':00';
     
     // Limpiar y preparar datos
+    $usuario_id = intval($data['usuario_id']);
+    $formulario_id = intval($data['formulario_id']);
     $nombre = trim($data['nombre']);
     $email = trim($data['email']);
     $telefono = trim($data['telefono']);
@@ -99,7 +101,8 @@ try {
 
     // Ejecutar la consulta
     $result = $stmt->execute([
-        intval($data['usuario_id']),
+        $usuario_id,
+        $formulario_id,
         $nombre,
         $email,
         $telefono,

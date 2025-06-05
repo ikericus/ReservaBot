@@ -19,7 +19,7 @@ if (empty($token)) {
                 fp.color_primario, fp.color_secundario, fp.direccion, fp.telefono_contacto,
                 fp.email_contacto, fp.mensaje_bienvenida
             FROM reservas r
-            LEFT JOIN formularios_publicos fp ON r.usuario_id = fp.usuario_id
+            LEFT JOIN formularios_publicos fp ON r.formulario_id = fp.id
             WHERE r.access_token = ? 
             AND r.token_expires > NOW() 
             AND r.estado != 'cancelada'
@@ -42,6 +42,11 @@ $puedeModificar = false;
 $tiempoRestante = '';
 
 if ($reserva) {
+    // Debug temporal - puedes eliminarlo después
+    error_log('Datos de reserva obtenidos: ' . print_r($reserva, true));
+    error_log('Color primario: ' . ($reserva['color_primario'] ?? 'No definido'));
+    error_log('Logo empresa: ' . ($reserva['empresa_logo'] ?? 'No definido'));
+
     $fechaHoraReserva = new DateTime($reserva['fecha'] . ' ' . $reserva['hora']);
     $fechaLimite = clone $fechaHoraReserva;
     $fechaLimite->sub(new DateInterval('PT24H'));
