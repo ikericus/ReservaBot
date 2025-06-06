@@ -698,7 +698,8 @@ include 'includes/header.php';
         Crear Nuevo Enlace
     </h2>
     
-    <form method="post">
+    <form method="post" class="w-full">
+        <!-- Información básica -->
         <label class="mobile-form-label">Nombre del enlace*</label>
         <input type="text" name="nombre" required
                class="mobile-form-input"
@@ -709,15 +710,76 @@ include 'includes/header.php';
                class="mobile-form-input"
                placeholder="Descripción interna del enlace">
         
-        <div class="mobile-form-checkbox">
+        <!-- Información de la empresa -->
+        <div class="mt-6 pt-4 border-t border-gray-200">
+            <h3 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                🏢 Información de la empresa
+            </h3>
+            
+            <label class="mobile-form-label">Nombre de la empresa*</label>
+            <input type="text" name="empresa_nombre" required
+                   class="mobile-form-input"
+                   placeholder="Ej: Clínica Dental López">
+            
+            <label class="mobile-form-label">URL del logo (opcional)</label>
+            <input type="url" name="empresa_logo"
+                   class="mobile-form-input"
+                   placeholder="https://ejemplo.com/logo.png">
+            
+            <label class="mobile-form-label">Dirección</label>
+            <input type="text" name="direccion"
+                   class="mobile-form-input"
+                   placeholder="Calle Principal 123, Madrid">
+            
+            <label class="mobile-form-label">Teléfono de contacto</label>
+            <input type="tel" name="telefono_contacto"
+                   class="mobile-form-input"
+                   placeholder="+34 900 123 456">
+            
+            <label class="mobile-form-label">Email de contacto</label>
+            <input type="email" name="email_contacto"
+                   class="mobile-form-input"
+                   placeholder="info@empresa.com">
+        </div>
+        
+        <!-- Personalización visual -->
+        <div class="mt-6 pt-4 border-t border-gray-200">
+            <h3 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                🎨 Personalización visual
+            </h3>
+            
+            <label class="mobile-form-label">Color primario</label>
+            <div class="flex gap-3 mb-4 w-full">
+                <input type="color" name="color_primario" value="#667eea" id="color_primario_mobile"
+                       class="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer flex-shrink-0">
+                <input type="text" id="color_primario_text_mobile" value="#667eea" readonly
+                       class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm">
+            </div>
+            
+            <label class="mobile-form-label">Color secundario</label>
+            <div class="flex gap-3 mb-4 w-full">
+                <input type="color" name="color_secundario" value="#764ba2" id="color_secundario_mobile"
+                       class="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer flex-shrink-0">
+                <input type="text" id="color_secundario_text_mobile" value="#764ba2" readonly
+                       class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm">
+            </div>
+            
+            <label class="mobile-form-label">Mensaje de bienvenida personalizado</label>
+            <textarea name="mensaje_bienvenida" rows="3"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm resize-vertical min-h-16"
+                     placeholder="Ej: Bienvenido a nuestra clínica. Reserva tu cita de forma rápida y sencilla."></textarea>
+        </div>
+        
+        <!-- Confirmación automática -->
+        <div class="mobile-form-checkbox mt-4">
             <input type="checkbox" id="confirmacion_auto_mobile" name="confirmacion_auto">
             <label for="confirmacion_auto_mobile">
                 Confirmación automática de reservas
             </label>
         </div>
         
-        <input type="text" name="crear_enlace" value="Crear Enlace" class="hidden">
-        <button type="submit" name="crear_enlace" class="mobile-submit-btn">
+        <input type="hidden" name="crear_enlace" value="1">
+        <button type="submit" class="mobile-submit-btn mt-4">
             <i class="ri-add-line"></i>
             Crear Enlace de Reserva
         </button>

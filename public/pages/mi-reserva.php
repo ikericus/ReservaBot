@@ -3,6 +3,9 @@
 require_once dirname(__DIR__) . '/includes/db-config.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
 
+// Configurar idioma español para fechas
+setlocale(LC_TIME, 'es_ES.UTF-8', 'es_ES', 'spanish');
+
 $token = $_GET['token'] ?? '';
 $reserva = null;
 $error = '';
@@ -42,11 +45,6 @@ $puedeModificar = false;
 $tiempoRestante = '';
 
 if ($reserva) {
-    // Debug temporal - puedes eliminarlo después
-    error_log('Datos de reserva obtenidos: ' . print_r($reserva, true));
-    error_log('Color primario: ' . ($reserva['color_primario'] ?? 'No definido'));
-    error_log('Logo empresa: ' . ($reserva['empresa_logo'] ?? 'No definido'));
-
     $fechaHoraReserva = new DateTime($reserva['fecha'] . ' ' . $reserva['hora']);
     $fechaLimite = clone $fechaHoraReserva;
     $fechaLimite->sub(new DateInterval('PT24H'));
@@ -90,6 +88,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $reserva) {
             $tipoMensaje = 'error';
         }
     }
+    
+    if ($action === 'modificar' && $puedeModificar) {
+        $nuevaFecha = $_POST['nueva_fecha'] ?? '';
+        $nuevaHora = $_POST['nueva_hora'] ?? '';
+        
+        if (!empty($nuevaFecha) && !empty($nuevaHora)) {
+            try {
+                $stmt = getPDO()->prepare("UPDATE reservas SET fecha = ?, hora = ? WHERE id = ?");
+                $result = $stmt->execute([$nuevaFecha, $nuevaHora, $reserva['id']]);
+                
+                if ($result) {
+                    $mensaje = 'Tu reserva ha sido modificada correctamente';
+                    $tipoMensaje = 'success';
+                    $reserva['fecha'] = $nuevaFecha;
+                    $reserva['hora'] = $nuevaHora;
+                    // Recalcular si puede modificar con la nueva fecha
+                    $fechaHoraReserva = new DateTime($reserva['fecha'] . ' ' . $reserva['hora']);
+                    $fechaLimite = clone $fechaHoraReserva;
+                    $fechaLimite->sub(new DateInterval('PT24H'));
+                    $ahora = new DateTime();
+                    $puedeModificar = $ahora < $fechaLimite && in_array($reserva['estado'], ['pendiente', 'confirmada']);
+                } else {
+                    $mensaje = 'Error al modificar la reserva';
+                    $tipoMensaje = 'error';
+                }
+            } catch (Exception $e) {
+                error_log('Error modificando reserva: ' . $e->getMessage());
+                $mensaje = 'Error al modificar la reserva';
+                $tipoMensaje = 'error';
+            }
+        } else {
+            $mensaje = 'Debes seleccionar fecha y hora';
+            $tipoMensaje = 'error';
+        }
+    }
 }
 
 // Obtener horarios disponibles para modificación
@@ -103,8 +136,8 @@ if ($reserva && $puedeModificar) {
         
         $intervalo = intval($configuraciones['intervalo_reservas'] ?? 30);
         
-        // Generar próximos 7 días disponibles
-        for ($i = 0; $i < 7; $i++) {
+        // Generar próximos 14 días disponibles
+        for ($i = 0; $i < 14; $i++) {
             $fecha = date('Y-m-d', strtotime("+$i days"));
             $diaSemana = date('w', strtotime($fecha));
             $diasMap = [1 => 'lun', 2 => 'mar', 3 => 'mie', 4 => 'jue', 5 => 'vie', 6 => 'sab', 0 => 'dom'];
@@ -124,7 +157,7 @@ if ($reserva && $puedeModificar) {
                 $stmt->execute([$reserva['usuario_id'], $fecha, $reserva['id']]);
                 $horasOcupadas = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 
-                // Generar horas disponibles (simplificado)
+                // Generar horas disponibles
                 $ventanas = json_decode($parts[1], true) ?: [['inicio' => '09:00', 'fin' => '18:00']];
                 $horas = [];
                 
@@ -144,6 +177,7 @@ if ($reserva && $puedeModificar) {
                     $horariosDisponibles[$fecha] = [
                         'fecha_formateada' => date('d/m/Y', strtotime($fecha)),
                         'dia_semana' => ucfirst($diaConfig),
+                        'dia_completo' => formatearDiaCompleto($fecha),
                         'horas' => $horas
                     ];
                 }
@@ -152,6 +186,58 @@ if ($reserva && $puedeModificar) {
     } catch (Exception $e) {
         error_log('Error obteniendo horarios disponibles: ' . $e->getMessage());
     }
+}
+
+// Función para formatear fecha en español
+function formatearFechaEspanol($fecha) {
+    $dias = [
+        'Monday' => 'Lunes',
+        'Tuesday' => 'Martes', 
+        'Wednesday' => 'Miércoles',
+        'Thursday' => 'Jueves',
+        'Friday' => 'Viernes',
+        'Saturday' => 'Sábado',
+        'Sunday' => 'Domingo'
+    ];
+    
+    $meses = [
+        'January' => 'Enero',
+        'February' => 'Febrero',
+        'March' => 'Marzo',
+        'April' => 'Abril',
+        'May' => 'Mayo',
+        'June' => 'Junio',
+        'July' => 'Julio',
+        'August' => 'Agosto',
+        'September' => 'Septiembre',
+        'October' => 'Octubre',
+        'November' => 'Noviembre',
+        'December' => 'Diciembre'
+    ];
+    
+    $fechaFormateada = date('l, j \d\e F \d\e Y', strtotime($fecha));
+    
+    foreach ($dias as $ingles => $espanol) {
+        $fechaFormateada = str_replace($ingles, $espanol, $fechaFormateada);
+    }
+    
+    foreach ($meses as $ingles => $espanol) {
+        $fechaFormateada = str_replace($ingles, $espanol, $fechaFormateada);
+    }
+    
+    return $fechaFormateada;
+}
+
+function formatearDiaCompleto($fecha) {
+    $dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    $meses = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    
+    $timestamp = strtotime($fecha);
+    $dia_semana = $dias[date('w', $timestamp)];
+    $dia = date('j', $timestamp);
+    $mes = $meses[date('n', $timestamp)];
+    
+    return $dia_semana . ' ' . $dia . ' ' . $mes;
 }
 ?>
 <!DOCTYPE html>
@@ -240,26 +326,77 @@ if ($reserva && $puedeModificar) {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .btn-loading {
-            position: relative;
-            color: transparent;
+        
+        /* Calendario de fechas */
+        .date-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
         }
-        .btn-loading::after {
-            content: "";
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
+        
+        .date-option {
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        
+        .date-option:hover {
+            border-color: var(--primary-color);
+            background-color: color-mix(in srgb, var(--primary-color) 5%, white);
+        }
+        
+        .date-option.selected {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .date-option .day {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-bottom: 2px;
+        }
+        
+        .date-option .date {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        /* Horarios */
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+        }
+        
+        .time-option {
+            padding: 8px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+            font-size: 0.875rem;
+        }
+        
+        .time-option:hover {
+            border-color: var(--primary-color);
+            background-color: color-mix(in srgb, var(--primary-color) 5%, white);
+        }
+        
+        .time-option.selected {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .hidden-section {
+            display: none;
         }
     </style>
 </head>
@@ -285,25 +422,26 @@ if ($reserva && $puedeModificar) {
 <?php else: ?>
     <!-- Página principal -->
     <div class="min-h-screen bg-gray-50">
+        
         <!-- Header -->
         <div class="gradient-bg">
-            <div class="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <div class="max-w-4xl mx-auto px-4 py-4 sm:px-6 lg:px-8"> <!-- Reducido de py-8 a py-4 -->
                 <div class="text-center text-white fade-in">
                     <!-- Logo y nombre de empresa -->
-                    <div class="mb-6">
+                    <div class="mb-3"> <!-- Reducido de mb-6 a mb-3 -->
                         <?php if (!empty($reserva['empresa_logo'])): ?>
-                            <div class="flex justify-center mb-4">
+                            <div class="flex justify-center mb-2"> <!-- Reducido de mb-4 a mb-2 -->
                                 <img src="<?php echo htmlspecialchars($reserva['empresa_logo']); ?>" 
-                                     alt="<?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre']); ?>"
-                                     class="h-16 w-auto object-contain bg-white bg-opacity-20 rounded-lg p-2">
+                                    alt="<?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre']); ?>"
+                                    class="h-12 w-auto object-contain bg-white bg-opacity-20 rounded-lg p-2"> <!-- Reducido de h-16 a h-12 -->
                             </div>
                         <?php endif; ?>
                         
-                        <h1 class="text-3xl font-bold sm:text-4xl"><?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre'] ?? 'Gestión de Reserva'); ?></h1>
+                        <h1 class="text-2xl font-bold sm:text-3xl"><?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre'] ?? 'Gestión de Reserva'); ?></h1> <!-- Reducido de text-3xl sm:text-4xl a text-2xl sm:text-3xl -->
 
                         <!-- Información de contacto -->
                         <?php if (!empty($reserva['direccion']) || !empty($reserva['telefono_contacto'])): ?>
-                            <div class="flex flex-wrap justify-center items-center gap-4 mt-4 text-sm text-white text-opacity-80">
+                            <div class="flex flex-wrap justify-center items-center gap-4 mt-2 text-sm text-white text-opacity-80"> <!-- Reducido de mt-4 a mt-2 -->
                                 <?php if (!empty($reserva['direccion'])): ?>
                                     <div class="flex items-center">
                                         <i class="ri-map-pin-line mr-2"></i>
@@ -315,7 +453,7 @@ if ($reserva && $puedeModificar) {
                                     <div class="flex items-center">
                                         <i class="ri-phone-line mr-2"></i>
                                         <a href="tel:<?php echo htmlspecialchars($reserva['telefono_contacto']); ?>" 
-                                           class="hover:text-white transition-colors">
+                                        class="hover:text-white transition-colors">
                                             <?php echo htmlspecialchars($reserva['telefono_contacto']); ?>
                                         </a>
                                     </div>
@@ -384,7 +522,7 @@ if ($reserva && $puedeModificar) {
                                 <dt class="text-sm font-medium text-gray-500">Fecha</dt>
                                 <dd class="mt-1 text-sm text-gray-900">
                                     <i class="ri-calendar-line mr-2 text-primary"></i>
-                                    <?php echo date('l, d \d\e F \d\e Y', strtotime($reserva['fecha'])); ?>
+                                    <?php echo formatearFechaEspanol($reserva['fecha']); ?>
                                 </dd>
                             </div>
                             <div>
@@ -440,31 +578,52 @@ if ($reserva && $puedeModificar) {
                                 <h3 class="text-lg leading-6 font-medium text-gray-900">Cambiar fecha y hora</h3>
                             </div>
                             <div class="px-6 py-5">
-                                <form id="modificarForm" class="space-y-4">
+                                <form method="POST" id="modificarForm" class="space-y-6">
                                     <input type="hidden" name="action" value="modificar">
-                                    <input type="hidden" name="reserva_id" value="<?php echo $reserva['id']; ?>">
-                                    <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
+                                    <input type="hidden" name="nueva_fecha" id="selectedDate">
+                                    <input type="hidden" name="nueva_hora" id="selectedTime">
                                     
+                                    <!-- Selección de fecha -->
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nueva fecha</label>
-                                        <select name="nueva_fecha" id="nuevaFecha" class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-primary focus:border-primary">
-                                            <option value="">Selecciona una fecha</option>
+                                        <label class="block text-sm font-medium text-gray-700 mb-3">Nueva fecha</label>
+                                        <div class="date-grid" id="dateGrid">
                                             <?php foreach ($horariosDisponibles as $fecha => $info): ?>
-                                                <option value="<?php echo $fecha; ?>" data-horas="<?php echo htmlspecialchars(json_encode($info['horas'])); ?>">
-                                                    <?php echo $info['dia_semana'] . ', ' . $info['fecha_formateada']; ?>
-                                                </option>
+                                                <div class="date-option" data-fecha="<?php echo $fecha; ?>" data-horas="<?php echo htmlspecialchars(json_encode($info['horas'])); ?>">
+                                                    <div class="day"><?php echo $info['dia_semana']; ?></div>
+                                                    <div class="date"><?php echo date('j M', strtotime($fecha)); ?></div>
+                                                </div>
                                             <?php endforeach; ?>
-                                        </select>
+                                        </div>
                                     </div>
                                     
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nueva hora</label>
-                                        <select name="nueva_hora" id="nuevaHora" class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-primary focus:border-primary" disabled>
-                                            <option value="">Selecciona una fecha primero</option>
-                                        </select>
+                                    <!-- Selección de hora -->
+                                    <div id="timeSection" class="hidden-section">
+                                        <label class="block text-sm font-medium text-gray-700 mb-3">Nueva hora</label>
+                                        <div class="time-grid" id="timeGrid">
+                                            <!-- Las horas se cargarán dinámicamente -->
+                                        </div>
                                     </div>
                                     
-                                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all" id="btnModificar">
+                                    <!-- Resumen de selección -->
+                                    <div id="summarySection" class="hidden-section">
+                                        <div class="bg-gray-50 rounded-lg p-4 border">
+                                            <h4 class="text-sm font-medium text-gray-900 mb-2">Resumen del cambio:</h4>
+                                            <div class="flex items-center justify-between text-sm">
+                                                <div>
+                                                    <span class="text-gray-600">Fecha actual:</span>
+                                                    <span class="ml-2 font-medium"><?php echo formatearFechaEspanol($reserva['fecha']); ?> a las <?php echo substr($reserva['hora'], 0, 5); ?></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between text-sm mt-2">
+                                                <div>
+                                                    <span class="text-gray-600">Nueva fecha:</span>
+                                                    <span class="ml-2 font-medium text-primary" id="newDateSummary">-</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed" id="btnModificar" disabled>
                                         <i class="ri-calendar-check-line mr-2"></i>
                                         Confirmar cambio
                                     </button>
@@ -582,75 +741,96 @@ if ($reserva && $puedeModificar) {
 <?php endif; ?>
 
 <script>
-// Configuración de horarios disponibles
+// Datos de horarios disponibles
 const horariosDisponibles = <?php echo json_encode($horariosDisponibles); ?>;
 
 document.addEventListener('DOMContentLoaded', function() {
-    const nuevaFechaSelect = document.getElementById('nuevaFecha');
-    const nuevaHoraSelect = document.getElementById('nuevaHora');
+    let selectedDate = null;
+    let selectedTime = null;
+    
+    const dateOptions = document.querySelectorAll('.date-option');
+    const timeSection = document.getElementById('timeSection');
+    const timeGrid = document.getElementById('timeGrid');
+    const summarySection = document.getElementById('summarySection');
+    const btnModificar = document.getElementById('btnModificar');
+    const selectedDateInput = document.getElementById('selectedDate');
+    const selectedTimeInput = document.getElementById('selectedTime');
+    const newDateSummary = document.getElementById('newDateSummary');
     const modificarForm = document.getElementById('modificarForm');
 
-    // Manejar cambio de fecha
-    if (nuevaFechaSelect) {
-        nuevaFechaSelect.addEventListener('change', function() {
-            const fecha = this.value;
-            nuevaHoraSelect.innerHTML = '<option value="">Selecciona una hora</option>';
-            nuevaHoraSelect.disabled = !fecha;
-
-            if (fecha && horariosDisponibles[fecha]) {
-                const horas = horariosDisponibles[fecha].horas;
-                horas.forEach(hora => {
-                    const option = document.createElement('option');
-                    option.value = hora;
-                    option.textContent = hora;
-                    nuevaHoraSelect.appendChild(option);
-                });
-                nuevaHoraSelect.disabled = false;
-            }
+    // Manejar selección de fecha
+    dateOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Remover selección anterior
+            document.querySelectorAll('.date-option.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Seleccionar nueva fecha
+            this.classList.add('selected');
+            selectedDate = this.dataset.fecha;
+            selectedDateInput.value = selectedDate;
+            
+            // Mostrar horarios disponibles
+            const horas = JSON.parse(this.dataset.horas);
+            timeGrid.innerHTML = '';
+            
+            horas.forEach(hora => {
+                const timeOption = document.createElement('div');
+                timeOption.className = 'time-option';
+                timeOption.dataset.hora = hora;
+                timeOption.textContent = hora;
+                timeOption.addEventListener('click', selectTime);
+                timeGrid.appendChild(timeOption);
+            });
+            
+            // Mostrar sección de horarios
+            timeSection.classList.remove('hidden-section');
+            
+            // Resetear selección de hora
+            selectedTime = null;
+            selectedTimeInput.value = '';
+            summarySection.classList.add('hidden-section');
+            btnModificar.disabled = true;
         });
+    });
+    
+    // Función para seleccionar hora
+    function selectTime() {
+        // Remover selección anterior
+        document.querySelectorAll('.time-option.selected').forEach(el => {
+            el.classList.remove('selected');
+        });
+        
+        // Seleccionar nueva hora
+        this.classList.add('selected');
+        selectedTime = this.dataset.hora;
+        selectedTimeInput.value = selectedTime;
+        
+        // Actualizar resumen
+        if (selectedDate && selectedTime) {
+            const fechaInfo = horariosDisponibles[selectedDate];
+            newDateSummary.textContent = `${fechaInfo.dia_completo} a las ${selectedTime}`;
+            summarySection.classList.remove('hidden-section');
+            btnModificar.disabled = false;
+        }
     }
-
-    // Manejar envío del formulario de modificación
+    
+    // Manejar envío del formulario
     if (modificarForm) {
         modificarForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const btnModificar = document.getElementById('btnModificar');
-            
-            // Validaciones
-            if (!formData.get('nueva_fecha') || !formData.get('nueva_hora')) {
+            if (!selectedDate || !selectedTime) {
+                e.preventDefault();
                 alert('Por favor selecciona fecha y hora');
-                return;
+                return false;
             }
             
-            // Loading state
+            // Mostrar loading state
             const originalText = btnModificar.innerHTML;
             btnModificar.innerHTML = '<i class="ri-loader-line animate-spin mr-2"></i>Modificando...';
             btnModificar.disabled = true;
             
-            // Enviar petición
-            fetch('api/actualizar-reserva-publica', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Reserva modificada exitosamente');
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + (data.message || 'No se pudo modificar la reserva'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error de conexión al modificar la reserva');
-            })
-            .finally(() => {
-                btnModificar.innerHTML = originalText;
-                btnModificar.disabled = false;
-            });
+            return true;
         });
     }
 });

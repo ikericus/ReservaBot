@@ -96,77 +96,100 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
     <!-- Iconos -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
         
-    <style>
-        :root {
-            --primary-color: <?php echo htmlspecialchars($formulario['color_primario'] ?? '#667eea'); ?>;
-            --secondary-color: <?php echo htmlspecialchars($formulario['color_secundario'] ?? '#764ba2'); ?>;
+<style>
+    :root {
+        --primary-color: <?php echo htmlspecialchars($formulario['color_primario'] ?? '#667eea'); ?>;
+        --secondary-color: <?php echo htmlspecialchars($formulario['color_secundario'] ?? '#764ba2'); ?>;
+    }
+    
+    /* === GRADIENTE COMPACTO === */
+    .gradient-bg {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    }
+    
+    /* === BOTONES === */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, 
+            color-mix(in srgb, var(--primary-color) 90%, black) 0%, 
+            color-mix(in srgb, var(--secondary-color) 90%, black) 100%);
+        transform: translateY(-1px);
+    }
+    
+    /* === UTILIDADES === */
+    .text-primary { color: var(--primary-color); }
+    .border-primary { border-color: var(--primary-color); }
+    .focus\:ring-primary:focus { --tw-ring-color: var(--primary-color); }
+    .focus\:border-primary:focus { border-color: var(--primary-color); }
+    
+    /* === ANIMACIONES SUAVES === */
+    .fade-in {
+        animation: fadeIn 0.4s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .success-animation {
+        animation: successPulse 1s ease-in-out;
+    }
+    
+    @keyframes successPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+    
+    /* === LOADING === */
+    .btn-loading {
+        position: relative;
+        color: transparent;
+    }
+    
+    .btn-loading::after {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        top: 50%;
+        left: 50%;
+        margin-left: -7px;
+        margin-top: -7px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* === RESPONSIVO === */
+    @media (max-width: 640px) {
+        .truncate {
+            max-width: 200px;
         }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    }
+    
+    /* === ACCESIBILIDAD === */
+    @media (prefers-reduced-motion: reduce) {
+        .fade-in,
+        .btn-loading::after {
+            animation: none;
         }
         
         .btn-primary:hover {
-            background: linear-gradient(135deg, 
-                color-mix(in srgb, var(--primary-color) 90%, black) 0%, 
-                color-mix(in srgb, var(--secondary-color) 90%, black) 100%);
+            transform: none;
         }
-        
-        .text-primary {
-            color: var(--primary-color);
-        }
-        
-        .border-primary {
-            border-color: var(--primary-color);
-        }
-        
-        .focus\:ring-primary:focus {
-            --tw-ring-color: var(--primary-color);
-        }
-        
-        .focus\:border-primary:focus {
-            border-color: var(--primary-color);
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .success-animation {
-            animation: successPulse 1.5s ease-in-out;
-        }
-        @keyframes successPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        .btn-loading {
-            position: relative;
-            color: transparent;
-        }
-        .btn-loading::after {
-            content: "";
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
+    }
+</style>
+
 </head>
 <body class="bg-gray-50">
     
@@ -270,69 +293,101 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
     <?php else: ?>
         <!-- Formulario de reserva -->
         <div class="min-h-screen bg-gray-50">
+
             <!-- Header -->
-            <div class="gradient-bg">
-                <div class="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-                    <div class="text-center text-white fade-in">
+           <div class="gradient-bg relative overflow-hidden">
+                <!-- Efecto sutil de fondo -->
+                <div class="absolute inset-0 opacity-5">
+                    <div class="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -mr-20 -mt-20"></div>
+                    <div class="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full -ml-16 -mb-16"></div>
+                </div>
+                
+                <!-- Contenido principal -->
+                <div class="relative z-10 max-w-4xl mx-auto px-4 py-3 sm:px-6">
+                    <div class="flex items-center justify-between text-white">
                         
-                        <!-- Logo y nombre de empresa -->
-                        <div class="mb-6">
+                        <!-- Logo y nombre (lado izquierdo) -->
+                        <div class="flex items-center space-x-3">
                             <?php if (!empty($formulario['empresa_logo'])): ?>
-                                <div class="flex justify-center mb-4">
+                                <div class="flex-shrink-0">
                                     <img src="<?php echo htmlspecialchars($formulario['empresa_logo']); ?>" 
                                         alt="<?php echo htmlspecialchars($formulario['empresa_nombre'] ?? $formulario['nombre']); ?>"
-                                        class="h-16 w-auto object-contain bg-white/10 rounded-lg p-2">
+                                        class="h-10 w-auto object-contain bg-white/15 rounded-lg p-1.5 shadow-md">
                                 </div>
                             <?php endif; ?>
                             
-                            <h1 class="text-4xl font-bold sm:text-5xl mb-2">
-                                <?php echo htmlspecialchars($formulario['empresa_nombre'] ?? $formulario['nombre']); ?>
-                            </h1>
+                            <div class="min-w-0">
+                                <h1 class="text-lg font-bold sm:text-xl truncate">
+                                    <?php echo htmlspecialchars($formulario['empresa_nombre'] ?? $formulario['nombre']); ?>
+                                </h1>
+                                
+                                <?php if (!empty($formulario['nombre']) && $formulario['nombre'] !== ($formulario['empresa_nombre'] ?? '')): ?>
+                                    <p class="text-sm text-white/90 truncate">
+                                        <?php echo htmlspecialchars($formulario['nombre']); ?>
+                                    </p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <!-- Información de contacto (lado derecho) -->
+                        <div class="hidden sm:flex items-center space-x-4 text-sm">
+                            <?php if (!empty($formulario['telefono_contacto'])): ?>
+                                <a href="tel:<?php echo htmlspecialchars($formulario['telefono_contacto']); ?>" 
+                                class="flex items-center space-x-2 bg-white/10 rounded-full px-3 py-1.5 hover:bg-white/20 transition-colors">
+                                    <i class="ri-phone-line text-xs"></i>
+                                    <span class="font-medium"><?php echo htmlspecialchars($formulario['telefono_contacto']); ?></span>
+                                </a>
+                            <?php endif; ?>
                             
-                            <?php if (!empty($formulario['nombre']) && $formulario['nombre'] !== ($formulario['empresa_nombre'] ?? '')): ?>
-                                <h2 class="text-xl font-medium text-white/90 mb-2">
-                                    <?php echo htmlspecialchars($formulario['nombre']); ?>
-                                </h2>
+                            <?php if (!empty($formulario['direccion'])): ?>
+                                <div class="flex items-center space-x-2 text-white/80 max-w-xs">
+                                    <i class="ri-map-pin-line text-xs flex-shrink-0"></i>
+                                    <span class="truncate text-xs"><?php echo htmlspecialchars($formulario['direccion']); ?></span>
+                                </div>
                             <?php endif; ?>
                         </div>
                         
-                        <!-- Mensaje de bienvenida personalizado -->
-                        <?php if (!empty($formulario['mensaje_bienvenida'])): ?>
-                            <div class="max-w-2xl mx-auto mb-6">
-                                <p class="text-lg text-white/90 leading-relaxed">
-                                    <?php echo htmlspecialchars($formulario['mensaje_bienvenida']); ?>
-                                </p>
-                            </div>
-                        <?php elseif (!empty($formulario['descripcion'])): ?>
-                            <p class="mt-2 text-lg text-white/90 max-w-2xl mx-auto">
-                                <?php echo htmlspecialchars($formulario['descripcion']); ?>
+                        <!-- Menú móvil para información -->
+                        <div class="sm:hidden">
+                            <button type="button" onclick="toggleMobileInfo()" class="bg-white/10 rounded-full p-2 hover:bg-white/20 transition-colors">
+                                <i class="ri-information-line text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Mensaje de bienvenida compacto (opcional) -->
+                    <?php if (!empty($formulario['mensaje_bienvenida'])): ?>
+                        <div class="mt-2 text-center">
+                            <p class="text-sm text-white/90 max-w-2xl mx-auto leading-relaxed">
+                                <?php echo htmlspecialchars($formulario['mensaje_bienvenida']); ?>
                             </p>
-                        <?php endif; ?>
-                        
-                        <!-- Información de contacto -->
-                        <?php if (!empty($formulario['direccion']) || !empty($formulario['telefono_contacto'])): ?>
-                            <div class="flex flex-wrap justify-center items-center gap-4 mt-6 text-sm text-white/80">
-                                <?php if (!empty($formulario['direccion'])): ?>
-                                    <div class="flex items-center">
-                                        <i class="ri-map-pin-line mr-2"></i>
-                                        <?php echo htmlspecialchars($formulario['direccion']); ?>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <?php if (!empty($formulario['telefono_contacto'])): ?>
-                                    <div class="flex items-center">
-                                        <i class="ri-phone-line mr-2"></i>
-                                        <a href="tel:<?php echo htmlspecialchars($formulario['telefono_contacto']); ?>" 
-                                        class="hover:text-white transition-colors">
-                                            <?php echo htmlspecialchars($formulario['telefono_contacto']); ?>
-                                        </a>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- Información móvil desplegable -->
+                    <div id="mobileInfo" class="hidden sm:hidden mt-3 pt-3 border-t border-white/20">
+                        <div class="space-y-2 text-sm">
+                            <?php if (!empty($formulario['telefono_contacto'])): ?>
+                                <div class="flex items-center justify-center space-x-2">
+                                    <i class="ri-phone-line"></i>
+                                    <a href="tel:<?php echo htmlspecialchars($formulario['telefono_contacto']); ?>" 
+                                    class="font-medium hover:text-white/80">
+                                        <?php echo htmlspecialchars($formulario['telefono_contacto']); ?>
+                                    </a>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($formulario['direccion'])): ?>
+                                <div class="flex items-center justify-center space-x-2 text-white/80">
+                                    <i class="ri-map-pin-line"></i>
+                                    <span class="text-center"><?php echo htmlspecialchars($formulario['direccion']); ?></span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
+
             
             <!-- Formulario -->
             <div class="max-w-2xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -490,12 +545,13 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Información importante</h3>
                     <div class="space-y-3 text-sm text-gray-600">
                         <div class="flex items-start">
-                            <i class="ri-information-line text-blue-500 mt-0.5 mr-3 flex-shrink-0"></i>
-                            <p>
-                                <?php echo $formulario['confirmacion_automatica'] 
-                                    ? 'Tu reserva será confirmada automáticamente.' 
-                                    : 'Recibirás una confirmación por teléfono en las próximas horas.'; ?>
-                            </p>
+                            <?php if ($formulario['confirmacion_automatica']): ?>
+                                <i class="ri-check-line text-green-500 mt-0.5 mr-3 flex-shrink-0"></i>
+                                <p>Tu reserva será confirmada automáticamente.</p>
+                            <?php else: ?>
+                                <i class="ri-time-line text-orange-500 mt-0.5 mr-3 flex-shrink-0"></i>
+                                <p>Tu reserva será confirmada en las próximas horas.</p>
+                            <?php endif; ?>
                         </div>
                         <div class="flex items-start">
                             <i class="ri-mail-line text-blue-500 mt-0.5 mr-3 flex-shrink-0"></i>
@@ -503,11 +559,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                         </div>
                         <div class="flex items-start">
                             <i class="ri-phone-line text-green-500 mt-0.5 mr-3 flex-shrink-0"></i>
-                            <p>También te contactaremos al número proporcionado si es necesario.</p>
-                        </div>
-                        <div class="flex items-start">
-                            <i class="ri-time-line text-orange-500 mt-0.5 mr-3 flex-shrink-0"></i>
-                            <p>Por favor, llega con 5 minutos de antelación a tu cita.</p>
+                            <p>Te contactaremos al número proporcionado si es necesario.</p>
                         </div>
                     </div>
                 </div>
@@ -539,7 +591,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
             if (fechaInput && horaSelect) {
                 fechaInput.addEventListener('change', cargarHorasDisponibles);
             }
-            
+
             function showError(message, type = 'error') {
                 if (type === 'success') {
                     // Cambiar el estilo del contenedor para éxito
@@ -845,6 +897,12 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
             const urlParams = new URLSearchParams(window.location.search);
             const baseUrl = window.location.pathname + '?f=' + urlParams.get('f');
             window.location.href = baseUrl;
+        }
+        
+        // JavaScript para el menú móvil
+        function toggleMobileInfo() {
+            const mobileInfo = document.getElementById('mobileInfo');
+            mobileInfo.classList.toggle('hidden');
         }
     </script>
 </body>
