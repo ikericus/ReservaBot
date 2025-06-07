@@ -266,12 +266,12 @@ try {
                 <div class="user-avatar h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold mr-3">
                     <?php 
                     $user = getAuthenticatedUser();
-                    echo strtoupper(substr($user['name'] ?? 'U', 0, 1));
+                    echo strtoupper(substr($user['nombre'] ?? 'U', 0, 1));
                     ?>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-gray-900 truncate"><?php echo htmlspecialchars($user['name'] ?? 'Usuario'); ?></p>
-                    <p class="text-xs text-gray-500 truncate"><?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
+                    <p class="text-sm font-semibold text-gray-900 truncate"><?php echo htmlspecialchars($user['negocio'] ?? 'Mi Negocio'); ?></p>
+                    <p class="text-xs text-gray-500 truncate"><?php echo htmlspecialchars($user['nombre'] ?? 'Usuario'); ?></p>
                 </div>
                 <div class="flex items-center">
                     <i class="ri-arrow-up-s-line text-gray-400 transition-transform group-hover:rotate-180" id="userMenuIcon"></i>

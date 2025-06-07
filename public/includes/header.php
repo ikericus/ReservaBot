@@ -207,7 +207,10 @@
                                 <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center mr-3">
                                     <i class="ri-calendar-line text-white text-lg"></i>
                                 </div>
-                                <span class="font-bold gradient-text">ReservaBot</span>
+                                <div>
+                                    <div class="font-bold gradient-text"><?php echo htmlspecialchars($user['negocio'] ?? 'Mi Negocio'); ?></div>
+                                    <div class="text-xs text-gray-500"><?php echo htmlspecialchars($user['nombre'] ?? 'Usuario'); ?></div>
+                                </div>
                             </div>
                             <button id="closeMobileMenu" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                                 <i class="ri-close-line text-xl"></i>
@@ -270,12 +273,12 @@
                                 <div class="user-avatar h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold mr-3">
                                     <?php 
                                     $user = getAuthenticatedUser();
-                                    echo strtoupper(substr($user['name'] ?? 'U', 0, 1));
+                                    echo strtoupper(substr($user['nombre'] ?? 'U', 0, 1));
                                     ?>
                                 </div>
                                 <div class="flex-1">
-                                    <p class="text-sm font-semibold text-gray-900"><?php echo htmlspecialchars($user['name'] ?? 'Usuario'); ?></p>
-                                    <p class="text-xs text-gray-500"><?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
+                                    <p class="text-sm font-semibold text-gray-900"><?php echo htmlspecialchars($user['negocio'] ?? 'Mi Negocio'); ?></p>
+                                    <p class="text-xs text-gray-500"><?php echo htmlspecialchars($user['nombre'] ?? 'Usuario'); ?></p>
                                 </div>
                                 <div class="relative">
                                     <button id="mobileUserMenuBtn" class="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors">
@@ -381,12 +384,12 @@
                             <div class="user-avatar h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                                 <?php 
                                 $user = getAuthenticatedUser();
-                                echo strtoupper(substr($user['name'] ?? 'U', 0, 1));
+                                echo strtoupper(substr($user['nombre'] ?? 'U', 0, 1));
                                 ?>
                             </div>
                             <div class="hidden xl:block">
-                                <p class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($user['name'] ?? 'Usuario'); ?></p>
-                                <p class="text-xs text-gray-500">Plan <?php echo ucfirst($user['plan'] ?? 'Gratis'); ?></p>
+                                <p class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($user['negocio'] ?? 'Mi Negocio'); ?></p>
+                                <p class="text-xs text-gray-500"><?php echo htmlspecialchars($user['nombre'] ?? 'Usuario'); ?></p>
                             </div>
                         </div>
                     </div>
