@@ -33,6 +33,7 @@ class Router {
         $this->addRoute('GET',      '/reservar',                'pages/reservar.php');
         $this->addRoute('POST',     '/reservar',                'pages/reservar.php');
         $this->addRoute('GET',      '/mi-reserva',              'pages/mi-reserva.php');
+        $this->addRoute('POST',     '/api/contacto-handler',    'api/contacto-handler.php');
 
         // Rutas protegidas        
         $this->addRoute('GET',      '/',                 'pages/reservas.php',         ['auth']);
@@ -57,6 +58,7 @@ class Router {
         $this->addRoute('POST',     '/api/eliminar-reserva',            'api/eliminar-reserva.php',         ['auth']);
         $this->addRoute('POST',     '/api/horas-disponibles',           'api/horas-disponibles.php',        ['auth']);
         $this->addRoute('POST',     '/api/actualizar-configuracion',    'api/actualizar-configuracion.php', ['auth']);
+        
         
         // Webhook para WhatsApp
         $this->addRoute('POST',     '/webhook/whatsapp',    'webhook/whatsapp.php');

@@ -1,131 +1,162 @@
 <?php
 /**
  * Funciones para envío de emails
- * Agregar a: public/includes/email-functions.php
+ * Archivo: public/includes/email-functions.php
+ * Refactorizado con método central enviarEmail()
  */
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
-
-// Instalar PHPMailer con: composer require phpmailer/phpmailer
-
-require_once dirname(__DIR__) . '/includes/db-config.php';
+// No necesitamos db-config.php ya que no usamos configuraciones de BD
 
 /**
- * Configuración de email desde base de datos
+ * Método central para envío de emails
+ * 
+ * @param string $destinatario Email del destinatario
+ * @param string $asunto Asunto del email
+ * @param string $contenidoHTML Contenido HTML del email
+ * @param string $fromEmail Email del remitente
+ * @param string $fromName Nombre del remitente
+ * @param array $opciones Opciones adicionales (reply_to, etc.)
+ * @param string $tipoEmail Tipo de email para logs
+ * @return bool True si se envió correctamente
  */
-function getEmailConfig() {
+function enviarEmail($destinatario, $asunto, $contenidoHTML, $fromEmail, $fromName, $opciones = [], $tipoEmail = 'genérico') {
+    // Headers base
+    $headers = [
+        'MIME-Version: 1.0',
+        'Content-type: text/html; charset=UTF-8',
+        "From: {$fromName} <{$fromEmail}>",
+        'X-Mailer: PHP/' . phpversion()
+    ];
     
-    try {
-        $stmt = getPDO()->prepare("
-            SELECT clave, valor FROM configuraciones 
-            WHERE clave IN ('email_smtp_host', 'email_smtp_port', 'email_smtp_user', 'email_smtp_pass', 'email_from_address', 'email_from_name')
-        ");
-        $stmt->execute();
-        $config = [];
-        
-        while ($row = $stmt->fetch()) {
-            $config[$row['clave']] = $row['valor'];
+    // Headers adicionales según opciones
+    if (isset($opciones['reply_to'])) {
+        if (isset($opciones['reply_to_name'])) {
+            $headers[] = "Reply-To: {$opciones['reply_to_name']} <{$opciones['reply_to']}>";
+        } else {
+            $headers[] = "Reply-To: {$opciones['reply_to']}";
         }
-        
-        return $config;
-    } catch (Exception $e) {
-        error_log("Error obteniendo configuración de email: " . $e->getMessage());
-        return [];
     }
+    
+    // Enviar email
+    $enviado = mail(
+        $destinatario,
+        $asunto,
+        $contenidoHTML,
+        implode("\r\n", $headers)
+    );
+    
+    // Log del resultado
+    if ($enviado) {
+        error_log("Email {$tipoEmail} enviado a: {$destinatario}");
+    } else {
+        error_log("Error enviando email {$tipoEmail} a: {$destinatario}");
+    }
+    
+    return $enviado;
 }
 
 /**
  * Enviar email de restablecimiento de contraseña
  */
 function sendPasswordResetEmail($email, $resetToken) {
-    $config = getEmailConfig();
+    // Generar URL de restablecimiento
+    $resetUrl = "https://{$_SERVER['HTTP_HOST']}/password-reset.php?token={$resetToken}";
     
-    if (empty($config['email_smtp_host']) || empty($config['email_smtp_user'])) {
-        error_log("Configuración de email incompleta");
-        return false;
-    }
+    // Asunto y contenido
+    $asunto = 'Restablecer contraseña - ReservaBot';
+    $contenido = getPasswordResetEmailTemplate($resetUrl, $email);
     
-    try {
-        $mail = new PHPMailer(true);
-        
-        // Configuración del servidor
-        $mail->isSMTP();
-        $mail->Host = $config['email_smtp_host'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $config['email_smtp_user'];
-        $mail->Password = $config['email_smtp_pass'];
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = $config['email_smtp_port'] ?? 587;
-        $mail->CharSet = 'UTF-8';
-        
-        // Remitente y destinatario
-        $mail->setFrom($config['email_from_address'], $config['email_from_name'] ?? 'ReservaBot');
-        $mail->addAddress($email);
-        
-        // Contenido del email
-        $resetUrl = "https://{$_SERVER['HTTP_HOST']}/password-reset.php?token={$resetToken}";
-        
-        $mail->isHTML(true);
-        $mail->Subject = 'Restablecer contraseña - ReservaBot';
-        $mail->Body = getPasswordResetEmailTemplate($resetUrl, $email);
-        $mail->AltBody = "Para restablecer tu contraseña, visita: {$resetUrl}";
-        
-        $mail->send();
-        error_log("Email de restablecimiento enviado a: {$email}");
-        return true;
-        
-    } catch (Exception $e) {
-        error_log("Error enviando email de restablecimiento: {$mail->ErrorInfo}");
-        return false;
-    }
+    // Enviar usando método central
+    return enviarEmail(
+        $email, 
+        $asunto, 
+        $contenido, 
+        'noreply@reservabot.es', 
+        'ReservaBot',
+        [], 
+        'restablecimiento de contraseña'
+    );
 }
 
 /**
  * Enviar email de verificación
  */
 function sendVerificationEmail($email, $verificationToken) {
-    $config = getEmailConfig();
+    // Generar URL de verificación
+    $verifyUrl = "https://{$_SERVER['HTTP_HOST']}/verify-email.php?token={$verificationToken}";
     
-    if (empty($config['email_smtp_host']) || empty($config['email_smtp_user'])) {
-        error_log("Configuración de email incompleta");
-        return false;
-    }
+    // Asunto y contenido
+    $asunto = 'Verificar email - ReservaBot';
+    $contenido = getVerificationEmailTemplate($verifyUrl, $email);
     
-    try {
-        $mail = new PHPMailer(true);
-        
-        // Configuración del servidor
-        $mail->isSMTP();
-        $mail->Host = $config['email_smtp_host'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $config['email_smtp_user'];
-        $mail->Password = $config['email_smtp_pass'];
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = $config['email_smtp_port'] ?? 587;
-        $mail->CharSet = 'UTF-8';
-        
-        // Remitente y destinatario
-        $mail->setFrom($config['email_from_address'], $config['email_from_name'] ?? 'ReservaBot');
-        $mail->addAddress($email);
-        
-        // Contenido del email
-        $verifyUrl = "https://{$_SERVER['HTTP_HOST']}/verify-email.php?token={$verificationToken}";
-        
-        $mail->isHTML(true);
-        $mail->Subject = 'Verificar email - ReservaBot';
-        $mail->Body = getVerificationEmailTemplate($verifyUrl, $email);
-        $mail->AltBody = "Para verificar tu email, visita: {$verifyUrl}";
-        
-        $mail->send();
-        error_log("Email de verificación enviado a: {$email}");
-        return true;
-        
-    } catch (Exception $e) {
-        error_log("Error enviando email de verificación: {$mail->ErrorInfo}");
-        return false;
-    }
+    // Enviar usando método central
+    return enviarEmail(
+        $email, 
+        $asunto, 
+        $contenido, 
+        'noreply@reservabot.es', 
+        'ReservaBot',
+        [], 
+        'verificación de email'
+    );
+}
+
+/**
+ * Envía email de contacto desde el formulario web
+ */
+function enviarEmailContactoWeb($nombre, $emailCliente, $asunto, $mensaje) {
+    // Destinatario y asunto
+    $destinatario = 'contacto@reservabot.es';
+    $subject = 'Contacto Web - ' . ucfirst($asunto);
+    
+    // Contenido HTML
+    $contenido = generarEmailContactoWebHTML($nombre, $emailCliente, $asunto, $mensaje);
+    
+    // Opciones específicas para contacto
+    $opciones = [
+        'reply_to' => $emailCliente,
+        'reply_to_name' => $nombre
+    ];
+    
+    // Enviar usando método central (el email viene del cliente)
+    return enviarEmail(
+        $destinatario, 
+        $subject, 
+        $contenido, 
+        $emailCliente, 
+        $nombre,
+        $opciones, 
+        'contacto web'
+    );
+}
+
+/**
+ * Envía email de confirmación al cliente
+ */
+function enviarEmailConfirmacion($reserva) {
+    // Generar URL de gestión
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+    $host = $_SERVER['HTTP_HOST'];
+    $gestionUrl = $protocol . $host . '/mi-reserva?token=' . $reserva['access_token'];
+    
+    // Asunto del email
+    $asunto = $reserva['estado'] === 'confirmada' 
+        ? '✅ Tu reserva está confirmada - ' . $reserva['formulario_nombre']
+        : '⏳ Tu solicitud de reserva - ' . $reserva['formulario_nombre'];
+    
+    // Contenido HTML
+    $contenido = generarHTMLEmail($reserva, $gestionUrl);
+    
+    // Enviar usando método central
+    return enviarEmail(
+        $reserva['email'], 
+        $asunto, 
+        $contenido, 
+        'noreply@reservabot.es', 
+        'ReservaBot',
+        [], 
+        "confirmación de reserva ID: {$reserva['id']}"
+    );
 }
 
 /**
@@ -226,70 +257,68 @@ function getVerificationEmailTemplate($verifyUrl, $email) {
 }
 
 /**
- * Configurar email desde panel de administración
+ * Genera el HTML del email de contacto web
  */
-function updateEmailConfig($config) {
+function generarEmailContactoWebHTML($nombre, $emailCliente, $asunto, $mensaje) {
+    $fechaActual = date('d/m/Y H:i:s');
+    $asuntoFormateado = ucfirst($asunto);
     
-    try {
-        $stmt = getPDO()->prepare("
-            INSERT INTO configuraciones (clave, valor, updated_at) 
-            VALUES (?, ?, NOW())
-            ON DUPLICATE KEY UPDATE valor = VALUES(valor), updated_at = NOW()
-        ");
-        
-        foreach ($config as $key => $value) {
-            $stmt->execute([$key, $value]);
-        }
-        
-        return true;
-    } catch (Exception $e) {
-        error_log("Error actualizando configuración de email: " . $e->getMessage());
-        return false;
-    }
-}
-
-/**
- * Envía email de confirmación al cliente
- */
-function enviarEmailConfirmacion($reserva) {
-    // Generar URL de gestión
-    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
-    $host = $_SERVER['HTTP_HOST'];
-    $gestionUrl = $protocol . $host . '/mi-reserva?token=' . $reserva['access_token'];
-    
-    // Asunto del email
-    $asunto = $reserva['estado'] === 'confirmada' 
-        ? '✅ Tu reserva está confirmada - ' . $reserva['formulario_nombre']
-        : '⏳ Tu solicitud de reserva - ' . $reserva['formulario_nombre'];
-    
-    // Contenido HTML del email
-    $htmlContent = generarHTMLEmail($reserva, $gestionUrl);
-    
-    // Headers del email
-    $headers = [
-        'MIME-Version: 1.0',
-        'Content-type: text/html; charset=UTF-8',
-        'From: ReservaBot <noreply@reservabot.com>',
-        'Reply-To: info@reservabot.com',
-        'X-Mailer: PHP/' . phpversion()
-    ];
-    
-    // Enviar email (puedes cambiar por otra librería de email)
-    $enviado = mail(
-        $reserva['email'],
-        $asunto,
-        $htmlContent,
-        implode("\r\n", $headers)
-    );
-    
-    // Log del resultado
-    if ($enviado) {
-        error_log("Email de confirmación enviado para reserva ID: " . $reserva['id']);
-    } else {
-        error_log("Error enviando email de confirmación para reserva ID: " . $reserva['id']);
-    }
-    
-    return $enviado;
+    return "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <title>Nuevo Contacto Web</title>
+    </head>
+    <body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc;'>
+        <div style='max-width: 600px; margin: 0 auto; background-color: white;'>
+            <!-- Header -->
+            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center;'>
+                <h1 style='margin: 0; font-size: 24px;'>📧 Nuevo Contacto Web</h1>
+                <p style='margin: 10px 0 0 0; opacity: 0.9;'>ReservaBot</p>
+            </div>
+            
+            <!-- Content -->
+            <div style='padding: 30px 20px;'>
+                <h2 style='color: #374151; margin-top: 0;'>Nuevo mensaje de contacto</h2>
+                <p style='color: #6b7280; line-height: 1.6;'>
+                    Se ha recibido un nuevo mensaje desde el formulario de contacto del sitio web.
+                </p>
+                
+                <!-- Detalles del contacto -->
+                <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;'>
+                    <h3 style='margin-top: 0; color: #374151;'>👤 Información del contacto:</h3>
+                    <table style='width: 100%; border-collapse: collapse;'>
+                        <tr><td style='padding: 8px 0; color: #374151; width: 120px;'><strong>Nombre:</strong></td><td style='padding: 8px 0; color: #6b7280;'>{$nombre}</td></tr>
+                        <tr><td style='padding: 8px 0; color: #374151;'><strong>Email:</strong></td><td style='padding: 8px 0; color: #6b7280;'><a href='mailto:{$emailCliente}' style='color: #667eea;'>{$emailCliente}</a></td></tr>
+                        <tr><td style='padding: 8px 0; color: #374151;'><strong>Asunto:</strong></td><td style='padding: 8px 0; color: #6b7280;'>{$asuntoFormateado}</td></tr>
+                        <tr><td style='padding: 8px 0; color: #374151;'><strong>Fecha:</strong></td><td style='padding: 8px 0; color: #6b7280;'>{$fechaActual}</td></tr>
+                    </table>
+                </div>
+                
+                <!-- Mensaje -->
+                <div style='background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #bfdbfe;'>
+                    <h3 style='margin-top: 0; color: #374151;'>💬 Mensaje:</h3>
+                    <div style='color: #1e40af; line-height: 1.6; white-space: pre-wrap;'>{$mensaje}</div>
+                </div>
+                
+                <!-- Botón de respuesta -->
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='mailto:{$emailCliente}?subject=Re: {$asuntoFormateado}' style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;'>
+                        📧 Responder
+                    </a>
+                </div>
+                
+                <hr style='border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;'>
+                <p style='font-size: 12px; color: #9ca3af; text-align: center; margin: 0;'>
+                    Este email fue generado automáticamente desde el formulario de contacto de ReservaBot<br>
+                    <strong>No responder a este email</strong> - Usar el botón de respuesta de arriba
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>";
 }
 
 /**
@@ -381,4 +410,5 @@ function generarHTMLEmail($reserva, $gestionUrl) {
     </body>
     </html>";
 }
+
 ?>

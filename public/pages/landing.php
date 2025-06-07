@@ -91,20 +91,6 @@
             left: 100%;
         }
         
-        .modal {
-            transition: opacity 0.25s ease;
-        }
-        
-        .modal.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        
-        .modal.hide {
-            opacity: 0;
-            pointer-events: none;
-        }
-        
         .price-old {
             text-decoration: line-through;
             color: #9ca3af;
@@ -125,11 +111,12 @@
         .mobile-menu {
             transform: translateX(100%);
             transition: transform 0.3s ease-in-out;
-            background: white;
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            background: white !important;
+            backdrop-filter: none;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
             visibility: hidden;
         }
-        
+
         .mobile-menu.open {
             transform: translateX(0);
             visibility: visible;
@@ -176,10 +163,10 @@
         </div>
         
         <!-- Mobile menu -->
-        <div id="mobileMenu" class="mobile-menu md:hidden fixed inset-y-0 right-0 w-80 bg-white shadow-xl z-50 border-l border-gray-200">
-            <div class="h-full flex flex-col bg-white">
+        <div id="mobileMenu" class="mobile-menu md:hidden fixed inset-y-0 right-0 w-80 shadow-xl z-50 border-l border-gray-200" style="background-color: white !important;">
+            <div class="h-full flex flex-col" style="background-color: white !important;">
                 <!-- Header del menú -->
-                <div class="flex items-center justify-between p-6 border-b border-gray-100">
+                <div class="flex items-center justify-between p-6 border-b border-gray-100" style="background-color: white !important;">
                     <div class="flex items-center">
                         <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
                             <i class="ri-calendar-line text-white text-lg"></i>
@@ -192,7 +179,7 @@
                 </div>
                 
                 <!-- Navegación principal -->
-                <div class="flex-1 px-6 py-4">
+                <div class="flex-1 px-6 py-4" style="background-color: white !important;">
                     <nav class="space-y-2">
                         <a href="#inicio" class="flex items-center px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors group" onclick="closeMobileMenu()">
                             <i class="ri-home-line mr-3 text-gray-400 group-hover:text-blue-600"></i>
@@ -210,7 +197,7 @@
                 </div>
                 
                 <!-- Acciones del footer -->
-                <div class="p-6 border-t border-gray-100 bg-gray-50">
+                <div class="p-6 border-t border-gray-100" style="background-color: #f9fafb !important;">
                     <div class="space-y-3">
                         <a href="/login" class="w-full flex items-center justify-center px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-colors border border-gray-200">
                             <i class="ri-login-circle-line mr-2"></i>
@@ -708,56 +695,7 @@
     </footer>
 
     <!-- Contact Modal -->
-    <div id="contactModal" class="modal hide fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-8 max-w-md w-full transform transition-all">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-gray-900">Contáctanos</h3>
-                <button onclick="closeContactModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="ri-close-line text-2xl"></i>
-                </button>
-            </div>
-            
-            <form id="contactForm" class="space-y-4">
-                <div>
-                    <label for="contactName" class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-                    <input type="text" id="contactName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Tu nombre">
-                </div>
-                
-                <div>
-                    <label for="contactEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" id="contactEmail" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="tu@email.com">
-                </div>
-                
-                <div>
-                    <label for="contactSubject" class="block text-sm font-medium text-gray-700 mb-2">Asunto</label>
-                    <select id="contactSubject" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        <option value="consulta">Consulta general</option>
-                        <option value="demo">Solicitar demo personalizada</option>
-                        <option value="soporte">Soporte técnico</option>
-                        <option value="ventas">Información de ventas</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label for="contactMessage" class="block text-sm font-medium text-gray-700 mb-2">Mensaje</label>
-                    <textarea id="contactMessage" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Cuéntanos en qué podemos ayudarte..."></textarea>
-                </div>
-                
-                <button type="submit" class="w-full gradient-bg text-white py-3 px-4 rounded-xl font-semibold hover:shadow-lg transition-all">
-                    <i class="ri-send-plane-line mr-2"></i>
-                    Enviar Mensaje
-                </button>
-            </form>
-            
-            <div class="mt-6 text-center">
-                <p class="text-sm text-gray-600">
-                    O escríbenos directamente a:
-                    <a href="mailto:contacto@reservabot.io" class="text-purple-600 font-medium">contacto@reservabot.io</a>
-                </p>
-            </div>
-        </div>
-    </div>
+    <?php include __DIR__ . '/../components/contacto.php'; ?>
 
     <!-- Scripts -->
     <script>
@@ -822,54 +760,7 @@
         });
         
         document.getElementById('closeMobileMenu').addEventListener('click', closeMobileMenu);
-        
-        // Contact Modal Functions
-        function openContactModal() {
-            const modal = document.getElementById('contactModal');
-            modal.classList.remove('hide');
-            modal.classList.add('show');
-            document.body.style.overflow = 'hidden';
-        }
-        
-        function closeContactModal() {
-            const modal = document.getElementById('contactModal');
-            modal.classList.remove('show');
-            modal.classList.add('hide');
-            document.body.style.overflow = 'auto';
-        }
-        
-        // Close modal when clicking outside
-        document.getElementById('contactModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeContactModal();
-            }
-        });
-        
-        // Handle contact form submission
-        document.getElementById('contactForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                name: document.getElementById('contactName').value,
-                email: document.getElementById('contactEmail').value,
-                subject: document.getElementById('contactSubject').value,
-                message: document.getElementById('contactMessage').value
-            };
-            
-            // Create mailto link
-            const mailtoLink = `mailto:contacto@reservabot.io?subject=${encodeURIComponent('Contacto Web - ' + formData.subject)}&body=${encodeURIComponent(`Nombre: ${formData.name}\nEmail: ${formData.email}\n\nMensaje:\n${formData.message}`)}`;
-            
-            // Open email client
-            window.location.href = mailtoLink;
-            
-            // Show success message
-            alert('Se ha abierto tu cliente de email. Si no se abre automáticamente, puedes escribirnos a contacto@reservabot.io');
-            
-            // Close modal and reset form
-            closeContactModal();
-            this.reset();
-        });
-        
+                
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {

@@ -97,7 +97,7 @@ try {
     // Las configuraciones iniciales se crean automáticamente por el trigger
     
     // Aquí podrías enviar email de verificación
-    //sendVerificationEmail($email, $verificationToken);
+    sendVerificationEmail($email, $verificationToken);
     
     // Auto-login después del registro
     session_start();
