@@ -51,7 +51,7 @@ function getAuthenticatedUser() {
     return [
         'id' => $_SESSION['user_id'] ?? null,
         'email' => $_SESSION['user_email'] ?? '',
-        'name' => $_SESSION['user_name'] ?? '',
+        'nombre' => $_SESSION['user_name'] ?? '',
         'role' => $_SESSION['user_role'] ?? 'user',
         'negocio' => $_SESSION['user_negocio'] ?? '',
         'plan' => $_SESSION['user_plan'] ?? 'gratis',

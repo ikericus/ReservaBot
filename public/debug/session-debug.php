@@ -108,7 +108,7 @@ if (isset($_GET['check_after_login'])) {
     echo "isAuthenticated(): " . (isAuthenticated() ? "✅ true" : "❌ false") . "<br>";
     if (isAuthenticated()) {
         $user = getAuthenticatedUser();
-        echo "Usuario: " . ($user['name'] ?? 'N/A') . "<br>";
+        echo "Usuario: " . ($user['nombre'] ?? 'N/A') . "<br>";
     }
 }
 
