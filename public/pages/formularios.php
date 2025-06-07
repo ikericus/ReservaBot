@@ -119,359 +119,525 @@ include 'includes/header.php';
 
 <style>
 /* Estilos específicos para móvil - Formularios */
-@media (max-width: 768px) {
-    .form-mobile-card {
-        margin: 0.75rem 0;
-        border-radius: 1rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        overflow: hidden;
-        position: relative;
-    }
-    
-    .form-mobile-card:hover {
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        transform: translateY(-3px);
-    }
-    
-    .form-card-header {
-        padding: 1rem 1rem 0.5rem 1rem;
-        position: relative;
-    }
-    
-    .form-card-icon {
-        width: 3rem;
-        height: 3rem;
-        border-radius: 1rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.25rem;
-        margin-bottom: 0.75rem;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-    
-    .form-card-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #1f2937;
-        margin: 0 0 0.25rem 0;
-        line-height: 1.3;
-    }
-    
-    .form-card-description {
-        font-size: 0.875rem;
-        color: #6b7280;
-        margin: 0 0 0.75rem 0;
-        line-height: 1.4;
-    }
-    
-    .form-card-badges {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-        flex-wrap: wrap;
-    }
-    
-    .form-badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-    
-    .form-badge-auto {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-    }
-    
-    .form-badge-manual {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-    }
-    
-    .form-badge-date {
-        background: rgba(102, 126, 234, 0.1);
-        color: #667eea;
-        border: 1px solid rgba(102, 126, 234, 0.2);
-    }
-    
-    .form-card-url {
-        background: rgba(102, 126, 234, 0.05);
-        padding: 0.75rem;
-        border-radius: 0.75rem;
-        margin: 1rem;
-        border: 1px solid rgba(102, 126, 234, 0.1);
-    }
-    
-    .form-card-url-label {
-        font-size: 0.75rem;
-        color: #6b7280;
-        margin-bottom: 0.25rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 500;
-    }
-    
-    .form-card-url-text {
-        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-        font-size: 0.75rem;
-        color: #374151;
-        word-break: break-all;
-        line-height: 1.4;
-    }
-    
-    .form-card-actions {
-        padding: 0 1rem 1rem 1rem;
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-    
+/* Correcciones de responsividad para móvil - Reemplazar en @media (max-width: 768px) */
+
+/* Base responsive */
+* {
+    box-sizing: border-box;
+}
+
+.mobile-view {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+/* Tarjetas de formularios móviles */
+.form-mobile-card {
+    margin: 0.75rem 0;
+    border-radius: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    position: relative;
+    /* Garantizar que no se salga del contenedor */
+    width: 100%;
+    max-width: 100%;
+}
+
+.form-mobile-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+}
+
+.form-card-header {
+    padding: 1rem;
+    position: relative;
+    width: 100%;
+}
+
+.form-card-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    flex-shrink: 0;
+}
+
+.form-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.form-card-description {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.form-card-badges {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.form-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.form-badge-auto {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.form-badge-manual {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.form-badge-date {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+/* URL del formulario */
+.form-card-url {
+    background: rgba(102, 126, 234, 0.05);
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    margin: 1rem;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    /* Prevenir overflow horizontal */
+    width: calc(100% - 2rem);
+    max-width: calc(100% - 2rem);
+    overflow: hidden;
+}
+
+.form-card-url-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+}
+
+.form-card-url-text {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.75rem;
+    color: #374151;
+    word-break: break-all;
+    line-height: 1.4;
+    /* Prevenir overflow */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
+}
+
+/* Información detallada móvil - corregir ancho */
+.form-mobile-card .px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Sección de colores - mejorar responsividad */
+.form-mobile-card .mb-3 .flex {
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Botones de acción */
+.form-card-actions {
+    padding: 0 1rem 1rem 1rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.form-action-btn {
+    flex: 1;
+    min-width: calc(50% - 0.25rem);
+    max-width: calc(50% - 0.25rem);
+    padding: 0.625rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    text-decoration: none;
+    border: 1px solid;
+    cursor: pointer;
+    background: white;
+    /* Prevenir que se salgan */
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* En pantallas muy pequeñas, hacer botones de ancho completo */
+@media (max-width: 380px) {
     .form-action-btn {
-        flex: 1;
-        min-width: calc(50% - 0.25rem);
-        padding: 0.625rem 0.75rem;
-        border-radius: 0.75rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        text-align: center;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.375rem;
-        text-decoration: none;
-        border: none;
-        cursor: pointer;
-    }
-    
-    .form-action-btn:focus {
-        outline: none;
-        ring: 2px solid rgba(102, 126, 234, 0.5);
-    }
-    
-    .form-btn-view {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-    }
-    
-    .form-btn-view:hover {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        color: white;
-        text-decoration: none;
-        transform: translateY(-1px);
-    }
-    
-    .form-btn-copy {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
-    }
-    
-    .form-btn-copy:hover {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        color: white;
-        transform: translateY(-1px);
-    }
-    
-    .form-btn-qr {
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-        color: white;
-    }
-    
-    .form-btn-qr:hover {
-        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-        color: white;
-        transform: translateY(-1px);
-    }
-    
-    .form-btn-delete {
-        background: white;
-        color: #dc2626;
-        border: 1px solid rgba(220, 38, 38, 0.2);
-    }
-    
-    .form-btn-delete:hover {
-        background: rgba(220, 38, 38, 0.05);
-        color: #b91c1c;
-        transform: translateY(-1px);
-    }
-    
-    /* Formulario de creación mobile */
-    .mobile-create-form {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border-radius: 1rem;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-    
-    .mobile-form-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #1f2937;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .mobile-form-title i {
-        color: #667eea;
-        font-size: 1.5rem;
-    }
-    
-    .mobile-form-input {
-        width: 100%;
-        padding: 0.875rem;
-        border-radius: 0.75rem;
-        border: 2px solid #e5e7eb;
-        font-size: 1rem;
-        transition: all 0.2s ease;
-        background: white;
-        margin-bottom: 1rem;
-    }
-    
-    .mobile-form-input:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        outline: none;
-    }
-    
-    .mobile-form-label {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #374151;
-        margin-bottom: 0.5rem;
-        display: block;
-    }
-    
-    .mobile-form-checkbox {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-        padding: 0.75rem;
-        background: rgba(102, 126, 234, 0.05);
-        border-radius: 0.75rem;
-        border: 1px solid rgba(102, 126, 234, 0.1);
-    }
-    
-    .mobile-form-checkbox input {
-        width: 1.25rem;
-        height: 1.25rem;
-        accent-color: #667eea;
-    }
-    
-    .mobile-form-checkbox label {
-        font-size: 0.875rem;
-        color: #374151;
-        margin: 0;
-    }
-    
-    .mobile-submit-btn {
-        width: 100%;
-        padding: 1rem;
-        border-radius: 0.75rem;
-        font-size: 1rem;
-        font-weight: 600;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-    
-    .mobile-submit-btn:hover {
-        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-    
-    /* Estados de mensajes */
-    .mobile-message {
-        padding: 1rem;
-        border-radius: 0.75rem;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.875rem;
-    }
-    
-    .mobile-message-success {
-        background: rgba(16, 185, 129, 0.1);
-        color: #065f46;
-        border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-    
-    .mobile-message-error {
-        background: rgba(220, 38, 38, 0.1);
-        color: #991b1b;
-        border: 1px solid rgba(220, 38, 38, 0.2);
-    }
-    
-    /* Lista vacía */
-    .mobile-empty-state {
-        text-align: center;
-        padding: 2rem 1rem;
-        color: #6b7280;
-    }
-    
-    .mobile-empty-icon {
-        font-size: 3rem;
-        color: #d1d5db;
-        margin-bottom: 1rem;
-    }
-    
-    .mobile-empty-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #374151;
+        flex: 1 1 100%;
+        min-width: 100%;
+        max-width: 100%;
         margin-bottom: 0.5rem;
     }
     
-    .mobile-empty-description {
-        font-size: 0.875rem;
-        color: #6b7280;
-        margin-bottom: 1.5rem;
+    .form-action-btn:last-child {
+        margin-bottom: 0;
     }
-    
-    /* Animaciones */
-    .fade-in-mobile {
-        animation: fadeInMobile 0.4s ease-out;
+}
+
+.form-action-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.5);
+}
+
+.form-btn-view {
+    border-color: #10b981;
+    color: #047857;
+    background: white;
+}
+
+.form-btn-view:hover {
+    background: #ecfdf5;
+    color: #065f46;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.form-btn-copy {
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    background: white;
+}
+
+.form-btn-copy:hover {
+    background: #eff6ff;
+    color: #1e40af;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.form-btn-qr {
+    border-color: #8b5cf6;
+    color: #7c3aed;
+    background: white;
+}
+
+.form-btn-qr:hover {
+    background: #f3e8ff;
+    color: #6d28d9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+}
+
+.form-btn-delete {
+    border-color: #ef4444;
+    color: #dc2626;
+    background: white;
+}
+
+.form-btn-delete:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+/* Formulario de creación mobile */
+.mobile-create-form {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.mobile-form-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    word-wrap: break-word;
+}
+
+.mobile-form-title i {
+    color: #667eea;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.mobile-form-input {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.875rem;
+    border-radius: 0.75rem;
+    border: 2px solid #e5e7eb;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: white;
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+}
+
+.mobile-form-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.mobile-form-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: block;
+    word-wrap: break-word;
+}
+
+/* Colores en formulario móvil - corregir flex */
+.mobile-create-form .flex.gap-3 {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    align-items: center;
+}
+
+.mobile-create-form .flex.gap-3 input[type="color"] {
+    width: 3rem;
+    height: 2.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.mobile-create-form .flex.gap-3 input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    padding: 0.625rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #f9fafb;
+    font-size: 0.875rem;
+    font-family: monospace;
+}
+
+.mobile-form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 0.75rem;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    width: 100%;
+    max-width: 100%;
+}
+
+.mobile-form-checkbox input {
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: #667eea;
+    flex-shrink: 0;
+}
+
+.mobile-form-checkbox label {
+    font-size: 0.875rem;
+    color: #374151;
+    margin: 0;
+    flex: 1;
+    line-height: 1.4;
+}
+
+.mobile-submit-btn {
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-sizing: border-box;
+}
+
+.mobile-submit-btn:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Textarea responsive */
+.mobile-create-form textarea {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    resize: vertical;
+    min-height: 4rem;
+    box-sizing: border-box;
+}
+
+.mobile-create-form textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 1px #667eea;
+    outline: none;
+}
+
+/* Estados de mensajes */
+.mobile-message {
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+}
+
+.mobile-message-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #065f46;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.mobile-message-error {
+    background: rgba(220, 38, 38, 0.1);
+    color: #991b1b;
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+/* Lista vacía */
+.mobile-empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #6b7280;
+    width: 100%;
+    max-width: 100%;
+}
+
+.mobile-empty-icon {
+    font-size: 3rem;
+    color: #d1d5db;
+    margin-bottom: 1rem;
+}
+
+.mobile-empty-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    word-wrap: break-word;
+}
+
+.mobile-empty-description {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+    word-wrap: break-word;
+}
+
+/* Padding del contenedor principal móvil */
+.mobile-view .p-4 {
+    padding: 1rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Prevenir overflow en todas las secciones */
+.mobile-view h2,
+.mobile-view h3,
+.mobile-view p,
+.mobile-view span,
+.mobile-view div {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+}
+
+/* Animaciones */
+.fade-in-mobile {
+    animation: fadeInMobile 0.4s ease-out;
+}
+
+@keyframes fadeInMobile {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
     }
-    
-    @keyframes fadeInMobile {
-        from {
-            opacity: 0;
-            transform: translateY(15px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
-    
-    .copy-feedback {
-        animation: copyFeedback 2s ease-in-out;
-    }
-    
-    @keyframes copyFeedback {
-        0%, 100% { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-        50% { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-    }
+}
+
+.copy-feedback {
+    animation: copyFeedback 2s ease-in-out;
+}
+
+@keyframes copyFeedback {
+    0%, 100% { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+    50% { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
 }
 
 /* Estilos para desktop - mantener diseño original */
@@ -528,7 +694,7 @@ include 'includes/header.php';
     <form method="post" class="space-y-4">
         <div>
             <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">
-                Nombre del enlace (solo para identificarlo)*
+                Nombre del enlace *
             </label>
             <input type="text" id="nombre" name="nombre" required
                 class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
@@ -693,7 +859,7 @@ include 'includes/header.php';
     
     <form method="post" class="w-full">
         <!-- Información básica -->
-        <label class="mobile-form-label">Nombre del enlace (solo para identificarlo)*</label>
+        <label class="mobile-form-label">Nombre del enlace *</label>
         <input type="text" name="nombre" required
             class="mobile-form-input"
             placeholder="Ej: Formulario Consulta General">
@@ -1120,10 +1286,10 @@ include 'includes/header.php';
                             $enlaceCompleto = $baseUrl . 'reservar?f=' . $enlace['slug'];
                             ?>
                             
-                            <div class="form-card-url">
+                            <!-- <div class="form-card-url">
                                 <div class="form-card-url-label">Enlace del formulario:</div>
                                 <div class="form-card-url-text"><?php echo $enlaceCompleto; ?></div>
-                            </div>
+                            </div> -->
                             
                             <div class="form-card-actions">
                                 <a href="<?php echo $enlaceCompleto; ?>" 

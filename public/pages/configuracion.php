@@ -73,6 +73,400 @@ $nombresDias = [
 include 'includes/header.php';
 ?>
 
+<style>
+/* Estilos responsivos para la página de configuración - Móvil */
+
+/* Base responsive SOLO para el contenido de configuración */
+main * {
+    box-sizing: border-box;
+}
+
+/* Evitar que afecte al header */
+main {
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+/* Contenedor principal - SOLO main content */
+@media (max-width: 768px) {
+    main .max-w-4xl {
+        max-width: 100%;
+        margin: 0;
+        padding: 0 1rem;
+    }
+    
+    /* Título principal - SOLO en main */
+    main .flex.justify-between.items-center.mb-6 {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 0 0.5rem;
+    }
+    
+    main .flex.justify-between.items-center.mb-6 h1 {
+        font-size: 1.5rem;
+        line-height: 1.3;
+        word-wrap: break-word;
+    }
+    
+    /* Formulario principal */
+    #configForm {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+    }
+    
+    #configForm .space-y-8 > * {
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Tarjetas de configuración - SOLO en main */
+    main .bg-white.rounded-lg.shadow-sm {
+        border-radius: 1rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* Títulos de sección - SOLO en main */
+    main .bg-white h2 {
+        font-size: 1.125rem;
+        line-height: 1.4;
+        margin-bottom: 1rem;
+        word-wrap: break-word;
+    }
+    
+    main .bg-white h2 i {
+        margin-right: 0.5rem;
+        flex-shrink: 0;
+    }
+    
+    /* Configuración de reservas - Modo de aceptación - SOLO en main */
+    main .flex.justify-between.items-center {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        width: 100%;
+    }
+    
+    main .flex.justify-between.items-center > div:first-child {
+        width: 100%;
+    }
+    
+    main .flex.justify-between.items-center > div:last-child {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    /* Toggle switch responsive */
+    #toggleModo {
+        flex-shrink: 0;
+    }
+    
+    #modoLabel {
+        font-size: 0.875rem;
+        margin-right: 0.75rem;
+    }
+    
+    /* Descripción del modo */
+    #modoDescription {
+        font-size: 0.875rem;
+        line-height: 1.4;
+        margin-top: 0.5rem;
+        word-wrap: break-word;
+    }
+    
+    /* Border inferior responsive */
+    .border-b.border-gray-200.pb-6 {
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Selector de intervalo - SOLO en main */
+    main .space-y-4 > div {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    main .space-y-4 label {
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+        display: block;
+        word-wrap: break-word;
+    }
+    
+    main .space-y-4 select {
+        width: 100%;
+        max-width: 100%;
+        font-size: 0.875rem;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+    }
+    
+    /* Horarios de atención - SOLO en main */
+    main .flex.items-center.justify-between.mb-4 {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    main .flex.items-center.justify-between.mb-4 h2 {
+        width: 100%;
+        margin-bottom: 0;
+    }
+    
+    main .flex.items-center.justify-between.mb-4 .text-sm {
+        width: 100%;
+        font-size: 0.8125rem;
+        color: #6b7280;
+        padding: 0.5rem;
+        background: rgba(59, 130, 246, 0.05);
+        border-radius: 0.5rem;
+        border: 1px solid rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Contenedor de días */
+    .space-y-6 {
+        gap: 1rem;
+    }
+    
+    .space-y-6 > div {
+        margin-bottom: 1rem;
+    }
+    
+    /* Tarjetas de días individuales - SOLO en main */
+    main .border.border-gray-200.rounded-lg.p-4 {
+        border-radius: 0.75rem;
+        padding: 1rem;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+    }
+    
+    /* Header de cada día - SOLO en main */
+    main .border .flex.items-center.justify-between.mb-4 {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    main .border .flex.items-center.justify-between.mb-4 > div:first-child {
+        width: 100%;
+    }
+    
+    main .border .flex.items-center.justify-between.mb-4 .btn-add-ventana {
+        width: 100%;
+        justify-content: center;
+        padding: 0.5rem;
+        background: rgba(59, 130, 246, 0.05);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Checkbox y label de días - SOLO en main */
+    main .flex.items-center input[type="checkbox"] {
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+    
+    main .flex.items-center label {
+        font-size: 1rem;
+        font-weight: 500;
+        word-wrap: break-word;
+    }
+    
+    /* Ventanas horarias */
+    .ventanas-horarias {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .ventanas-horarias .space-y-3 > * {
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Ventana horaria individual */
+    .ventana-horaria {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Grupo de inputs de hora */
+    .ventana-horaria > div {
+        width: 100%;
+    }
+    
+    .ventana-horaria .flex.items-center.space-x-2 {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 0.5rem;
+    }
+    
+    .ventana-horaria .flex.items-center.space-x-2 label {
+        font-size: 0.875rem;
+        margin-bottom: 0;
+        flex-shrink: 0;
+        min-width: 3.5rem;
+    }
+    
+    .ventana-horaria .flex.items-center.space-x-2 input[type="time"] {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.875rem;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+    }
+    
+    /* Badges y botones de acción en ventanas */
+    .ventana-horaria .flex.items-center.space-x-2:last-child {
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .ventana-horaria .px-2.py-1 {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        white-space: nowrap;
+    }
+    
+    .btn-remove-ventana {
+        padding: 0.375rem;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    
+    /* Botón guardar */
+    .pt-4.text-right {
+        padding-top: 1rem;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .pt-4.text-right button {
+        width: 100%;
+        max-width: 100%;
+        padding: 0.875rem 1rem;
+        font-size: 1rem;
+        border-radius: 0.75rem;
+        justify-content: center;
+    }
+    
+    /* Mensaje de éxito */
+    #saveSuccessMessage {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+        max-width: calc(100vw - 2rem);
+        font-size: 0.875rem;
+    }
+    
+    /* Template y elementos ocultos */
+    template {
+        display: none;
+    }
+    
+    /* Mejoras para inputs pequeños */
+    input[type="time"] {
+        min-height: 2.5rem;
+    }
+    
+    input[type="checkbox"] {
+        min-width: 1rem;
+        min-height: 1rem;
+    }
+    
+    select {
+        min-height: 2.5rem;
+    }
+    
+    /* Prevenir texto que se salga - SOLO en main */
+    main * {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
+    
+    /* Específico para pantallas muy pequeñas - SOLO main */
+    @media (max-width: 380px) {
+        main .max-w-4xl {
+            padding: 0 0.75rem;
+        }
+        
+        main .bg-white.rounded-lg.shadow-sm {
+            padding: 0.75rem;
+        }
+        
+        main .ventana-horaria {
+            padding: 0.75rem;
+        }
+        
+        main .ventana-horaria .flex.items-center.space-x-2 {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+        }
+        
+        main .ventana-horaria .flex.items-center.space-x-2 label {
+            min-width: auto;
+            text-align: left;
+        }
+        
+        main .border .flex.items-center.justify-between.mb-4 .btn-add-ventana {
+            font-size: 0.8125rem;
+            padding: 0.625rem;
+        }
+        
+        main .flex.justify-between.items-center.mb-6 h1 {
+            font-size: 1.375rem;
+        }
+    }
+    
+    /* Animaciones suaves */
+    .ventana-horaria {
+        transition: all 0.3s ease;
+    }
+    
+    .btn-add-ventana {
+        transition: all 0.2s ease;
+    }
+    
+    .btn-add-ventana:hover {
+        background: rgba(59, 130, 246, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    /* Scroll suave para el formulario */
+    #configForm {
+        scroll-behavior: smooth;
+    }
+}
+
+/* Mantener estilos desktop intactos */
+@media (min-width: 769px) {
+    /* Estilos desktop originales se mantienen */
+}
+</style>
+
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Configuración General</h1>
 </div>
