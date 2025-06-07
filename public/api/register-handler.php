@@ -6,6 +6,7 @@
 
 require_once dirname(__DIR__) . '/includes/db-config.php';
 require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/email-functions.php';
 
 // Solo procesar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
