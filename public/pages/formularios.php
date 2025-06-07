@@ -540,9 +540,9 @@ include 'includes/header.php';
 
         <!-- Información de la empresa -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-6 pt-6 border-t border-gray-200">
-            <div class="sm:col-span-2">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">🏢 Información de la empresa</h3>
-            </div>
+            <!-- <div class="sm:col-span-2">
+                <h3 class="text-lg font-medium text-gray-900">🏢 Información de la empresa</h3>
+            </div> -->
                         
             <div>
                 <label for="empresa_nombre" class="block text-sm font-medium text-gray-700 mb-1">
@@ -601,9 +601,9 @@ include 'includes/header.php';
 
         <!-- Personalización visual -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-6 pt-6 border-t border-gray-200">
-            <div class="sm:col-span-2">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">🎨 Personalización visual</h3>
-            </div>
+            <!-- <div class="sm:col-span-2">
+                <h3 class="text-lg font-medium text-gray-900 ">🎨 Personalización visual</h3>
+            </div> -->
             
             <div>
                 <label for="color_primario" class="block text-sm font-medium text-gray-700 mb-1">
@@ -663,13 +663,16 @@ include 'includes/header.php';
             </div>
         </div>
         
-        <div class="flex items-center">
-            <input type="checkbox" id="confirmacion_auto" name="confirmacion_auto" 
-                   class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-            <label for="confirmacion_auto" class="ml-2 block text-sm text-gray-700">
-                Confirmación automática (las reservas se confirman automáticamente)
-            </label>
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-6 pt-6 border-t border-gray-200">
+            <div class="flex items-center">
+                <input type="checkbox" id="confirmacion_auto" name="confirmacion_auto" 
+                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <label for="confirmacion_auto" class="ml-2 block text-sm text-gray-700">
+                    Confirmación automática (las reservas se confirman automáticamente)
+                </label>
+            </div>
         </div>
+
         <div class="flex justify-end">
             <input type="text" name="crear_enlace" value="Crear Enlace" class="hidden">
             <button type="submit"
@@ -862,27 +865,7 @@ include 'includes/header.php';
                         
                         <!-- Contenido del enlace -->
                         <div class="p-6">
-                            <!-- URL del enlace -->
-                            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex-1">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">URL del formulario:</label>
-                                        <div class="flex items-center">
-                                            <input type="text" 
-                                                   value="<?php echo $enlaceCompleto; ?>" 
-                                                   readonly
-                                                   class="flex-1 text-sm bg-transparent border-0 text-gray-700 p-2 focus:ring-0 font-mono"
-                                                   id="url-<?php echo $enlace['id']; ?>">
-                                            <button class="btn-copiar-url ml-2 p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                                                    data-clipboard-target="#url-<?php echo $enlace['id']; ?>"
-                                                    title="Copiar URL">
-                                                <i class="ri-file-copy-line"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
+                           
                             <!-- Información de la empresa -->
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                                 <div class="space-y-4">
@@ -1020,8 +1003,7 @@ include 'includes/header.php';
                                         
                                         <div class="flex items-center text-sm text-gray-600">
                                             <i class="ri-link mr-2 text-purple-600"></i>
-                                            <span class="font-medium">Slug:</span>
-                                            <span class="ml-1 font-mono"><?php echo htmlspecialchars($enlace['slug']); ?></span>
+                                            <span class="ml-1 font-mono"><?php echo $enlaceCompleto; ?></span>
                                         </div>
                                     </div>
                                     
