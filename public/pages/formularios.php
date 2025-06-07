@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['crear_enlace'])) {
 
         $nombre = trim($_POST['nombre'] ?? '');
-        $descripcion = trim($_POST['descripcion'] ?? '');
+        $descripcion = ''; // Ya no usamos descripción
         $confirmacionAutomatica = isset($_POST['confirmacion_auto']) ? 1 : 0;
         
         if (!empty($nombre)) {
@@ -77,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $result = $stmt->execute([
                     $usuario_id,
                     $nombre,
-                    $descripcion,
-                    $_POST['empresa_nombre'] ?? '',
+                    '', // descripción vacía
+                    $_POST['empresa_nombre'] ?? $currentUser['negocio'] ?? '',
                     $_POST['empresa_logo'] ?? '',
                     $_POST['color_primario'] ?? '#667eea',
                     $_POST['color_secundario'] ?? '#764ba2',
@@ -526,25 +526,14 @@ include 'includes/header.php';
     <h2 class="text-lg font-medium text-gray-900 mb-4">Crear Nuevo Enlace de Reserva</h2>
     
     <form method="post" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre del enlace*
-                </label>
-                <input type="text" id="nombre" name="nombre" required
-                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ej: Reserva Consulta General">
-                <p class="mt-1 text-xs text-gray-500">Este nombre aparecerá en el formulario público</p>
-            </div>
-
-            <div>
-                <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-1">
-                    Descripción (opcional)
-                </label>
-                <input type="text" id="descripcion" name="descripcion"
-                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Descripción interna del enlace">
-            </div>
+        <div>
+            <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">
+                Nombre del enlace (solo para identificarlo)*
+            </label>
+            <input type="text" id="nombre" name="nombre" required
+                class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Ej: Formulario Consulta General, Reservas Urgentes...">
+            <p class="mt-1 text-xs text-gray-500">Solo para identificar este enlace en tu panel de control</p>
         </div>
 
         <!-- Buscar el formulario existente y añadir estos campos después del campo "descripcion" -->
@@ -554,7 +543,7 @@ include 'includes/header.php';
             <div class="sm:col-span-2">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">🏢 Información de la empresa</h3>
             </div>
-            
+                        
             <div>
                 <label for="empresa_nombre" class="block text-sm font-medium text-gray-700 mb-1">
                     Nombre de la empresa *
@@ -566,6 +555,7 @@ include 'includes/header.php';
                     required
                     class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Ej: Clínica Dental López"
+                    value="<?php echo htmlspecialchars($currentUser['negocio'] ?? ''); ?>"
                 >
             </div>
             
@@ -700,15 +690,11 @@ include 'includes/header.php';
     
     <form method="post" class="w-full">
         <!-- Información básica -->
-        <label class="mobile-form-label">Nombre del enlace*</label>
+        <label class="mobile-form-label">Nombre del enlace (solo para identificarlo)*</label>
         <input type="text" name="nombre" required
-               class="mobile-form-input"
-               placeholder="Ej: Reserva Consulta General">
-        
-        <label class="mobile-form-label">Descripción (opcional)</label>
-        <input type="text" name="descripcion"
-               class="mobile-form-input"
-               placeholder="Descripción interna del enlace">
+            class="mobile-form-input"
+            placeholder="Ej: Formulario Consulta General">
+        <p class="text-xs text-gray-500 mb-4 -mt-3">Solo para identificar este enlace en tu panel</p>
         
         <!-- Información de la empresa -->
         <div class="mt-6 pt-4 border-t border-gray-200">
@@ -718,8 +704,9 @@ include 'includes/header.php';
             
             <label class="mobile-form-label">Nombre de la empresa*</label>
             <input type="text" name="empresa_nombre" required
-                   class="mobile-form-input"
-                   placeholder="Ej: Clínica Dental López">
+                class="mobile-form-input"
+                placeholder="Ej: Clínica Dental López"
+                value="<?php echo htmlspecialchars($currentUser['negocio'] ?? ''); ?>">
             
             <label class="mobile-form-label">URL del logo (opcional)</label>
             <input type="url" name="empresa_logo"
@@ -798,77 +785,250 @@ include 'includes/header.php';
                 <p class="text-sm text-gray-500">Crea tu primer enlace usando el formulario de arriba</p>
             </div>
         <?php else: ?>
-            <div class="space-y-4">
+            <div class="space-y-6">
                 <?php foreach ($enlaces as $enlace): ?>
-                    <div class="border border-gray-200 rounded-lg p-4">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <h3 class="text-sm font-medium text-gray-900">
-                                    <?php echo htmlspecialchars($enlace['nombre']); ?>
-                                </h3>
-                                <?php if (!empty($enlace['descripcion'])): ?>
-                                    <p class="text-sm text-gray-500 mt-1">
-                                        <?php echo htmlspecialchars($enlace['descripcion']); ?>
-                                    </p>
-                                <?php endif; ?>
-                                
-                                <div class="mt-2 flex items-center space-x-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $enlace['confirmacion_automatica'] ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'; ?>">
-                                        <?php echo $enlace['confirmacion_automatica'] ? 'Confirmación automática' : 'Confirmación manual'; ?>
-                                    </span>
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <!-- Cabecera del enlace -->
+                        <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                            <i class="ri-link text-white text-sm"></i>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-gray-900">
+                                            <?php echo htmlspecialchars($enlace['nombre']); ?>
+                                        </h3>
+                                    </div>
                                     
-                                    <span class="text-xs text-gray-500">
-                                        Creado: <?php echo date('d/m/Y', strtotime($enlace['created_at'])); ?>
-                                    </span>
+                                    <div class="flex items-center space-x-4">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $enlace['confirmacion_automatica'] ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'; ?>">
+                                            <i class="<?php echo $enlace['confirmacion_automatica'] ? 'ri-check-line' : 'ri-time-line'; ?> mr-1"></i>
+                                            <?php echo $enlace['confirmacion_automatica'] ? 'Confirmación automática' : 'Confirmación manual'; ?>
+                                        </span>
+                                        
+                                        <span class="text-xs text-gray-500">
+                                            <i class="ri-calendar-line mr-1"></i>
+                                            Creado: <?php echo date('d/m/Y H:i', strtotime($enlace['created_at'])); ?>
+                                        </span>
+                                        
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <?php echo $enlace['activo'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
+                                            <span class="w-1.5 h-1.5 <?php echo $enlace['activo'] ? 'bg-green-400' : 'bg-red-400'; ?> rounded-full mr-1"></span>
+                                            <?php echo $enlace['activo'] ? 'Activo' : 'Inactivo'; ?>
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div class="ml-4 flex items-center space-x-2">
-                                <?php 
-                                // Generar URL completa
-                                $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
-                                $host = $_SERVER['HTTP_HOST'];
-                                $path = dirname($_SERVER['REQUEST_URI']);
-                                $baseUrl = $protocol . $host . $path;
-                                $enlaceCompleto = $baseUrl . 'reservar?f=' . $enlace['slug'];
-                                ?>
                                 
-                                <a href="<?php echo $enlaceCompleto; ?>" 
-                                   target="_blank"
-                                   class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                    <i class="ri-eye-line mr-1"></i>
-                                    Ver
-                                </a>
-                                
-                                <button class="btn-copiar inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                        data-clipboard-text="<?php echo $enlaceCompleto; ?>">
-                                    <i class="ri-file-copy-line mr-1"></i>
-                                    Copiar enlace
-                                </button>
-                                
-                                <button class="btn-qr inline-flex items-center px-3 py-1 border border-blue-300 shadow-sm text-xs font-medium rounded text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                        data-url="<?php echo $enlaceCompleto; ?>"
-                                        data-nombre="<?php echo htmlspecialchars($enlace['nombre']); ?>">
-                                    <i class="ri-qr-code-line mr-1"></i>
-                                    QR
-                                </button>
-                                
-                                <button class="btn-eliminar inline-flex items-center px-3 py-1 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                        data-id="<?php echo $enlace['id']; ?>"
-                                        data-nombre="<?php echo htmlspecialchars($enlace['nombre']); ?>">
-                                    <i class="ri-delete-bin-line mr-1"></i>
-                                    Eliminar
-                                </button>
+                                <!-- Botones de acción principales -->
+                                <div class="flex items-center space-x-2">
+                                    <?php 
+                                    // Generar URL completa
+                                    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+                                    $host = $_SERVER['HTTP_HOST'];
+                                    $path = dirname($_SERVER['REQUEST_URI']);
+                                    $baseUrl = $protocol . $host . $path;
+                                    $enlaceCompleto = $baseUrl . 'reservar?f=' . $enlace['slug'];
+                                    ?>
+                                    
+                                    <a href="<?php echo $enlaceCompleto; ?>" 
+                                       target="_blank"
+                                       class="inline-flex items-center px-3 py-2 border border-green-300 shadow-sm text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                                        <i class="ri-external-link-line mr-2"></i>
+                                        Ver formulario
+                                    </a>
+                                    
+                                    <button class="btn-copiar inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                            data-clipboard-text="<?php echo $enlaceCompleto; ?>">
+                                        <i class="ri-file-copy-line mr-2"></i>
+                                        Copiar enlace
+                                    </button>
+                                    
+                                    <button class="btn-qr inline-flex items-center px-3 py-2 border border-purple-300 shadow-sm text-sm font-medium rounded-md text-purple-700 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                                            data-url="<?php echo $enlaceCompleto; ?>"
+                                            data-nombre="<?php echo htmlspecialchars($enlace['nombre']); ?>">
+                                        <i class="ri-qr-code-line mr-2"></i>
+                                        Generar QR
+                                    </button>
+                                    
+                                    <button class="btn-eliminar inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                                            data-id="<?php echo $enlace['id']; ?>"
+                                            data-nombre="<?php echo htmlspecialchars($enlace['nombre']); ?>">
+                                        <i class="ri-delete-bin-line mr-2"></i>
+                                        Eliminar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="mt-3 p-3 bg-gray-50 rounded-md">
-                            <div class="flex items-center">
-                                <span class="text-xs font-medium text-gray-500 mr-2">Enlace:</span>
-                                <input type="text" 
-                                       value="<?php echo $enlaceCompleto; ?>" 
-                                       readonly
-                                       class="flex-1 text-xs bg-transparent border-0 text-gray-700 p-0 focus:ring-0">
+                        <!-- Contenido del enlace -->
+                        <div class="p-6">
+                            <!-- URL del enlace -->
+                            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">URL del formulario:</label>
+                                        <div class="flex items-center">
+                                            <input type="text" 
+                                                   value="<?php echo $enlaceCompleto; ?>" 
+                                                   readonly
+                                                   class="flex-1 text-sm bg-transparent border-0 text-gray-700 p-2 focus:ring-0 font-mono"
+                                                   id="url-<?php echo $enlace['id']; ?>">
+                                            <button class="btn-copiar-url ml-2 p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                                                    data-clipboard-target="#url-<?php echo $enlace['id']; ?>"
+                                                    title="Copiar URL">
+                                                <i class="ri-file-copy-line"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Información de la empresa -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                                <div class="space-y-4">
+                                    <h4 class="text-sm font-semibold text-gray-900 flex items-center">
+                                        <i class="ri-building-line mr-2 text-blue-600"></i>
+                                        Información de la empresa
+                                    </h4>
+                                    
+                                    <div class="space-y-3 pl-6">
+                                        <div class="flex items-start">
+                                            <span class="text-sm font-medium text-gray-700 w-20 flex-shrink-0">Nombre:</span>
+                                            <span class="text-sm text-gray-900"><?php echo htmlspecialchars($enlace['empresa_nombre'] ?: 'No especificado'); ?></span>
+                                        </div>
+                                        
+                                        <?php if (!empty($enlace['direccion'])): ?>
+                                        <div class="flex items-start">
+                                            <span class="text-sm font-medium text-gray-700 w-20 flex-shrink-0">Dirección:</span>
+                                            <span class="text-sm text-gray-900"><?php echo htmlspecialchars($enlace['direccion']); ?></span>
+                                        </div>
+                                        <?php endif; ?>
+                                        
+                                        <?php if (!empty($enlace['telefono_contacto'])): ?>
+                                        <div class="flex items-start">
+                                            <span class="text-sm font-medium text-gray-700 w-20 flex-shrink-0">Teléfono:</span>
+                                            <span class="text-sm text-gray-900">
+                                                <a href="tel:<?php echo htmlspecialchars($enlace['telefono_contacto']); ?>" 
+                                                   class="text-blue-600 hover:text-blue-800">
+                                                    <?php echo htmlspecialchars($enlace['telefono_contacto']); ?>
+                                                </a>
+                                            </span>
+                                        </div>
+                                        <?php endif; ?>
+                                        
+                                        <?php if (!empty($enlace['email_contacto'])): ?>
+                                        <div class="flex items-start">
+                                            <span class="text-sm font-medium text-gray-700 w-20 flex-shrink-0">Email:</span>
+                                            <span class="text-sm text-gray-900">
+                                                <a href="mailto:<?php echo htmlspecialchars($enlace['email_contacto']); ?>" 
+                                                   class="text-blue-600 hover:text-blue-800">
+                                                    <?php echo htmlspecialchars($enlace['email_contacto']); ?>
+                                                </a>
+                                            </span>
+                                        </div>
+                                        <?php endif; ?>
+                                        
+                                        <?php if (!empty($enlace['empresa_logo'])): ?>
+                                        <div class="flex items-start">
+                                            <span class="text-sm font-medium text-gray-700 w-20 flex-shrink-0">Logo:</span>
+                                            <div class="flex items-center space-x-2">
+                                                <img src="<?php echo htmlspecialchars($enlace['empresa_logo']); ?>" 
+                                                     alt="Logo" 
+                                                     class="h-8 w-auto object-contain border rounded">
+                                                <a href="<?php echo htmlspecialchars($enlace['empresa_logo']); ?>" 
+                                                   target="_blank" 
+                                                   class="text-xs text-blue-600 hover:text-blue-800">
+                                                    Ver imagen
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                
+                                <!-- Personalización visual -->
+                                <div class="space-y-4">
+                                    <h4 class="text-sm font-semibold text-gray-900 flex items-center">
+                                        <i class="ri-palette-line mr-2 text-purple-600"></i>
+                                        Personalización visual
+                                    </h4>
+                                    
+                                    <div class="space-y-3 pl-6">
+                                        <div class="flex items-center">
+                                            <span class="text-sm font-medium text-gray-700 w-24 flex-shrink-0">Color primario:</span>
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-6 h-6 rounded border border-gray-300" 
+                                                     style="background-color: <?php echo htmlspecialchars($enlace['color_primario'] ?: '#667eea'); ?>"></div>
+                                                <span class="text-sm text-gray-900 font-mono"><?php echo htmlspecialchars($enlace['color_primario'] ?: '#667eea'); ?></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-center">
+                                            <span class="text-sm font-medium text-gray-700 w-24 flex-shrink-0">Color secundario:</span>
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-6 h-6 rounded border border-gray-300" 
+                                                     style="background-color: <?php echo htmlspecialchars($enlace['color_secundario'] ?: '#764ba2'); ?>"></div>
+                                                <span class="text-sm text-gray-900 font-mono"><?php echo htmlspecialchars($enlace['color_secundario'] ?: '#764ba2'); ?></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Vista previa del gradiente -->
+                                        <div class="flex items-center">
+                                            <span class="text-sm font-medium text-gray-700 w-24 flex-shrink-0">Vista previa:</span>
+                                            <div class="w-32 h-8 rounded border border-gray-300" 
+                                                 style="background: linear-gradient(135deg, <?php echo htmlspecialchars($enlace['color_primario'] ?: '#667eea'); ?> 0%, <?php echo htmlspecialchars($enlace['color_secundario'] ?: '#764ba2'); ?> 100%);">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Mensaje de bienvenida -->
+                            <?php if (!empty($enlace['mensaje_bienvenida'])): ?>
+                            <div class="mb-4">
+                                <h4 class="text-sm font-semibold text-gray-900 flex items-center mb-3">
+                                    <i class="ri-message-2-line mr-2 text-green-600"></i>
+                                    Mensaje de bienvenida
+                                </h4>
+                                <div class="pl-6 p-3 bg-gray-50 rounded-md border-l-4 border-green-400">
+                                    <p class="text-sm text-gray-700 italic">"<?php echo htmlspecialchars($enlace['mensaje_bienvenida']); ?>"</p>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <!-- Estadísticas de uso (si las tienes) -->
+                            <?php
+                            // Opcional: obtener estadísticas de uso del formulario
+                            try {
+                                $stmt = getPDO()->prepare("SELECT COUNT(*) as total_reservas FROM reservas WHERE formulario_id = ?");
+                                $stmt->execute([$enlace['id']]);
+                                $stats = $stmt->fetch();
+                                $totalReservas = $stats['total_reservas'] ?? 0;
+                            } catch (Exception $e) {
+                                $totalReservas = 0;
+                            }
+                            ?>
+                            
+                            <div class="pt-4 border-t border-gray-200">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-6">
+                                        <div class="flex items-center text-sm text-gray-600">
+                                            <i class="ri-calendar-check-line mr-2 text-blue-600"></i>
+                                            <span class="font-medium"><?php echo $totalReservas; ?></span>
+                                            <span class="ml-1">reservas recibidas</span>
+                                        </div>
+                                        
+                                        <div class="flex items-center text-sm text-gray-600">
+                                            <i class="ri-link mr-2 text-purple-600"></i>
+                                            <span class="font-medium">Slug:</span>
+                                            <span class="ml-1 font-mono"><?php echo htmlspecialchars($enlace['slug']); ?></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="text-xs text-gray-500">
+                                        ID: <?php echo $enlace['id']; ?>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -897,9 +1057,7 @@ include 'includes/header.php';
                                     <i class="ri-link"></i>
                                 </div>
                                 <h3 class="form-card-title"><?php echo htmlspecialchars($enlace['nombre']); ?></h3>
-                                <?php if (!empty($enlace['descripcion'])): ?>
-                                    <p class="form-card-description"><?php echo htmlspecialchars($enlace['descripcion']); ?></p>
-                                <?php endif; ?>
+                                <p class="form-card-description">Empresa: <?php echo htmlspecialchars($enlace['empresa_nombre'] ?: 'No especificado'); ?></p>
                                 
                                 <div class="form-card-badges">
                                     <span class="form-badge <?php echo $enlace['confirmacion_automatica'] ? 'form-badge-auto' : 'form-badge-manual'; ?>">
@@ -910,6 +1068,64 @@ include 'includes/header.php';
                                         <i class="ri-calendar-line"></i>
                                         <?php echo date('d/m/Y', strtotime($enlace['created_at'])); ?>
                                     </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Información detallada móvil -->
+                            <div class="px-4 pb-2">
+                                <!-- Colores -->
+                                <div class="mb-3">
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-600">Colores:</span>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-4 h-4 rounded border" 
+                                                 style="background-color: <?php echo htmlspecialchars($enlace['color_primario'] ?: '#667eea'); ?>"></div>
+                                            <div class="w-4 h-4 rounded border" 
+                                                 style="background-color: <?php echo htmlspecialchars($enlace['color_secundario'] ?: '#764ba2'); ?>"></div>
+                                            <div class="w-12 h-4 rounded border" 
+                                                 style="background: linear-gradient(135deg, <?php echo htmlspecialchars($enlace['color_primario'] ?: '#667eea'); ?> 0%, <?php echo htmlspecialchars($enlace['color_secundario'] ?: '#764ba2'); ?> 100%);">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contacto -->
+                                <?php if (!empty($enlace['telefono_contacto']) || !empty($enlace['email_contacto'])): ?>
+                                <div class="mb-3 text-sm">
+                                    <div class="text-gray-600 mb-1">Contacto:</div>
+                                    <?php if (!empty($enlace['telefono_contacto'])): ?>
+                                        <div class="flex items-center text-gray-700 mb-1">
+                                            <i class="ri-phone-line mr-2 text-green-600"></i>
+                                            <a href="tel:<?php echo htmlspecialchars($enlace['telefono_contacto']); ?>" 
+                                               class="text-blue-600"><?php echo htmlspecialchars($enlace['telefono_contacto']); ?></a>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($enlace['email_contacto'])): ?>
+                                        <div class="flex items-center text-gray-700">
+                                            <i class="ri-mail-line mr-2 text-blue-600"></i>
+                                            <a href="mailto:<?php echo htmlspecialchars($enlace['email_contacto']); ?>" 
+                                               class="text-blue-600 truncate"><?php echo htmlspecialchars($enlace['email_contacto']); ?></a>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <!-- Estadísticas -->
+                                <?php
+                                try {
+                                    $stmt = getPDO()->prepare("SELECT COUNT(*) as total_reservas FROM reservas WHERE formulario_id = ?");
+                                    $stmt->execute([$enlace['id']]);
+                                    $stats = $stmt->fetch();
+                                    $totalReservas = $stats['total_reservas'] ?? 0;
+                                } catch (Exception $e) {
+                                    $totalReservas = 0;
+                                }
+                                ?>
+                                <div class="mb-3 text-sm">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-600">Reservas recibidas:</span>
+                                        <span class="font-semibold text-blue-600"><?php echo $totalReservas; ?></span>
+                                    </div>
                                 </div>
                             </div>
                             
