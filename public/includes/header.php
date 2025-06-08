@@ -232,33 +232,21 @@
                                 <i class="ri-user-line mr-3 text-lg nav-icon"></i>
                                 Clientes
                             </a>
-
-                            <!-- <div class="section-divider">
-                                <div class="section-label">WhatsApp</div>
-                            </div>
-                            
-                            <a href="/whatsapp" class="mobile-nav-item <?php echo $currentPage === 'whatsapp' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
-                                <i class="ri-whatsapp-line mr-3 text-lg nav-icon text-green-500"></i>
-                                Conexión WhatsApp
-                            </a>
-                            
-                            <a href="/autorespuestas" class="mobile-nav-item <?php echo $currentPage === 'autorespuestas' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
-                                <i class="ri-message-2-line mr-3 text-lg nav-icon"></i>
-                                Respuestas Automáticas
-                            </a>
-                            
-                            <a href="/mensajes" class="mobile-nav-item <?php echo $currentPage === 'mensajes' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
-                                <i class="ri-chat-history-line mr-3 text-lg nav-icon"></i>
-                                Historial de Mensajes
-                            </a>
-                            
-                            <div class="section-divider">
-                                <div class="section-label">Sistema</div>
-                            </div> -->
                             
                             <a href="/formularios" class="mobile-nav-item <?php echo $currentPage === 'formularios' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
                                 <i class="ri-survey-fill mr-3 text-lg nav-icon"></i>
                                 Formularios
+                            </a>
+                            
+                            <a href="/whatsapp" class="mobile-nav-item <?php echo $currentPage === 'whatsapp' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
+                                <i class="ri-whatsapp-line mr-3 text-lg nav-icon text-green-500"></i>
+                                WhatsApp
+                                <div class="ml-auto">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1"></span>
+                                        Offline
+                                    </span>
+                                </div>
                             </a>
                             
                             <a href="/configuracion" class="mobile-nav-item <?php echo $currentPage === 'configuracion' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
@@ -337,11 +325,8 @@
                                         'calendario' => 'Calendario',
                                         'clientes' => 'Clientes',
                                         'whatsapp' => 'WhatsApp',
-                                        'autorespuestas' => 'Respuestas Automáticas',
-                                        'mensajes' => 'Mensajes',
                                         'formularios' => 'Formularios',
-                                        'configuracion' => 'Configuración',
-                                        'notificaciones' => 'Notificaciones'
+                                        'configuracion' => 'Configuración'
                                     ];
                                     echo $pageNames[$currentPage] ?? 'Reservas';
                                     ?>

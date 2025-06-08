@@ -2,6 +2,46 @@
 
 require_once 'db-config.php';
 
+function generateJWT($userId, $secret) {
+    $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+    $payload = json_encode([
+        'userId' => (int)$userId,
+        'iat' => time(),
+        'exp' => time() + 3600
+    ]);
+    
+    $base64Header = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
+    $base64Payload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
+    
+    $signature = hash_hmac('sha256', $base64Header . "." . $base64Payload, $secret, true);
+    $base64Signature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
+    
+    return $base64Header . "." . $base64Payload . "." . $base64Signature;
+}
+
+function makeRequest($url, $method = 'GET', $data = null, $headers = []) {
+    $context = [
+        'http' => [
+            'method' => $method,
+            'header' => implode("\r\n", $headers) . "\r\n",
+            'timeout' => 15
+        ]
+    ];
+    
+    if ($data && in_array($method, ['POST', 'PUT'])) {
+        $context['http']['content'] = json_encode($data);
+        $context['http']['header'] .= "Content-Type: application/json\r\n";
+    }
+    
+    $response = @file_get_contents($url, false, stream_context_create($context));
+    
+    if ($response === false) {
+        return ['success' => false, 'error' => 'Error de conexión con servidor WhatsApp'];
+    }
+    
+    return json_decode($response, true);
+}
+
 /**
  * Obtiene la URL base del sitio web
  *

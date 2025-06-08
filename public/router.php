@@ -50,7 +50,12 @@ class Router {
         $this->addRoute('GET',      '/day',              'pages/day.php',              ['auth']);
         $this->addRoute('GET',      '/cliente-detail',   'pages/cliente-detail.php',   ['auth']);        
         $this->addRoute('GET',      '/reserva-form',     'pages/reserva-form.php',     ['auth']);    
-        $this->addRoute('GET',      '/reserva-detail',   'pages/reserva-detail.php',   ['auth']);          
+        $this->addRoute('GET',      '/reserva-detail',   'pages/reserva-detail.php',   ['auth']);  
+        $this->addRoute('GET',      '/whatsapp',         'pages/whatsapp.php',         ['auth']);          
+        $this->addRoute('GET',      '/mensajes',         'pages/mensajes.php',         ['auth']);  
+        
+        $this->addRoute('GET',      '/test-whatsapp-connection',        'pages/test-whatsapp-connection.php',         ['auth']);  
+        
 
         $this->addRoute('POST',     '/api/crear-reserva',               'api/crear-reserva.php',            ['auth']);
         $this->addRoute('POST',     '/api/actualizar-reserva',          'api/actualizar-reserva.php',       ['auth']);        
@@ -58,6 +63,9 @@ class Router {
         $this->addRoute('POST',     '/api/eliminar-reserva',            'api/eliminar-reserva.php',         ['auth']);
         $this->addRoute('POST',     '/api/horas-disponibles',           'api/horas-disponibles.php',        ['auth']);
         $this->addRoute('POST',     '/api/actualizar-configuracion',    'api/actualizar-configuracion.php', ['auth']);
+        $this->addRoute('POST',     '/api/whatsapp-connect',            'api/whatsapp-connect.php',         ['auth']);
+        $this->addRoute('GET',      '/api/whatsapp-status',             'api/whatsapp-status.php',          ['auth']);
+        $this->addRoute('POST',     '/api/whatsapp-disconnect',         'api/whatsapp-disconnect.php',      ['auth']);
         
         
         // Webhook para WhatsApp

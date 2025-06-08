@@ -134,56 +134,21 @@ try {
                     <i class="ri-user-line nav-icon mr-4 h-5 w-5 <?php echo $currentPage === 'clientes' ? 'text-purple-600' : 'text-gray-400'; ?>"></i>
                     <span>Clientes</span>
                 </a>
-            </div>
 
-            <!-- Sección WhatsApp -->
-            <!-- <div class="section-divider">
-                <div class="section-label">
-                    <i class="ri-whatsapp-line text-green-500 mr-1"></i>
-                    WhatsApp
-                </div>
-            </div>
-
-            <div class="space-y-1">
-                <a href="/whatsapp" class="nav-item <?php echo $currentPage === 'whatsapp' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
-                    <i class="ri-whatsapp-line nav-icon mr-4 h-5 w-5 text-green-500"></i>
-                    <span>Conexión</span>
-                    <div class="ml-auto">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></span>
-                            Online
-                        </span>
-                    </div>
-                </a>
-
-                <a href="/autorespuestas" class="nav-item <?php echo $currentPage === 'autorespuestas' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
-                    <i class="ri-message-2-line nav-icon mr-4 h-5 w-5 <?php echo $currentPage === 'autorespuestas' ? 'text-purple-600' : 'text-gray-400'; ?>"></i>
-                    <span>Respuestas Auto</span>
-                </a>
-
-                <a href="/mensajes" class="nav-item <?php echo $currentPage === 'mensajes' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
-                    <i class="ri-chat-history-line nav-icon mr-4 h-5 w-5 <?php echo $currentPage === 'mensajes' ? 'text-purple-600' : 'text-gray-400'; ?>"></i>
-                    <span>Historial</span>
-                    <div class="ml-auto">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            24
-                        </span>
-                    </div>
-                </a>
-            </div>-->
-
-            <!-- Sección Sistema -->
-            <!-- <div class="section-divider">
-                <div class="section-label">
-                    <i class="ri-settings-4-line mr-1"></i>
-                    Sistema
-                </div>
-            </div> -->
-
-            <div class="space-y-1">
                 <a href="/formularios" class="nav-item <?php echo $currentPage === 'formularios' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
                     <i class="ri-survey-fill nav-icon mr-4 h-5 w-5 <?php echo $currentPage === 'formularios' ? 'text-purple-600' : 'text-gray-400'; ?>"></i>
                     <span>Formularios</span>
+                </a>
+
+                <a href="/whatsapp" class="nav-item <?php echo $currentPage === 'whatsapp' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
+                    <i class="ri-whatsapp-line nav-icon mr-4 h-5 w-5 text-green-500"></i>
+                    <span>WhatsApp</span>
+                    <div class="ml-auto">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600" id="whatsapp-status-indicator">
+                            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1"></span>
+                            Offline
+                        </span>
+                    </div>
                 </a>
 
                 <a href="/configuracion" class="nav-item <?php echo $currentPage === 'configuracion' ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
