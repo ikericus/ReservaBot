@@ -18,8 +18,15 @@ if (isset($_SESSION['form_data'])) unset($_SESSION['form_data']);
 
 // Comprobar si es modo edición o creación
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-$fecha = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
 $isEditMode = $id > 0;
+
+// Para nuevas reservas, usar siempre la fecha de hoy por defecto
+if (!$isEditMode) {
+    $fecha = isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d');
+} else {
+    // En modo edición, se establecerá cuando obtengamos la reserva
+    $fecha = null;
+}
 
 // Obtener la reserva si estamos en modo edición
 $reserva = null;
@@ -35,7 +42,7 @@ if ($isEditMode) {
             exit;
         }
         
-        // Usar la fecha de la reserva
+        // Usar la fecha de la reserva en modo edición
         $fecha = $reserva['fecha'];
     } catch (\PDOException $e) {
         // Si hay un error, redirigir al calendario

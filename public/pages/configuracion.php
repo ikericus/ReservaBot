@@ -18,15 +18,14 @@ try {
 }
 
 // Establecer valores predeterminados si no existen
-$modoAceptacion = $configuraciones['modo_aceptacion'] ?? 'manual';
 $intervaloReservas = $configuraciones['intervalo_reservas'] ?? '30';
 
-// Horarios con soporte para múltiples ventanas
+// Horarios con soporte para múltiples ventanas y capacidad
 $diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
 $horarios = [];
 
 foreach ($diasSemana as $dia) {
-    $horarioConfig = $configuraciones["horario_{$dia}"] ?? 'true|[{"inicio":"09:00","fin":"18:00"}]';
+    $horarioConfig = $configuraciones["horario_{$dia}"] ?? 'true|[{"inicio":"09:00","fin":"18:00","capacidad":1}]';
     
     // Separar activo y ventanas
     $parts = explode('|', $horarioConfig, 2);
@@ -36,20 +35,27 @@ foreach ($diasSemana as $dia) {
         // Intentar decodificar como JSON (nuevo formato)
         $ventanas = json_decode($parts[1], true);
         
-        // Si no es JSON válido, usar formato legacy
+        // Si no es JSON válido, usar formato legacy y añadir capacidad por defecto
         if (!$ventanas) {
             // Formato legacy: "09:00|18:00"
             $tiempos = explode('|', $parts[1]);
             if (count($tiempos) >= 2) {
                 $ventanas = [
-                    ['inicio' => $tiempos[0], 'fin' => $tiempos[1]]
+                    ['inicio' => $tiempos[0], 'fin' => $tiempos[1], 'capacidad' => 1]
                 ];
             } else {
-                $ventanas = [['inicio' => '09:00', 'fin' => '18:00']];
+                $ventanas = [['inicio' => '09:00', 'fin' => '18:00', 'capacidad' => 1]];
+            }
+        } else {
+            // Asegurar que todas las ventanas tienen capacidad
+            foreach ($ventanas as &$ventana) {
+                if (!isset($ventana['capacidad'])) {
+                    $ventana['capacidad'] = 1;
+                }
             }
         }
     } else {
-        $ventanas = [['inicio' => '09:00', 'fin' => '18:00']];
+        $ventanas = [['inicio' => '09:00', 'fin' => '18:00', 'capacidad' => 1]];
     }
     
     $horarios[$dia] = [
@@ -143,49 +149,6 @@ main {
     main .bg-white h2 i {
         margin-right: 0.5rem;
         flex-shrink: 0;
-    }
-    
-    /* Configuración de reservas - Modo de aceptación - SOLO en main */
-    main .flex.justify-between.items-center {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-        width: 100%;
-    }
-    
-    main .flex.justify-between.items-center > div:first-child {
-        width: 100%;
-    }
-    
-    main .flex.justify-between.items-center > div:last-child {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    /* Toggle switch responsive */
-    #toggleModo {
-        flex-shrink: 0;
-    }
-    
-    #modoLabel {
-        font-size: 0.875rem;
-        margin-right: 0.75rem;
-    }
-    
-    /* Descripción del modo */
-    #modoDescription {
-        font-size: 0.875rem;
-        line-height: 1.4;
-        margin-top: 0.5rem;
-        word-wrap: break-word;
-    }
-    
-    /* Border inferior responsive */
-    .border-b.border-gray-200.pb-6 {
-        padding-bottom: 1rem;
-        margin-bottom: 1rem;
     }
     
     /* Selector de intervalo - SOLO en main */
@@ -310,7 +273,13 @@ main {
         width: 100%;
     }
     
-    .ventana-horaria .flex.items-center.space-x-2 {
+    .ventana-horaria .grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .ventana-horaria .grid .flex {
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
@@ -318,14 +287,14 @@ main {
         gap: 0.5rem;
     }
     
-    .ventana-horaria .flex.items-center.space-x-2 label {
+    .ventana-horaria .grid .flex label {
         font-size: 0.875rem;
         margin-bottom: 0;
         flex-shrink: 0;
         min-width: 3.5rem;
     }
     
-    .ventana-horaria .flex.items-center.space-x-2 input[type="time"] {
+    .ventana-horaria .grid .flex input {
         flex: 1;
         min-width: 0;
         font-size: 0.875rem;
@@ -333,8 +302,13 @@ main {
         border-radius: 0.5rem;
     }
     
+    /* Capacidad input específico */
+    .capacidad-input {
+        max-width: 120px;
+    }
+    
     /* Badges y botones de acción en ventanas */
-    .ventana-horaria .flex.items-center.space-x-2:last-child {
+    .ventana-horaria .flex.items-center.justify-between:last-child {
         justify-content: space-between;
         align-items: center;
         margin-top: 0.5rem;
@@ -386,7 +360,7 @@ main {
     }
     
     /* Mejoras para inputs pequeños */
-    input[type="time"] {
+    input[type="time"], input[type="number"] {
         min-height: 2.5rem;
     }
     
@@ -420,13 +394,13 @@ main {
             padding: 0.75rem;
         }
         
-        main .ventana-horaria .flex.items-center.space-x-2 {
+        main .ventana-horaria .grid .flex {
             flex-direction: column;
             align-items: stretch;
             gap: 0.5rem;
         }
         
-        main .ventana-horaria .flex.items-center.space-x-2 label {
+        main .ventana-horaria .grid .flex label {
             min-width: auto;
             text-align: left;
         }
@@ -465,6 +439,25 @@ main {
 @media (min-width: 769px) {
     /* Estilos desktop originales se mantienen */
 }
+
+/* Estilos para el campo de capacidad */
+.capacidad-badge {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.capacidad-input {
+    text-align: center;
+    font-weight: 600;
+}
+
+.capacidad-help {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
 </style>
 
 <div class="flex justify-between items-center mb-6">
@@ -481,39 +474,11 @@ main {
                 Configuración de reservas
             </h2>
             
-            <!-- Destacar el modo de aceptación -->
-            <div class="mb-6 border-b border-gray-200 pb-6">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h3 class="text-base font-medium text-gray-900">Modo de aceptación de reservas</h3>
-                        <p class="text-sm text-gray-500" id="modoDescription">
-                            <?php echo $modoAceptacion === 'automatico' 
-                                ? 'Las reservas se aceptan automáticamente en horarios disponibles' 
-                                : 'Las reservas requieren aprobación manual'; ?>
-                        </p>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="mr-3 text-sm font-medium text-gray-700" id="modoLabel">
-                            <?php echo $modoAceptacion === 'automatico' ? 'Automático' : 'Manual'; ?>
-                        </span>
-                        <button 
-                            id="toggleModo" 
-                            type="button"
-                            class="relative inline-flex h-6 w-11 items-center rounded-full <?php echo $modoAceptacion === 'automatico' ? 'bg-blue-600' : 'bg-gray-200'; ?> focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                            <span 
-                                class="inline-block h-4 w-4 transform rounded-full bg-white <?php echo $modoAceptacion === 'automatico' ? 'translate-x-6' : 'translate-x-1'; ?> transition-transform"
-                            ></span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Otras configuraciones de reservas -->
+            <!-- Solo configuración de intervalo -->
             <div class="space-y-4">
                 <div>
                     <label for="intervaloReservas" class="block text-sm font-medium text-gray-700 mb-1">
-                        Intervalo entre reservas (minutos)
+                        Intervalo entre horarios disponibles (minutos)
                     </label>
                     <select
                         id="intervaloReservas"
@@ -527,20 +492,21 @@ main {
                         <option value="90" <?php echo $intervaloReservas == 90 ? 'selected' : ''; ?>>1 hora y 30 minutos</option>
                         <option value="120" <?php echo $intervaloReservas == 120 ? 'selected' : ''; ?>>2 horas</option>
                     </select>
+                    <p class="text-sm text-gray-500 mt-1">Define cada cuánto tiempo se pueden hacer reservas</p>
                 </div>
             </div>
         </div>
         
-        <!-- Horario de atención con múltiples ventanas -->
+        <!-- Horario de atención con múltiples ventanas y capacidad -->
         <div class="bg-white rounded-lg shadow-sm p-6">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-medium text-gray-900 flex items-center">
                     <i class="ri-time-line mr-2 text-blue-600"></i>
-                    Horario de atención
+                    Horario de atención y capacidad
                 </h2>
                 <div class="text-sm text-gray-500">
                     <i class="ri-information-line mr-1"></i>
-                    Puedes definir múltiples ventanas horarias por día
+                    Define horarios y cuántas reservas simultáneas puedes atender
                 </div>
             </div>
             
@@ -577,33 +543,59 @@ main {
                              style="<?php echo !$horarios[$dia]['activo'] ? 'display: none;' : ''; ?>">
                             
                             <?php foreach ($horarios[$dia]['ventanas'] as $index => $ventana): ?>
-                                <div class="ventana-horaria flex items-center space-x-3 p-3 <?php echo $index === 0 ? 'bg-gray-50' : 'bg-blue-50 border border-blue-200'; ?> rounded-lg">
-                                    <div class="flex items-center space-x-2">
-                                        <label class="text-sm font-medium text-gray-700">Desde:</label>
-                                        <input
-                                            type="time"
-                                            name="horario_<?php echo $dia; ?>_inicio_<?php echo $index + 1; ?>"
-                                            class="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                                            value="<?php echo htmlspecialchars($ventana['inicio']); ?>"
-                                            <?php echo !$horarios[$dia]['activo'] ? 'disabled' : ''; ?>
-                                        >
+                                <div class="ventana-horaria p-3 <?php echo $index === 0 ? 'bg-gray-50' : 'bg-blue-50 border border-blue-200'; ?> rounded-lg">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+                                        <div class="flex items-center space-x-2">
+                                            <label class="text-sm font-medium text-gray-700">Desde:</label>
+                                            <input
+                                                type="time"
+                                                name="horario_<?php echo $dia; ?>_inicio_<?php echo $index + 1; ?>"
+                                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                                value="<?php echo htmlspecialchars($ventana['inicio']); ?>"
+                                                <?php echo !$horarios[$dia]['activo'] ? 'disabled' : ''; ?>
+                                            >
+                                        </div>
+                                        
+                                        <div class="flex items-center space-x-2">
+                                            <label class="text-sm font-medium text-gray-700">Hasta:</label>
+                                            <input
+                                                type="time"
+                                                name="horario_<?php echo $dia; ?>_fin_<?php echo $index + 1; ?>"
+                                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                                value="<?php echo htmlspecialchars($ventana['fin']); ?>"
+                                                <?php echo !$horarios[$dia]['activo'] ? 'disabled' : ''; ?>
+                                            >
+                                        </div>
+                                        
+                                        <div class="flex items-center space-x-2">
+                                            <label class="text-sm font-medium text-gray-700">Capacidad:</label>
+                                            <input
+                                                type="number"
+                                                name="horario_<?php echo $dia; ?>_capacidad_<?php echo $index + 1; ?>"
+                                                class="capacidad-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                                value="<?php echo htmlspecialchars($ventana['capacidad'] ?? 1); ?>"
+                                                min="1"
+                                                max="50"
+                                                <?php echo !$horarios[$dia]['activo'] ? 'disabled' : ''; ?>
+                                            >
+                                        </div>
                                     </div>
                                     
-                                    <div class="flex items-center space-x-2">
-                                        <label class="text-sm font-medium text-gray-700">Hasta:</label>
-                                        <input
-                                            type="time"
-                                            name="horario_<?php echo $dia; ?>_fin_<?php echo $index + 1; ?>"
-                                            class="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                                            value="<?php echo htmlspecialchars($ventana['fin']); ?>"
-                                            <?php echo !$horarios[$dia]['activo'] ? 'disabled' : ''; ?>
-                                        >
+                                    <div class="capacidad-help text-center">
+                                        <i class="ri-information-line mr-1"></i>
+                                        Número máximo de reservas simultáneas en este horario
                                     </div>
                                     
-                                    <div class="flex items-center space-x-2">
-                                        <span class="px-2 py-1 text-xs font-medium <?php echo $index === 0 ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; ?> rounded-full">
-                                            <?php echo $index === 0 ? 'Principal' : 'Adicional'; ?>
-                                        </span>
+                                    <div class="flex items-center justify-between mt-3">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="px-2 py-1 text-xs font-medium <?php echo $index === 0 ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; ?> rounded-full">
+                                                <?php echo $index === 0 ? 'Principal' : 'Adicional'; ?>
+                                            </span>
+                                            
+                                            <span class="capacidad-badge px-2 py-1 text-xs rounded-full">
+                                                🏪 <?php echo htmlspecialchars($ventana['capacidad'] ?? 1); ?> reservas máx.
+                                            </span>
+                                        </div>
                                         
                                         <?php if ($index > 0): ?>
                                             <button 
@@ -638,31 +630,56 @@ main {
 
 <!-- Template para nuevas ventanas horarias -->
 <template id="ventana-horaria-template">
-    <div class="ventana-horaria flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-        <div class="flex items-center space-x-2">
-            <label class="text-sm font-medium text-gray-700">Desde:</label>
-            <input
-                type="time"
-                name=""
-                class="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                value="14:00"
-            >
+    <div class="ventana-horaria p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+            <div class="flex items-center space-x-2">
+                <label class="text-sm font-medium text-gray-700">Desde:</label>
+                <input
+                    type="time"
+                    name=""
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                    value="14:00"
+                >
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <label class="text-sm font-medium text-gray-700">Hasta:</label>
+                <input
+                    type="time"
+                    name=""
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                    value="18:00"
+                >
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <label class="text-sm font-medium text-gray-700">Capacidad:</label>
+                <input
+                    type="number"
+                    name=""
+                    class="capacidad-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                    value="1"
+                    min="1"
+                    max="50"
+                >
+            </div>
         </div>
         
-        <div class="flex items-center space-x-2">
-            <label class="text-sm font-medium text-gray-700">Hasta:</label>
-            <input
-                type="time"
-                name=""
-                class="block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                value="18:00"
-            >
+        <div class="capacidad-help text-center">
+            <i class="ri-information-line mr-1"></i>
+            Número máximo de reservas simultáneas en este horario
         </div>
         
-        <div class="flex items-center space-x-2">
-            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                Adicional
-            </span>
+        <div class="flex items-center justify-between mt-3">
+            <div class="flex items-center space-x-2">
+                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                    Adicional
+                </span>
+                <span class="capacidad-badge px-2 py-1 text-xs rounded-full">
+                    🏪 1 reservas máx.
+                </span>
+            </div>
+            
             <button 
                 type="button" 
                 class="btn-remove-ventana text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50"
@@ -736,6 +753,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Event listeners para actualizar el badge de capacidad
+    document.querySelectorAll('input[name*="_capacidad_"]').forEach(input => {
+        input.addEventListener('input', function() {
+            updateCapacidadBadge(this);
+        });
+    });
+    
+    // Función para actualizar el badge de capacidad
+    function updateCapacidadBadge(input) {
+        const ventana = input.closest('.ventana-horaria');
+        const badge = ventana.querySelector('.capacidad-badge');
+        const valor = parseInt(input.value) || 1;
+        
+        if (badge) {
+            badge.textContent = `🏪 ${valor} reservas máx.`;
+        }
+    }
+    
     // Función para añadir nueva ventana horaria
     function addVentanaHoraria(dia) {
         const template = document.getElementById('ventana-horaria-template');
@@ -747,14 +782,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const ventanaNum = ventanaCounters[dia];
         
         // Configurar nombres de los inputs
-        const inputs = clone.querySelectorAll('input[type="time"]');
-        inputs[0].name = `horario_${dia}_inicio_${ventanaNum}`;
-        inputs[1].name = `horario_${dia}_fin_${ventanaNum}`;
+        const inputs = clone.querySelectorAll('input');
+        inputs[0].name = `horario_${dia}_inicio_${ventanaNum}`;    // time inicio
+        inputs[1].name = `horario_${dia}_fin_${ventanaNum}`;       // time fin
+        inputs[2].name = `horario_${dia}_capacidad_${ventanaNum}`; // number capacidad
         
         // Event listener para eliminar ventana
         const removeBtn = clone.querySelector('.btn-remove-ventana');
         removeBtn.addEventListener('click', function() {
             this.closest('.ventana-horaria').remove();
+        });
+        
+        // Event listener para actualizar badge de capacidad
+        const capacidadInput = inputs[2];
+        capacidadInput.addEventListener('input', function() {
+            updateCapacidadBadge(this);
         });
         
         // Añadir al contenedor
@@ -772,38 +814,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 10);
     }
     
-    // Toggle modo aceptación
-    const toggleModo = document.getElementById('toggleModo');
-    const modoLabel = document.getElementById('modoLabel');
-    const modoDescription = document.getElementById('modoDescription');
-    let modoAceptacion = modoLabel.textContent.trim() === 'Automático' ? 'automatico' : 'manual';
-    
-    if (toggleModo) {
-        toggleModo.addEventListener('click', function() {
-            const toggleButton = toggleModo.querySelector('span');
-            
-            if (toggleButton.classList.contains('translate-x-1')) {
-                // Cambiar a modo automático
-                toggleButton.classList.remove('translate-x-1');
-                toggleButton.classList.add('translate-x-6');
-                toggleModo.classList.remove('bg-gray-200');
-                toggleModo.classList.add('bg-blue-600');
-                modoLabel.textContent = 'Automático';
-                modoDescription.textContent = 'Las reservas se aceptan automáticamente en horarios disponibles';
-                modoAceptacion = 'automatico';
-            } else {
-                // Cambiar a modo manual
-                toggleButton.classList.remove('translate-x-6');
-                toggleButton.classList.add('translate-x-1');
-                toggleModo.classList.remove('bg-blue-600');
-                toggleModo.classList.add('bg-gray-200');
-                modoLabel.textContent = 'Manual';
-                modoDescription.textContent = 'Las reservas requieren aprobación manual';
-                modoAceptacion = 'manual';
-            }
-        });
-    }
-    
     // Envío del formulario
     const configForm = document.getElementById('configForm');
     if (configForm) {
@@ -812,14 +822,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const data = {};
             
-            // Recopilar modo de aceptación
-            data['modo_aceptacion'] = modoAceptacion;
-            
             // Recopilar intervalo de reservas
             const intervaloReservas = document.getElementById('intervaloReservas');
             if (intervaloReservas) data['intervalo_reservas'] = intervaloReservas.value;
             
-            // Recopilar horarios con múltiples ventanas
+            // Recopilar horarios con múltiples ventanas y capacidad
             const diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
             
             diasSemana.forEach(dia => {
@@ -835,16 +842,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     ventanasElements.forEach((ventana, index) => {
                         const inicioInput = ventana.querySelector(`input[name*="_inicio_"]`);
                         const finInput = ventana.querySelector(`input[name*="_fin_"]`);
+                        const capacidadInput = ventana.querySelector(`input[name*="_capacidad_"]`);
                         
-                        if (inicioInput && finInput && inicioInput.value && finInput.value) {
+                        if (inicioInput && finInput && capacidadInput && 
+                            inicioInput.value && finInput.value) {
                             ventanas.push({
                                 inicio: inicioInput.value,
-                                fin: finInput.value
+                                fin: finInput.value,
+                                capacidad: parseInt(capacidadInput.value) || 1
                             });
                         }
                     });
                     
-                    // Guardar como JSON las múltiples ventanas
+                    // Guardar como JSON las múltiples ventanas con capacidad
                     data[`horario_${dia}`] = `true|${JSON.stringify(ventanas)}`;
                 } else {
                     data[`horario_${dia}`] = 'false|[]';

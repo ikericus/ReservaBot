@@ -1,4 +1,9 @@
 <?php
+/**
+ * API para actualizar configuración del sistema
+ * ACTUALIZADA para soportar capacidad de reservas simultáneas
+ */
+
 // Cabeceras para JSON
 header('Content-Type: application/json');
 
@@ -22,95 +27,154 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     exit;
 }
 
-// Verificar que los datos requeridos estén presentes
-if (!isset($data['nombre']) || !isset($data['telefono']) || !isset($data['fecha']) || !isset($data['hora'])) {
-    echo json_encode(['success' => false, 'message' => 'Faltan datos requeridos: ' . implode(', ', array_diff(['nombre', 'telefono', 'fecha', 'hora'], array_keys($data)))]);
-    exit;
-}
-
-// Validar los datos
-if (empty(trim($data['nombre'])) || empty(trim($data['telefono'])) || empty($data['fecha']) || empty($data['hora'])) {
-    echo json_encode(['success' => false, 'message' => 'Todos los campos obligatorios deben estar completos']);
-    exit;
-}
-
-// Validar el formato de la fecha
-if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data['fecha'])) {
-    echo json_encode(['success' => false, 'message' => 'Formato de fecha inválido (debe ser YYYY-MM-DD)']);
-    exit;
-}
-
-// Validar el formato de la hora
-if (!preg_match('/^\d{2}:\d{2}$/', $data['hora'])) {
-    echo json_encode(['success' => false, 'message' => 'Formato de hora inválido (debe ser HH:MM)']);
-    exit;
-}
-
-// Validar que la fecha no sea anterior a hoy
-if ($data['fecha'] < date('Y-m-d')) {
-    echo json_encode(['success' => false, 'message' => 'La fecha no puede ser anterior a hoy']);
+// Verificar que hay datos para procesar
+if (empty($data)) {
+    echo json_encode(['success' => false, 'message' => 'No se recibieron datos para actualizar']);
     exit;
 }
 
 try {
-    // Verificar que no exista ya una reserva para esa fecha y hora
-    $stmt = getPDO()->prepare('SELECT COUNT(*) FROM reservas WHERE fecha = ? AND TIME_FORMAT(hora, "%H:%i") = ? AND estado IN ("pendiente", "confirmada")');
-    $stmt->execute([$data['fecha'], $data['hora']]);
-    $existeReserva = $stmt->fetchColumn();
+    $pdo = getPDO();
+    $pdo->beginTransaction();
     
-    if ($existeReserva > 0) {
-        echo json_encode(['success' => false, 'message' => 'Ya existe una reserva para esa fecha y hora']);
-        exit;
+    $configuracionesActualizadas = [];
+    
+    foreach ($data as $clave => $valor) {
+        // Validar clave de configuración
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $clave)) {
+            throw new Exception("Clave de configuración inválida: $clave");
+        }
+        
+        // Validaciones específicas según el tipo de configuración
+        switch ($clave) {
+            case 'intervalo_reservas':
+                $intervalosValidos = [15, 30, 45, 60, 90, 120];
+                if (!in_array(intval($valor), $intervalosValidos)) {
+                    throw new Exception('Intervalo de reservas no válido');
+                }
+                break;
+                
+            default:
+                // Validar horarios de días de la semana con capacidad
+                if (preg_match('/^horario_(lun|mar|mie|jue|vie|sab|dom)$/', $clave)) {
+                    if (!validateHorarioConfig($valor)) {
+                        throw new Exception("Configuración de horario inválida para $clave");
+                    }
+                }
+                break;
+        }
+        
+        // Verificar si la configuración ya existe
+        $stmt = $pdo->prepare('SELECT id FROM configuraciones WHERE clave = ?');
+        $stmt->execute([$clave]);
+        $existe = $stmt->fetchColumn();
+        
+        if ($existe) {
+            // Actualizar configuración existente
+            $stmt = $pdo->prepare('UPDATE configuraciones SET valor = ?, updated_at = NOW() WHERE clave = ?');
+            $result = $stmt->execute([$valor, $clave]);
+        } else {
+            // Crear nueva configuración
+            $stmt = $pdo->prepare('INSERT INTO configuraciones (clave, valor, created_at, updated_at) VALUES (?, ?, NOW(), NOW())');
+            $result = $stmt->execute([$clave, $valor]);
+        }
+        
+        if ($result) {
+            $configuracionesActualizadas[] = $clave;
+        } else {
+            throw new Exception("Error al actualizar configuración: $clave");
+        }
     }
     
-    // Preparar la consulta
-    $sql = 'INSERT INTO reservas (nombre, telefono, fecha, hora, mensaje, estado, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())';
-    $stmt = getPDO()->prepare($sql);
+    $pdo->commit();
     
-    // Establecer el estado predeterminado si no se proporciona
-    $estado = isset($data['estado']) ? $data['estado'] : 'pendiente';
+    // Log de auditoría
+    error_log('Configuraciones actualizadas: ' . implode(', ', $configuracionesActualizadas));
     
-    // Convertir la hora al formato de MySQL (HH:MM:SS)
-    $hora = $data['hora'] . ':00';
-    
-    // Limpiar y preparar datos
-    $nombre = trim($data['nombre']);
-    $telefono = trim($data['telefono']);
-    $mensaje = isset($data['mensaje']) ? trim($data['mensaje']) : '';
-    
-    // Ejecutar la consulta
-    $result = $stmt->execute([
-        $nombre,
-        $telefono,
-        $data['fecha'],
-        $hora,
-        $mensaje,
-        $estado
+    echo json_encode([
+        'success' => true,
+        'message' => 'Configuración actualizada correctamente',
+        'configuraciones_actualizadas' => $configuracionesActualizadas,
+        'total' => count($configuracionesActualizadas)
     ]);
     
-    if ($result) {
-        $id = getPDO()->lastInsertId();
-        echo json_encode([
-            'success' => true, 
-            'id' => $id,
-            'message' => 'Reserva creada correctamente'
-        ]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Error al crear la reserva en la base de datos']);
-    }
-    
-} catch (\PDOException $e) {
-    // Log del error real (no mostrar al usuario por seguridad)
-    error_log('Error al crear reserva: ' . $e->getMessage());
-    
-    // Mensajes de error específicos según el código
-    if ($e->getCode() == 23000) { // Violación de restricción única
-        echo json_encode(['success' => false, 'message' => 'Ya existe una reserva con esos datos']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Error en la base de datos. Por favor, intente nuevamente.']);
-    }
 } catch (\Exception $e) {
-    error_log('Error general al crear reserva: ' . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    
+    error_log('Error al actualizar configuración: ' . $e->getMessage());
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Error al actualizar la configuración: ' . $e->getMessage()
+    ]);
+}
+
+/**
+ * Validar configuración de horario con capacidad
+ */
+function validateHorarioConfig($horarioConfig) {
+    // Formato esperado: "true|[{'inicio':'09:00','fin':'18:00','capacidad':1}]" o "false|[]"
+    $parts = explode('|', $horarioConfig, 2);
+    
+    if (count($parts) !== 2) {
+        return false;
+    }
+    
+    $activo = $parts[0];
+    $ventanasJson = $parts[1];
+    
+    // Validar estado activo
+    if (!in_array($activo, ['true', 'false'])) {
+        return false;
+    }
+    
+    // Si está inactivo, puede tener array vacío
+    if ($activo === 'false') {
+        return $ventanasJson === '[]';
+    }
+    
+    // Validar estructura de ventanas
+    $ventanas = json_decode($ventanasJson, true);
+    
+    if (!is_array($ventanas)) {
+        return false;
+    }
+    
+    // Debe haber al menos una ventana si está activo
+    if (empty($ventanas)) {
+        return false;
+    }
+    
+    // Validar cada ventana
+    foreach ($ventanas as $ventana) {
+        if (!is_array($ventana)) {
+            return false;
+        }
+        
+        // Verificar campos requeridos
+        if (!isset($ventana['inicio']) || !isset($ventana['fin'])) {
+            return false;
+        }
+        
+        // Validar formato de horas
+        if (!preg_match('/^\d{2}:\d{2}$/', $ventana['inicio']) || 
+            !preg_match('/^\d{2}:\d{2}$/', $ventana['fin'])) {
+            return false;
+        }
+        
+        // Validar capacidad
+        $capacidad = $ventana['capacidad'] ?? 1;
+        if (!is_numeric($capacidad) || $capacidad < 1 || $capacidad > 50) {
+            return false;
+        }
+        
+        // Validar que hora inicio < hora fin
+        if (strtotime($ventana['inicio']) >= strtotime($ventana['fin'])) {
+            return false;
+        }
+    }
+    
+    return true;
 }
 ?>

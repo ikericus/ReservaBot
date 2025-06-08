@@ -353,11 +353,11 @@ include 'includes/header.php';
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-    
+
     .mobile-day-header-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 1.25rem;
+        background: #f8fafc;
+        padding: 1rem;
+        border-bottom: 1px solid #e5e7eb;
         text-align: center;
     }
     
@@ -438,20 +438,20 @@ include 'includes/header.php';
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0 1.25rem 1.25rem 1.25rem;
+        margin-bottom: 1rem;
     }
-    
+
     .mobile-day-nav-btn {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background: rgba(102, 126, 234, 0.2);
+        color: #667eea;
         border: none;
-        border-radius: 0.5rem;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.875rem;
-        font-weight: 500;
         display: flex;
         align-items: center;
-        gap: 0.25rem;
+        justify-content: center;
+        font-size: 1.25rem;
         transition: all 0.2s ease;
         cursor: pointer;
     }
@@ -605,7 +605,7 @@ include 'includes/header.php';
             </button>
         </div>
         
-        <div class="mobile-month-stats">
+        <!-- <div class="mobile-month-stats">
             <div class="mobile-stat-item">
                 <div class="mobile-stat-number" id="mobileConfirmadasCount">0</div>
                 <div class="mobile-stat-label">Confirmadas</div>
@@ -614,7 +614,7 @@ include 'includes/header.php';
                 <div class="mobile-stat-number" id="mobilePendientesCount">0</div>
                 <div class="mobile-stat-label">Pendientes</div>
             </div>
-        </div>
+        </div> -->
     </div>
     
     <!-- Selector de vista -->
@@ -673,15 +673,15 @@ include 'includes/header.php';
             <div class="mobile-day-nav">
                 <button id="mobilePrevDay" class="mobile-day-nav-btn">
                     <i class="ri-arrow-left-s-line"></i>
-                    Anterior
                 </button>
+                <div>
+                    <h3 id="mobileDayDate" class="mobile-day-date">25</h3>
+                    <p id="mobileDayName" class="mobile-day-name">Domingo, Mayo 2025</p>
+                </div>
                 <button id="mobileNextDay" class="mobile-day-nav-btn">
-                    Siguiente
                     <i class="ri-arrow-right-s-line"></i>
                 </button>
             </div>
-            <h3 id="mobileDayDate" class="mobile-day-date">25</h3>
-            <p id="mobileDayName" class="mobile-day-name">Domingo, Mayo 2025</p>
         </div>
         
         <div id="mobileReservationsList" class="mobile-reservations-list">
