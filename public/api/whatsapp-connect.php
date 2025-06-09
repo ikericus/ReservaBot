@@ -9,92 +9,218 @@ require_once dirname(__DIR__) . '/includes/auth.php';
 header('Content-Type: application/json');
 
 // Configuración del servidor WhatsApp
-$WHATSAPP_SERVER_URL = 'http://37.59.109.167:3001';
-$JWT_SECRET = 'da3c7b9e13a38a0ea3dcbaaed1ec9ec1f0005f974adad7141b71a36e9f13e187'; // Del .env del servidor Node.js
+$WHATSAPP_SERVER_URL = 'http://server.reservabot.es:3001';
+$JWT_SECRET = 'da3c7b9e13a38a0ea3dcbaaed1ec9ec1f0005f974adad7141b71a36e9f13e187';
+
+// Función de log detallado
+function logDebug($message, $data = null) {
+    $logEntry = "[" . date('Y-m-d H:i:s') . "] WHATSAPP-CONNECT: " . $message;
+    if ($data !== null) {
+        $logEntry .= " | Data: " . json_encode($data, JSON_UNESCAPED_UNICODE);
+    }
+    error_log($logEntry);
+}
+
+// Función para verificar prerequisites
+function checkPrerequisites() {
+    $checks = [];
+    
+    // Verificar extensiones PHP
+    $checks['curl_extension'] = extension_loaded('curl');
+    $checks['json_extension'] = extension_loaded('json');
+    $checks['openssl_extension'] = extension_loaded('openssl');
+    
+    // Verificar funciones
+    $checks['curl_init'] = function_exists('curl_init');
+    $checks['json_encode'] = function_exists('json_encode');
+    $checks['hash_hmac'] = function_exists('hash_hmac');
+    
+    // Verificar conectividad DNS
+    //$checks['dns_resolution'] = gethostbyname('37.59.109.167') !== '37.59.109.167';
+    
+    // Solo si usaras un hostname en lugar de IP
+    $checks['dns_resolution'] = gethostbyname('server.reservabot.es') !== 'server.reservabot.es';
+    
+    logDebug("Prerequisites check", $checks);
+    
+    foreach ($checks as $check => $result) {
+        if (!$result) {
+            throw new Exception("Prerequisite failed: {$check}");
+        }
+    }
+    
+    return $checks;
+}
+
+// Función para ping básico
+function testServerPing($host, $port) {
+    logDebug("Testing server ping", ['host' => $host, 'port' => $port]);
+    
+    $connection = @fsockopen($host, $port, $errno, $errstr, 5);
+    if ($connection) {
+        fclose($connection);
+        logDebug("Ping successful");
+        return true;
+    } else {
+        logDebug("Ping failed", ['errno' => $errno, 'errstr' => $errstr]);
+        return false;
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    logDebug("Invalid method", ['method' => $_SERVER['REQUEST_METHOD']]);
     echo json_encode(['success' => false, 'error' => 'Método no permitido']);
     exit;
 }
 
 $user = getAuthenticatedUser();
 if (!$user) {
+    logDebug("User not authenticated");
     echo json_encode(['success' => false, 'error' => 'No autenticado']);
     exit;
 }
 
 $userId = $user['id'];
+logDebug("Starting WhatsApp connection process", [
+    'userId' => $userId,
+    'server_url' => $WHATSAPP_SERVER_URL,
+    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+    'client_ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+]);
 
 try {
-    // Verificar si ya está conectado en el servidor
+    // 1. Verificar prerequisites
+    logDebug("Step 1: Checking prerequisites");
+    checkPrerequisites();
+    
+    // 2. Test básico de conectividad
+    logDebug("Step 2: Testing basic connectivity");
+    $serverHost = parse_url($WHATSAPP_SERVER_URL, PHP_URL_HOST);
+    $serverPort = parse_url($WHATSAPP_SERVER_URL, PHP_URL_PORT) ?: 3001;
+    
+    if (!testServerPing($serverHost, $serverPort)) {
+        throw new Exception("No se puede conectar al servidor {$serverHost}:{$serverPort}");
+    }
+    
+    // 3. Generar JWT token
+    logDebug("Step 3: Generating JWT token");
     $token = generateJWT($userId, $JWT_SECRET);
+    logDebug("JWT generated", ['token_length' => strlen($token), 'token_preview' => substr($token, 0, 50) . '...']);
+    
     $headers = ["Authorization: Bearer " . $token];
     
-    $statusResult = makeRequest($WHATSAPP_SERVER_URL . '/api/status', 'GET', null, $headers);
+    // 4. Verificar estado actual en el servidor
+    logDebug("Step 4: Checking current server status");
     
-    if ($statusResult && $statusResult['success']) {
-        if ($statusResult['status'] === 'ready') {
-            // Ya está conectado
-            $stmt = getPDO()->prepare('
-                INSERT INTO whatsapp_config (usuario_id, status, phone_number, updated_at) 
-                VALUES (?, "ready", ?, CURRENT_TIMESTAMP)
-                ON DUPLICATE KEY UPDATE 
-                status = "ready", 
-                phone_number = VALUES(phone_number),
-                updated_at = CURRENT_TIMESTAMP
-            ');
-            $stmt->execute([$userId, $statusResult['info']['phoneNumber'] ?? null]);
+    try {
+        $statusResult = makeRequest($WHATSAPP_SERVER_URL . '/api/status', 'GET', null, $headers);
+        logDebug("Status check result", $statusResult);
+        
+        if ($statusResult && $statusResult['success']) {
+            if ($statusResult['status'] === 'ready') {
+                logDebug("WhatsApp already connected, updating database");
+                
+                $stmt = getPDO()->prepare('
+                    INSERT INTO whatsapp_config (usuario_id, status, phone_number, updated_at) 
+                    VALUES (?, "ready", ?, CURRENT_TIMESTAMP)
+                    ON DUPLICATE KEY UPDATE 
+                    status = "ready", 
+                    phone_number = VALUES(phone_number),
+                    updated_at = CURRENT_TIMESTAMP
+                ');
+                $stmt->execute([$userId, $statusResult['info']['phoneNumber'] ?? null]);
+                
+                logDebug("Database updated successfully");
+                
+                echo json_encode([
+                    'success' => true,
+                    'status' => 'ready',
+                    'message' => 'WhatsApp ya está conectado',
+                    'phoneNumber' => $statusResult['info']['phoneNumber'] ?? null
+                ]);
+                exit;
+            }
             
-            echo json_encode([
-                'success' => true,
-                'status' => 'ready',
-                'message' => 'WhatsApp ya está conectado',
-                'phoneNumber' => $statusResult['info']['phoneNumber'] ?? null
-            ]);
-            exit;
+            if ($statusResult['status'] === 'waiting_qr' && !empty($statusResult['qr'])) {
+                logDebug("QR already available, updating database");
+                
+                $stmt = getPDO()->prepare('
+                    INSERT INTO whatsapp_config (usuario_id, status, qr_code, updated_at) 
+                    VALUES (?, "waiting_qr", ?, CURRENT_TIMESTAMP)
+                    ON DUPLICATE KEY UPDATE 
+                    status = "waiting_qr", 
+                    qr_code = VALUES(qr_code),
+                    updated_at = CURRENT_TIMESTAMP
+                ');
+                $stmt->execute([$userId, $statusResult['qr']]);
+                
+                logDebug("Database updated with QR code");
+                
+                echo json_encode([
+                    'success' => true,
+                    'status' => 'waiting_qr',
+                    'message' => 'Escanea el código QR con tu WhatsApp',
+                    'qr' => $statusResult['qr']
+                ]);
+                exit;
+            }
+            
+            logDebug("Current server status does not require immediate action", ['status' => $statusResult['status']]);
+        } else {
+            logDebug("Status check failed or returned invalid response");
+        }
+    } catch (Exception $statusError) {
+        logDebug("Status check error (continuing with new connection)", ['error' => $statusError->getMessage()]);
+        // Continuar con nueva conexión aunque falle el status check
+    }
+    
+    // 5. Iniciar nueva conexión
+    logDebug("Step 5: Starting new connection");
+    $connectData = ['userId' => $userId];
+    
+    try {
+        $connectResult = makeRequest($WHATSAPP_SERVER_URL . '/api/connect', 'POST', $connectData, $headers);
+        logDebug("Connect request result", $connectResult);
+        
+        if (!$connectResult || !$connectResult['success']) {
+            $errorMsg = $connectResult['error'] ?? 'Error desconocido conectando al servidor WhatsApp';
+            logDebug("Connect request failed", ['error' => $errorMsg, 'full_result' => $connectResult]);
+            throw new Exception($errorMsg);
         }
         
-        if ($statusResult['status'] === 'waiting_qr' && !empty($statusResult['qr'])) {
-            // Ya está esperando QR
-            $stmt = getPDO()->prepare('
-                INSERT INTO whatsapp_config (usuario_id, status, qr_code, updated_at) 
-                VALUES (?, "waiting_qr", ?, CURRENT_TIMESTAMP)
-                ON DUPLICATE KEY UPDATE 
-                status = "waiting_qr", 
-                qr_code = VALUES(qr_code),
-                updated_at = CURRENT_TIMESTAMP
-            ');
-            $stmt->execute([$userId, $statusResult['qr']]);
-            
-            echo json_encode([
-                'success' => true,
-                'status' => 'waiting_qr',
-                'message' => 'Escanea el código QR con tu WhatsApp',
-                'qr' => $statusResult['qr']
-            ]);
-            exit;
-        }
+        logDebug("Connect request successful");
+        
+    } catch (Exception $connectError) {
+        logDebug("Connect request exception", [
+            'error' => $connectError->getMessage(),
+            'file' => $connectError->getFile(),
+            'line' => $connectError->getLine()
+        ]);
+        throw $connectError;
     }
     
-    // Iniciar nueva conexión
-    $connectData = ['userId' => $userId];
-    $connectResult = makeRequest($WHATSAPP_SERVER_URL . '/api/connect', 'POST', $connectData, $headers);
+    // 6. Actualizar base de datos
+    logDebug("Step 6: Updating database");
     
-    if (!$connectResult || !$connectResult['success']) {
-        throw new Exception($connectResult['error'] ?? 'Error conectando al servidor WhatsApp');
+    try {
+        $stmt = getPDO()->prepare('
+            INSERT INTO whatsapp_config (usuario_id, status, updated_at) 
+            VALUES (?, "connecting", CURRENT_TIMESTAMP)
+            ON DUPLICATE KEY UPDATE 
+            status = "connecting", 
+            phone_number = NULL,
+            qr_code = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        ');
+        $stmt->execute([$userId]);
+        logDebug("Database updated successfully");
+        
+    } catch (Exception $dbError) {
+        logDebug("Database update error", ['error' => $dbError->getMessage()]);
+        throw new Exception("Error actualizando base de datos: " . $dbError->getMessage());
     }
     
-    // Actualizar base de datos
-    $stmt = getPDO()->prepare('
-        INSERT INTO whatsapp_config (usuario_id, status, updated_at) 
-        VALUES (?, "connecting", CURRENT_TIMESTAMP)
-        ON DUPLICATE KEY UPDATE 
-        status = "connecting", 
-        phone_number = NULL,
-        qr_code = NULL,
-        updated_at = CURRENT_TIMESTAMP
-    ');
-    $stmt->execute([$userId]);
+    logDebug("WhatsApp connection process completed successfully");
     
     echo json_encode([
         'success' => true,
@@ -103,7 +229,12 @@ try {
     ]);
     
 } catch (Exception $e) {
-    error_log('Error en whatsapp-connect: ' . $e->getMessage());
+    logDebug("FATAL ERROR in connection process", [
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'trace' => $e->getTraceAsString()
+    ]);
     
     // Actualizar BD con error
     try {
@@ -115,13 +246,32 @@ try {
             updated_at = CURRENT_TIMESTAMP
         ');
         $stmt->execute([$userId]);
+        logDebug("Error status saved to database");
     } catch (Exception $dbError) {
-        error_log('Error actualizando BD: ' . $dbError->getMessage());
+        logDebug("Failed to save error status to database", ['db_error' => $dbError->getMessage()]);
     }
     
-    echo json_encode([
+    // Respuesta de error detallada
+    $response = [
         'success' => false,
-        'error' => $e->getMessage()
-    ]);
+        'error' => $e->getMessage(),
+        'debug_info' => [
+            'server_url' => $WHATSAPP_SERVER_URL,
+            'user_id' => $userId,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'file' => basename($e->getFile()),
+            'line' => $e->getLine()
+        ]
+    ];
+    
+    // En modo desarrollo, incluir más detalles
+    if (defined('DEBUG_MODE') && DEBUG_MODE) {
+        $response['debug_info']['full_trace'] = $e->getTraceAsString();
+        $response['debug_info']['server_response'] = $statusResult ?? null;
+    }
+    
+    echo json_encode($response);
 }
+
+logDebug("Request processing completed");
 ?>

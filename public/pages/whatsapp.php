@@ -525,20 +525,31 @@ include 'includes/header.php';
 </div>
 
 <script>
-    // JavaScript para whatsapp.php - Versión limpia y funcional
+    // JavaScript para whatsapp.php - Versión corregida
+// Variables globales
+let currentStatus = '<?php echo $connectionStatus; ?>';
+let checkStatusInterval = null;
+
+// Elementos del DOM - se inicializarán en DOMContentLoaded
+let connectBtn, disconnectBtn, refreshQrBtn, disconnectModal, confirmDisconnect, cancelDisconnect;
+let quickMessageText, charCount;
+
 document.addEventListener('DOMContentLoaded', function() {
-    let currentStatus = '<?php echo $connectionStatus; ?>';
-    let checkStatusInterval = null;
+    // Inicializar elementos del DOM
+    connectBtn = document.getElementById('connectBtn');
+    disconnectBtn = document.getElementById('disconnectBtn');
+    refreshQrBtn = document.getElementById('refreshQrBtn');
+    disconnectModal = document.getElementById('disconnectModal');
+    confirmDisconnect = document.getElementById('confirmDisconnect');
+    cancelDisconnect = document.getElementById('cancelDisconnect');
+    quickMessageText = document.getElementById('quickMessageText');
+    charCount = document.getElementById('charCount');
     
-    // Elementos del DOM
-    const connectBtn = document.getElementById('connectBtn');
-    const disconnectBtn = document.getElementById('disconnectBtn');
-    const refreshQrBtn = document.getElementById('refreshQrBtn');
-    const disconnectModal = document.getElementById('disconnectModal');
-    const confirmDisconnect = document.getElementById('confirmDisconnect');
-    const cancelDisconnect = document.getElementById('cancelDisconnect');
-    const quickMessageText = document.getElementById('quickMessageText');
-    const charCount = document.getElementById('charCount');
+    // Verificar que currentStatus esté definido
+    if (typeof currentStatus === 'undefined' || !currentStatus) {
+        currentStatus = 'disconnected';
+        console.warn('currentStatus no definido, usando valor por defecto: disconnected');
+    }
     
     // Event listeners principales
     if (connectBtn) {
@@ -587,16 +598,18 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePage();
     
     // Auto-verificar estado del servidor cada 2 minutos si está conectado
-    if (currentStatus === 'connected') {
+    if (currentStatus === 'connected' || currentStatus === 'ready') {
         setInterval(refreshServerStatus, 120000);
     }
 });
 
 // Inicializar página según estado
 function initializePage() {
-    if (currentStatus === 'connecting') {
+    console.log('Inicializando página con estado:', currentStatus);
+    
+    if (currentStatus === 'connecting' || currentStatus === 'waiting_qr') {
         startStatusCheck();
-    } else if (currentStatus === 'connected') {
+    } else if (currentStatus === 'connected' || currentStatus === 'ready') {
         loadInitialData();
         loadAutoMessageConfig();
         loadStats();
@@ -676,7 +689,7 @@ async function checkStatus() {
         if (data.success && data.status !== currentStatus) {
             updateConnectionStatus(data.status, data.phoneNumber);
             
-            if (data.status === 'ready') {
+            if (data.status === 'ready' || data.status === 'connected') {
                 stopStatusCheck();
                 showNotification('¡WhatsApp conectado correctamente!', 'success');
                 loadInitialData();
@@ -698,15 +711,23 @@ async function checkStatus() {
 
 function updateConnectionStatus(status, phoneNumber = null) {
     currentStatus = status;
+    console.log('Actualizando estado a:', status);
     
     // Ocultar todos los estados
-    document.getElementById('disconnectedState').classList.add('hidden');
-    document.getElementById('qrState').classList.add('hidden');
-    document.getElementById('connectedState').classList.add('hidden');
+    const disconnectedState = document.getElementById('disconnectedState');
+    const qrState = document.getElementById('qrState');
+    const connectedState = document.getElementById('connectedState');
+    
+    if (disconnectedState) disconnectedState.classList.add('hidden');
+    if (qrState) qrState.classList.add('hidden');
+    if (connectedState) connectedState.classList.add('hidden');
     
     // Actualizar indicador de estado
     const statusIndicator = document.querySelector('.status-indicator');
-    statusIndicator.className = `status-indicator w-3 h-3 rounded-full ${status === 'ready' ? 'connected' : status}`;
+    if (statusIndicator) {
+        const statusClass = (status === 'ready' || status === 'connected') ? 'connected' : status;
+        statusIndicator.className = `status-indicator w-3 h-3 rounded-full ${statusClass}`;
+    }
     
     const statusLabels = {
         'ready': 'Conectado',
@@ -716,13 +737,15 @@ function updateConnectionStatus(status, phoneNumber = null) {
         'disconnected': 'Desconectado'
     };
     
-    const statusText = statusIndicator.nextElementSibling;
-    statusText.textContent = statusLabels[status] || 'Desconectado';
+    const statusText = statusIndicator ? statusIndicator.nextElementSibling : null;
+    if (statusText) {
+        statusText.textContent = statusLabels[status] || 'Desconectado';
+    }
     
     // Mostrar estado correspondiente
     switch (status) {
         case 'disconnected':
-            document.getElementById('disconnectedState').classList.remove('hidden');
+            if (disconnectedState) disconnectedState.classList.remove('hidden');
             if (connectBtn) {
                 updateButtonState(connectBtn, false, '<i class="ri-qr-code-line mr-2"></i>Conectar WhatsApp');
             }
@@ -730,12 +753,12 @@ function updateConnectionStatus(status, phoneNumber = null) {
             
         case 'connecting':
         case 'waiting_qr':
-            document.getElementById('qrState').classList.remove('hidden');
+            if (qrState) qrState.classList.remove('hidden');
             break;
             
         case 'ready':
         case 'connected':
-            document.getElementById('connectedState').classList.remove('hidden');
+            if (connectedState) connectedState.classList.remove('hidden');
             if (phoneNumber) {
                 const phoneElements = document.querySelectorAll('#connectedState .text-green-800');
                 phoneElements.forEach(el => {

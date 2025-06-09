@@ -2,45 +2,193 @@
 
 require_once 'db-config.php';
 
+// function generateJWT($userId, $secret) {
+//     $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+//     $payload = json_encode([
+//         'userId' => (int)$userId,
+//         'iat' => time(),
+//         'exp' => time() + 3600
+//     ]);
+    
+//     $base64Header = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
+//     $base64Payload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
+    
+//     $signature = hash_hmac('sha256', $base64Header . "." . $base64Payload, $secret, true);
+//     $base64Signature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
+    
+//     return $base64Header . "." . $base64Payload . "." . $base64Signature;
+// }
+
+// function makeRequest($url, $method = 'GET', $data = null, $headers = []) {
+//     $context = [
+//         'http' => [
+//             'method' => $method,
+//             'header' => implode("\r\n", $headers) . "\r\n",
+//             'timeout' => 15
+//         ]
+//     ];
+    
+//     if ($data && in_array($method, ['POST', 'PUT'])) {
+//         $context['http']['content'] = json_encode($data);
+//         $context['http']['header'] .= "Content-Type: application/json\r\n";
+//     }
+    
+//     $response = @file_get_contents($url, false, stream_context_create($context));
+    
+//     if ($response === false) {
+//         return ['success' => false, 'error' => 'Error de conexión con servidor WhatsApp'];
+//     }
+    
+//     return json_decode($response, true);
+// }
+
+
+// Función para generar JWT (si no existe)
 function generateJWT($userId, $secret) {
     $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
     $payload = json_encode([
-        'userId' => (int)$userId,
+        'userId' => $userId,
         'iat' => time(),
-        'exp' => time() + 3600
+        'exp' => time() + 3600 // 1 hora
     ]);
     
-    $base64Header = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
-    $base64Payload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
+    $headerEncoded = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
+    $payloadEncoded = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
     
-    $signature = hash_hmac('sha256', $base64Header . "." . $base64Payload, $secret, true);
-    $base64Signature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
+    $signature = hash_hmac('sha256', $headerEncoded . '.' . $payloadEncoded, $secret, true);
+    $signatureEncoded = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
     
-    return $base64Header . "." . $base64Payload . "." . $base64Signature;
+    return $headerEncoded . '.' . $payloadEncoded . '.' . $signatureEncoded;
 }
 
+// Función mejorada para hacer requests HTTP con debug detallado
 function makeRequest($url, $method = 'GET', $data = null, $headers = []) {
-    $context = [
-        'http' => [
-            'method' => $method,
-            'header' => implode("\r\n", $headers) . "\r\n",
-            'timeout' => 15
-        ]
-    ];
+    error_log("=== INICIO REQUEST ===");
+    error_log("URL: " . $url);
+    error_log("Método: " . $method);
+    error_log("Headers: " . json_encode($headers));
+    error_log("Data: " . ($data ? json_encode($data) : 'null'));
     
-    if ($data && in_array($method, ['POST', 'PUT'])) {
-        $context['http']['content'] = json_encode($data);
-        $context['http']['header'] .= "Content-Type: application/json\r\n";
+    $ch = curl_init();
+    
+    // Configuración básica de cURL
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_MAXREDIRS => 3,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_USERAGENT => 'ReservaBot-WhatsApp/1.0',
+        CURLOPT_VERBOSE => true
+    ]);
+    
+    // Headers
+    $curlHeaders = ['Content-Type: application/json'];
+    if (!empty($headers)) {
+        $curlHeaders = array_merge($curlHeaders, $headers);
+    }
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $curlHeaders);
+    
+    // Método y datos
+    switch (strtoupper($method)) {
+        case 'POST':
+            curl_setopt($ch, CURLOPT_POST, true);
+            if ($data) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            }
+            break;
+        case 'PUT':
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+            if ($data) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            }
+            break;
+        case 'DELETE':
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+            break;
     }
     
-    $response = @file_get_contents($url, false, stream_context_create($context));
+    // Ejecutar request
+    $startTime = microtime(true);
+    $response = curl_exec($ch);
+    $endTime = microtime(true);
+    $duration = round(($endTime - $startTime) * 1000, 2);
+    
+    // Información de la respuesta
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    $info = curl_getinfo($ch);
+    
+    curl_close($ch);
+    
+    error_log("=== RESPUESTA ===");
+    error_log("HTTP Code: " . $httpCode);
+    error_log("Duración: " . $duration . "ms");
+    error_log("Error cURL: " . ($error ?: 'ninguno'));
+    error_log("Info cURL: " . json_encode([
+        'url' => $info['url'],
+        'content_type' => $info['content_type'],
+        'total_time' => $info['total_time'],
+        'namelookup_time' => $info['namelookup_time'],
+        'connect_time' => $info['connect_time']
+    ]));
+    error_log("Response body: " . substr($response, 0, 1000) . (strlen($response) > 1000 ? '...[truncated]' : ''));
+    error_log("=== FIN REQUEST ===");
+    
+    // Verificar errores
+    if ($error) {
+        throw new Exception("Error cURL: " . $error);
+    }
     
     if ($response === false) {
-        return ['success' => false, 'error' => 'Error de conexión con servidor WhatsApp'];
+        throw new Exception("cURL devolvió false - no se pudo obtener respuesta del servidor");
     }
     
-    return json_decode($response, true);
+    if ($httpCode >= 400) {
+        throw new Exception("HTTP Error {$httpCode}: " . substr($response, 0, 200));
+    }
+    
+    // Decodificar JSON
+    $decoded = json_decode($response, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception("Error decodificando JSON: " . json_last_error_msg() . ". Response: " . substr($response, 0, 200));
+    }
+    
+    return $decoded;
 }
+
+// Función para verificar conectividad básica
+function checkServerConnectivity($url) {
+    error_log("Verificando conectividad básica a: " . $url);
+    
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 5,
+        CURLOPT_CONNECTTIMEOUT => 3,
+        CURLOPT_NOBODY => true, // Solo HEAD request
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false
+    ]);
+    
+    $result = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    error_log("Conectividad - HTTP Code: " . $httpCode . ", Error: " . ($error ?: 'ninguno'));
+    
+    return [
+        'success' => $result !== false && empty($error),
+        'httpCode' => $httpCode,
+        'error' => $error
+    ];
+}
+
 
 /**
  * Obtiene la URL base del sitio web

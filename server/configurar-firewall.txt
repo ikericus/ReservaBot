@@ -1,0 +1,21 @@
+#Instalar ufw
+	sudo apt update
+	sudo apt install ufw
+
+#Permitir acceso SSH antes de activarlo
+#Esto es muy importante para no quedarte fuera del servidor:
+	sudo ufw allow from 212.81.182.41 to any port 22
+
+#Permitir el puerto de tu app (3001)
+	sudo ufw allow from 212.81.182.41 to any port 3001
+	sudo ufw allow from 141.136.33.190 to any port 3001
+
+#Denegar todo lo demás por defecto
+	sudo ufw default deny incoming
+	sudo ufw default allow outgoing
+
+#Activar ufw
+	sudo ufw enable
+
+#Verifica las reglas
+	sudo ufw status
