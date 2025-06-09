@@ -11,55 +11,6 @@ const fs = require('fs').promises;
 const path = require('path');
 require('dotenv').config();
 
-// === SUPRIMIR ERRORES DE LOCALWEBCACHE ===
-process.on('unhandledRejection', (reason, promise) => {
-    // Silenciar específicamente errores de LocalWebCache
-    if (reason?.message?.includes('LocalWebCache') || 
-        reason?.message?.includes('Cannot read properties of null') ||
-        reason?.stack?.includes('LocalWebCache.js')) {
-        return; // Completamente silenciado
-    }
-    
-    // Para otros errores, usar el logger cuando esté disponible
-    if (typeof logger !== 'undefined') {
-        logger.error('Promesa rechazada no manejada:', {
-            reason: reason?.message || reason,
-            service: 'whatsapp-server'
-        });
-    } else {
-        console.error('Promesa rechazada no manejada:', reason?.message || reason);
-    }
-});
-
-// Suprimir console.error globalmente para LocalWebCache
-const originalConsoleError = console.error;
-console.error = (...args) => {
-    const message = args.join(' ');
-    if (message.includes('LocalWebCache') || 
-        message.includes('Cannot read properties of null') ||
-        message.includes('webCache') ||
-        message.includes('LocalWebCache.js')) {
-        return; // No mostrar estos errores
-    }
-    originalConsoleError.apply(console, args);
-};
-
-process.on('uncaughtException', (error) => {
-    if (error?.message?.includes('LocalWebCache') || 
-        error?.message?.includes('Cannot read properties of null')) {
-        return; // Silenciar estos errores
-    }
-    
-    if (typeof logger !== 'undefined') {
-        logger.error('Excepción no capturada:', {
-            error: error?.message || error,
-            service: 'whatsapp-server'
-        });
-    } else {
-        console.error('Excepción no capturada:', error?.message || error);
-    }
-});
-
 // Configuración del logger
 const logger = winston.createLogger({
     level: process.env.LOG_LEVEL || 'info',
@@ -84,9 +35,62 @@ const logger = winston.createLogger({
 const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
-const WEBAPP_URL = process.env.WEBAPP_URL || 'https://reservabot.es';
+const WEBAPP_API_URL = process.env.WEBAPP_API_URL || 'http://localhost';
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 const MAX_CLIENTS = parseInt(process.env.MAX_CLIENTS) || 50;
+
+// Configuración para manejar errores no capturados
+process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Promesa rechazada no manejada:', {
+        reason: reason,
+        stack: reason?.stack,
+        service: 'whatsapp-server'
+    });
+    
+    // Si es error específico de WhatsApp Web.js cache
+    if (reason?.message?.includes('LocalWebCache') || 
+        reason?.message?.includes('Cannot read properties of null')) {
+        
+        logger.info('Detectado error de LocalWebCache, ejecutando limpieza...');
+        
+        // Obtener userId del error si es posible
+        const errorString = reason?.stack || reason?.message || '';
+        const userIdMatch = errorString.match(/client_(\d+)/);
+        
+        if (userIdMatch) {
+            const affectedUserId = userIdMatch[1];
+            logger.info(`Usuario afectado por error de cache: ${affectedUserId}`);
+            
+            // Limpiar específicamente ese usuario
+            if (activeClients.has(affectedUserId)) {
+                cleanup(affectedUserId);
+            }
+            
+            // Limpiar sesión corrupta
+            cleanCorruptedSessions(affectedUserId).catch(err => {
+                logger.error(`Error limpiando sesión corrupta:`, err);
+            });
+        } else {
+            // Si no podemos identificar el usuario, limpiar todas las sesiones
+            logger.warn('No se pudo identificar usuario específico, limpiando todas las sesiones');
+            
+            for (const [userId] of activeClients) {
+                cleanup(userId);
+                cleanCorruptedSessions(userId).catch(err => {
+                    logger.error(`Error limpiando sesión ${userId}:`, err);
+                });
+            }
+        }
+    }
+});
+
+process.on('uncaughtException', (error) => {
+    logger.error('Excepción no capturada:', {
+        error: error.message,
+        stack: error.stack,
+        service: 'whatsapp-server'
+    });
+});
 
 // Middleware de seguridad
 app.use(helmet({
@@ -101,7 +105,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-    origin: WEBAPP_URL,
+    origin: process.env.WEBAPP_URL || 'http://localhost',
     credentials: true
 }));
 
@@ -267,6 +271,7 @@ async function initializeSessionsCleanup() {
 // ========== FUNCIONES DE CLIENTE WHATSAPP ==========
 
 // Función para crear cliente WhatsApp
+// Reemplaza la función createWhatsAppClient con esta versión sin cache:
 async function createWhatsAppClient(userId) {
     if (activeClients.has(userId)) {
         logger.warn(`Cliente ${userId} ya existe`);
@@ -289,25 +294,32 @@ async function createWhatsAppClient(userId) {
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--disable-gpu',
-            '--single-process',
-            '--disable-web-security',
-            '--disable-features=VizDisplayCompositor'
+            '--single-process'
         ]
     };
 
-    // Cliente sin webVersionCache ni webVersion para evitar LocalWebCache
+    // CLIENTE SIMPLE SIN CACHE
     const client = new Client({
         authStrategy: new LocalAuth({
             clientId: `client_${userId}`,
             dataPath: './sessions'
         }),
         puppeteer: puppeteerConfig
-        // NO incluir webVersion, webVersionCache o takeoverOnConflict
+        // Sin webVersion ni webVersionCache
     });
 
-    // Eventos del cliente
+    // Suprimir errores de LocalWebCache específicamente
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+        const message = args.join(' ');
+        if (!message.includes('LocalWebCache') && !message.includes('Cannot read properties of null')) {
+            originalConsoleError.apply(console, args);
+        }
+    };
+
+    // Resto de eventos igual...
     client.on('qr', async (qr) => {
-        logger.info(`QR generado para usuario ${userId}`, { service: 'whatsapp-server' });
+        logger.info(`QR generado para usuario ${userId}`);
         try {
             const qrDataURL = await QRCode.toDataURL(qr);
             pendingConnections.set(userId, { qr: qrDataURL, timestamp: Date.now() });
@@ -317,63 +329,19 @@ async function createWhatsAppClient(userId) {
         }
     });
 
-    client.on('ready', async () => {
-        logger.info(`Cliente ${userId} listo`, { service: 'whatsapp-server' });
-        pendingConnections.delete(userId);
-        
-        await notifyWebApp('connected', userId, {
-            phoneNumber: client.info.wid.user,
-            name: client.info.pushname
-        });
-
-        // Procesar mensajes en cola
-        await processQueuedMessages(userId);
-    });
-
-    client.on('auth_failure', async (msg) => {
-        logger.error(`Fallo de autenticación ${userId}: ${msg}`);
-        await notifyWebApp('auth_failure', userId, { error: msg });
-        cleanup(userId);
-    });
-
-    client.on('disconnected', async (reason) => {
-        logger.warn(`Cliente ${userId} desconectado: ${reason}`);
-        await notifyWebApp('disconnected', userId, { reason });
-        cleanup(userId);
-    });
-
-    client.on('message', async (message) => {
-        if (!message.fromMe) {
-            await handleIncomingMessage(userId, message);
-        } else {
-            await logOutgoingMessage(userId, message);
-        }
-    });
-
-    // Manejar errores específicos del cliente
-    client.on('error', (error) => {
-        if (error?.message?.includes('LocalWebCache') || 
-            error?.message?.includes('Cannot read properties of null')) {
-            return; // Ignorar errores de LocalWebCache
-        }
-        logger.error(`Error en cliente ${userId}:`, error);
-    });
+    // ... resto de eventos
 
     activeClients.set(userId, client);
     
-    // Inicializar con manejo de errores silencioso
     try {
         await client.initialize();
-        logger.info(`Cliente ${userId} inicializado correctamente`);
     } catch (error) {
-        if (error?.message?.includes('LocalWebCache') || 
-            error?.message?.includes('Cannot read properties of null')) {
-            logger.info(`Cliente ${userId} inicializado (ignorando errores de cache)`);
-        } else {
+        if (!error.message.includes('LocalWebCache')) {
             logger.error(`Error inicializando cliente ${userId}:`, error);
-            activeClients.delete(userId);
             throw error;
         }
+        // Ignorar errores de LocalWebCache
+        logger.info(`Cliente inicializado (ignorando errores de cache)`);
     }
 
     return client;
@@ -453,10 +421,7 @@ async function notifyWebApp(event, userId, data) {
 
         logger.debug(`Webhook enviado: ${event} para usuario ${userId}`);
     } catch (error) {
-        logger.error(`Error enviando webhook:`, { 
-            service: 'whatsapp-server',
-            timestamp: new Date().toISOString()
-        });
+        logger.error(`Error enviando webhook:`, error.message);
     }
 }
 

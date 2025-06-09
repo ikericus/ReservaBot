@@ -1,7 +1,7 @@
 <?php
 // test-whatsapp-connection.php
 
-$whatsappServerUrl = 'http://server.reservabot.es:3001';
+$whatsappServerUrl = 'http://37.59.109.167:3001';
 
 echo "<h2>Test de conexión WhatsApp Server</h2>";
 

@@ -1,27 +1,24 @@
 <?php
-/**
- * API para desconectar WhatsApp - Refactorizado
- * Usa las nuevas funciones centralizadas
- */
+// public/api/whatsapp-disconnect.php
+// API para desconectar WhatsApp del servidor Node.js
 
 require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 require_once dirname(__DIR__) . '/includes/auth.php';
-require_once dirname(__DIR__) . '/includes/whatsapp-config.php';
-require_once dirname(__DIR__) . '/includes/whatsapp-functions.php';
 
 header('Content-Type: application/json');
 
-// Solo permitir POST
+// Configuración del servidor WhatsApp
+$WHATSAPP_SERVER_URL = 'http://37.59.109.167:3001';
+$JWT_SECRET = 'da3c7b9e13a38a0ea3dcbaaed1ec9ec1f0005f974adad7141b71a36e9f13e187'; // Del .env del servidor Node.js
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
     echo json_encode(['success' => false, 'error' => 'Método no permitido']);
     exit;
 }
 
-// Verificar autenticación
 $user = getAuthenticatedUser();
 if (!$user) {
-    http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'No autenticado']);
     exit;
 }
@@ -29,56 +26,77 @@ if (!$user) {
 $userId = $user['id'];
 
 try {
-    // Verificar estado actual
-    $currentStatus = getWhatsAppStatus($userId);
+    // Verificar estado actual en BD
+    $stmt = getPDO()->prepare('SELECT status FROM whatsapp_config WHERE usuario_id = ?');
+    $stmt->execute([$userId]);
+    $config = $stmt->fetch();
     
-    // Si ya está desconectado, no hacer nada
-    if ($currentStatus['status'] === 'disconnected') {
+    if (!$config || $config['status'] === 'disconnected') {
         echo json_encode([
             'success' => true,
-            'status' => 'disconnected',
             'message' => 'WhatsApp ya estaba desconectado'
         ]);
         exit;
     }
     
-    // Intentar desconectar usando la función centralizada
-    $disconnectResult = disconnectWhatsApp();
+    // Desconectar del servidor Node.js
+    $token = generateJWT($userId, $JWT_SECRET);
+    $headers = ["Authorization: Bearer " . $token];
+    $disconnectData = ['userId' => $userId];
     
-    if ($disconnectResult['success']) {
+    $result = makeRequest($WHATSAPP_SERVER_URL . '/api/disconnect', 'POST', $disconnectData, $headers);
+    
+    // Actualizar BD independientemente del resultado del servidor
+    // (para limpiar estado local)
+    $stmt = getPDO()->prepare('
+        UPDATE whatsapp_config 
+        SET status = "disconnected", 
+            phone_number = NULL, 
+            qr_code = NULL,
+            token = NULL,
+            last_activity = NULL,
+            updated_at = CURRENT_TIMESTAMP 
+        WHERE usuario_id = ?
+    ');
+    $stmt->execute([$userId]);
+    
+    if ($result && $result['success']) {
         echo json_encode([
             'success' => true,
-            'status' => 'disconnected',
-            'message' => $disconnectResult['message']
+            'message' => 'WhatsApp desconectado correctamente del servidor'
         ]);
     } else {
-        // Aún así reportar éxito parcial si hay problemas con el servidor
+        // Aún así reportar éxito si se limpió la BD local
         echo json_encode([
             'success' => true,
-            'status' => 'disconnected',
-            'message' => 'WhatsApp desconectado localmente',
-            'warning' => $disconnectResult['message']
+            'message' => 'WhatsApp desconectado localmente. ' . ($result['error'] ?? 'Error en servidor remoto'),
+            'warning' => 'Posible error en servidor remoto'
         ]);
     }
     
 } catch (Exception $e) {
     error_log('Error en whatsapp-disconnect: ' . $e->getMessage());
     
-    // Intentar forzar desconexión local
+    // Intentar limpiar BD de todas formas
     try {
-        updateWhatsAppStatus('disconnected');
-        removeQRCode();
+        $stmt = getPDO()->prepare('
+            UPDATE whatsapp_config 
+            SET status = "disconnected", 
+                phone_number = NULL, 
+                qr_code = NULL,
+                token = NULL,
+                updated_at = CURRENT_TIMESTAMP 
+            WHERE usuario_id = ?
+        ');
+        $stmt->execute([$userId]);
         
         echo json_encode([
             'success' => true,
-            'status' => 'disconnected',
             'message' => 'WhatsApp desconectado localmente',
             'warning' => 'Error comunicándose con servidor: ' . $e->getMessage()
         ]);
-    } catch (Exception $cleanupError) {
-        error_log('Error en limpieza de disconnect: ' . $cleanupError->getMessage());
-        
-        http_response_code(500);
+    } catch (Exception $dbError) {
+        error_log('Error actualizando BD en disconnect: ' . $dbError->getMessage());
         echo json_encode([
             'success' => false,
             'error' => 'Error interno del servidor'
