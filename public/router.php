@@ -66,11 +66,9 @@ class Router {
         $this->addRoute('POST',     '/api/whatsapp-connect',            'api/whatsapp-connect.php',         ['auth']);
         $this->addRoute('GET',      '/api/whatsapp-status',             'api/whatsapp-status.php',          ['auth']);
         $this->addRoute('POST',     '/api/whatsapp-disconnect',         'api/whatsapp-disconnect.php',      ['auth']);
-        
-        
+                
         // Webhook para WhatsApp
-        $this->addRoute('POST',     '/webhook/whatsapp',    'webhook/whatsapp.php');
-        $this->addRoute('GET',      '/webhook/whatsapp',    'webhook/whatsapp.php');        
+        $this->addRoute('POST',     '/api/whatsapp-webhook',    'api/whatsapp-webhook.php');
     }
     
     /**

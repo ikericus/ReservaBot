@@ -1,570 +1,882 @@
 <?php
 /**
- * Funciones relacionadas con WhatsApp - VERSIÓN CORREGIDA
+ * Funciones unificadas para WhatsApp
+ * Combina funciones principales y auxiliares en un solo archivo simplificado
  */
 
-require_once '../includes/db-config.php';
+require_once __DIR__ . '/whatsapp-config.php';
+require_once __DIR__ . '/db-config.php';
+
+// ============================================================================
+// FUNCIONES DE CONEXIÓN Y ESTADO
+// ============================================================================
 
 /**
- * Verifica el estado de conexión de WhatsApp con parámetros opcionales
- * 
- * @param string $serverUrl URL del servidor (opcional)
- * @param string $apiKey Clave API (opcional)
- * @return array Estado actual de la conexión
+ * Obtener estado actual de WhatsApp
  */
-function checkWhatsAppStatus($serverUrl = null, $apiKey = null) {
-        
+function getWhatsAppStatus($userId = null) {
     try {
-        // Obtener configuración del servidor WhatsApp
-        $stmt = getPDO()->query("SELECT * FROM configuraciones WHERE clave IN ('whatsapp_server_url', 'whatsapp_status', 'whatsapp_last_activity', 'whatsapp_api_key')");
-        $config = [];
+        $pdo = getPDO();
         
+        $configKeys = ['whatsapp_server_url', 'whatsapp_status', 'whatsapp_last_activity', 'whatsapp_api_key'];
+        $placeholders = str_repeat('?,', count($configKeys) - 1) . '?';
+        
+        $stmt = $pdo->prepare("SELECT clave, valor FROM configuraciones WHERE clave IN ($placeholders)");
+        $stmt->execute($configKeys);
+        
+        $config = [];
         while ($row = $stmt->fetch()) {
             $config[$row['clave']] = $row['valor'];
         }
         
-        $actualServerUrl = $serverUrl ?: ($config['whatsapp_server_url'] ?? 'http://localhost:3000');
-        $actualApiKey = $apiKey ?: ($config['whatsapp_api_key'] ?? '');
-        $currentStatus = $config['whatsapp_status'] ?? 'disconnected';
-        $lastActivity = $config['whatsapp_last_activity'] ?? null;
-        
-        // Simular estado conectado para desarrollo (cambiar esto en producción)
-        $connected = ($currentStatus === 'connected');
-        
-        $result = [
-            'connected' => $connected,
-            'status' => $currentStatus,
-            'server_url' => $actualServerUrl,
-            'api_key' => $actualApiKey,
-            'phone' => $connected ? '+34 600 123 456' : null, // Placeholder
-            'name' => $connected ? 'Negocio Demo' : null, // Placeholder
-        ];
-        
-        // Formatear última actividad
-        if ($lastActivity) {
-            $lastActivityTimestamp = intval($lastActivity);
-            if ($lastActivityTimestamp > 0) {
-                $result['lastActivity'] = date('d/m/Y H:i:s', $lastActivityTimestamp);
-            }
-        }
-        
-        return $result;
-    } catch (\PDOException $e) {
-        error_log('Error al verificar estado de WhatsApp: ' . $e->getMessage());
-        return [
-            'connected' => false, 
-            'status' => 'error', 
-            'message' => 'Error al verificar el estado',
-            'server_url' => $serverUrl ?: 'http://localhost:3000',
-            'api_key' => $apiKey ?: ''
-        ];
-    }
-}
-
-/**
- * Verifica el estado de conexión de WhatsApp y lo actualiza si es necesario
- * Esta función se usa en la vista principal de WhatsApp
- *
- * @return array Estado actual de la conexión
- */
-function getWhatsAppConnectionStatus() {
-    
-    try {
-        // Obtener configuración del servidor WhatsApp
-        $stmt = getPDO()->query("SELECT * FROM configuraciones WHERE clave IN ('whatsapp_server_url', 'whatsapp_status', 'whatsapp_last_activity')");
-        $config = [];
-        
-        while ($row = $stmt->fetch()) {
-            $config[$row['clave']] = $row['valor'];
-        }
-        
-        $serverUrl = $config['whatsapp_server_url'] ?? 'http://localhost:3000';
-        $currentStatus = $config['whatsapp_status'] ?? 'disconnected';
-        $lastActivity = $config['whatsapp_last_activity'] ?? null;
-        
-        // Si el estado actual es "connecting" o "qr_ready", verificamos el estado real
-        if ($currentStatus === 'connecting' || $currentStatus === 'qr_ready') {
-            // Intentar verificar el estado real en el servidor
-            $statusCheck = @file_get_contents($serverUrl . '/status');
-            
-            if ($statusCheck !== false) {
-                $statusData = json_decode($statusCheck, true);
-                
-                if (json_last_error() === JSON_ERROR_NONE && isset($statusData['status'])) {
-                    $newStatus = $statusData['status'];
-                    
-                    // Actualizar estado si ha cambiado
-                    if ($newStatus !== $currentStatus) {
-                        $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', ?) 
-                                              ON DUPLICATE KEY UPDATE valor = ?");
-                        $stmt->execute([$newStatus, $newStatus]);
-                        
-                        $currentStatus = $newStatus;
-                    }
-                }
-            }
-        }
-        
-        // Obtener configuración de notificaciones
-        $stmt = getPDO()->query("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'whatsapp_notify_%'");
-        $settings = [];
-        
-        while ($row = $stmt->fetch()) {
-            $key = str_replace('whatsapp_notify_', '', $row['clave']);
-            $settings[$key] = $row['valor'];
-        }
-        
-        $result = [
-            'status' => $currentStatus,
-            'server_url' => $serverUrl,
-            'settings' => $settings
-        ];
-        
-        // Formatear última actividad
-        if ($lastActivity) {
-            $lastActivityTimestamp = intval($lastActivity);
-            if ($lastActivityTimestamp > 0) {
-                $result['lastActivity'] = date('d/m/Y H:i:s', $lastActivityTimestamp);
-            }
-        }
-        
-        // Si el estado es 'qr_ready', intentar obtener el código QR
-        if ($currentStatus === 'qr_ready') {
-            $qrCodePath = __DIR__ . '/../uploads/whatsapp_qr.png';
-            if (file_exists($qrCodePath)) {
-                $result['qrCode'] = 'uploads/whatsapp_qr.png?' . filemtime($qrCodePath);
-            }
-        }
-        
-        return $result;
-    } catch (\PDOException $e) {
-        error_log('Error al verificar estado de WhatsApp: ' . $e->getMessage());
-        return ['status' => 'error', 'message' => 'Error al verificar el estado'];
-    }
-}
-
-/**
- * Maneja eventos de actualización de código QR
- * Esta función es llamada desde el webhook de WhatsApp
- *
- * @param array $data Datos del evento
- * @return array Resultado del proceso
- */
-function handleQRUpdate($data) {    
-    try {
-        $qrCode = $data['qrCode'] ?? '';
-        
-        if (empty($qrCode)) {
-            return ['success' => false, 'message' => 'Código QR no proporcionado'];
-        }
-        
-        // Guardar imagen del QR
-        if (preg_match('/^data:image\/png;base64,(.*)$/', $qrCode, $matches)) {
-            $imageData = base64_decode($matches[1]);
-            $qrCodePath = __DIR__ . '/../uploads/whatsapp_qr.png';
-            
-            // Crear directorio si no existe
-            $dir = dirname($qrCodePath);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
-            }
-            
-            file_put_contents($qrCodePath, $imageData);
-            
-            // Actualizar estado a 'qr_ready'
-            $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'qr_ready') 
-                                  ON DUPLICATE KEY UPDATE valor = 'qr_ready'");
-            $stmt->execute();
-            
-            return ['success' => true, 'message' => 'Código QR actualizado'];
-        }
-        
-        return ['success' => false, 'message' => 'Formato de código QR inválido'];
-    } catch (\Exception $e) {
-        error_log('Error al actualizar código QR: ' . $e->getMessage());
-        return ['success' => false, 'message' => $e->getMessage()];
-    }
-}
-
-/**
- * Verifica el estado de conexión de WhatsApp
- *
- * @return array Datos del estado actual
- */
-function getWhatsAppStatus() {
-    
-    try {
-        // Obtener configuración del servidor WhatsApp
-        $stmt = getPDO()->query("SELECT * FROM configuraciones WHERE clave IN ('whatsapp_server_url', 'whatsapp_status', 'whatsapp_last_activity')");
-        $config = [];
-        
-        while ($row = $stmt->fetch()) {
-            $config[$row['clave']] = $row['valor'];
-        }
-        
-        $serverUrl = $config['whatsapp_server_url'] ?? 'http://localhost:3000';
+        $serverUrl = $config['whatsapp_server_url'] ?? WhatsAppConfig::SERVER_URL;
         $status = $config['whatsapp_status'] ?? 'disconnected';
         $lastActivity = $config['whatsapp_last_activity'] ?? null;
+        $apiKey = $config['whatsapp_api_key'] ?? '';
         
         $result = [
             'status' => $status,
-            'server_url' => $serverUrl
+            'server_url' => $serverUrl,
+            'api_key' => $apiKey,
+            'connected' => ($status === 'connected'),
+            'lastActivity' => $lastActivity ? date('d/m/Y H:i:s', intval($lastActivity)) : null
         ];
         
-        // Formatear última actividad
-        if ($lastActivity) {
-            $lastActivityTimestamp = intval($lastActivity);
-            if ($lastActivityTimestamp > 0) {
-                $result['lastActivity'] = date('d/m/Y H:i:s', $lastActivityTimestamp);
-            }
-        }
-        
         // Obtener configuración de notificaciones
-        $stmt = getPDO()->query("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'whatsapp_notify_%'");
+        $stmt = $pdo->query("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'whatsapp_notify_%'");
         $settings = [];
-        
         while ($row = $stmt->fetch()) {
             $key = str_replace('whatsapp_notify_', '', $row['clave']);
             $settings[$key] = $row['valor'];
         }
-        
         $result['settings'] = $settings;
         
-        // Si el estado es 'qr_ready', intentar obtener el código QR
+        // Si hay QR disponible
         if ($status === 'qr_ready') {
-            $qrCodePath = __DIR__ . '/../uploads/whatsapp_qr.png';
-            if (file_exists($qrCodePath)) {
-                $result['qrCode'] = 'uploads/whatsapp_qr.png?' . filemtime($qrCodePath);
+            $qrPath = __DIR__ . '/../uploads/whatsapp_qr.png';
+            if (file_exists($qrPath)) {
+                $result['qrCode'] = 'uploads/whatsapp_qr.png?' . filemtime($qrPath);
             }
         }
         
         return $result;
-    } catch (\PDOException $e) {
-        error_log('Error al obtener estado de WhatsApp: ' . $e->getMessage());
-        return ['status' => 'error', 'message' => 'Error al obtener el estado'];
+        
+    } catch (Exception $e) {
+        error_log('Error obteniendo estado WhatsApp: ' . $e->getMessage());
+        return ['status' => 'error', 'message' => $e->getMessage()];
     }
 }
 
 /**
- * Inicia el proceso de conexión de WhatsApp
- * 
- * @return array Resultado del proceso
+ * Conectar WhatsApp
  */
 function connectWhatsApp() {
-    
     try {
-        // Obtener URL del servidor
-        $stmt = getPDO()->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_server_url'");
-        $serverUrl = $stmt->fetchColumn() ?: 'http://localhost:3000';
+        updateWhatsAppStatus('connecting');
         
-        // Realizar petición al servidor Node.js
-        $response = @file_get_contents($serverUrl . '/start');
+        $serverUrl = getConfigValue('whatsapp_server_url', WhatsAppConfig::SERVER_URL);
+        $response = makeHttpRequest($serverUrl . '/start', 'GET');
         
-        if ($response === false) {
-            // Si no se puede conectar, simular proceso para desarrollo
-            $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'qr_ready') 
-                                  ON DUPLICATE KEY UPDATE valor = 'qr_ready'");
-            $stmt->execute();
-            
+        if (!$response) {
+            // Modo desarrollo - simular QR
+            updateWhatsAppStatus('qr_ready');
             return ['success' => true, 'message' => 'Modo desarrollo: simulando conexión'];
         }
         
-        $data = json_decode($response, true);
-        
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception('Respuesta inválida del servidor');
-        }
-        
-        // Actualizar estado en la base de datos
-        $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'connecting') 
-                              ON DUPLICATE KEY UPDATE valor = 'connecting'");
-        $stmt->execute();
-        
-        $result = ['success' => true];
-        
-        // Si hay código QR, guardarlo
-        if (isset($data['qrCode'])) {
-            $qrCode = $data['qrCode'];
-            $qrCodePath = __DIR__ . '/../uploads/whatsapp_qr.png';
-            
-            // Crear directorio si no existe
-            $dir = dirname($qrCodePath);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
-            }
-            
-            // Guardar imagen del QR
-            if (preg_match('/^data:image\/png;base64,(.*)$/', $qrCode, $matches)) {
-                $imageData = base64_decode($matches[1]);
-                file_put_contents($qrCodePath, $imageData);
-                
-                // Actualizar estado a 'qr_ready'
-                $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'qr_ready') 
-                                      ON DUPLICATE KEY UPDATE valor = 'qr_ready'");
-                $stmt->execute();
-                
-                $result['qrCode'] = 'uploads/whatsapp_qr.png?' . time();
+        // Procesar respuesta real
+        if (isset($response['qrCode'])) {
+            if (saveQRCode($response['qrCode'])) {
+                updateWhatsAppStatus('qr_ready');
+                return [
+                    'success' => true, 
+                    'qrCode' => 'uploads/whatsapp_qr.png?' . time()
+                ];
             }
         }
         
-        return $result;
-    } catch (\Exception $e) {
-        error_log('Error al conectar WhatsApp: ' . $e->getMessage());
+        return ['success' => true, 'message' => 'Proceso de conexión iniciado'];
         
-        // Actualizar estado a 'error' en la base de datos
-        $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'error') 
-                              ON DUPLICATE KEY UPDATE valor = 'error'");
-        $stmt->execute();
-        
+    } catch (Exception $e) {
+        error_log('Error conectando WhatsApp: ' . $e->getMessage());
+        updateWhatsAppStatus('error');
         return ['success' => false, 'message' => $e->getMessage()];
     }
 }
 
 /**
- * Desconecta la sesión de WhatsApp
- * 
- * @return array Resultado del proceso
+ * Desconectar WhatsApp
  */
 function disconnectWhatsApp() {
-    
     try {
-        // Obtener URL del servidor
-        $stmt = getPDO()->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_server_url'");
-        $serverUrl = $stmt->fetchColumn() ?: 'http://localhost:3000';
+        $serverUrl = getConfigValue('whatsapp_server_url', WhatsAppConfig::SERVER_URL);
+        makeHttpRequest($serverUrl . '/stop', 'GET');
         
-        // Realizar petición al servidor Node.js
-        $response = @file_get_contents($serverUrl . '/stop');
+        updateWhatsAppStatus('disconnected');
+        removeQRCode();
         
-        // Actualizar estado en la base de datos (independientemente de la respuesta)
-        $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', 'disconnected') 
-                              ON DUPLICATE KEY UPDATE valor = 'disconnected'");
-        $stmt->execute();
+        return ['success' => true, 'message' => 'WhatsApp desconectado'];
         
-        // Eliminar archivo QR si existe
-        $qrCodePath = __DIR__ . '/../uploads/whatsapp_qr.png';
-        if (file_exists($qrCodePath)) {
-            unlink($qrCodePath);
-        }
-        
-        return ['success' => true, 'message' => 'WhatsApp desconectado correctamente'];
-    } catch (\Exception $e) {
-        error_log('Error al desconectar WhatsApp: ' . $e->getMessage());
+    } catch (Exception $e) {
+        error_log('Error desconectando WhatsApp: ' . $e->getMessage());
         return ['success' => false, 'message' => $e->getMessage()];
     }
 }
 
-/**
- * Actualiza la configuración de notificaciones de WhatsApp
- * 
- * @param string $setting Configuración a actualizar
- * @param int $enabled Estado (1=activado, 0=desactivado)
- * @return array Resultado del proceso
- */
-function updateWhatsAppNotificationSetting($setting, $enabled) {
-    
-    try {
-        // Validar configuración
-        $validSettings = ['nueva_reserva', 'confirmacion', 'recordatorio', 'cancelacion'];
-        
-        if (!in_array($setting, $validSettings)) {
-            return ['success' => false, 'message' => 'Configuración no válida'];
-        }
-        
-        // Actualizar en la base de datos
-        $stmt = getPDO()->prepare("INSERT INTO configuraciones (clave, valor) VALUES (?, ?) 
-                              ON DUPLICATE KEY UPDATE valor = ?");
-        $key = 'whatsapp_notify_' . $setting;
-        $value = $enabled ? '1' : '0';
-        
-        $stmt->execute([$key, $value, $value]);
-        
-        return ['success' => true];
-    } catch (\PDOException $e) {
-        error_log('Error al actualizar configuración WhatsApp: ' . $e->getMessage());
-        return ['success' => false, 'message' => 'Error al guardar la configuración'];
-    }
-}
+// ============================================================================
+// FUNCIONES DE MENSAJERÍA
+// ============================================================================
 
 /**
- * Envía un mensaje de WhatsApp
- *
- * @param string $to Número de destino con formato internacional (ej: 34600000000)
- * @param string $message Contenido del mensaje
- * @param bool $isAuto Indica si es una respuesta automática
- * @return array Resultado del envío
+ * Enviar mensaje de WhatsApp
  */
-function sendWhatsAppMessage($to, $message, $isAuto = false) {
-    
+function sendWhatsAppMessage($phoneNumber, $message, $type = 'manual', $reservationId = null) {
     try {
-        // Formatear número si es necesario
-        $to = formatWhatsappNumber($to);
+        $status = getWhatsAppStatus();
         
-        // Obtener URL del servidor
-        $stmt = getPDO()->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_server_url'");
-        $serverUrl = $stmt->fetchColumn() ?: 'http://localhost:3000';
-        
-        // Comprobar estado de conexión
-        $stmt = getPDO()->query("SELECT valor FROM configuraciones WHERE clave = 'whatsapp_status'");
-        $status = $stmt->fetchColumn();
-        
-        if ($status !== 'connected') {
-            // Para desarrollo, simular envío exitoso
-            error_log("Simulando envío de WhatsApp a $to: $message");
+        if ($status['status'] !== 'connected') {
+            // Modo desarrollo - simular envío
+            error_log("Simulando envío WhatsApp a $phoneNumber: $message");
             return ['success' => true, 'message' => 'Mensaje simulado (desarrollo)'];
         }
         
-        // Preparar datos para la petición
+        $cleanPhone = formatPhoneNumber($phoneNumber);
+        $serverUrl = $status['server_url'];
+        
         $data = [
-            'to' => $to,
-            'message' => $message
+            'to' => $cleanPhone,
+            'message' => $message,
+            'type' => $type
         ];
         
-        $options = [
-            'http' => [
-                'method' => 'POST',
-                'header' => 'Content-Type: application/json',
-                'content' => json_encode($data)
-            ]
-        ];
+        $response = makeHttpRequest($serverUrl . '/send', 'POST', $data);
         
-        $context = stream_context_create($options);
-        $response = @file_get_contents($serverUrl . '/send', false, $context);
-        
-        if ($response === false) {
-            throw new \Exception('Error al enviar el mensaje');
+        if ($response && isset($response['success']) && $response['success']) {
+            // Guardar mensaje en base de datos si es necesario
+            if ($reservationId) {
+                logWhatsAppMessage($phoneNumber, $message, 'sent', $type, $reservationId);
+            }
+            
+            return ['success' => true, 'message' => 'Mensaje enviado'];
         }
         
-        $result = json_decode($response, true);
+        throw new Exception($response['message'] ?? 'Error desconocido al enviar mensaje');
         
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception('Respuesta inválida del servidor');
-        }
-        
-        if (isset($result['success']) && $result['success']) {
-            return ['success' => true, 'message' => 'Mensaje enviado correctamente'];
-        } else {
-            $errorMsg = $result['message'] ?? 'Error desconocido al enviar el mensaje';
-            throw new \Exception($errorMsg);
-        }
-    } catch (\Exception $e) {
-        error_log('Error al enviar mensaje WhatsApp: ' . $e->getMessage());
+    } catch (Exception $e) {
+        error_log('Error enviando mensaje WhatsApp: ' . $e->getMessage());
         return ['success' => false, 'message' => $e->getMessage()];
     }
 }
 
 /**
- * Procesa un mensaje recibido y envía respuesta automática si corresponde
- *
- * @param array $messageData Datos del mensaje recibido
- * @return array Resultado del procesamiento
+ * Enviar confirmación de reserva
  */
-function processIncomingWhatsAppMessage($messageData) {
+function sendReservationConfirmation($reservationId) {
+    $reservation = getReservationData($reservationId);
+    if (!$reservation) {
+        return ['success' => false, 'message' => 'Reserva no encontrada'];
+    }
     
+    $message = processMessageTemplate('confirmation', [
+        'cliente' => $reservation['nombre'],
+        'fecha' => formatDate($reservation['fecha']),
+        'hora' => formatTime($reservation['hora']),
+        'negocio' => $reservation['negocio']
+    ], $reservation['usuario_id']);
+    
+    $result = sendWhatsAppMessage($reservation['telefono'], $message, 'confirmation', $reservationId);
+    
+    if ($result['success']) {
+        markReservationMessageSent($reservationId, 'confirmacion');
+    }
+    
+    return $result;
+}
+
+/**
+ * Enviar recordatorio de reserva
+ */
+function sendReservationReminder($reservationId) {
+    $reservation = getReservationData($reservationId);
+    if (!$reservation) {
+        return ['success' => false, 'message' => 'Reserva no encontrada'];
+    }
+    
+    $message = processMessageTemplate('reminder', [
+        'cliente' => $reservation['nombre'],
+        'fecha' => formatDate($reservation['fecha']),
+        'hora' => formatTime($reservation['hora']),
+        'negocio' => $reservation['negocio']
+    ], $reservation['usuario_id']);
+    
+    $result = sendWhatsAppMessage($reservation['telefono'], $message, 'reminder', $reservationId);
+    
+    if ($result['success']) {
+        markReservationMessageSent($reservationId, 'recordatorio');
+    }
+    
+    return $result;
+}
+
+/**
+ * Procesar mensaje entrante
+ */
+function processIncomingMessage($messageData) {
     try {
-        // Extraer datos del mensaje
         $chatId = $messageData['chatId'] ?? '';
         $message = $messageData['body'] ?? '';
-        $timestamp = $messageData['timestamp'] ?? time();
         $senderName = $messageData['senderName'] ?? '';
         
-        // Verificar datos mínimos
         if (empty($chatId) || empty($message)) {
-            return ['success' => false, 'message' => 'Datos de mensaje incompletos'];
+            return ['success' => false, 'message' => 'Datos incompletos'];
         }
         
-        // Buscar posibles respuestas automáticas
-        $stmtResponses = getPDO()->query("SELECT * FROM autorespuestas_whatsapp WHERE is_active = 1 ORDER BY created_at");
-        $autoResponses = $stmtResponses->fetchAll();
+        $phoneNumber = extractPhoneFromChatId($chatId);
         
-        $matchedResponse = null;
+        // Buscar respuesta automática
+        $autoResponse = findAutoResponse($message);
         
-        foreach ($autoResponses as $response) {
-            $keyword = $response['keyword'];
-            $isRegex = $response['is_regex'] == 1;
-            
-            if ($isRegex) {
-                // Tratarla como expresión regular
-                if (@preg_match('/' . $keyword . '/i', $message)) {
-                    $matchedResponse = $response;
-                    break;
-                }
-            } else {
-                // Tratarla como coincidencia de texto normal
-                if (stripos($message, $keyword) !== false) {
-                    $matchedResponse = $response;
-                    break;
-                }
-            }
-        }
-        
-        // Enviar respuesta automática si hay coincidencia
-        if ($matchedResponse) {
-            $responseText = $matchedResponse['response'];
-            $phoneNumber = extractPhoneNumber($chatId);
-            
-            // Enviar mensaje de respuesta
-            sendWhatsAppMessage($phoneNumber, $responseText, true);
-            
+        if ($autoResponse) {
+            sendWhatsAppMessage($phoneNumber, $autoResponse, 'auto');
             return [
                 'success' => true, 
-                'message' => 'Mensaje procesado con respuesta automática',
+                'message' => 'Respuesta automática enviada',
                 'auto_response' => true
             ];
         }
         
-        return ['success' => true, 'message' => 'Mensaje recibido correctamente'];
-    } catch (\Exception $e) {
-        error_log('Error al procesar mensaje WhatsApp: ' . $e->getMessage());
+        return ['success' => true, 'message' => 'Mensaje procesado'];
+        
+    } catch (Exception $e) {
+        error_log('Error procesando mensaje entrante: ' . $e->getMessage());
         return ['success' => false, 'message' => $e->getMessage()];
     }
 }
 
+// ============================================================================
+// FUNCIONES DE CONFIGURACIÓN
+// ============================================================================
+
 /**
- * Formatea un número de teléfono al formato requerido por WhatsApp
- *
- * @param string $number Número de teléfono
- * @return string Número formateado
+ * Actualizar configuración de notificaciones
  */
-function formatWhatsappNumber($number) {
-    // Eliminar espacios, guiones y paréntesis
-    $number = preg_replace('/[\s\-\(\)]/', '', $number);
-    
-    // Asegurarse de que el número comienza con el prefijo del país (asumimos España por defecto)
-    if (substr($number, 0, 1) === '+') {
-        // Eliminar el signo +
-        $number = substr($number, 1);
-    } else if (substr($number, 0, 2) !== '34') {
-        // Añadir prefijo de España si no lo tiene
-        $number = '34' . $number;
+function updateNotificationSetting($setting, $enabled) {
+    try {
+        if (!WhatsAppConfig::isValidNotificationSetting($setting)) {
+            return ['success' => false, 'message' => 'Configuración no válida'];
+        }
+        
+        $pdo = getPDO();
+        $key = 'whatsapp_notify_' . $setting;
+        $value = $enabled ? '1' : '0';
+        
+        $stmt = $pdo->prepare("
+            INSERT INTO configuraciones (clave, valor) VALUES (?, ?) 
+            ON DUPLICATE KEY UPDATE valor = ?
+        ");
+        $stmt->execute([$key, $value, $value]);
+        
+        return ['success' => true];
+        
+    } catch (Exception $e) {
+        error_log('Error actualizando configuración: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Error al guardar configuración'];
     }
-    
-    return $number;
 }
 
 /**
- * Extrae el número de teléfono de un chatId de WhatsApp
- *
- * @param string $chatId ID del chat (formato: 34600000000@c.us)
- * @return string Número de teléfono formateado
+ * Manejar actualización de QR
  */
-function extractPhoneNumber($chatId) {
-    // Eliminar el sufijo @c.us si existe
+function handleQRUpdate($qrData) {
+    try {
+        if (empty($qrData)) {
+            return ['success' => false, 'message' => 'QR no proporcionado'];
+        }
+        
+        if (saveQRCode($qrData)) {
+            updateWhatsAppStatus('qr_ready');
+            return ['success' => true, 'message' => 'QR actualizado'];
+        }
+        
+        return ['success' => false, 'message' => 'Error guardando QR'];
+        
+    } catch (Exception $e) {
+        error_log('Error actualizando QR: ' . $e->getMessage());
+        return ['success' => false, 'message' => $e->getMessage()];
+    }
+}
+
+// ============================================================================
+// FUNCIONES AUXILIARES
+// ============================================================================
+
+/**
+ * Realizar petición HTTP con reintentos
+ */
+function makeHttpRequest($url, $method = 'GET', $data = null) {
+    $lastError = null;
+    
+    for ($attempt = 1; $attempt <= WhatsAppConfig::MAX_RETRY_ATTEMPTS; $attempt++) {
+        try {
+            $ch = curl_init();
+            
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => WhatsAppConfig::REQUEST_TIMEOUT,
+                CURLOPT_CONNECTTIMEOUT => WhatsAppConfig::CONNECT_TIMEOUT,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_MAXREDIRS => WhatsAppConfig::MAX_REDIRECTS,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_USERAGENT => 'WhatsApp-Client/1.0',
+                CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Accept: application/json']
+            ]);
+            
+            if ($method === 'POST' && $data) {
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            }
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+            
+            if ($error) {
+                throw new Exception("cURL Error: {$error}");
+            }
+            
+            if ($httpCode >= 500) {
+                throw new Exception("Server Error: HTTP {$httpCode}");
+            }
+            
+            if ($httpCode >= 400) {
+                throw new Exception("Client Error: HTTP {$httpCode}");
+            }
+            
+            return json_decode($response, true);
+            
+        } catch (Exception $e) {
+            $lastError = $e;
+            
+            if ($attempt < WhatsAppConfig::MAX_RETRY_ATTEMPTS && isRetryableError($e)) {
+                sleep(WhatsAppConfig::RETRY_DELAY * $attempt);
+                continue;
+            }
+            
+            break;
+        }
+    }
+    
+    throw new Exception("Request failed after " . WhatsAppConfig::MAX_RETRY_ATTEMPTS . " attempts: " . $lastError->getMessage());
+}
+
+/**
+ * Verificar si un error es recuperable
+ */
+function isRetryableError($exception) {
+    $message = $exception->getMessage();
+    $retryablePatterns = ['Connection timed out', 'Connection refused', 'Server Error: HTTP 5', 'cURL Error'];
+    
+    foreach ($retryablePatterns as $pattern) {
+        if (strpos($message, $pattern) !== false) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Formatear número de teléfono
+ */
+function formatPhoneNumber($phone) {
+    $clean = preg_replace('/[^0-9+]/', '', $phone);
+    
+    // Si empieza con +, mantenerlo
+    if (strpos($clean, '+') === 0) {
+        return ltrim($clean, '+');
+    }
+    
+    // Si es español sin código de país
+    if (strlen($clean) === 9 && ($clean[0] === '6' || $clean[0] === '7')) {
+        return '34' . $clean;
+    }
+    
+    // Si no empieza con +
+    if (strlen($clean) > 9) {
+        return $clean;
+    }
+    
+    return $clean;
+}
+
+/**
+ * Extraer teléfono de chatId
+ */
+function extractPhoneFromChatId($chatId) {
     $number = str_replace('@c.us', '', $chatId);
-    
-    // Formatear para mostrar
-    if (strlen($number) > 2 && substr($number, 0, 2) === '34') {
-        $number = '+' . $number;
-    }
-    
-    return $number;
+    return '+' . $number;
 }
 
 /**
- * Formatea un ID de chat de WhatsApp para mostrar
- *
- * @param string $chatId ID del chat
- * @return string ID formateado
+ * Procesar plantilla de mensaje
  */
-function formatWhatsappId($chatId) {
-    return extractPhoneNumber($chatId);
+function processMessageTemplate($type, $variables = [], $userId = null) {
+    try {
+        $template = WhatsAppConfig::getDefaultTemplate($type);
+        
+        // Intentar obtener plantilla personalizada del usuario
+        if ($userId) {
+            $customTemplate = getConfigValue("whatsapp_{$type}_message", null, $userId);
+            if ($customTemplate) {
+                $template = $customTemplate;
+            }
+        }
+        
+        // Reemplazar variables
+        foreach ($variables as $key => $value) {
+            $template = str_replace('{' . $key . '}', $value, $template);
+        }
+        
+        // Limpiar variables no reemplazadas
+        $template = preg_replace('/\{[^}]+\}/', '', $template);
+        
+        return trim($template);
+        
+    } catch (Exception $e) {
+        error_log("Error procesando plantilla: " . $e->getMessage());
+        return "Mensaje automático";
+    }
 }
+
+/**
+ * Buscar respuesta automática
+ */
+function findAutoResponse($message) {
+    try {
+        $pdo = getPDO();
+        $stmt = $pdo->query("SELECT * FROM autorespuestas_whatsapp WHERE is_active = 1 ORDER BY created_at");
+        
+        while ($response = $stmt->fetch()) {
+            $keyword = $response['keyword'];
+            $isRegex = $response['is_regex'] == 1;
+            
+            if ($isRegex) {
+                if (@preg_match('/' . $keyword . '/i', $message)) {
+                    return $response['response'];
+                }
+            } else {
+                if (stripos($message, $keyword) !== false) {
+                    return $response['response'];
+                }
+            }
+        }
+        
+        return null;
+        
+    } catch (Exception $e) {
+        error_log("Error buscando respuesta automática: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Obtener datos de reserva
+ */
+function getReservationData($reservationId) {
+    try {
+        $pdo = getPDO();
+        $stmt = $pdo->prepare('
+            SELECT r.*, u.id as usuario_id, u.negocio
+            FROM reservas r 
+            JOIN usuarios u ON r.usuario_id = u.id 
+            WHERE r.id = ?
+        ');
+        $stmt->execute([$reservationId]);
+        return $stmt->fetch();
+    } catch (Exception $e) {
+        error_log("Error obteniendo datos de reserva: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Marcar mensaje de reserva como enviado
+ */
+function markReservationMessageSent($reservationId, $type) {
+    try {
+        $pdo = getPDO();
+        $field = "whatsapp_{$type}_enviada";
+        $dateField = "whatsapp_{$type}_fecha";
+        
+        $stmt = $pdo->prepare("
+            UPDATE reservas 
+            SET $field = 1, $dateField = NOW() 
+            WHERE id = ?
+        ");
+        $stmt->execute([$reservationId]);
+        return true;
+    } catch (Exception $e) {
+        error_log("Error marcando mensaje como enviado: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Actualizar estado de WhatsApp
+ */
+function updateWhatsAppStatus($status) {
+    try {
+        if (!WhatsAppConfig::isValidStatus($status)) {
+            throw new Exception("Estado no válido: $status");
+        }
+        
+        $pdo = getPDO();
+        $stmt = $pdo->prepare("
+            INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_status', ?) 
+            ON DUPLICATE KEY UPDATE valor = ?
+        ");
+        $stmt->execute([$status, $status]);
+        
+        // Actualizar timestamp de actividad
+        $stmt = $pdo->prepare("
+            INSERT INTO configuraciones (clave, valor) VALUES ('whatsapp_last_activity', ?) 
+            ON DUPLICATE KEY UPDATE valor = ?
+        ");
+        $timestamp = time();
+        $stmt->execute([$timestamp, $timestamp]);
+        
+        return true;
+    } catch (Exception $e) {
+        error_log("Error actualizando estado: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Guardar código QR
+ */
+function saveQRCode($qrData) {
+    try {
+        if (preg_match('/^data:image\/png;base64,(.*)$/', $qrData, $matches)) {
+            $imageData = base64_decode($matches[1]);
+            $qrPath = __DIR__ . '/../uploads/whatsapp_qr.png';
+            
+            $dir = dirname($qrPath);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+            
+            return file_put_contents($qrPath, $imageData) !== false;
+        }
+        
+        return false;
+    } catch (Exception $e) {
+        error_log("Error guardando QR: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Eliminar código QR
+ */
+function removeQRCode() {
+    $qrPath = __DIR__ . '/../uploads/whatsapp_qr.png';
+    if (file_exists($qrPath)) {
+        unlink($qrPath);
+    }
+}
+
+/**
+ * Obtener valor de configuración
+ */
+function getConfigValue($key, $default = null, $userId = null) {
+    try {
+        $pdo = getPDO();
+        $table = $userId ? 'configuraciones_usuario' : 'configuraciones';
+        $whereClause = $userId ? 'usuario_id = ? AND clave = ?' : 'clave = ?';
+        $params = $userId ? [$userId, $key] : [$key];
+        
+        $stmt = $pdo->prepare("SELECT valor FROM $table WHERE $whereClause");
+        $stmt->execute($params);
+        
+        $value = $stmt->fetchColumn();
+        return $value !== false ? $value : $default;
+    } catch (Exception $e) {
+        return $default;
+    }
+}
+
+/**
+ * Registrar mensaje en log
+ */
+function logWhatsAppMessage($phone, $message, $direction, $type = 'manual', $reservationId = null) {
+    try {
+        $pdo = getPDO();
+        $stmt = $pdo->prepare("
+            INSERT INTO whatsapp_messages 
+            (phone, message, direction, type, reservation_id, created_at) 
+            VALUES (?, ?, ?, ?, ?, NOW())
+        ");
+        $stmt->execute([$phone, $message, $direction, $type, $reservationId]);
+        return true;
+    } catch (Exception $e) {
+        error_log("Error registrando mensaje: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Formatear fecha para mostrar
+ */
+function formatDate($date) {
+    return date('d/m/Y', strtotime($date));
+}
+
+/**
+ * Formatear hora para mostrar
+ */
+function formatTime($time) {
+    return date('H:i', strtotime($time));
+}
+
+/**
+ * Generar JWT para autenticación
+ */
+function generateJWT($userId, $expiresIn = 3600) {
+    $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+    $payload = json_encode([
+        'userId' => (int)$userId,
+        'iat' => time(),
+        'exp' => time() + $expiresIn
+    ]);
+    
+    $base64Header = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
+    $base64Payload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
+    
+    $signature = hash_hmac('sha256', $base64Header . "." . $base64Payload, WhatsAppConfig::JWT_SECRET, true);
+    $base64Signature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
+    
+    return $base64Header . "." . $base64Payload . "." . $base64Signature;
+}
+
+/**
+ * Obtener headers para peticiones autenticadas
+ */
+function getAuthHeaders($userId) {
+    $token = generateJWT($userId);
+    return [
+        'Authorization: Bearer ' . $token,
+        'Content-Type: application/json',
+        'Accept: application/json',
+        'User-Agent: WhatsApp-Client/1.0'
+    ];
+}
+
+/**
+ * Verificar si WhatsApp está conectado para un usuario
+ */
+function isWhatsAppConnected($userId = null) {
+    $status = getWhatsAppStatus($userId);
+    return $status['connected'];
+}
+
+/**
+ * Obtener estadísticas de WhatsApp
+ */
+function getWhatsAppStats($userId, $period = 'today') {
+    try {
+        $pdo = getPDO();
+        
+        switch ($period) {
+            case 'week':
+                $startDate = date('Y-m-d', strtotime('monday this week'));
+                break;
+            case 'month':
+                $startDate = date('Y-m-01');
+                break;
+            default:
+                $startDate = date('Y-m-d');
+        }
+        
+        $endDate = date('Y-m-d 23:59:59');
+        
+        // Mensajes enviados
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) FROM whatsapp_messages 
+            WHERE direction = 'sent' AND created_at BETWEEN ? AND ?
+        ");
+        $stmt->execute([$startDate, $endDate]);
+        $sent = $stmt->fetchColumn();
+        
+        // Mensajes recibidos
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) FROM whatsapp_messages 
+            WHERE direction = 'received' AND created_at BETWEEN ? AND ?
+        ");
+        $stmt->execute([$startDate, $endDate]);
+        $received = $stmt->fetchColumn();
+        
+        // Conversaciones activas
+        $stmt = $pdo->prepare("
+            SELECT COUNT(DISTINCT phone) FROM whatsapp_messages 
+            WHERE created_at BETWEEN ? AND ?
+        ");
+        $stmt->execute([$startDate, $endDate]);
+        $activeChats = $stmt->fetchColumn();
+        
+        return [
+            'sent' => (int)$sent,
+            'received' => (int)$received,
+            'active_chats' => (int)$activeChats,
+            'period' => $period
+        ];
+        
+    } catch (Exception $e) {
+        error_log("Error obteniendo estadísticas: " . $e->getMessage());
+        return [
+            'sent' => 0,
+            'received' => 0,
+            'active_chats' => 0,
+            'period' => $period
+        ];
+    }
+}
+
+/**
+ * Limpiar datos antiguos (para mantenimiento)
+ */
+function cleanupOldWhatsAppData() {
+    try {
+        $pdo = getPDO();
+        $cleaned = 0;
+        
+        // Limpiar mensajes antiguos (más de 1 año)
+        $stmt = $pdo->prepare("
+            DELETE FROM whatsapp_messages 
+            WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 YEAR)
+        ");
+        $stmt->execute();
+        $cleaned += $stmt->rowCount();
+        
+        // Limpiar QR codes antiguos
+        $qrPath = __DIR__ . '/../uploads/whatsapp_qr.png';
+        if (file_exists($qrPath) && filemtime($qrPath) < (time() - 3600)) {
+            unlink($qrPath);
+            $cleaned++;
+        }
+        
+        return $cleaned;
+        
+    } catch (Exception $e) {
+        error_log("Error en limpieza: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Verificar salud del servidor WhatsApp
+ */
+function checkWhatsAppServerHealth() {
+    try {
+        $serverUrl = getConfigValue('whatsapp_server_url', WhatsAppConfig::SERVER_URL);
+        $response = makeHttpRequest($serverUrl . '/health');
+        
+        return $response ?: ['status' => 'offline', 'error' => 'No se pudo conectar'];
+        
+    } catch (Exception $e) {
+        return ['status' => 'offline', 'error' => $e->getMessage()];
+    }
+}
+
+// ============================================================================
+// FUNCIONES DE COMPATIBILIDAD (mantener nombres originales)
+// ============================================================================
+
+/**
+ * Alias para compatibilidad con código existente
+ */
+function checkWhatsAppStatus($serverUrl = null, $apiKey = null) {
+    return getWhatsAppStatus();
+}
+
+function getWhatsAppConnectionStatus() {
+    return getWhatsAppStatus();
+}
+
+function updateWhatsAppNotificationSetting($setting, $enabled) {
+    return updateNotificationSetting($setting, $enabled);
+}
+
+function processIncomingWhatsAppMessage($messageData) {
+    return processIncomingMessage($messageData);
+}
+
+function sendWhatsAppMessage($to, $message, $isAuto = false) {
+    $type = $isAuto ? 'auto' : 'manual';
+    return sendWhatsAppMessage($to, $message, $type);
+}
+
+function formatWhatsappNumber($number) {
+    return formatPhoneNumber($number);
+}
+
+function extractPhoneNumber($chatId) {
+    return extractPhoneFromChatId($chatId);
+}
+
+function formatWhatsappId($chatId) {
+    return extractPhoneFromChatId($chatId);
+}
+
+/**
+ * Procesar evento de webhook (usada en webhook.php)
+ */
+function processWebhookEvent($event, $userId, $eventData, $timestamp) {
+    try {
+        switch ($event) {
+            case 'qr_generated':
+                return handleQRUpdate($eventData['qr'] ?? '');
+                
+            case 'connected':
+                updateWhatsAppStatus('connected');
+                return ['success' => true, 'message' => 'Conexión exitosa'];
+                
+            case 'disconnected':
+                updateWhatsAppStatus('disconnected');
+                removeQRCode();
+                return ['success' => true, 'message' => 'Desconexión procesada'];
+                
+            case 'auth_failure':
+                updateWhatsAppStatus('auth_failed');
+                removeQRCode();
+                return ['success' => true, 'message' => 'Fallo de autenticación procesado'];
+                
+            case 'message_received':
+                return processIncomingMessage($eventData);
+                
+            case 'message_sent':
+                $phoneNumber = extractPhoneFromChatId($eventData['to'] ?? '');
+                logWhatsAppMessage($phoneNumber, $eventData['body'] ?? '', 'sent', 'outgoing');
+                return ['success' => true, 'message' => 'Mensaje enviado procesado'];
+                
+            case 'status_change':
+                $newStatus = $eventData['status'] ?? '';
+                if (WhatsAppConfig::isValidStatus($newStatus)) {
+                    updateWhatsAppStatus($newStatus);
+                    return ['success' => true, 'message' => 'Estado actualizado'];
+                }
+                return ['success' => false, 'message' => 'Estado inválido'];
+                
+            default:
+                error_log("Evento webhook desconocido: {$event}");
+                return ['success' => false, 'message' => "Evento desconocido: {$event}"];
+        }
+        
+    } catch (Exception $e) {
+        error_log("Error en processWebhookEvent: " . $e->getMessage());
+        return ['success' => false, 'message' => $e->getMessage()];
+    }
+}
+
+?>
