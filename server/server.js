@@ -35,7 +35,7 @@ const logger = winston.createLogger({
 const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
-const WEBAPP_API_URL = process.env.WEBAPP_API_URL || 'http://localhost';
+const WEBAPP_URL = process.env.WEBAPP_URL || 'http://localhost';
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 const MAX_CLIENTS = parseInt(process.env.MAX_CLIENTS) || 50;
 
@@ -282,7 +282,7 @@ async function createWhatsAppClient(userId) {
         throw new Error('Máximo número de clientes alcanzado');
     }
 
-    logger.info(`Iniciando conexión para usuario ${userId}`, { service: 'whatsapp-server' });
+    logger.info(`Iniciando conexión para usuario ${userId}`);
 
     // Limpiar cualquier sesión previa
     await cleanCorruptedSessions(userId);
@@ -411,7 +411,7 @@ async function notifyWebApp(event, userId, data) {
             timestamp: Date.now()
         };
 
-        await axios.post(`${WEBAPP_API_URL}/api/whatsapp-webhook`, payload, {
+        await axios.post(`${WEBAPP_URL}/api/whatsapp-webhook`, payload, {
             headers: {
                 'Content-Type': 'application/json',
                 'X-Webhook-Secret': WEBHOOK_SECRET
@@ -908,8 +908,8 @@ async function initializeServer() {
         logger.info('🚀 Servidor WhatsApp iniciado en puerto ' + PORT);
         logger.info('📱 Máximo de clientes: ' + MAX_CLIENTS);
         logger.info('🔐 JWT Secret configurado: ' + !!JWT_SECRET);
-        logger.info('🌐 Web App URL: ' + (process.env.WEBAPP_URL || 'no configurada'));
-        logger.info('🔗 Webhook URL: ' + WEBAPP_API_URL);
+        
+        logger.info('🔗 Webhook URL: ' + WEBAPP_URL);
         
         return true;
     } catch (error) {

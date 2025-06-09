@@ -9,7 +9,7 @@ require_once dirname(__DIR__) . '/includes/auth.php';
 header('Content-Type: application/json');
 
 // Configuración del servidor WhatsApp
-$WHATSAPP_SERVER_URL = 'http://37.59.109.167:3001';
+$WHATSAPP_SERVER_URL = 'http://server.reservabot.es:3001';
 $JWT_SECRET = 'da3c7b9e13a38a0ea3dcbaaed1ec9ec1f0005f974adad7141b71a36e9f13e187'; // Del .env del servidor Node.js
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
