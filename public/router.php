@@ -69,8 +69,8 @@ class Router {
         
         
         // Webhook para WhatsApp
-        $this->addRoute('POST',     '/webhook/whatsapp',    'webhook/whatsapp.php');
-        $this->addRoute('GET',      '/webhook/whatsapp',    'webhook/whatsapp.php');        
+        $this->addRoute('POST',     '/api/whatsapp-webhook',    'api/whatsapp-webhook.php');
+        $this->addRoute('GET',      '/api/whatsapp-webhook',    'api/whatsapp-webhook.php');        
     }
     
     /**

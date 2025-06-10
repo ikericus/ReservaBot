@@ -39,52 +39,87 @@ const WEBAPP_URL = process.env.WEBAPP_URL || 'http://localhost';
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 const MAX_CLIENTS = parseInt(process.env.MAX_CLIENTS) || 50;
 
-// Configuración para manejar errores no capturados
+// ========== SUPRESIÓN DE ERRORES DE CACHE ==========
+
+// Guardar referencias originales
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+
+// Función para filtrar errores conocidos de WhatsApp
+function isKnownWhatsAppError(message) {
+    const knownErrors = [
+        'LocalWebCache',
+        'Cannot read properties of null',
+        'webCache',
+        'Evaluation failed',
+        'Protocol error (Runtime.evaluate)',
+        'Session closed',
+        'Target closed',
+        'Cannot read property'
+    ];
+    
+    return knownErrors.some(error => message.includes(error));
+}
+
+// Sobrescribir console.error
+console.error = (...args) => {
+    const message = args.join(' ');
+    if (!isKnownWhatsAppError(message)) {
+        originalConsoleError.apply(console, args);
+    }
+};
+
+// Sobrescribir console.warn
+console.warn = (...args) => {
+    const message = args.join(' ');
+    if (!isKnownWhatsAppError(message)) {
+        originalConsoleWarn.apply(console, args);
+    }
+};
+
+// ========== MANEJO DE ERRORES NO CAPTURADOS ==========
+
 process.on('unhandledRejection', (reason, promise) => {
+    const reasonStr = reason?.message || reason?.stack || String(reason);
+    
+    // Filtrar errores específicos de WhatsApp cache
+    if (isKnownWhatsAppError(reasonStr)) {
+        logger.debug('Ignorando error conocido de WhatsApp cache');
+        return;
+    }
+    
     logger.error('Promesa rechazada no manejada:', {
         reason: reason,
         stack: reason?.stack,
         service: 'whatsapp-server'
     });
     
-    // Si es error específico de WhatsApp Web.js cache
-    if (reason?.message?.includes('LocalWebCache') || 
-        reason?.message?.includes('Cannot read properties of null')) {
+    // Manejo de cleanup solo para errores reales
+    const errorString = reason?.stack || reason?.message || '';
+    const userIdMatch = errorString.match(/client_(\d+)/);
+    
+    if (userIdMatch) {
+        const affectedUserId = userIdMatch[1];
+        logger.info(`Usuario afectado por error: ${affectedUserId}`);
         
-        logger.info('Detectado error de LocalWebCache, ejecutando limpieza...');
-        
-        // Obtener userId del error si es posible
-        const errorString = reason?.stack || reason?.message || '';
-        const userIdMatch = errorString.match(/client_(\d+)/);
-        
-        if (userIdMatch) {
-            const affectedUserId = userIdMatch[1];
-            logger.info(`Usuario afectado por error de cache: ${affectedUserId}`);
-            
-            // Limpiar específicamente ese usuario
-            if (activeClients.has(affectedUserId)) {
-                cleanup(affectedUserId);
-            }
-            
-            // Limpiar sesión corrupta
-            cleanCorruptedSessions(affectedUserId).catch(err => {
-                logger.error(`Error limpiando sesión corrupta:`, err);
-            });
-        } else {
-            // Si no podemos identificar el usuario, limpiar todas las sesiones
-            logger.warn('No se pudo identificar usuario específico, limpiando todas las sesiones');
-            
-            for (const [userId] of activeClients) {
-                cleanup(userId);
-                cleanCorruptedSessions(userId).catch(err => {
-                    logger.error(`Error limpiando sesión ${userId}:`, err);
-                });
-            }
+        if (activeClients.has(affectedUserId)) {
+            cleanup(affectedUserId);
         }
+        
+        cleanCorruptedSessions(affectedUserId).catch(err => {
+            logger.error(`Error limpiando sesión corrupta:`, err);
+        });
     }
 });
 
 process.on('uncaughtException', (error) => {
+    const errorStr = error.message || error.stack || String(error);
+    
+    if (isKnownWhatsAppError(errorStr)) {
+        logger.debug('Ignorando excepción conocida de WhatsApp cache');
+        return;
+    }
+    
     logger.error('Excepción no capturada:', {
         error: error.message,
         stack: error.stack,
@@ -92,7 +127,8 @@ process.on('uncaughtException', (error) => {
     });
 });
 
-// Middleware de seguridad
+// ========== MIDDLEWARE DE SEGURIDAD ==========
+
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -111,22 +147,23 @@ app.use(cors({
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100, // máximo 100 requests por IP
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     message: { error: 'Demasiadas peticiones, intenta más tarde' }
 });
 app.use('/api/', limiter);
 
-// Middleware para parsing JSON
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Storage para clientes WhatsApp activos
+// ========== STORAGE GLOBAL ==========
+
 const activeClients = new Map();
 const pendingConnections = new Map();
-const messageQueue = new Map(); // Cola de mensajes para clientes desconectados
+const messageQueue = new Map();
 
-// Middleware de autenticación JWT
+// ========== MIDDLEWARE DE AUTENTICACIÓN ==========
+
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -144,7 +181,6 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// Middleware para verificar webhook secret
 function verifyWebhookSecret(req, res, next) {
     const providedSecret = req.headers['x-webhook-secret'];
     
@@ -157,7 +193,6 @@ function verifyWebhookSecret(req, res, next) {
 
 // ========== FUNCIONES DE SESIÓN ==========
 
-// Función para limpiar sesiones corruptas
 async function cleanCorruptedSessions(userId) {
     const sessionPath = path.join('./sessions', `session-client_${userId}`);
     const wwebSessionPath = path.join('./sessions', `wweb_session_client_${userId}`);
@@ -168,47 +203,17 @@ async function cleanCorruptedSessions(userId) {
         await fs.rmdir(sessionPath, { recursive: true });
         logger.info(`Sesión eliminada: ${sessionPath}`);
     } catch (error) {
-        logger.debug(`No se pudo eliminar ${sessionPath}: ${error.message}`);
+        logger.debug(`No se pudo eliminar ${sessionPath}`);
     }
     
     try {
         await fs.rmdir(wwebSessionPath, { recursive: true });
         logger.info(`Sesión wweb eliminada: ${wwebSessionPath}`);
     } catch (error) {
-        logger.debug(`No se pudo eliminar ${wwebSessionPath}: ${error.message}`);
+        logger.debug(`No se pudo eliminar ${wwebSessionPath}`);
     }
 }
 
-// Función para verificar integridad de sesión
-async function checkSessionIntegrity(userId) {
-    const sessionPath = path.join('./sessions', `session-client_${userId}`);
-    
-    try {
-        const sessionExists = await fs.access(sessionPath).then(() => true).catch(() => false);
-        
-        if (sessionExists) {
-            // Verificar archivos críticos de la sesión
-            const criticalFiles = ['Default/Local Storage', 'Default/Session Storage'];
-            
-            for (const file of criticalFiles) {
-                const filePath = path.join(sessionPath, file);
-                try {
-                    await fs.access(filePath);
-                } catch (error) {
-                    logger.warn(`Archivo de sesión corrupto: ${filePath}`);
-                    return false;
-                }
-            }
-        }
-        
-        return sessionExists;
-    } catch (error) {
-        logger.error(`Error verificando integridad de sesión: ${error.message}`);
-        return false;
-    }
-}
-
-// Función para crear directorio de sesiones si no existe
 async function ensureSessionsDirectory() {
     const sessionsDir = './sessions';
     const logsDir = './logs';
@@ -217,20 +222,18 @@ async function ensureSessionsDirectory() {
         await fs.mkdir(sessionsDir, { recursive: true });
         await fs.mkdir(logsDir, { recursive: true });
         
-        // Verificar permisos de escritura
         await fs.access(sessionsDir, fs.constants.W_OK);
         await fs.access(logsDir, fs.constants.W_OK);
         
-        logger.info('✅ Directorios de sesiones y logs verificados');
+        logger.info('✅ Directorios verificados');
     } catch (error) {
         logger.error('❌ Error con directorios:', error.message);
         throw error;
     }
 }
 
-// Función para limpiar sesiones al inicio
 async function initializeSessionsCleanup() {
-    logger.info('🧹 Verificando sesiones existentes...');
+    logger.info('🧹 Limpieza inicial de sesiones...');
     
     const sessionsDir = './sessions';
     
@@ -245,33 +248,29 @@ async function initializeSessionsCleanup() {
                     const stats = await fs.stat(sessionPath);
                     const ageHours = (Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60);
                     
-                    // Si la sesión tiene más de 24 horas, considerar limpiarla
                     if (ageHours > 24) {
-                        logger.info(`Limpiando sesión antigua: ${sessionDir} (${ageHours.toFixed(1)}h)`);
+                        logger.info(`Limpiando sesión antigua: ${sessionDir}`);
                         await fs.rmdir(sessionPath, { recursive: true });
                     }
                 } catch (error) {
-                    logger.warn(`Error verificando sesión ${sessionDir}:`, error.message);
                     try {
                         await fs.rmdir(sessionPath, { recursive: true });
                         logger.info(`Sesión corrupta eliminada: ${sessionDir}`);
                     } catch (cleanupError) {
-                        logger.error(`No se pudo limpiar sesión corrupta ${sessionDir}:`, cleanupError.message);
+                        logger.error(`No se pudo limpiar: ${sessionDir}`);
                     }
                 }
             }
         }
     } catch (error) {
-        logger.error('Error durante limpieza inicial de sesiones:', error);
+        logger.error('Error durante limpieza:', error);
     }
     
-    logger.info('✅ Limpieza inicial de sesiones completada');
+    logger.info('✅ Limpieza completada');
 }
 
-// ========== FUNCIONES DE CLIENTE WHATSAPP ==========
+// ========== FUNCIÓN PRINCIPAL DE CLIENTE WHATSAPP ==========
 
-// Función para crear cliente WhatsApp
-// Reemplaza la función createWhatsAppClient con esta versión sin cache:
 async function createWhatsAppClient(userId) {
     if (activeClients.has(userId)) {
         logger.warn(`Cliente ${userId} ya existe`);
@@ -284,9 +283,10 @@ async function createWhatsAppClient(userId) {
 
     logger.info(`Iniciando conexión para usuario ${userId}`);
 
-    // Limpiar cualquier sesión previa
+    // Limpiar sesiones previas
     await cleanCorruptedSessions(userId);
 
+    // Configuración optimizada de Puppeteer
     const puppeteerConfig = {
         headless: true,
         args: [
@@ -294,30 +294,45 @@ async function createWhatsAppClient(userId) {
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--disable-gpu',
-            '--single-process'
-        ]
+            '--single-process',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding',
+            '--disable-features=TranslateUI',
+            '--disable-ipc-flooding-protection',
+            '--disable-extensions',
+            '--disable-plugins',
+            '--disable-default-apps',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-web-security'
+        ],
+        defaultViewport: null,
+        timeout: 60000
     };
 
-    // CLIENTE SIMPLE SIN CACHE
+    // Cliente simplificado sin configuraciones problemáticas
     const client = new Client({
         authStrategy: new LocalAuth({
             clientId: `client_${userId}`,
-            dataPath: './sessions'
+            dataPath: './sessions',
+            webCache: false // ← fuerza desactivación
         }),
-        puppeteer: puppeteerConfig
-        // Sin webVersion ni webVersionCache
+        puppeteer: puppeteerConfig,
+        qrMaxRetries: 5,
+        authTimeoutMs: 60000,
+        takeoverOnConflict: true,
+        takeoverTimeoutMs: 30000
     });
 
-    // Suprimir errores de LocalWebCache específicamente
-    const originalConsoleError = console.error;
-    console.error = (...args) => {
-        const message = args.join(' ');
-        if (!message.includes('LocalWebCache') && !message.includes('Cannot read properties of null')) {
-            originalConsoleError.apply(console, args);
-        }
-    };
+    // Timeout para inicialización
+    const initTimeout = setTimeout(() => {
+        logger.error(`Timeout inicializando cliente ${userId}`);
+        cleanup(userId);
+    }, 120000);
 
-    // Resto de eventos igual...
+    // ========== EVENTOS DEL CLIENTE ==========
+
     client.on('qr', async (qr) => {
         logger.info(`QR generado para usuario ${userId}`);
         try {
@@ -325,32 +340,116 @@ async function createWhatsAppClient(userId) {
             pendingConnections.set(userId, { qr: qrDataURL, timestamp: Date.now() });
             await notifyWebApp('qr_generated', userId, { qr: qrDataURL });
         } catch (error) {
-            logger.error(`Error generando QR:`, error);
+            logger.error(`Error generando QR:`, error.message);
         }
     });
 
-    // ... resto de eventos
+    client.on('ready', async () => {
+        clearTimeout(initTimeout);
+        logger.info(`Cliente ${userId} listo: ${client.info.wid.user}`);
+        
+        pendingConnections.delete(userId);
+        
+        try {
+            await notifyWebApp('client_ready', userId, {
+                phoneNumber: client.info.wid.user,
+                name: client.info.pushname
+            });
+            
+            await processQueuedMessages(userId);
+            
+        } catch (error) {
+            logger.error(`Error notificando cliente listo:`, error.message);
+        }
+    });
+
+    client.on('authenticated', () => {
+        logger.info(`Cliente ${userId} autenticado`);
+        pendingConnections.delete(userId);
+    });
+
+    client.on('auth_failure', (msg) => {
+        clearTimeout(initTimeout);
+        logger.error(`Fallo autenticación ${userId}:`, msg);
+        cleanup(userId);
+        notifyWebApp('auth_failure', userId, { error: msg }).catch(() => {});
+    });
+
+    client.on('disconnected', (reason) => {
+        clearTimeout(initTimeout);
+        logger.info(`Cliente ${userId} desconectado: ${reason}`);
+        cleanup(userId);
+        notifyWebApp('client_disconnected', userId, { reason }).catch(() => {});
+    });
+
+    client.on('message', async (message) => {
+        try {
+            await handleIncomingMessage(userId, message);
+        } catch (error) {
+            logger.error(`Error manejando mensaje:`, error.message);
+        }
+    });
+
+    client.on('message_create', async (message) => {
+        if (message.fromMe) {
+            try {
+                await logOutgoingMessage(userId, message);
+            } catch (error) {
+                logger.error(`Error registrando mensaje:`, error.message);
+            }
+        }
+    });
+
+    client.on('error', (error) => {
+        const errorStr = error.message || String(error);
+        
+        // Ignorar errores conocidos de cache
+        if (isKnownWhatsAppError(errorStr)) {
+            return;
+        }
+        
+        logger.error(`Error del cliente ${userId}:`, error.message);
+        
+        // Solo cleanup para errores graves
+        if (errorStr.includes('Protocol error') || 
+            errorStr.includes('Target closed') ||
+            errorStr.includes('Session closed')) {
+            cleanup(userId);
+        }
+    });
 
     activeClients.set(userId, client);
     
     try {
         await client.initialize();
+        logger.info(`Cliente ${userId} inicializado`);
     } catch (error) {
-        if (!error.message.includes('LocalWebCache')) {
-            logger.error(`Error inicializando cliente ${userId}:`, error);
-            throw error;
+        clearTimeout(initTimeout);
+
+        const errorStr = error.message || String(error);
+        
+        if (isKnownWhatsAppError(errorStr)) {
+            logger.warn(`Error conocido ignorado durante inicialización de ${userId}: ${errorStr}`);
+            return client; // ← devuelve aunque haya error si es de caché
         }
-        // Ignorar errores de LocalWebCache
-        logger.info(`Cliente inicializado (ignorando errores de cache)`);
+
+        logger.error(`Error inicializando cliente ${userId}:`, errorStr);
+
+        // Extra: limpiar por si algo quedó mal
+        cleanup(userId);
+        await cleanCorruptedSessions(userId);
+
+        throw error;
     }
 
     return client;
 }
 
-// Función para manejar mensajes entrantes
+// ========== FUNCIONES DE MANEJO DE MENSAJES ==========
+
 async function handleIncomingMessage(userId, message) {
     try {
-        logger.info(`Mensaje entrante para ${userId} de ${message.from}: ${message.body}`);
+        logger.info(`Mensaje entrante ${userId}: ${message.from}`);
 
         const messageData = {
             id: message.id._serialized,
@@ -373,18 +472,17 @@ async function handleIncomingMessage(userId, message) {
                     data: media.data
                 };
             } catch (error) {
-                logger.error(`Error descargando media:`, error);
+                logger.error(`Error descargando media:`, error.message);
             }
         }
 
         await notifyWebApp('message_received', userId, messageData);
 
     } catch (error) {
-        logger.error(`Error procesando mensaje entrante:`, error);
+        logger.error(`Error procesando mensaje:`, error.message);
     }
 }
 
-// Función para registrar mensajes salientes
 async function logOutgoingMessage(userId, message) {
     try {
         const messageData = {
@@ -397,11 +495,10 @@ async function logOutgoingMessage(userId, message) {
 
         await notifyWebApp('message_sent', userId, messageData);
     } catch (error) {
-        logger.error(`Error registrando mensaje saliente:`, error);
+        logger.error(`Error registrando mensaje:`, error.message);
     }
 }
 
-// Función para notificar a la web app
 async function notifyWebApp(event, userId, data) {
     try {
         const payload = {
@@ -411,21 +508,32 @@ async function notifyWebApp(event, userId, data) {
             timestamp: Date.now()
         };
 
-        await axios.post(`${WEBAPP_URL}/api/whatsapp-webhook`, payload, {
+        const response = await axios.post(`${WEBAPP_URL}/api/whatsapp-webhook`, payload, {
             headers: {
                 'Content-Type': 'application/json',
                 'X-Webhook-Secret': WEBHOOK_SECRET
             },
-            timeout: 5000
+            timeout: 10000,
+            validateStatus: (status) => status < 500
         });
 
         logger.debug(`Webhook enviado: ${event} para usuario ${userId}`);
+        return response.data;
+        
     } catch (error) {
-        logger.error(`Error enviando webhook:`, error.message);
+        if (error.code === 'ECONNREFUSED') {
+            logger.warn(`Webhook no disponible: ${event} - ${error.message}`);
+        } else {
+            logger.error(`Error webhook: ${event}`, {
+                message: error.message,
+                code: error.code,
+                status: error.response?.status,
+                data: error.response?.data
+            });
+        }
     }
 }
 
-// Función para procesar mensajes en cola
 async function processQueuedMessages(userId) {
     const queue = messageQueue.get(userId);
     if (!queue || queue.length === 0) return;
@@ -437,16 +545,15 @@ async function processQueuedMessages(userId) {
             await sendMessage(userId, queuedMessage.to, queuedMessage.message);
             logger.info(`Mensaje de cola enviado a ${queuedMessage.to}`);
         } catch (error) {
-            logger.error(`Error enviando mensaje de cola:`, error);
+            logger.error(`Error enviando mensaje de cola:`, error.message);
         }
     }
 
     messageQueue.delete(userId);
 }
 
-// Función para limpiar recursos de cliente
 function cleanup(userId) {
-    logger.info(`Iniciando cleanup para usuario ${userId}`);
+    logger.info(`Cleanup para usuario ${userId}`);
     
     if (activeClients.has(userId)) {
         const client = activeClients.get(userId);
@@ -455,7 +562,7 @@ function cleanup(userId) {
                 client.destroy();
             }
         } catch (error) {
-            logger.error(`Error destruyendo cliente ${userId}:`, error);
+            logger.debug(`Error destruyendo cliente (ignorado):`, error.message);
         }
         activeClients.delete(userId);
     }
@@ -464,7 +571,6 @@ function cleanup(userId) {
     logger.info(`Cleanup completado para usuario ${userId}`);
 }
 
-// Función para enviar mensaje
 async function sendMessage(userId, to, message, media = null) {
     const client = activeClients.get(userId);
     
@@ -494,30 +600,35 @@ async function sendMessage(userId, to, message, media = null) {
         logger.info(`Mensaje enviado desde ${userId} a ${to}`);
         return sentMessage;
     } catch (error) {
-        logger.error(`Error enviando mensaje:`, error);
+        logger.error(`Error enviando mensaje:`, error.message);
         throw error;
     }
 }
 
 // ========== RUTAS API ==========
 
-// Health check
 app.get('/health', (req, res) => {
+    const memUsage = process.memoryUsage();
+    
     res.json({
         status: 'healthy',
         uptime: process.uptime(),
         timestamp: new Date().toISOString(),
         activeClients: activeClients.size,
-        pendingConnections: pendingConnections.size
+        pendingConnections: pendingConnections.size,
+        messageQueues: messageQueue.size,
+        memory: {
+            rss: Math.round(memUsage.rss / 1024 / 1024) + 'MB',
+            heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB'
+        }
     });
 });
 
-// Información del servidor
 app.get('/api/info', authenticateToken, (req, res) => {
     res.json({
         success: true,
         server: {
-            version: '1.0.0',
+            version: '1.0.1',
             uptime: process.uptime(),
             activeClients: activeClients.size,
             maxClients: MAX_CLIENTS,
@@ -527,7 +638,6 @@ app.get('/api/info', authenticateToken, (req, res) => {
     });
 });
 
-// Conectar WhatsApp
 app.post('/api/connect', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
 
@@ -553,7 +663,7 @@ app.post('/api/connect', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        logger.error(`Error conectando cliente ${userId}:`, error);
+        logger.error(`Error conectando cliente ${userId}:`, error.message);
         res.status(500).json({
             success: false,
             error: error.message
@@ -561,7 +671,6 @@ app.post('/api/connect', authenticateToken, async (req, res) => {
     }
 });
 
-// Desconectar WhatsApp
 app.post('/api/disconnect', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
 
@@ -583,7 +692,7 @@ app.post('/api/disconnect', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        logger.error(`Error desconectando cliente ${userId}:`, error);
+        logger.error(`Error desconectando cliente ${userId}:`, error.message);
         res.status(500).json({
             success: false,
             error: error.message
@@ -591,7 +700,6 @@ app.post('/api/disconnect', authenticateToken, async (req, res) => {
     }
 });
 
-// Estado de la conexión
 app.get('/api/status', authenticateToken, (req, res) => {
     const userId = req.user.userId;
 
@@ -621,7 +729,7 @@ app.get('/api/status', authenticateToken, (req, res) => {
             });
         }
     } catch (error) {
-        logger.error(`Error obteniendo status ${userId}:`, error);
+        logger.error(`Error obteniendo status ${userId}:`, error.message);
         res.status(500).json({
             success: false,
             error: error.message
@@ -629,7 +737,6 @@ app.get('/api/status', authenticateToken, (req, res) => {
     }
 });
 
-// Enviar mensaje
 app.post('/api/send', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const { to, message, media } = req.body;
@@ -653,7 +760,7 @@ app.post('/api/send', authenticateToken, async (req, res) => {
             return res.json({
                 success: true,
                 queued: true,
-                message: 'Mensaje añadido a la cola (cliente no conectado)'
+                message: 'Mensaje añadido a la cola'
             });
         }
 
@@ -666,7 +773,7 @@ app.post('/api/send', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        logger.error(`Error enviando mensaje desde ${userId}:`, error);
+        logger.error(`Error enviando mensaje desde ${userId}:`, error.message);
         res.status(500).json({
             success: false,
             error: error.message
@@ -674,7 +781,6 @@ app.post('/api/send', authenticateToken, async (req, res) => {
     }
 });
 
-// Obtener chats
 app.get('/api/chats', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
 
@@ -707,7 +813,7 @@ app.get('/api/chats', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        logger.error(`Error obteniendo chats ${userId}:`, error);
+        logger.error(`Error obteniendo chats ${userId}:`, error.message);
         res.status(500).json({
             success: false,
             error: error.message
@@ -715,7 +821,6 @@ app.get('/api/chats', authenticateToken, async (req, res) => {
     }
 });
 
-// Obtener mensajes de un chat
 app.get('/api/chat/:chatId/messages', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const { chatId } = req.params;
@@ -751,7 +856,7 @@ app.get('/api/chat/:chatId/messages', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        logger.error(`Error obteniendo mensajes ${userId}:`, error);
+        logger.error(`Error obteniendo mensajes ${userId}:`, error.message);
         res.status(500).json({
             success: false,
             error: error.message
@@ -759,7 +864,6 @@ app.get('/api/chat/:chatId/messages', authenticateToken, async (req, res) => {
     }
 });
 
-// Webhook para recibir notificaciones de la web app
 app.post('/api/webhook', verifyWebhookSecret, async (req, res) => {
     const { event, userId, data } = req.body;
 
@@ -793,7 +897,7 @@ app.post('/api/webhook', verifyWebhookSecret, async (req, res) => {
 
         res.json({ success: true });
     } catch (error) {
-        logger.error(`Error procesando webhook:`, error);
+        logger.error(`Error procesando webhook:`, error.message);
         res.status(500).json({
             success: false,
             error: error.message
@@ -801,7 +905,6 @@ app.post('/api/webhook', verifyWebhookSecret, async (req, res) => {
     }
 });
 
-// Endpoint para generar token JWT (para testing)
 app.post('/api/generate-token', (req, res) => {
     const { userId } = req.body;
     
@@ -824,22 +927,18 @@ app.post('/api/generate-token', (req, res) => {
     });
 });
 
-// Obtener estadísticas básicas
 app.get('/api/stats', authenticateToken, (req, res) => {
     const userId = req.user.userId;
     
     res.json({
         success: true,
         stats: {
-            messagesSent: 0, // TODO: Implementar contador real
-            messagesReceived: 0, // TODO: Implementar contador real
-            activeChats: 0, // TODO: Implementar contador real
-            connectionStatus: activeClients.has(userId) ? 'connected' : 'disconnected'
+            connectionStatus: activeClients.has(userId) ? 'connected' : 'disconnected',
+            queuedMessages: messageQueue.get(userId)?.length || 0
         }
     });
 });
 
-// Obtener conversaciones (preview)
 app.get('/api/conversations', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const limit = parseInt(req.query.limit) || 5;
@@ -872,7 +971,7 @@ app.get('/api/conversations', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        logger.error(`Error obteniendo conversaciones ${userId}:`, error);
+        logger.error(`Error obteniendo conversaciones ${userId}:`, error.message);
         res.json({
             success: true,
             conversations: []
@@ -880,9 +979,33 @@ app.get('/api/conversations', authenticateToken, async (req, res) => {
     }
 });
 
+app.post('/api/restart-client', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+
+    try {
+        logger.info(`Reiniciando cliente para usuario ${userId}`);
+        
+        cleanup(userId);
+        await cleanCorruptedSessions(userId);
+        await createWhatsAppClient(userId);
+        
+        res.json({
+            success: true,
+            message: 'Cliente reiniciado correctamente'
+        });
+
+    } catch (error) {
+        logger.error(`Error reiniciando cliente ${userId}:`, error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Manejo de errores global
 app.use((error, req, res, next) => {
-    logger.error('Error no manejado:', error);
+    logger.error('Error no manejado:', error.message);
     res.status(500).json({
         success: false,
         error: 'Error interno del servidor'
@@ -897,9 +1020,8 @@ app.use('*', (req, res) => {
     });
 });
 
-// ========== INICIALIZACIÓN DEL SERVIDOR ==========
+// ========== FUNCIONES DE INICIALIZACIÓN ==========
 
-// Función de inicialización del servidor
 async function initializeServer() {
     try {
         await ensureSessionsDirectory();
@@ -908,37 +1030,68 @@ async function initializeServer() {
         logger.info('🚀 Servidor WhatsApp iniciado en puerto ' + PORT);
         logger.info('📱 Máximo de clientes: ' + MAX_CLIENTS);
         logger.info('🔐 JWT Secret configurado: ' + !!JWT_SECRET);
-        
         logger.info('🔗 Webhook URL: ' + WEBAPP_URL);
         
         return true;
     } catch (error) {
-        logger.error('❌ Error inicializando servidor:', error);
+        logger.error('❌ Error inicializando servidor:', error.message);
         throw error;
     }
 }
 
-// Limpieza al cerrar el servidor
+async function periodicSessionMaintenance() {
+    logger.info('🧹 Mantenimiento periódico de sesiones');
+    
+    try {
+        const sessionsDir = './sessions';
+        const sessions = await fs.readdir(sessionsDir).catch(() => []);
+        
+        for (const sessionDir of sessions) {
+            if (sessionDir.startsWith('session-client_') || sessionDir.startsWith('wweb_session_client_')) {
+                const sessionPath = path.join(sessionsDir, sessionDir);
+                
+                try {
+                    const stats = await fs.stat(sessionPath);
+                    const ageHours = (Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60);
+                    
+                    // Limpiar sesiones muy antiguas (más de 7 días)
+                    if (ageHours > 168) {
+                        logger.info(`Limpiando sesión muy antigua: ${sessionDir}`);
+                        await fs.rmdir(sessionPath, { recursive: true });
+                    }
+                } catch (error) {
+                    logger.warn(`Error en mantenimiento de sesión ${sessionDir}`);
+                }
+            }
+        }
+    } catch (error) {
+        logger.error('Error en mantenimiento periódico:', error.message);
+    }
+}
+
+// ========== MANEJO DE CIERRE GRACEFUL ==========
+
 process.on('SIGINT', async () => {
     logger.info('🛑 Cerrando servidor (SIGINT)...');
     
-    // Cerrar todos los clientes activos
     const cleanupPromises = [];
     for (const [userId, client] of activeClients) {
         cleanupPromises.push(
             new Promise(async (resolve) => {
                 try {
-                    await client.destroy();
-                    logger.info(`Cliente ${userId} cerrado correctamente`);
+                    if (client && typeof client.destroy === 'function') {
+                        await client.destroy();
+                        logger.info(`Cliente ${userId} cerrado correctamente`);
+                    }
                 } catch (error) {
-                    logger.error(`Error cerrando cliente ${userId}:`, error);
+                    logger.error(`Error cerrando cliente ${userId}:`, error.message);
                 }
                 resolve();
             })
         );
     }
     
-    // Esperar a que todos los clientes se cierren (máximo 10 segundos)
+    // Esperar máximo 10 segundos para cerrar todos los clientes
     await Promise.race([
         Promise.all(cleanupPromises),
         new Promise(resolve => setTimeout(resolve, 10000))
@@ -949,14 +1102,16 @@ process.on('SIGINT', async () => {
 });
 
 process.on('SIGTERM', async () => {
-    logger.info('🛑 SIGTERM recibido, cerrando servidor gracefulmente...');
+    logger.info('🛑 SIGTERM recibido, cerrando servidor...');
     
     for (const [userId, client] of activeClients) {
         try {
-            await client.destroy();
-            logger.info(`Cliente ${userId} cerrado por SIGTERM`);
+            if (client && typeof client.destroy === 'function') {
+                await client.destroy();
+                logger.info(`Cliente ${userId} cerrado por SIGTERM`);
+            }
         } catch (error) {
-            logger.error(`Error cerrando cliente ${userId}:`, error);
+            logger.error(`Error cerrando cliente ${userId}:`, error.message);
         }
     }
     
@@ -964,7 +1119,9 @@ process.on('SIGTERM', async () => {
     process.exit(0);
 });
 
-// Monitoreo de memoria (opcional)
+// ========== MONITOREO Y MANTENIMIENTO ==========
+
+// Monitoreo de memoria cada 5 minutos
 setInterval(() => {
     const memUsage = process.memoryUsage();
     const memUsageMB = {
@@ -980,13 +1137,21 @@ setInterval(() => {
         pendingConnections: pendingConnections.size
     });
     
-    // Alertar si el uso de memoria es muy alto (más de 1GB)
+    // Alertar si el uso de memoria es muy alto
     if (memUsageMB.heapUsed > 1024) {
         logger.warn(`⚠️ Alto uso de memoria: ${memUsageMB.heapUsed}MB heap used`);
+        
+        // Si supera 2GB, forzar garbage collection
+        if (memUsageMB.heapUsed > 2048) {
+            logger.warn('🗑️ Forzando garbage collection');
+            if (global.gc) {
+                global.gc();
+            }
+        }
     }
-}, 300000); // Cada 5 minutos
+}, 300000);
 
-// Limpiar conexiones pendientes que llevan mucho tiempo
+// Limpiar conexiones pendientes expiradas cada minuto
 setInterval(() => {
     const now = Date.now();
     const timeout = 10 * 60 * 1000; // 10 minutos
@@ -996,7 +1161,7 @@ setInterval(() => {
             logger.info(`Limpiando conexión pendiente expirada para usuario ${userId}`);
             pendingConnections.delete(userId);
             
-            // También limpiar el cliente si existe pero no está conectado
+            // También limpiar el cliente si no está conectado
             if (activeClients.has(userId)) {
                 const client = activeClients.get(userId);
                 if (!client.info) {
@@ -1005,14 +1170,43 @@ setInterval(() => {
             }
         }
     }
-}, 60000); // Cada minuto
+}, 60000);
 
-// Iniciar servidor
+// Mantenimiento periódico de sesiones cada 6 horas
+setInterval(periodicSessionMaintenance, 6 * 60 * 60 * 1000);
+
+// Verificar estado de clientes cada 30 segundos
+setInterval(() => {
+    for (const [userId, client] of activeClients) {
+        try {
+            // Si el cliente existe pero no tiene info después de mucho tiempo, limpiar
+            if (!client.info && !pendingConnections.has(userId)) {
+                const clientAge = Date.now() - (client._createdAt || 0);
+                if (clientAge > 300000) { // 5 minutos
+                    logger.warn(`Cliente ${userId} sin info después de 5 minutos, limpiando`);
+                    cleanup(userId);
+                }
+            }
+        } catch (error) {
+            logger.error(`Error verificando estado del cliente ${userId}:`, error.message);
+            cleanup(userId);
+        }
+    }
+}, 30000);
+
+// ========== INICIAR SERVIDOR ==========
+
 app.listen(PORT, async () => {
     try {
         await initializeServer();
+        
+        // Ejecutar mantenimiento inicial después de un minuto
+        setTimeout(periodicSessionMaintenance, 60000);
+        
+        logger.info('✅ Servidor completamente inicializado y funcionando');
+        
     } catch (error) {
-        logger.error('💥 Error fatal durante inicialización:', error);
+        logger.error('💥 Error fatal durante inicialización:', error.message);
         process.exit(1);
     }
 });
