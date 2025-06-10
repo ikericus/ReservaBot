@@ -1,1215 +1,1266 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const jwt = require('jsonwebtoken');
-const QRCode = require('qrcode');
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
-const axios = require('axios');
-const winston = require('winston');
-const fs = require('fs').promises;
-const path = require('path');
-require('dotenv').config();
+<?php
+// Incluir configuración y funciones
+require_once dirname(__DIR__) . '/includes/db-config.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
-// Configuración del logger
-const logger = winston.createLogger({
-    level: process.env.LOG_LEVEL || 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.File({ filename: './logs/error.log', level: 'error' }),
-        new winston.transports.File({ filename: './logs/combined.log' }),
-        new winston.transports.Console({
-            format: winston.format.combine(
-                winston.format.colorize(),
-                winston.format.simple()
-            )
-        })
-    ]
-});
+// Configurar la página actual
+$currentPage = 'whatsapp';
+$pageTitle = 'ReservaBot - WhatsApp';
+$pageScript = 'whatsapp';
 
-// Configuración de la aplicación
-const app = express();
-const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET;
-const WEBAPP_URL = process.env.WEBAPP_URL || 'http://localhost';
-const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
-const MAX_CLIENTS = parseInt(process.env.MAX_CLIENTS) || 50;
+// Obtener usuario actual
+$currentUser = getAuthenticatedUser();
+$userId = $currentUser['id'];
 
-// ========== SUPRESIÓN DE ERRORES DE CACHE ==========
-
-// Guardar referencias originales
-const originalConsoleError = console.error;
-const originalConsoleWarn = console.warn;
-
-// Función para filtrar errores conocidos de WhatsApp
-function isKnownWhatsAppError(message) {
-    const knownErrors = [
-        'LocalWebCache',
-        'Cannot read properties of null',
-        'webCache',
-        'Evaluation failed',
-        'Protocol error (Runtime.evaluate)',
-        'Session closed',
-        'Target closed',
-        'Cannot read property'
-    ];
-    
-    return knownErrors.some(error => message.includes(error));
+// Obtener configuración WhatsApp actual
+$whatsappConfig = null;
+try {
+    $stmt = getPDO()->prepare('SELECT * FROM whatsapp_config WHERE usuario_id = ?');
+    $stmt->execute([$userId]);
+    $whatsappConfig = $stmt->fetch();
+} catch (PDOException $e) {
+    error_log('Error obteniendo configuración WhatsApp: ' . $e->getMessage());
 }
 
-// Sobrescribir console.error
-console.error = (...args) => {
-    const message = args.join(' ');
-    if (!isKnownWhatsAppError(message)) {
-        originalConsoleError.apply(console, args);
-    }
-};
-
-// Sobrescribir console.warn
-console.warn = (...args) => {
-    const message = args.join(' ');
-    if (!isKnownWhatsAppError(message)) {
-        originalConsoleWarn.apply(console, args);
-    }
-};
-
-// ========== MANEJO DE ERRORES NO CAPTURADOS ==========
-
-process.on('unhandledRejection', (reason, promise) => {
-    const reasonStr = reason?.message || reason?.stack || String(reason);
-    
-    // Filtrar errores específicos de WhatsApp cache
-    if (isKnownWhatsAppError(reasonStr)) {
-        logger.debug('Ignorando error conocido de WhatsApp cache');
-        return;
-    }
-    
-    logger.error('Promesa rechazada no manejada:', {
-        reason: reason,
-        stack: reason?.stack,
-        service: 'whatsapp-server'
-    });
-    
-    // Manejo de cleanup solo para errores reales
-    const errorString = reason?.stack || reason?.message || '';
-    const userIdMatch = errorString.match(/client_(\d+)/);
-    
-    if (userIdMatch) {
-        const affectedUserId = userIdMatch[1];
-        logger.info(`Usuario afectado por error: ${affectedUserId}`);
-        
-        if (activeClients.has(affectedUserId)) {
-            cleanup(affectedUserId);
-        }
-        
-        cleanCorruptedSessions(affectedUserId).catch(err => {
-            logger.error(`Error limpiando sesión corrupta:`, err);
-        });
-    }
-});
-
-process.on('uncaughtException', (error) => {
-    const errorStr = error.message || error.stack || String(error);
-    
-    if (isKnownWhatsAppError(errorStr)) {
-        logger.debug('Ignorando excepción conocida de WhatsApp cache');
-        return;
-    }
-    
-    logger.error('Excepción no capturada:', {
-        error: error.message,
-        stack: error.stack,
-        service: 'whatsapp-server'
-    });
-});
-
-// ========== MIDDLEWARE DE SEGURIDAD ==========
-
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "https:"]
-        }
-    }
-}));
-
-app.use(cors({
-    origin: process.env.WEBAPP_URL || 'http://localhost',
-    credentials: true
-}));
-
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: { error: 'Demasiadas peticiones, intenta más tarde' }
-});
-app.use('/api/', limiter);
-
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// ========== STORAGE GLOBAL ==========
-
-const activeClients = new Map();
-const pendingConnections = new Map();
-const messageQueue = new Map();
-
-// ========== MIDDLEWARE DE AUTENTICACIÓN ==========
-
-function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ success: false, error: 'Token de acceso requerido' });
-    }
-
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return res.status(403).json({ success: false, error: 'Token inválido' });
-        }
-        req.user = decoded;
-        next();
-    });
-}
-
-function verifyWebhookSecret(req, res, next) {
-    const providedSecret = req.headers['x-webhook-secret'];
-    
-    if (!providedSecret || providedSecret !== WEBHOOK_SECRET) {
-        return res.status(401).json({ success: false, error: 'Secret inválido' });
-    }
-    
-    next();
-}
-
-// ========== FUNCIONES DE SESIÓN ==========
-
-async function cleanCorruptedSessions(userId) {
-    const sessionPath = path.join('./sessions', `session-client_${userId}`);
-    const wwebSessionPath = path.join('./sessions', `wweb_session_client_${userId}`);
-    
-    logger.info(`Limpiando sesiones para usuario ${userId}`);
-    
-    try {
-        await fs.rmdir(sessionPath, { recursive: true });
-        logger.info(`Sesión eliminada: ${sessionPath}`);
-    } catch (error) {
-        logger.debug(`No se pudo eliminar ${sessionPath}`);
-    }
-    
-    try {
-        await fs.rmdir(wwebSessionPath, { recursive: true });
-        logger.info(`Sesión wweb eliminada: ${wwebSessionPath}`);
-    } catch (error) {
-        logger.debug(`No se pudo eliminar ${wwebSessionPath}`);
+// Inicializar variables - CORREGIDO: normalizar estados
+$connectionStatus = 'disconnected'; // Valor por defecto
+if ($whatsappConfig) {
+    $dbStatus = $whatsappConfig['status'];
+    // Normalizar estados desde la BD
+    switch ($dbStatus) {
+        case 'ready':
+        case 'connected':
+            $connectionStatus = 'connected';
+            break;
+        case 'connecting':
+        case 'waiting_qr':
+            $connectionStatus = 'connecting';
+            break;
+        case 'disconnected':
+        case 'error':
+        case 'auth_failed':
+        default:
+            $connectionStatus = 'disconnected';
+            break;
     }
 }
 
-async function ensureSessionsDirectory() {
-    const sessionsDir = './sessions';
-    const logsDir = './logs';
-    
-    try {
-        await fs.mkdir(sessionsDir, { recursive: true });
-        await fs.mkdir(logsDir, { recursive: true });
-        
-        await fs.access(sessionsDir, fs.constants.W_OK);
-        await fs.access(logsDir, fs.constants.W_OK);
-        
-        logger.info('✅ Directorios verificados');
-    } catch (error) {
-        logger.error('❌ Error con directorios:', error.message);
-        throw error;
-    }
+$phoneNumber = $whatsappConfig['phone_number'] ?? null;
+$lastActivity = $whatsappConfig['last_activity'] ?? null;
+
+// Log para debug
+error_log("WhatsApp Status Debug - DB: " . ($whatsappConfig['status'] ?? 'null') . " -> Normalizado: " . $connectionStatus);
+
+// Incluir la cabecera
+include 'includes/header.php';
+?>
+
+<style>
+/* Estilos específicos para la página de WhatsApp */
+.whatsapp-card {
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
 }
 
-async function initializeSessionsCleanup() {
-    logger.info('🧹 Limpieza inicial de sesiones...');
+.whatsapp-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.status-indicator {
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.connected {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.status-indicator.connecting {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.status-indicator.disconnected {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.qr-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 2px dashed #cbd5e1;
+    transition: all 0.3s ease;
+}
+
+.qr-container.active {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.whatsapp-button {
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+    transition: all 0.3s ease;
+}
+
+.whatsapp-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
+}
+
+.whatsapp-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.feature-item {
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.feature-item:hover {
+    border-left-color: #25d366;
+    background: rgba(37, 211, 102, 0.05);
+    transform: translateX(5px);
+}
+
+.stats-card {
+    background: linear-gradient(135deg, rgba(37, 211, 102, 0.1) 0%, rgba(18, 140, 126, 0.05) 100%);
+    border: 1px solid rgba(37, 211, 102, 0.2);
+}
+
+.pulse-animation {
+    animation: pulse-custom 2s infinite;
+}
+
+@keyframes pulse-custom {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .grid-cols-1 {
+        gap: 1rem;
+    }
     
-    const sessionsDir = './sessions';
+    .whatsapp-card {
+        padding: 1rem;
+    }
     
-    try {
-        const sessions = await fs.readdir(sessionsDir).catch(() => []);
+    .qr-container {
+        min-height: 250px;
+    }
+}
+</style>
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+            <i class="ri-whatsapp-line text-green-500 mr-3 text-3xl"></i>
+            WhatsApp
+        </h1>
+        <p class="text-gray-600 mt-1">Conecta tu WhatsApp para automatizar la comunicación con tus clientes</p>
+    </div>
+    
+    <!-- Estado de conexión -->
+    <div class="flex items-center space-x-3">
+        <div class="status-indicator w-3 h-3 rounded-full <?php echo $connectionStatus; ?>"></div>
+        <span class="text-sm font-medium text-gray-700 capitalize">
+            <?php 
+            $statusLabels = [
+                'connected' => 'Conectado',
+                'connecting' => 'Conectando...',
+                'disconnected' => 'Desconectado'
+            ];
+            echo $statusLabels[$connectionStatus] ?? 'Desconectado';
+            ?>
+        </span>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- Panel principal de configuración -->
+    <div class="lg:col-span-2 space-y-6">
         
-        for (const sessionDir of sessions) {
-            if (sessionDir.startsWith('session-client_') || sessionDir.startsWith('wweb_session_client_')) {
-                const sessionPath = path.join(sessionsDir, sessionDir);
+        <!-- Tarjeta de conexión principal -->
+        <div class="whatsapp-card rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">Configuración de Conexión</h2>
+                <?php if ($connectionStatus === 'connected' && $phoneNumber): ?>
+                    <div class="flex items-center space-x-2 bg-green-50 px-3 py-1 rounded-full">
+                        <i class="ri-phone-line text-green-600"></i>
+                        <span class="text-sm font-medium text-green-800"><?php echo htmlspecialchars($phoneNumber); ?></span>
+                    </div>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Estado desconectado -->
+            <div id="disconnectedState" class="text-center py-8 <?php echo $connectionStatus !== 'disconnected' ? 'hidden' : ''; ?>">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="ri-smartphone-line text-gray-400 text-3xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Conecta tu WhatsApp</h3>
+                <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                    Para comenzar a automatizar la comunicación con tus clientes, conecta tu cuenta de WhatsApp escaneando el código QR.
+                </p>
+                <button id="connectBtn" class="whatsapp-button text-white px-6 py-3 rounded-lg font-medium inline-flex items-center">
+                    <i class="ri-qr-code-line mr-2"></i>
+                    Conectar WhatsApp
+                </button>
+            </div>
+            
+            <!-- Estado conectando/QR -->
+            <div id="qrState" class="text-center <?php echo $connectionStatus !== 'connecting' ? 'hidden' : ''; ?>">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Escanea el código QR</h3>
+                <div id="qrContainer" class="qr-container rounded-xl p-8 mb-6 flex items-center justify-center min-h-[300px]">
+                    <div class="text-center">
+                        <div class="pulse-animation mb-4">
+                            <i class="ri-qr-code-line text-gray-400 text-6xl"></i>
+                        </div>
+                        <p class="text-gray-500">Generando código QR...</p>
+                    </div>
+                </div>
                 
-                try {
-                    const stats = await fs.stat(sessionPath);
-                    const ageHours = (Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60);
+                <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                    <h4 class="font-medium text-blue-900 mb-2">Instrucciones:</h4>
+                    <ol class="text-sm text-blue-800 space-y-1 text-left max-w-md mx-auto">
+                        <li>1. Abre WhatsApp en tu teléfono</li>
+                        <li>2. Ve a <strong>Configuración → Dispositivos vinculados</strong></li>
+                        <li>3. Toca <strong>"Vincular un dispositivo"</strong></li>
+                        <li>4. Escanea este código QR con tu teléfono</li>
+                    </ol>
+                </div>
+                
+                <button id="refreshQrBtn" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    <i class="ri-refresh-line mr-1"></i>
+                    Actualizar código QR
+                </button>
+            </div>
+            
+            <!-- Estado conectado -->
+            <div id="connectedState" class="<?php echo $connectionStatus !== 'connected' ? 'hidden' : ''; ?>">
+                <div class="text-center py-6 mb-6">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="ri-whatsapp-line text-green-600 text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">¡WhatsApp conectado correctamente!</h3>
+                    <p class="text-gray-600 mb-4">Tu cuenta está lista para enviar y recibir mensajes automáticamente.</p>
                     
-                    if (ageHours > 24) {
-                        logger.info(`Limpiando sesión antigua: ${sessionDir}`);
-                        await fs.rmdir(sessionPath, { recursive: true });
-                    }
-                } catch (error) {
-                    try {
-                        await fs.rmdir(sessionPath, { recursive: true });
-                        logger.info(`Sesión corrupta eliminada: ${sessionDir}`);
-                    } catch (cleanupError) {
-                        logger.error(`No se pudo limpiar: ${sessionDir}`);
-                    }
-                }
-            }
-        }
-    } catch (error) {
-        logger.error('Error durante limpieza:', error);
+                    <?php if ($lastActivity): ?>
+                        <p class="text-sm text-gray-500">
+                            Última actividad: <?php echo date('d/m/Y H:i', strtotime($lastActivity)); ?>
+                        </p>
+                    <?php endif; ?>
+                </div>
+                
+                <div class="bg-red-50 rounded-lg p-4 text-center">
+                    <button id="disconnectBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                        <i class="ri-logout-box-line mr-2"></i>
+                        Desconectar WhatsApp
+                    </button>
+                    <p class="text-sm text-red-600 mt-2">Esto desvinculará tu cuenta de WhatsApp de ReservaBot</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Configuración de mensajes automáticos -->
+        <div id="autoMessagesSection" class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo $connectionStatus !== 'connected' ? 'opacity-50 pointer-events-none' : ''; ?>">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="ri-message-line text-green-600 mr-2"></i>
+                Mensajes Automáticos
+            </h3>
+            <p class="text-gray-600 mb-6">Configura qué mensajes se enviarán automáticamente a tus clientes.</p>
+            
+            <div class="space-y-4">
+                <label class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                    <input type="checkbox" id="autoConfirmation" class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4">
+                    <div class="flex-1">
+                        <h4 class="font-medium text-gray-900">Confirmación de reservas</h4>
+                        <p class="text-sm text-gray-600">Enviar confirmación automática cuando se cree una nueva reserva</p>
+                        <p class="text-xs text-gray-500 mt-1">Ejemplo: "Tu reserva ha sido confirmada para el {fecha} a las {hora}"</p>
+                    </div>
+                </label>
+                
+                <label class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                    <input type="checkbox" id="autoReminders" class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4">
+                    <div class="flex-1">
+                        <h4 class="font-medium text-gray-900">Recordatorios automáticos</h4>
+                        <p class="text-sm text-gray-600">Enviar recordatorio 24 horas antes de la cita</p>
+                        <p class="text-xs text-gray-500 mt-1">Se envía automáticamente a las 10:00 AM del día anterior</p>
+                    </div>
+                </label>
+                
+                <label class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                    <input type="checkbox" id="autoWelcome" class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4">
+                    <div class="flex-1">
+                        <h4 class="font-medium text-gray-900">Mensaje de bienvenida</h4>
+                        <p class="text-sm text-gray-600">Responder automáticamente cuando un cliente escriba por primera vez</p>
+                        <p class="text-xs text-gray-500 mt-1">Solo se envía una vez por cliente nuevo</p>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <button onclick="saveAutoMessageConfig()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    <i class="ri-save-line mr-2"></i>
+                    Guardar Configuración
+                </button>
+                <a href="/configuracion#mensajes" class="ml-3 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    Personalizar mensajes →
+                </a>
+            </div>
+        </div>
+        
+        <!-- Nueva sección: Envío rápido de mensaje -->
+        <div id="quickMessageSection" class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo $connectionStatus !== 'connected' ? 'opacity-50 pointer-events-none' : ''; ?>">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="ri-send-plane-line text-green-600 mr-2"></i>
+                Envío Rápido
+            </h3>
+            <p class="text-gray-600 mb-4">Envía un mensaje rápido a cualquier cliente.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Número de teléfono</label>
+                    <input type="tel" id="quickMessagePhone" placeholder="Ej: 34612345678" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    <p class="text-xs text-gray-500 mt-1">Incluye código de país (ej: 34 para España)</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mensaje</label>
+                    <textarea id="quickMessageText" rows="3" placeholder="Escribe tu mensaje aquí..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 resize-none"></textarea>
+                    <p class="text-xs text-gray-500 mt-1 flex justify-between">
+                        <span>Máximo 1000 caracteres</span>
+                        <span id="charCount">0/1000</span>
+                    </p>
+                </div>
+                
+                <button onclick="sendQuickMessage()" id="sendQuickBtn" 
+                        class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center">
+                    <i class="ri-send-plane-fill mr-2"></i>
+                    Enviar Mensaje
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel lateral -->
+    <div class="space-y-6">
+        
+        <!-- Estadísticas de WhatsApp -->
+        <div id="statsCard" class="stats-card whatsapp-card rounded-xl shadow-lg p-6 <?php echo $connectionStatus !== 'connected' ? 'opacity-50' : ''; ?>">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="ri-bar-chart-line mr-2 text-green-600"></i>
+                Estadísticas de Hoy
+            </h3>
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Mensajes enviados</span>
+                    <span class="text-lg font-bold text-gray-900" id="messagesSent">0</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Mensajes recibidos</span>
+                    <span class="text-lg font-bold text-gray-900" id="messagesReceived">0</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Conversaciones activas</span>
+                    <span class="text-lg font-bold text-gray-900" id="activeChats">0</span>
+                </div>
+            </div>
+            
+            <!-- Gráfico simple de estadísticas -->
+            <div id="statsChart" class="mt-4 pt-4 border-t border-green-200">
+                <!-- El gráfico se renderiza dinámicamente -->
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-green-200">
+                <a href="/estadisticas?filter=whatsapp" class="text-green-600 hover:text-green-700 text-sm font-medium inline-flex items-center">
+                    Ver estadísticas completas
+                    <i class="ri-arrow-right-line ml-1"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Preview de conversaciones recientes -->
+        <div id="conversationsCard" class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo $connectionStatus !== 'connected' ? 'opacity-50' : ''; ?>">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="ri-chat-history-line mr-2 text-green-600"></i>
+                    Conversaciones Recientes
+                </h3>
+                <a href="/mensajes" class="text-green-600 hover:text-green-700 text-sm font-medium">
+                    Ver todas →
+                </a>
+            </div>
+            
+            <div id="conversationsPreview" class="space-y-2">
+                <div class="text-center text-gray-500 py-4">
+                    <i class="ri-chat-3-line text-2xl mb-2"></i>
+                    <p class="text-sm">Conecta WhatsApp para ver conversaciones</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Enlaces rápidos -->
+        <div class="whatsapp-card rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Enlaces Rápidos</h3>
+            
+            <div class="space-y-3">
+                <a href="/mensajes" class="feature-item p-3 rounded-lg block">
+                    <div class="flex items-center">
+                        <i class="ri-chat-history-line text-green-600 mr-3"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900">Historial Completo</h4>
+                            <p class="text-xs text-gray-600">Todas las conversaciones</p>
+                        </div>
+                    </div>
+                </a>
+                
+                <a href="/configuracion#whatsapp" class="feature-item p-3 rounded-lg block">
+                    <div class="flex items-center">
+                        <i class="ri-settings-line text-green-600 mr-3"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900">Configuración Avanzada</h4>
+                            <p class="text-xs text-gray-600">Personalizar mensajes</p>
+                        </div>
+                    </div>
+                </a>
+                
+                <a href="/clientes" class="feature-item p-3 rounded-lg block">
+                    <div class="flex items-center">
+                        <i class="ri-user-line text-green-600 mr-3"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900">Base de Clientes</h4>
+                            <p class="text-xs text-gray-600">Gestionar contactos</p>
+                        </div>
+                    </div>
+                </a>
+                
+                <button onclick="testWhatsAppConnection()" class="feature-item p-3 rounded-lg block w-full text-left">
+                    <div class="flex items-center">
+                        <i class="ri-test-tube-line text-green-600 mr-3"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900">Probar Conexión</h4>
+                            <p class="text-xs text-gray-600">Verificar estado del servidor</p>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Estado del servidor -->
+        <div id="serverStatusCard" class="whatsapp-card rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Estado del Servidor</h3>
+            
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Servidor WhatsApp</span>
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800" id="serverStatus">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></span>
+                        Online
+                    </span>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Última verificación</span>
+                    <span class="text-xs text-gray-500" id="lastCheck">--</span>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Tiempo de respuesta</span>
+                    <span class="text-xs text-gray-500" id="responseTime">-- ms</span>
+                </div>
+            </div>
+            
+            <button onclick="refreshServerStatus()" class="mt-4 w-full text-sm text-green-600 hover:text-green-700 font-medium">
+                <i class="ri-refresh-line mr-1"></i>
+                Actualizar Estado
+            </button>
+        </div>
+        
+        <!-- Funcionalidades próximas -->
+        <div class="whatsapp-card rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Próximamente</h3>
+            
+            <div class="space-y-3">
+                <div class="feature-item p-3 rounded-lg opacity-60">
+                    <div class="flex items-center">
+                        <i class="ri-robot-line text-gray-400 mr-3"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500">IA para Reservas</h4>
+                            <p class="text-xs text-gray-400">Reservas automáticas con IA</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-item p-3 rounded-lg opacity-60">
+                    <div class="flex items-center">
+                        <i class="ri-team-line text-gray-400 mr-3"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500">Grupos WhatsApp</h4>
+                            <p class="text-xs text-gray-400">Gestión de grupos</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-item p-3 rounded-lg opacity-60">
+                    <div class="flex items-center">
+                        <i class="ri-file-line text-gray-400 mr-3"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500">Multimedia</h4>
+                            <p class="text-xs text-gray-400">Envío de archivos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para desconectar -->
+<div id="disconnectModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">¿Desconectar WhatsApp?</h3>
+        <p class="text-gray-600 mb-6">Esta acción desvinculará tu cuenta de WhatsApp de ReservaBot. Podrás volver a conectarla cuando quieras.</p>
+        
+        <div class="flex space-x-3">
+            <button id="confirmDisconnect" class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">
+                Desconectar
+            </button>
+            <button id="cancelDisconnect" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript para whatsapp.php - Versión corregida
+// Variables globales
+let currentStatus = '<?php echo $connectionStatus; ?>';
+let checkStatusInterval = null;
+
+// Elementos del DOM - se inicializarán en DOMContentLoaded
+let connectBtn, disconnectBtn, refreshQrBtn, disconnectModal, confirmDisconnect, cancelDisconnect;
+let quickMessageText, charCount;
+
+console.log('Script cargado. Estado inicial:', currentStatus);
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, inicializando...');
+    
+    // Inicializar elementos del DOM
+    connectBtn = document.getElementById('connectBtn');
+    disconnectBtn = document.getElementById('disconnectBtn');
+    refreshQrBtn = document.getElementById('refreshQrBtn');
+    disconnectModal = document.getElementById('disconnectModal');
+    confirmDisconnect = document.getElementById('confirmDisconnect');
+    cancelDisconnect = document.getElementById('cancelDisconnect');
+    quickMessageText = document.getElementById('quickMessageText');
+    charCount = document.getElementById('charCount');
+    
+    // Debug de elementos encontrados
+    console.log('Elementos encontrados:', {
+        connectBtn: !!connectBtn,
+        disconnectBtn: !!disconnectBtn,
+        refreshQrBtn: !!refreshQrBtn,
+        disconnectModal: !!disconnectModal,
+        quickMessageText: !!quickMessageText
+    });
+    
+    // Verificar que currentStatus esté definido
+    if (typeof currentStatus === 'undefined' || !currentStatus) {
+        currentStatus = 'disconnected';
+        console.warn('currentStatus no definido, usando valor por defecto: disconnected');
     }
     
-    logger.info('✅ Limpieza completada');
-}
-
-// ========== FUNCIÓN PRINCIPAL DE CLIENTE WHATSAPP ==========
-
-async function createWhatsAppClient(userId) {
-    if (activeClients.has(userId)) {
-        logger.warn(`Cliente ${userId} ya existe`);
-        return activeClients.get(userId);
+    // Event listeners principales
+    if (connectBtn) {
+        connectBtn.addEventListener('click', connectWhatsApp);
+        console.log('Event listener agregado al botón conectar');
+    } else {
+        console.error('Botón connectBtn no encontrado');
     }
-
-    if (activeClients.size >= MAX_CLIENTS) {
-        throw new Error('Máximo número de clientes alcanzado');
-    }
-
-    logger.info(`Iniciando conexión para usuario ${userId}`);
-
-    // Limpiar sesiones previas
-    await cleanCorruptedSessions(userId);
-
-    // Configuración optimizada de Puppeteer
-    const puppeteerConfig = {
-        headless: true,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--single-process',
-            '--disable-background-timer-throttling',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding',
-            '--disable-features=TranslateUI',
-            '--disable-ipc-flooding-protection',
-            '--disable-extensions',
-            '--disable-plugins',
-            '--disable-default-apps',
-            '--no-first-run',
-            '--no-zygote',
-            '--disable-web-security'
-        ],
-        defaultViewport: null,
-        timeout: 60000
-    };
-
-    // Cliente simplificado sin configuraciones problemáticas
-    const client = new Client({
-        authStrategy: new LocalAuth({
-            clientId: `client_${userId}`,
-            dataPath: './sessions',
-            webCache: false // ← fuerza desactivación
-        }),
-        puppeteer: puppeteerConfig,
-        qrMaxRetries: 5,
-        authTimeoutMs: 60000,
-        takeoverOnConflict: true,
-        takeoverTimeoutMs: 30000
-    });
-
-    // Timeout para inicialización
-    const initTimeout = setTimeout(() => {
-        logger.error(`Timeout inicializando cliente ${userId}`);
-        cleanup(userId);
-    }, 120000);
-
-    // ========== EVENTOS DEL CLIENTE ==========
-
-    client.on('qr', async (qr) => {
-        logger.info(`QR generado para usuario ${userId}`);
-        try {
-            const qrDataURL = await QRCode.toDataURL(qr);
-            pendingConnections.set(userId, { qr: qrDataURL, timestamp: Date.now() });
-            await notifyWebApp('qr_generated', userId, { qr: qrDataURL });
-        } catch (error) {
-            logger.error(`Error generando QR:`, error.message);
-        }
-    });
-
-    client.on('ready', async () => {
-        clearTimeout(initTimeout);
-        logger.info(`Cliente ${userId} listo: ${client.info.wid.user}`);
-        
-        pendingConnections.delete(userId);
-        
-        try {
-            await notifyWebApp('client_ready', userId, {
-                phoneNumber: client.info.wid.user,
-                name: client.info.pushname
-            });
-            
-            await processQueuedMessages(userId);
-            
-        } catch (error) {
-            logger.error(`Error notificando cliente listo:`, error.message);
-        }
-    });
-
-    client.on('authenticated', () => {
-        logger.info(`Cliente ${userId} autenticado`);
-        pendingConnections.delete(userId);
-    });
-
-    client.on('auth_failure', (msg) => {
-        clearTimeout(initTimeout);
-        logger.error(`Fallo autenticación ${userId}:`, msg);
-        cleanup(userId);
-        notifyWebApp('auth_failure', userId, { error: msg }).catch(() => {});
-    });
-
-    client.on('disconnected', (reason) => {
-        clearTimeout(initTimeout);
-        logger.info(`Cliente ${userId} desconectado: ${reason}`);
-        cleanup(userId);
-        notifyWebApp('client_disconnected', userId, { reason }).catch(() => {});
-    });
-
-    client.on('message', async (message) => {
-        try {
-            await handleIncomingMessage(userId, message);
-        } catch (error) {
-            logger.error(`Error manejando mensaje:`, error.message);
-        }
-    });
-
-    client.on('message_create', async (message) => {
-        if (message.fromMe) {
-            try {
-                await logOutgoingMessage(userId, message);
-            } catch (error) {
-                logger.error(`Error registrando mensaje:`, error.message);
-            }
-        }
-    });
-
-    client.on('error', (error) => {
-        const errorStr = error.message || String(error);
-        
-        // Ignorar errores conocidos de cache
-        if (isKnownWhatsAppError(errorStr)) {
-            return;
-        }
-        
-        logger.error(`Error del cliente ${userId}:`, error.message);
-        
-        // Solo cleanup para errores graves
-        if (errorStr.includes('Protocol error') || 
-            errorStr.includes('Target closed') ||
-            errorStr.includes('Session closed')) {
-            cleanup(userId);
-        }
-    });
-
-    activeClients.set(userId, client);
     
-    try {
-        await client.initialize();
-        logger.info(`Cliente ${userId} inicializado`);
-    } catch (error) {
-        clearTimeout(initTimeout);
-
-        const errorStr = error.message || String(error);
-        
-        if (isKnownWhatsAppError(errorStr)) {
-            logger.warn(`Error conocido ignorado durante inicialización de ${userId}: ${errorStr}`);
-            return client; // ← devuelve aunque haya error si es de caché
-        }
-
-        logger.error(`Error inicializando cliente ${userId}:`, errorStr);
-
-        // Extra: limpiar por si algo quedó mal
-        cleanup(userId);
-        await cleanCorruptedSessions(userId);
-
-        throw error;
-    }
-
-    return client;
-}
-
-// ========== FUNCIONES DE MANEJO DE MENSAJES ==========
-
-async function handleIncomingMessage(userId, message) {
-    try {
-        logger.info(`Mensaje entrante ${userId}: ${message.from}`);
-
-        const messageData = {
-            id: message.id._serialized,
-            from: message.from,
-            to: message.to,
-            body: message.body,
-            type: message.type,
-            timestamp: message.timestamp,
-            isGroupMsg: message.isGroupMsg,
-            author: message.author,
-            hasMedia: message.hasMedia
-        };
-
-        if (message.hasMedia) {
-            try {
-                const media = await message.downloadMedia();
-                messageData.media = {
-                    mimetype: media.mimetype,
-                    filename: media.filename,
-                    data: media.data
-                };
-            } catch (error) {
-                logger.error(`Error descargando media:`, error.message);
-            }
-        }
-
-        await notifyWebApp('message_received', userId, messageData);
-
-    } catch (error) {
-        logger.error(`Error procesando mensaje:`, error.message);
-    }
-}
-
-async function logOutgoingMessage(userId, message) {
-    try {
-        const messageData = {
-            id: message.id._serialized,
-            to: message.to,
-            body: message.body,
-            type: message.type,
-            timestamp: message.timestamp
-        };
-
-        await notifyWebApp('message_sent', userId, messageData);
-    } catch (error) {
-        logger.error(`Error registrando mensaje:`, error.message);
-    }
-}
-
-async function notifyWebApp(event, userId, data) {
-    try {
-        const payload = {
-            event,
-            userId,
-            data,
-            timestamp: Date.now()
-        };
-
-        const response = await axios.post(`${WEBAPP_URL}/api/whatsapp-webhook`, payload, {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Webhook-Secret': WEBHOOK_SECRET
-            },
-            timeout: 10000,
-            validateStatus: (status) => status < 500
+    if (disconnectBtn) {
+        disconnectBtn.addEventListener('click', () => {
+            disconnectModal.classList.remove('hidden');
+            disconnectModal.classList.add('flex');
         });
-
-        logger.debug(`Webhook enviado: ${event} para usuario ${userId}`);
-        return response.data;
-        
-    } catch (error) {
-        if (error.code === 'ECONNREFUSED') {
-            logger.warn(`Webhook no disponible: ${event} - ${error.message}`);
-        } else {
-            logger.error(`Error webhook: ${event}`, {
-                message: error.message,
-                code: error.code,
-                status: error.response?.status,
-                data: error.response?.data
-            });
-        }
     }
-}
-
-async function processQueuedMessages(userId) {
-    const queue = messageQueue.get(userId);
-    if (!queue || queue.length === 0) return;
-
-    logger.info(`Procesando ${queue.length} mensajes en cola para ${userId}`);
-
-    for (const queuedMessage of queue) {
-        try {
-            await sendMessage(userId, queuedMessage.to, queuedMessage.message);
-            logger.info(`Mensaje de cola enviado a ${queuedMessage.to}`);
-        } catch (error) {
-            logger.error(`Error enviando mensaje de cola:`, error.message);
-        }
-    }
-
-    messageQueue.delete(userId);
-}
-
-function cleanup(userId) {
-    logger.info(`Cleanup para usuario ${userId}`);
     
-    if (activeClients.has(userId)) {
-        const client = activeClients.get(userId);
-        try {
-            if (client && typeof client.destroy === 'function') {
-                client.destroy();
+    if (refreshQrBtn) {
+        refreshQrBtn.addEventListener('click', refreshQR);
+    }
+    
+    if (confirmDisconnect) {
+        confirmDisconnect.addEventListener('click', disconnectWhatsApp);
+    }
+    
+    if (cancelDisconnect) {
+        cancelDisconnect.addEventListener('click', () => {
+            disconnectModal.classList.add('hidden');
+            disconnectModal.classList.remove('flex');
+        });
+    }
+    
+    // Contador de caracteres para mensaje rápido
+    if (quickMessageText && charCount) {
+        quickMessageText.addEventListener('input', function() {
+            const count = this.value.length;
+            charCount.textContent = `${count}/1000`;
+            
+            if (count > 1000) {
+                charCount.classList.add('text-red-500');
+                this.value = this.value.substring(0, 1000);
+                charCount.textContent = '1000/1000';
+            } else {
+                charCount.classList.remove('text-red-500');
             }
-        } catch (error) {
-            logger.debug(`Error destruyendo cliente (ignorado):`, error.message);
-        }
-        activeClients.delete(userId);
+        });
     }
     
-    pendingConnections.delete(userId);
-    logger.info(`Cleanup completado para usuario ${userId}`);
+    // Inicialización según estado actual - FORZAR VISUALIZACIÓN CORRECTA
+    console.log('Inicializando interfaz con estado:', currentStatus);
+    initializePage();
+    
+    // Auto-verificar estado del servidor cada 2 minutos si está conectado
+    if (currentStatus === 'connected') {
+        setInterval(refreshServerStatus, 120000);
+    }
+});
+
+// Inicializar página según estado
+function initializePage() {
+    console.log('Inicializando página con estado:', currentStatus);
+    
+    // FORZAR la actualización visual del estado inicial
+    updateConnectionStatus(currentStatus);
+    
+    if (currentStatus === 'connecting') {
+        startStatusCheck();
+    } else if (currentStatus === 'connected') {
+        loadInitialData();
+        loadAutoMessageConfig();
+        loadStats();
+    }
+    
+    // Actualizar estado del servidor (sin mostrar notificación)
+    refreshServerStatus(false);
 }
 
-async function sendMessage(userId, to, message, media = null) {
-    const client = activeClients.get(userId);
+// =============== FUNCIONES DE CONEXIÓN ===============
+
+async function connectWhatsApp() {
+    console.log('Iniciando conexión WhatsApp...');
     
-    if (!client) {
-        throw new Error('Cliente WhatsApp no conectado');
-    }
-
-    if (!client.info) {
-        throw new Error('Cliente WhatsApp no está listo');
-    }
-
-    let chatId = to;
-    if (!to.includes('@')) {
-        chatId = `${to}@c.us`;
-    }
-
     try {
-        let sentMessage;
+        updateButtonState(connectBtn, true, 'Conectando...');
         
-        if (media) {
-            const messageMedia = new MessageMedia(media.mimetype, media.data, media.filename);
-            sentMessage = await client.sendMessage(chatId, messageMedia, { caption: message });
+        const response = await fetch('/api/whatsapp-connect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        console.log('Respuesta de conexión:', data);
+        
+        if (data.success) {
+            updateConnectionStatus('connecting');
+            startStatusCheck();
+            showNotification('Iniciando conexión de WhatsApp...', 'info');
         } else {
-            sentMessage = await client.sendMessage(chatId, message);
+            showNotification('Error al conectar: ' + (data.error || 'Error desconocido'), 'error');
+            updateButtonState(connectBtn, false, '<i class="ri-qr-code-line mr-2"></i>Conectar WhatsApp');
         }
-
-        logger.info(`Mensaje enviado desde ${userId} a ${to}`);
-        return sentMessage;
     } catch (error) {
-        logger.error(`Error enviando mensaje:`, error.message);
-        throw error;
+        console.error('Error:', error);
+        showNotification('Error al conectar con el servidor', 'error');
+        updateButtonState(connectBtn, false, '<i class="ri-qr-code-line mr-2"></i>Conectar WhatsApp');
     }
 }
 
-// ========== RUTAS API ==========
-
-app.get('/health', (req, res) => {
-    const memUsage = process.memoryUsage();
-    
-    res.json({
-        status: 'healthy',
-        uptime: process.uptime(),
-        timestamp: new Date().toISOString(),
-        activeClients: activeClients.size,
-        pendingConnections: pendingConnections.size,
-        messageQueues: messageQueue.size,
-        memory: {
-            rss: Math.round(memUsage.rss / 1024 / 1024) + 'MB',
-            heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB'
-        }
-    });
-});
-
-app.get('/api/info', authenticateToken, (req, res) => {
-    res.json({
-        success: true,
-        server: {
-            version: '1.0.1',
-            uptime: process.uptime(),
-            activeClients: activeClients.size,
-            maxClients: MAX_CLIENTS,
-            pendingConnections: pendingConnections.size,
-            messageQueues: messageQueue.size
-        }
-    });
-});
-
-app.post('/api/connect', authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
-
+async function disconnectWhatsApp() {
     try {
-        if (activeClients.has(userId)) {
-            const client = activeClients.get(userId);
-            if (client.info) {
-                return res.json({
-                    success: true,
-                    status: 'ready',
-                    message: 'Cliente ya conectado',
-                    phoneNumber: client.info.wid.user
+        updateButtonState(confirmDisconnect, true, 'Desconectando...');
+        
+        const response = await fetch('/api/whatsapp-disconnect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            updateConnectionStatus('disconnected');
+            stopStatusCheck();
+            disconnectModal.classList.add('hidden');
+            disconnectModal.classList.remove('flex');
+            showNotification('WhatsApp desconectado correctamente', 'success');
+        } else {
+            showNotification('Error al desconectar: ' + (data.error || 'Error desconocido'), 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error al desconectar', 'error');
+    } finally {
+        updateButtonState(confirmDisconnect, false, 'Desconectar');
+    }
+}
+
+// =============== FUNCIONES DE ESTADO ===============
+
+async function checkStatus() {
+    try {
+        const response = await fetch('/api/whatsapp-status');
+        const data = await response.json();
+        
+        console.log('Estado actual:', data.status, 'Estado local:', currentStatus);
+        
+        if (data.success && data.status !== currentStatus) {
+            // Normalizar estados del servidor
+            let normalizedStatus = data.status;
+            if (data.status === 'ready') {
+                normalizedStatus = 'connected';
+            } else if (data.status === 'waiting_qr') {
+                normalizedStatus = 'connecting';
+            }
+            
+            updateConnectionStatus(normalizedStatus, data.phoneNumber);
+            
+            if (normalizedStatus === 'connected') {
+                stopStatusCheck();
+                showNotification('¡WhatsApp conectado correctamente!', 'success');
+                loadInitialData();
+                loadAutoMessageConfig();
+                loadStats();
+            } else if (normalizedStatus === 'disconnected') {
+                stopStatusCheck();
+            }
+        }
+        
+        // Actualizar QR si está disponible
+        if (data.qr && currentStatus === 'connecting') {
+            updateQRCode(data.qr);
+        }
+    } catch (error) {
+        console.error('Error checking status:', error);
+    }
+}
+
+function updateConnectionStatus(status, phoneNumber = null) {
+    console.log('Actualizando estado UI:', currentStatus, '->', status);
+    currentStatus = status;
+    
+    // Ocultar todos los estados
+    const disconnectedState = document.getElementById('disconnectedState');
+    const qrState = document.getElementById('qrState');
+    const connectedState = document.getElementById('connectedState');
+    
+    if (disconnectedState) disconnectedState.classList.add('hidden');
+    if (qrState) qrState.classList.add('hidden');
+    if (connectedState) connectedState.classList.add('hidden');
+    
+    // Actualizar indicador de estado
+    const statusIndicator = document.querySelector('.status-indicator');
+    if (statusIndicator) {
+        statusIndicator.className = `status-indicator w-3 h-3 rounded-full ${status}`;
+    }
+    
+    const statusLabels = {
+        'connected': 'Conectado',
+        'connecting': 'Conectando...',
+        'disconnected': 'Desconectado'
+    };
+    
+    const statusText = statusIndicator ? statusIndicator.nextElementSibling : null;
+    if (statusText) {
+        statusText.textContent = statusLabels[status] || 'Desconectado';
+    }
+    
+    // Mostrar estado correspondiente
+    switch (status) {
+        case 'disconnected':
+            if (disconnectedState) {
+                disconnectedState.classList.remove('hidden');
+                console.log('Mostrando estado desconectado');
+            }
+            if (connectBtn) {
+                updateButtonState(connectBtn, false, '<i class="ri-qr-code-line mr-2"></i>Conectar WhatsApp');
+            }
+            break;
+            
+        case 'connecting':
+            if (qrState) {
+                qrState.classList.remove('hidden');
+                console.log('Mostrando estado QR');
+            }
+            break;
+            
+        case 'connected':
+            if (connectedState) {
+                connectedState.classList.remove('hidden');
+                console.log('Mostrando estado conectado');
+            }
+            if (phoneNumber) {
+                const phoneElements = connectedState?.querySelectorAll('.text-green-800');
+                phoneElements?.forEach(el => {
+                    if (el.textContent.includes('34') || el.textContent === '') {
+                        el.textContent = phoneNumber;
+                    }
                 });
             }
-        }
-
-        await createWhatsAppClient(userId);
-        
-        res.json({
-            success: true,
-            status: 'connecting',
-            message: 'Proceso de conexión iniciado'
-        });
-
-    } catch (error) {
-        logger.error(`Error conectando cliente ${userId}:`, error.message);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+            break;
     }
-});
-
-app.post('/api/disconnect', authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
-
-    try {
-        if (!activeClients.has(userId)) {
-            return res.json({
-                success: true,
-                status: 'already_disconnected',
-                message: 'Cliente no estaba conectado'
-            });
-        }
-
-        cleanup(userId);
-        
-        res.json({
-            success: true,
-            status: 'disconnected',
-            message: 'Cliente desconectado correctamente'
-        });
-
-    } catch (error) {
-        logger.error(`Error desconectando cliente ${userId}:`, error.message);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-app.get('/api/status', authenticateToken, (req, res) => {
-    const userId = req.user.userId;
-
-    try {
-        const client = activeClients.get(userId);
-        const pending = pendingConnections.get(userId);
-
-        if (client && client.info) {
-            res.json({
-                success: true,
-                status: 'ready',
-                info: {
-                    phoneNumber: client.info.wid.user,
-                    name: client.info.pushname
-                }
-            });
-        } else if (client || pending) {
-            res.json({
-                success: true,
-                status: 'waiting_qr',
-                qr: pending?.qr || null
-            });
-        } else {
-            res.json({
-                success: true,
-                status: 'disconnected'
-            });
-        }
-    } catch (error) {
-        logger.error(`Error obteniendo status ${userId}:`, error.message);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-app.post('/api/send', authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
-    const { to, message, media } = req.body;
-
-    if (!to || !message) {
-        return res.status(400).json({
-            success: false,
-            error: 'Faltan parámetros requeridos (to, message)'
-        });
-    }
-
-    try {
-        const client = activeClients.get(userId);
-        
-        if (!client || !client.info) {
-            if (!messageQueue.has(userId)) {
-                messageQueue.set(userId, []);
+    
+    // Actualizar estado de secciones dependientes
+    const dependentSections = [
+        'autoMessagesSection',
+        'statsCard',
+        'conversationsCard',
+        'quickMessageSection'
+    ];
+    
+    dependentSections.forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            if (status === 'connected') {
+                section.classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                section.classList.add('opacity-50', 'pointer-events-none');
             }
-            messageQueue.get(userId).push({ to, message, timestamp: Date.now() });
-            
-            return res.json({
-                success: true,
-                queued: true,
-                message: 'Mensaje añadido a la cola'
-            });
-        }
-
-        const sentMessage = await sendMessage(userId, to, message, media);
-        
-        res.json({
-            success: true,
-            messageId: sentMessage.id._serialized,
-            timestamp: sentMessage.timestamp
-        });
-
-    } catch (error) {
-        logger.error(`Error enviando mensaje desde ${userId}:`, error.message);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-app.get('/api/chats', authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
-
-    try {
-        const client = activeClients.get(userId);
-        
-        if (!client || !client.info) {
-            return res.status(400).json({
-                success: false,
-                error: 'Cliente no conectado'
-            });
-        }
-
-        const chats = await client.getChats();
-        const chatList = chats.slice(0, 20).map(chat => ({
-            id: chat.id._serialized,
-            name: chat.name,
-            isGroup: chat.isGroup,
-            lastMessage: chat.lastMessage ? {
-                body: chat.lastMessage.body,
-                timestamp: chat.lastMessage.timestamp,
-                from: chat.lastMessage.from
-            } : null,
-            unreadCount: chat.unreadCount
-        }));
-
-        res.json({
-            success: true,
-            chats: chatList
-        });
-
-    } catch (error) {
-        logger.error(`Error obteniendo chats ${userId}:`, error.message);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-app.get('/api/chat/:chatId/messages', authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
-    const { chatId } = req.params;
-    const limit = parseInt(req.query.limit) || 50;
-
-    try {
-        const client = activeClients.get(userId);
-        
-        if (!client || !client.info) {
-            return res.status(400).json({
-                success: false,
-                error: 'Cliente no conectado'
-            });
-        }
-
-        const chat = await client.getChatById(chatId);
-        const messages = await chat.fetchMessages({ limit });
-
-        const messageList = messages.map(msg => ({
-            id: msg.id._serialized,
-            body: msg.body,
-            from: msg.from,
-            to: msg.to,
-            timestamp: msg.timestamp,
-            fromMe: msg.fromMe,
-            type: msg.type,
-            hasMedia: msg.hasMedia
-        }));
-
-        res.json({
-            success: true,
-            messages: messageList
-        });
-
-    } catch (error) {
-        logger.error(`Error obteniendo mensajes ${userId}:`, error.message);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-app.post('/api/webhook', verifyWebhookSecret, async (req, res) => {
-    const { event, userId, data } = req.body;
-
-    logger.info(`Webhook recibido: ${event} para usuario ${userId}`);
-
-    try {
-        switch (event) {
-            case 'send_message':
-                const client = activeClients.get(userId);
-                if (client && client.info) {
-                    await sendMessage(userId, data.to, data.message, data.media);
-                } else {
-                    if (!messageQueue.has(userId)) {
-                        messageQueue.set(userId, []);
-                    }
-                    messageQueue.get(userId).push({
-                        to: data.to,
-                        message: data.message,
-                        timestamp: Date.now()
-                    });
-                }
-                break;
-
-            case 'disconnect_client':
-                cleanup(userId);
-                break;
-
-            default:
-                logger.warn(`Evento webhook desconocido: ${event}`);
-        }
-
-        res.json({ success: true });
-    } catch (error) {
-        logger.error(`Error procesando webhook:`, error.message);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-app.post('/api/generate-token', (req, res) => {
-    const { userId } = req.body;
-    
-    if (!userId) {
-        return res.status(400).json({
-            success: false,
-            error: 'userId requerido'
-        });
-    }
-
-    const token = jwt.sign(
-        { userId: userId },
-        JWT_SECRET,
-        { expiresIn: '24h' }
-    );
-
-    res.json({
-        success: true,
-        token: token
-    });
-});
-
-app.get('/api/stats', authenticateToken, (req, res) => {
-    const userId = req.user.userId;
-    
-    res.json({
-        success: true,
-        stats: {
-            connectionStatus: activeClients.has(userId) ? 'connected' : 'disconnected',
-            queuedMessages: messageQueue.get(userId)?.length || 0
         }
     });
-});
+}
 
-app.get('/api/conversations', authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
-    const limit = parseInt(req.query.limit) || 5;
-
-    try {
-        const client = activeClients.get(userId);
-        
-        if (!client || !client.info) {
-            return res.json({
-                success: true,
-                conversations: []
-            });
-        }
-
-        const chats = await client.getChats();
-        const conversations = chats.slice(0, limit).map(chat => ({
-            name: chat.name || chat.id.user,
-            phone: chat.id.user,
-            lastMessage: chat.lastMessage?.body || 'Sin mensajes',
-            lastMessageTime: chat.lastMessage ? 
-                new Date(chat.lastMessage.timestamp * 1000).toLocaleTimeString('es-ES', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                }) : '--'
-        }));
-
-        res.json({
-            success: true,
-            conversations: conversations
-        });
-
-    } catch (error) {
-        logger.error(`Error obteniendo conversaciones ${userId}:`, error.message);
-        res.json({
-            success: true,
-            conversations: []
-        });
-    }
-});
-
-app.post('/api/restart-client', authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
-
-    try {
-        logger.info(`Reiniciando cliente para usuario ${userId}`);
-        
-        cleanup(userId);
-        await cleanCorruptedSessions(userId);
-        await createWhatsAppClient(userId);
-        
-        res.json({
-            success: true,
-            message: 'Cliente reiniciado correctamente'
-        });
-
-    } catch (error) {
-        logger.error(`Error reiniciando cliente ${userId}:`, error.message);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-// Manejo de errores global
-app.use((error, req, res, next) => {
-    logger.error('Error no manejado:', error.message);
-    res.status(500).json({
-        success: false,
-        error: 'Error interno del servidor'
-    });
-});
-
-// Manejo de rutas no encontradas
-app.use('*', (req, res) => {
-    res.status(404).json({
-        success: false,
-        error: 'Ruta no encontrada'
-    });
-});
-
-// ========== FUNCIONES DE INICIALIZACIÓN ==========
-
-async function initializeServer() {
-    try {
-        await ensureSessionsDirectory();
-        await initializeSessionsCleanup();
-        
-        logger.info('🚀 Servidor WhatsApp iniciado en puerto ' + PORT);
-        logger.info('📱 Máximo de clientes: ' + MAX_CLIENTS);
-        logger.info('🔐 JWT Secret configurado: ' + !!JWT_SECRET);
-        logger.info('🔗 Webhook URL: ' + WEBAPP_URL);
-        
-        return true;
-    } catch (error) {
-        logger.error('❌ Error inicializando servidor:', error.message);
-        throw error;
+function updateQRCode(qrDataUrl) {
+    const qrContainer = document.getElementById('qrContainer');
+    if (qrContainer) {
+        qrContainer.innerHTML = `
+            <div class="bg-white p-4 rounded-lg shadow-sm inline-block">
+                <img src="${qrDataUrl}" alt="Código QR WhatsApp" class="w-full max-w-xs mx-auto rounded-lg">
+            </div>
+        `;
+        qrContainer.classList.add('active');
+        console.log('QR code actualizado');
     }
 }
 
-async function periodicSessionMaintenance() {
-    logger.info('🧹 Mantenimiento periódico de sesiones');
-    
-    try {
-        const sessionsDir = './sessions';
-        const sessions = await fs.readdir(sessionsDir).catch(() => []);
-        
-        for (const sessionDir of sessions) {
-            if (sessionDir.startsWith('session-client_') || sessionDir.startsWith('wweb_session_client_')) {
-                const sessionPath = path.join(sessionsDir, sessionDir);
-                
-                try {
-                    const stats = await fs.stat(sessionPath);
-                    const ageHours = (Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60);
-                    
-                    // Limpiar sesiones muy antiguas (más de 7 días)
-                    if (ageHours > 168) {
-                        logger.info(`Limpiando sesión muy antigua: ${sessionDir}`);
-                        await fs.rmdir(sessionPath, { recursive: true });
-                    }
-                } catch (error) {
-                    logger.warn(`Error en mantenimiento de sesión ${sessionDir}`);
-                }
-            }
-        }
-    } catch (error) {
-        logger.error('Error en mantenimiento periódico:', error.message);
+function startStatusCheck() {
+    if (checkStatusInterval) return;
+    checkStatusInterval = setInterval(checkStatus, 3000); // Cada 3 segundos
+    console.log('Iniciando verificación de estado WhatsApp...');
+}
+
+function stopStatusCheck() {
+    if (checkStatusInterval) {
+        clearInterval(checkStatusInterval);
+        checkStatusInterval = null;
+        console.log('Deteniendo verificación de estado WhatsApp...');
     }
 }
 
-// ========== MANEJO DE CIERRE GRACEFUL ==========
-
-process.on('SIGINT', async () => {
-    logger.info('🛑 Cerrando servidor (SIGINT)...');
+function refreshQR() {
+    const qrContainer = document.getElementById('qrContainer');
+    if (qrContainer) {
+        qrContainer.innerHTML = `
+            <div class="text-center">
+                <div class="pulse-animation mb-4">
+                    <i class="ri-qr-code-line text-gray-400 text-6xl"></i>
+                </div>
+                <p class="text-gray-500">Actualizando código QR...</p>
+            </div>
+        `;
+        qrContainer.classList.remove('active');
+    }
     
-    const cleanupPromises = [];
-    for (const [userId, client] of activeClients) {
-        cleanupPromises.push(
-            new Promise(async (resolve) => {
-                try {
-                    if (client && typeof client.destroy === 'function') {
-                        await client.destroy();
-                        logger.info(`Cliente ${userId} cerrado correctamente`);
-                    }
-                } catch (error) {
-                    logger.error(`Error cerrando cliente ${userId}:`, error.message);
-                }
-                resolve();
+    // Reiniciar conexión para generar nuevo QR
+    connectWhatsApp();
+}
+
+// =============== FUNCIONES DE ENVÍO ===============
+
+async function sendQuickMessage() {
+    const phoneInput = document.getElementById('quickMessagePhone');
+    const messageInput = document.getElementById('quickMessageText');
+    const sendBtn = document.getElementById('sendQuickBtn');
+    
+    if (!phoneInput || !messageInput || !sendBtn) return;
+    
+    const phone = phoneInput.value.trim();
+    const message = messageInput.value.trim();
+    
+    if (!phone || !message) {
+        showNotification('Por favor, completa todos los campos', 'warning');
+        return;
+    }
+    
+    // Validar formato de teléfono
+    if (!/^\d{8,15}$/.test(phone.replace(/[^\d]/g, ''))) {
+        showNotification('Formato de teléfono inválido. Usa solo números (ej: 34612345678)', 'error');
+        return;
+    }
+    
+    if (message.length > 1000) {
+        showNotification('El mensaje no puede tener más de 1000 caracteres', 'error');
+        return;
+    }
+    
+    try {
+        updateButtonState(sendBtn, true, 'Enviando...');
+        
+        const response = await fetch('/api/send-whatsapp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                to: phone,
+                message: message,
+                clientName: null
             })
-        );
-    }
-    
-    // Esperar máximo 10 segundos para cerrar todos los clientes
-    await Promise.race([
-        Promise.all(cleanupPromises),
-        new Promise(resolve => setTimeout(resolve, 10000))
-    ]);
-    
-    logger.info('✅ Servidor cerrado correctamente');
-    process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-    logger.info('🛑 SIGTERM recibido, cerrando servidor...');
-    
-    for (const [userId, client] of activeClients) {
-        try {
-            if (client && typeof client.destroy === 'function') {
-                await client.destroy();
-                logger.info(`Cliente ${userId} cerrado por SIGTERM`);
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('Mensaje enviado correctamente', 'success');
+            phoneInput.value = '';
+            messageInput.value = '';
+            if (charCount) charCount.textContent = '0/1000';
+            
+            // Actualizar estadísticas
+            setTimeout(loadStats, 1000);
+        } else {
+            if (data.queued) {
+                showNotification('Mensaje añadido a la cola (WhatsApp no conectado)', 'warning');
+            } else {
+                showNotification('Error enviando mensaje: ' + data.error, 'error');
             }
-        } catch (error) {
-            logger.error(`Error cerrando cliente ${userId}:`, error.message);
         }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error enviando mensaje', 'error');
+    } finally {
+        updateButtonState(sendBtn, false, '<i class="ri-send-plane-fill mr-2"></i>Enviar Mensaje');
     }
-    
-    logger.info('✅ Cierre graceful completado');
-    process.exit(0);
-});
+}
 
-// ========== MONITOREO Y MANTENIMIENTO ==========
+// =============== FUNCIONES DE CONFIGURACIÓN ===============
 
-// Monitoreo de memoria cada 5 minutos
-setInterval(() => {
-    const memUsage = process.memoryUsage();
-    const memUsageMB = {
-        rss: Math.round(memUsage.rss / 1024 / 1024),
-        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
-        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
-        external: Math.round(memUsage.external / 1024 / 1024)
+async function loadAutoMessageConfig() {
+    try {
+        const response = await fetch('/api/get-auto-message-config');
+        const data = await response.json();
+        
+        if (data.success) {
+            const checkboxes = {
+                'autoConfirmation': data.config.confirmacion || false,
+                'autoReminders': data.config.recordatorio || false,
+                'autoWelcome': data.config.bienvenida || false
+            };
+            
+            Object.entries(checkboxes).forEach(([id, checked]) => {
+                const checkbox = document.getElementById(id);
+                if (checkbox) checkbox.checked = checked;
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando configuración:', error);
+    }
+}
+
+async function saveAutoMessageConfig() {
+    const config = {
+        confirmacion: document.getElementById('autoConfirmation')?.checked || false,
+        recordatorio: document.getElementById('autoReminders')?.checked || false,
+        bienvenida: document.getElementById('autoWelcome')?.checked || false
     };
     
-    logger.debug('Uso de memoria:', {
-        ...memUsageMB,
-        activeClients: activeClients.size,
-        pendingConnections: pendingConnections.size
-    });
-    
-    // Alertar si el uso de memoria es muy alto
-    if (memUsageMB.heapUsed > 1024) {
-        logger.warn(`⚠️ Alto uso de memoria: ${memUsageMB.heapUsed}MB heap used`);
-        
-        // Si supera 2GB, forzar garbage collection
-        if (memUsageMB.heapUsed > 2048) {
-            logger.warn('🗑️ Forzando garbage collection');
-            if (global.gc) {
-                global.gc();
-            }
-        }
-    }
-}, 300000);
-
-// Limpiar conexiones pendientes expiradas cada minuto
-setInterval(() => {
-    const now = Date.now();
-    const timeout = 10 * 60 * 1000; // 10 minutos
-    
-    for (const [userId, connection] of pendingConnections) {
-        if (now - connection.timestamp > timeout) {
-            logger.info(`Limpiando conexión pendiente expirada para usuario ${userId}`);
-            pendingConnections.delete(userId);
-            
-            // También limpiar el cliente si no está conectado
-            if (activeClients.has(userId)) {
-                const client = activeClients.get(userId);
-                if (!client.info) {
-                    cleanup(userId);
-                }
-            }
-        }
-    }
-}, 60000);
-
-// Mantenimiento periódico de sesiones cada 6 horas
-setInterval(periodicSessionMaintenance, 6 * 60 * 60 * 1000);
-
-// Verificar estado de clientes cada 30 segundos
-setInterval(() => {
-    for (const [userId, client] of activeClients) {
-        try {
-            // Si el cliente existe pero no tiene info después de mucho tiempo, limpiar
-            if (!client.info && !pendingConnections.has(userId)) {
-                const clientAge = Date.now() - (client._createdAt || 0);
-                if (clientAge > 300000) { // 5 minutos
-                    logger.warn(`Cliente ${userId} sin info después de 5 minutos, limpiando`);
-                    cleanup(userId);
-                }
-            }
-        } catch (error) {
-            logger.error(`Error verificando estado del cliente ${userId}:`, error.message);
-            cleanup(userId);
-        }
-    }
-}, 30000);
-
-// ========== INICIAR SERVIDOR ==========
-
-app.listen(PORT, async () => {
     try {
-        await initializeServer();
+        const response = await fetch('/api/save-auto-message-config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(config)
+        });
         
-        // Ejecutar mantenimiento inicial después de un minuto
-        setTimeout(periodicSessionMaintenance, 60000);
+        const data = await response.json();
         
-        logger.info('✅ Servidor completamente inicializado y funcionando');
-        
+        if (data.success) {
+            showNotification('Configuración guardada correctamente', 'success');
+        } else {
+            showNotification('Error guardando configuración: ' + data.error, 'error');
+        }
     } catch (error) {
-        logger.error('💥 Error fatal durante inicialización:', error.message);
-        process.exit(1);
+        console.error('Error:', error);
+        showNotification('Error guardando configuración', 'error');
     }
+}
+
+// =============== FUNCIONES DE ESTADÍSTICAS ===============
+
+async function loadStats() {
+    try {
+        const response = await fetch('/api/whatsapp-stats');
+        const data = await response.json();
+        
+        if (data.success) {
+            updateStatsDisplay(data.stats);
+        }
+    } catch (error) {
+        console.error('Error cargando estadísticas:', error);
+    }
+}
+
+function updateStatsDisplay(stats) {
+    const elements = {
+        'messagesSent': stats.messagesSent || 0,
+        'messagesReceived': stats.messagesReceived || 0,
+        'activeChats': stats.activeChats || 0
+    };
+    
+    Object.entries(elements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    });
+}
+
+async function loadInitialData() {
+    try {
+        await Promise.all([
+            loadStats(),
+            loadConversationsPreview()
+        ]);
+    } catch (error) {
+        console.error('Error cargando datos iniciales:', error);
+    }
+}
+
+async function loadConversationsPreview() {
+    try {
+        const response = await fetch('/api/whatsapp-conversations?limit=3');
+        const data = await response.json();
+        
+        const container = document.getElementById('conversationsPreview');
+        if (!container) return;
+        
+        if (data.success && data.conversations.length > 0) {
+            container.innerHTML = data.conversations.map(conv => `
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-medium text-sm">${conv.name || conv.phone}</span>
+                        <span class="text-xs text-gray-500">${conv.lastMessageTime}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 truncate">${conv.lastMessage}</p>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = `
+                <div class="text-center text-gray-500 py-4">
+                    <i class="ri-chat-3-line text-2xl mb-2"></i>
+                    <p class="text-sm">No hay conversaciones recientes</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error cargando conversaciones:', error);
+    }
+}
+
+// =============== FUNCIONES DE SERVIDOR ===============
+
+async function testWhatsAppConnection() {
+    try {
+        const startTime = Date.now();
+        const response = await fetch('/api/whatsapp-status');
+        const responseTime = Date.now() - startTime;
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(`Conexión OK (${responseTime}ms)`, 'success');
+            updateServerStatus('online', responseTime);
+        } else {
+            showNotification('Error en la conexión: ' + data.error, 'error');
+            updateServerStatus('error', responseTime);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('No se pudo conectar con el servidor', 'error');
+        updateServerStatus('offline', null);
+    }
+}
+
+function updateServerStatus(status, responseTime) {
+    const serverStatusEl = document.getElementById('serverStatus');
+    const lastCheckEl = document.getElementById('lastCheck');
+    const responseTimeEl = document.getElementById('responseTime');
+    
+    if (serverStatusEl) {
+        const statusConfig = {
+            online: {
+                class: 'bg-green-100 text-green-800',
+                text: 'Online',
+                icon: 'bg-green-500'
+            },
+            offline: {
+                class: 'bg-red-100 text-red-800',
+                text: 'Offline',
+                icon: 'bg-red-500'
+            },
+            error: {
+                class: 'bg-yellow-100 text-yellow-800',
+                text: 'Error',
+                icon: 'bg-yellow-500'
+            }
+        };
+        
+        const config = statusConfig[status] || statusConfig.offline;
+        serverStatusEl.className = `inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.class}`;
+        serverStatusEl.innerHTML = `<span class="w-1.5 h-1.5 ${config.icon} rounded-full mr-1"></span>${config.text}`;
+    }
+    
+    if (lastCheckEl) {
+        lastCheckEl.textContent = new Date().toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+    
+    if (responseTimeEl) {
+        responseTimeEl.textContent = responseTime ? `${responseTime} ms` : '-- ms';
+    }
+}
+
+async function refreshServerStatus(showNotification = true) {
+    try {
+        const startTime = Date.now();
+        const response = await fetch('/api/whatsapp-status');
+        const responseTime = Date.now() - startTime;
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            if (showNotification) {
+                // Solo mostrar notificación si se llama manualmente
+                // showNotification(`Servidor OK (${responseTime}ms)`, 'success');
+            }
+            updateServerStatus('online', responseTime);
+        } else {
+            updateServerStatus('error', responseTime);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        updateServerStatus('offline', null);
+    }
+}
+
+// =============== FUNCIONES HELPER ===============
+
+function updateButtonState(button, loading, text) {
+    if (!button) return;
+    
+    if (loading) {
+        button.disabled = true;
+        if (typeof text === 'string' && !text.includes('<')) {
+            button.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                ${text}
+            `;
+        } else {
+            button.innerHTML = text;
+        }
+    } else {
+        button.disabled = false;
+        button.innerHTML = text;
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Buscar elementos de notificación existentes
+    let successMessage = document.getElementById('successMessage');
+    let errorMessage = document.getElementById('errorMessage');
+    
+    // Si no existen, crearlos dinámicamente
+    if (!successMessage) {
+        successMessage = createNotificationElement('successMessage', 'success');
+    }
+    if (!errorMessage) {
+        errorMessage = createNotificationElement('errorMessage', 'error');
+    }
+    
+    const isSuccess = type === 'success' || type === 'info';
+    const messageEl = isSuccess ? successMessage : errorMessage;
+    const textEl = messageEl.querySelector('[id$="Text"]');
+    
+    if (textEl) {
+        textEl.textContent = message;
+        messageEl.classList.remove('hidden');
+        
+        setTimeout(() => {
+            messageEl.classList.add('hidden');
+        }, 5000);
+    } else {
+        // Fallback
+        console.log(`${type.toUpperCase()}:`, message);
+        if (type === 'error') {
+            alert('Error: ' + message);
+        }
+    }
+}
+
+function createNotificationElement(id, type) {
+    const isSuccess = type === 'success';
+    const bgColor = isSuccess ? 'bg-green-100' : 'bg-red-100';
+    const textColor = isSuccess ? 'text-green-800' : 'text-red-800';
+    const icon = isSuccess ? 'ri-check-line' : 'ri-error-warning-line';
+    
+    const element = document.createElement('div');
+    element.id = id;
+    element.className = `hidden fixed top-4 right-4 ${bgColor} ${textColor} px-4 py-3 rounded-lg shadow-lg z-50`;
+    element.innerHTML = `
+        <div class="flex items-center">
+            <i class="${icon} mr-2"></i>
+            <span id="${id.replace('Message', 'Text')}"></span>
+        </div>
+    `;
+    
+    document.body.appendChild(element);
+    return element;
+}
+
+// Cleanup al salir de la página
+window.addEventListener('beforeunload', function() {
+    stopStatusCheck();
 });
 
-// Exportar para testing
-module.exports = app;
+// Exponer funciones globales necesarias
+window.sendQuickMessage = sendQuickMessage;
+window.saveAutoMessageConfig = saveAutoMessageConfig;
+window.testWhatsAppConnection = testWhatsAppConnection;
+window.refreshServerStatus = refreshServerStatus;
+</script>

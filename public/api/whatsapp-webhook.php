@@ -81,7 +81,7 @@ try {
             break;
             
         default:
-            logWhatsApp("Evento webhook desconocido: {$event}", 'WARNING');
+            error_log("WARNING: Evento webhook desconocido: {$event}");
             break;
     }
     
