@@ -149,7 +149,7 @@ include 'includes/header.php';
     </div>
     
     <!-- Estado de conexión -->
-    <div class="flex items-center space-x-3">
+    <div class="flex items-center space-x-3" data-status="<?php echo $connectionStatus; ?>">
         <div class="status-indicator w-3 h-3 rounded-full <?php echo $connectionStatus; ?>"></div>
         <span class="text-sm font-medium text-gray-700 capitalize">
             <?php 
@@ -226,7 +226,7 @@ include 'includes/header.php';
             </div>
             
             <!-- Estado conectado -->
-            <div id="connectedState" class="<?php echo $connectionStatus !== 'connected' ? 'hidden' : ''; ?>">
+            <div id="connectedState" class="<?php echo $connectionStatus == 'connected' ||  $connectionStatus == 'ready' ? '' : 'hidden'; ?>">
                 <div class="text-center py-6 mb-6">
                     <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <i class="ri-whatsapp-line text-green-600 text-3xl"></i>
@@ -526,679 +526,624 @@ include 'includes/header.php';
 </div>
 
 <script>
-// Variables globales
-let currentStatus = '<?php echo $connectionStatus; ?>';
-let checkStatusInterval = null;
-
-// Elementos del DOM - se inicializarán en DOMContentLoaded
-let connectBtn, disconnectBtn, refreshQrBtn, disconnectModal, confirmDisconnect, cancelDisconnect;
-let quickMessageText, charCount;
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar elementos del DOM
-    connectBtn = document.getElementById('connectBtn');
-    disconnectBtn = document.getElementById('disconnectBtn');
-    refreshQrBtn = document.getElementById('refreshQrBtn');
-    disconnectModal = document.getElementById('disconnectModal');
-    confirmDisconnect = document.getElementById('confirmDisconnect');
-    cancelDisconnect = document.getElementById('cancelDisconnect');
-    quickMessageText = document.getElementById('quickMessageText');
-    charCount = document.getElementById('charCount');
-    
-    // Verificar que currentStatus esté definido
-    if (typeof currentStatus === 'undefined' || !currentStatus) {
-        currentStatus = 'disconnected';
-        console.warn('currentStatus no definido, usando valor por defecto: disconnected');
-    }
-    
-    // Event listeners principales
-    if (connectBtn) {
-        connectBtn.addEventListener('click', connectWhatsApp);
-    }
-    
-    if (disconnectBtn) {
-        disconnectBtn.addEventListener('click', () => {
-            disconnectModal.classList.remove('hidden');
-            disconnectModal.classList.add('flex');
-        });
-    }
-    
-    if (refreshQrBtn) {
-        refreshQrBtn.addEventListener('click', refreshQR);
-    }
-    
-    if (confirmDisconnect) {
-        confirmDisconnect.addEventListener('click', disconnectWhatsApp);
-    }
-    
-    if (cancelDisconnect) {
-        cancelDisconnect.addEventListener('click', () => {
-            disconnectModal.classList.add('hidden');
-            disconnectModal.classList.remove('flex');
-        });
-    }
-    
-    // Contador de caracteres para mensaje rápido
-    if (quickMessageText && charCount) {
-        quickMessageText.addEventListener('input', function() {
-            const count = this.value.length;
-            charCount.textContent = `${count}/1000`;
+    class WhatsAppManager {
+        constructor() {
+            this.currentStatus = document.querySelector('[data-status]')?.dataset.status || 'disconnected';
+            this.statusInterval = null;
+            this.elements = {};
             
-            if (count > 1000) {
-                charCount.classList.add('text-red-500');
-                this.value = this.value.substring(0, 1000);
-                charCount.textContent = '1000/1000';
-            } else {
-                charCount.classList.remove('text-red-500');
-            }
-        });
-    }
-    
-    // Inicialización según estado actual
-    initializePage();
-    
-    // Auto-verificar estado del servidor cada 2 minutos si está conectado
-    // if (currentStatus === 'connected' || currentStatus === 'ready') {
-    //     setInterval(refreshServerStatus, 120000);
-    // }
-});
-
-// Inicializar página según estado
-function initializePage() {
-    console.log('Inicializando página con estado:', currentStatus);
-    
-    if (currentStatus === 'connecting' || currentStatus === 'waiting_qr') {
-        startStatusCheck();
-    } else if (currentStatus === 'connected' || currentStatus === 'ready') {
-        loadInitialData();
-        loadAutoMessageConfig();
-        loadStats();
-    }
-    
-    // Actualizar estado del servidor
-    //refreshServerStatus();
-}
-
-// =============== FUNCIONES DE CONEXIÓN ===============
-
-async function connectWhatsApp() {
-    try {
-        updateButtonState(connectBtn, true, 'Conectando...');
-        
-        const response = await fetch('/api/whatsapp-connect', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            updateConnectionStatus('connecting');
-            startStatusCheck();
-            showNotification('Iniciando conexión de WhatsApp...', 'info');
-        } else {
-            showNotification('Error al conectar: ' + (data.error || 'Error desconocido'), 'error');
-            updateButtonState(connectBtn, false, '<i class="ri-qr-code-line mr-2"></i>Conectar WhatsApp');
+            this.init();
         }
-    } catch (error) {
-        console.error('Error:', error);
-        showNotification('Error al conectar con el servidor', 'error');
-        updateButtonState(connectBtn, false, '<i class="ri-qr-code-line mr-2"></i>Conectar WhatsApp');
-    }
-}
 
-async function disconnectWhatsApp() {
-    try {
-        updateButtonState(confirmDisconnect, true, 'Desconectando...');
-        
-        const response = await fetch('/api/whatsapp-disconnect', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+        init() {
+            this.cacheElements();
+            this.bindEvents();
+            this.updateUI();
+            
+            // Auto-inicializar según estado
+            if (this.currentStatus === 'connecting') {
+                this.startStatusCheck();
+            } else if (this.currentStatus === 'connected') {
+                this.loadConnectedData();
             }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            updateConnectionStatus('disconnected');
-            stopStatusCheck();
-            disconnectModal.classList.add('hidden');
-            disconnectModal.classList.remove('flex');
-            showNotification('WhatsApp desconectado correctamente', 'success');
-        } else {
-            showNotification('Error al desconectar: ' + (data.error || 'Error desconocido'), 'error');
         }
-    } catch (error) {
-        console.error('Error:', error);
-        showNotification('Error al desconectar', 'error');
-    } finally {
-        updateButtonState(confirmDisconnect, false, 'Desconectar');
-    }
-}
 
-// =============== FUNCIONES DE ESTADO ===============
-
-async function checkStatus() {
-    try {
-        console.log('Invocando api/whatsapp-status');
-        const response = await fetch('/api/whatsapp-status');
-        const data = await response.json();        
-
-        if (data.success)
-        {
-            console.log('Obtenido status: ', data.status);
-
-           // if(data.status !== currentStatus) {
-                updateConnectionStatus(data.status, data.phoneNumber);
+        cacheElements() {
+            this.elements = {
+                // Estados
+                disconnectedState: document.getElementById('disconnectedState'),
+                qrState: document.getElementById('qrState'),
+                connectedState: document.getElementById('connectedState'),
                 
-                if (data.status === 'ready' || data.status === 'connected') {
-                    stopStatusCheck();
-                    showNotification('¡WhatsApp conectado correctamente!', 'success');
-                    loadInitialData();
-                    loadAutoMessageConfig();
-                    loadStats();
-                } else if (data.status === 'disconnected') {
-                    stopStatusCheck();
-                }
-                else
-                {
-                    console.log('status sin acción');
-                }
-            //}
-        }
-        else {            
-            console.error('Error al obtener status', data.status);
-        }
-        
-        // Actualizar QR si está disponible
-        if (data.qr && (currentStatus === 'connecting' || currentStatus === 'waiting_qr')) {
-            console.log('updateQRCode:', data.qr);
-            updateQRCode(data.qr);
-        }
-    } catch (error) {
-        console.error('Error checking status:', error);
-    }
-}
-
-function updateConnectionStatus(status, phoneNumber = null) {
-    currentStatus = status;
-    console.log('Actualizando estado a:', status);
-    
-    // Ocultar todos los estados
-    const disconnectedState = document.getElementById('disconnectedState');
-    const qrState = document.getElementById('qrState');
-    const connectedState = document.getElementById('connectedState');
-    
-    if (disconnectedState) disconnectedState.classList.add('hidden');
-    if (qrState) qrState.classList.add('hidden');
-    if (connectedState) connectedState.classList.add('hidden');
-    
-    // Actualizar indicador de estado
-    const statusIndicator = document.querySelector('.status-indicator');
-    if (statusIndicator) {
-        const statusClass = (status === 'ready' || status === 'connected') ? 'connected' : status;
-        statusIndicator.className = `status-indicator w-3 h-3 rounded-full ${statusClass}`;
-    }
-    
-    const statusLabels = {
-        'ready': 'Conectado',
-        'connected': 'Conectado',
-        'connecting': 'Conectando...',
-        'waiting_qr': 'Esperando QR...',
-        'disconnected': 'Desconectado'
-    };
-    
-    const statusText = statusIndicator ? statusIndicator.nextElementSibling : null;
-    if (statusText) {
-        statusText.textContent = statusLabels[status] || 'Desconectado';
-    }
-    
-    // Mostrar estado correspondiente
-    switch (status) {
-        case 'disconnected':
-            if (disconnectedState) disconnectedState.classList.remove('hidden');
-            if (connectBtn) {
-                updateButtonState(connectBtn, false, '<i class="ri-qr-code-line mr-2"></i>Conectar WhatsApp');
-            }
-            break;
-            
-        case 'connecting':
-        case 'waiting_qr':
-            if (qrState) qrState.classList.remove('hidden');
-            break;
-            
-        case 'ready':
-        case 'connected':
-            if (connectedState) connectedState.classList.remove('hidden');
-            if (phoneNumber) {
-                const phoneElements = document.querySelectorAll('#connectedState .text-green-800');
-                phoneElements.forEach(el => {
-                    if (el.textContent.includes('34') || el.textContent === '') {
-                        el.textContent = phoneNumber;
-                    }
-                });
-            }
-            break;
-    }
-    
-    // Actualizar estado de secciones dependientes
-    const dependentSections = [
-        'autoMessagesSection',
-        'statsCard',
-        'conversationsCard',
-        'quickMessageSection'
-    ];
-    
-    dependentSections.forEach(sectionId => {
-        const section = document.getElementById(sectionId);
-        if (section) {
-            if (status === 'ready' || status === 'connected') {
-                section.classList.remove('opacity-50', 'pointer-events-none');
-            } else {
-                section.classList.add('opacity-50', 'pointer-events-none');
-            }
-        }
-    });
-}
-
-function updateQRCode(qrDataUrl) {
-    const qrContainer = document.getElementById('qrContainer');
-    if (qrContainer) {
-        qrContainer.innerHTML = `
-            <div class="bg-white p-4 rounded-lg shadow-sm inline-block">
-                <img src="${qrDataUrl}" alt="Código QR WhatsApp" class="w-full max-w-xs mx-auto rounded-lg">
-            </div>
-        `;
-        qrContainer.classList.add('active');
-    }
-}
-
-function startStatusCheck() {
-    if (checkStatusInterval) return;
-    checkStatusInterval = setInterval(checkStatus, 3000); // Cada 3 segundos
-    console.log('Iniciando verificación de estado WhatsApp...');
-}
-
-function stopStatusCheck() {
-    if (checkStatusInterval) {
-        clearInterval(checkStatusInterval);
-        checkStatusInterval = null;
-        console.log('Deteniendo verificación de estado WhatsApp...');
-    }
-}
-
-function refreshQR() {
-    const qrContainer = document.getElementById('qrContainer');
-    if (qrContainer) {
-        qrContainer.innerHTML = `
-            <div class="text-center">
-                <div class="pulse-animation mb-4">
-                    <i class="ri-qr-code-line text-gray-400 text-6xl"></i>
-                </div>
-                <p class="text-gray-500">Actualizando código QR...</p>
-            </div>
-        `;
-        qrContainer.classList.remove('active');
-    }
-    
-    // Reiniciar conexión para generar nuevo QR
-    connectWhatsApp();
-}
-
-// =============== FUNCIONES DE ENVÍO ===============
-
-async function sendQuickMessage() {
-    const phoneInput = document.getElementById('quickMessagePhone');
-    const messageInput = document.getElementById('quickMessageText');
-    const sendBtn = document.getElementById('sendQuickBtn');
-    
-    if (!phoneInput || !messageInput || !sendBtn) return;
-    
-    const phone = phoneInput.value.trim();
-    const message = messageInput.value.trim();
-    
-    if (!phone || !message) {
-        showNotification('Por favor, completa todos los campos', 'warning');
-        return;
-    }
-    
-    // Validar formato de teléfono
-    if (!/^\d{8,15}$/.test(phone.replace(/[^\d]/g, ''))) {
-        showNotification('Formato de teléfono inválido. Usa solo números (ej: 34612345678)', 'error');
-        return;
-    }
-    
-    if (message.length > 1000) {
-        showNotification('El mensaje no puede tener más de 1000 caracteres', 'error');
-        return;
-    }
-    
-    try {
-        updateButtonState(sendBtn, true, 'Enviando...');
-        
-        const response = await fetch('/api/send-whatsapp', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                to: phone,
-                message: message,
-                clientName: null
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showNotification('Mensaje enviado correctamente', 'success');
-            phoneInput.value = '';
-            messageInput.value = '';
-            if (charCount) charCount.textContent = '0/1000';
-            
-            // Actualizar estadísticas
-            setTimeout(loadStats, 1000);
-        } else {
-            if (data.queued) {
-                showNotification('Mensaje añadido a la cola (WhatsApp no conectado)', 'warning');
-            } else {
-                showNotification('Error enviando mensaje: ' + data.error, 'error');
-            }
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        showNotification('Error enviando mensaje', 'error');
-    } finally {
-        updateButtonState(sendBtn, false, '<i class="ri-send-plane-fill mr-2"></i>Enviar Mensaje');
-    }
-}
-
-// =============== FUNCIONES DE CONFIGURACIÓN ===============
-
-async function loadAutoMessageConfig() {
-    try {
-        const response = await fetch('/api/get-auto-message-config');
-        const data = await response.json();
-        
-        if (data.success) {
-            const checkboxes = {
-                'autoConfirmation': data.config.confirmacion || false,
-                'autoReminders': data.config.recordatorio || false,
-                'autoWelcome': data.config.bienvenida || false
+                // Botones principales
+                connectBtn: document.getElementById('connectBtn'),
+                disconnectBtn: document.getElementById('disconnectBtn'),
+                refreshQrBtn: document.getElementById('refreshQrBtn'),
+                
+                // Modal
+                disconnectModal: document.getElementById('disconnectModal'),
+                confirmDisconnect: document.getElementById('confirmDisconnect'),
+                cancelDisconnect: document.getElementById('cancelDisconnect'),
+                
+                // Mensaje rápido
+                quickMessagePhone: document.getElementById('quickMessagePhone'),
+                quickMessageText: document.getElementById('quickMessageText'),
+                sendQuickBtn: document.getElementById('sendQuickBtn'),
+                charCount: document.getElementById('charCount'),
+                
+                // Estado y estadísticas
+                statusIndicator: document.querySelector('.status-indicator'),
+                statusText: document.querySelector('.status-indicator + span'),
+                qrContainer: document.getElementById('qrContainer'),
+                
+                // Stats
+                messagesSent: document.getElementById('messagesSent'),
+                messagesReceived: document.getElementById('messagesReceived'),
+                activeChats: document.getElementById('activeChats'),
+                conversationsPreview: document.getElementById('conversationsPreview')
             };
+        }
+
+        bindEvents() {
+            // Botones principales
+            this.elements.connectBtn?.addEventListener('click', () => this.connect());
+            this.elements.disconnectBtn?.addEventListener('click', () => this.showDisconnectModal());
+            this.elements.refreshQrBtn?.addEventListener('click', () => this.refreshQR());
             
-            Object.entries(checkboxes).forEach(([id, checked]) => {
-                const checkbox = document.getElementById(id);
-                if (checkbox) checkbox.checked = checked;
+            // Modal
+            this.elements.confirmDisconnect?.addEventListener('click', () => this.disconnect());
+            this.elements.cancelDisconnect?.addEventListener('click', () => this.hideDisconnectModal());
+            
+            // Mensaje rápido
+            this.elements.sendQuickBtn?.addEventListener('click', () => this.sendQuickMessage());
+            this.elements.quickMessageText?.addEventListener('input', (e) => this.updateCharCount(e));
+            
+            // Cerrar modal al hacer click fuera
+            this.elements.disconnectModal?.addEventListener('click', (e) => {
+                if (e.target === this.elements.disconnectModal) {
+                    this.hideDisconnectModal();
+                }
             });
         }
-    } catch (error) {
-        console.error('Error cargando configuración:', error);
-    }
-}
 
-async function saveAutoMessageConfig() {
-    const config = {
-        confirmacion: document.getElementById('autoConfirmation')?.checked || false,
-        recordatorio: document.getElementById('autoReminders')?.checked || false,
-        bienvenida: document.getElementById('autoWelcome')?.checked || false
-    };
-    
-    try {
-        const response = await fetch('/api/save-auto-message-config', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(config)
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showNotification('Configuración guardada correctamente', 'success');
-        } else {
-            showNotification('Error guardando configuración: ' + data.error, 'error');
+        // =============== GESTIÓN DE ESTADO ===============
+
+        updateStatus(newStatus, phoneNumber = null) {
+            console.log('Actualizando estado:', this.currentStatus, '->', newStatus);
+            this.currentStatus = newStatus;
+            this.updateUI(phoneNumber);
+            
+            // Gestionar verificación automática
+            if (newStatus === 'connecting') {
+                this.startStatusCheck();
+            } else if (newStatus === 'connected' || newStatus === 'ready') {
+                this.stopStatusCheck();
+                this.loadConnectedData();
+                this.showNotification('¡WhatsApp conectado correctamente!', 'success');
+            } else if (newStatus === 'disconnected') {
+                this.stopStatusCheck();
+            }
         }
-    } catch (error) {
-        console.error('Error:', error);
-        showNotification('Error guardando configuración', 'error');
-    }
-}
 
-// =============== FUNCIONES DE ESTADÍSTICAS ===============
-
-async function loadStats() {
-    try {
-        const response = await fetch('/api/whatsapp-stats');
-        const data = await response.json();
-        
-        if (data.success) {
-            updateStatsDisplay(data.stats);
+        updateUI(phoneNumber = null) {
+            // Actualizar indicador visual
+            this.updateStatusIndicator();
+            
+            // Mostrar/ocultar estados
+            this.showCorrectState();
+            
+            // Actualizar número de teléfono si se proporciona
+            if (phoneNumber && this.currentStatus === 'connected') {
+                this.updatePhoneNumber(phoneNumber);
+            }
+            
+            // Habilitar/deshabilitar secciones
+            this.toggleSections();
         }
-    } catch (error) {
-        console.error('Error cargando estadísticas:', error);
-    }
-}
 
-function updateStatsDisplay(stats) {
-    const elements = {
-        'messagesSent': stats.messagesSent || 0,
-        'messagesReceived': stats.messagesReceived || 0,
-        'activeChats': stats.activeChats || 0
-    };
-    
-    Object.entries(elements).forEach(([id, value]) => {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
-    });
-}
+        updateStatusIndicator() {
+            if (!this.elements.statusIndicator || !this.elements.statusText) return;
+            
+            const statusConfig = {
+                ready: { class: 'connected', text: 'Conectado' },
+                connected: { class: 'connected', text: 'Conectado' },
+                connecting: { class: 'connecting', text: 'Conectando...' },
+                waiting_qr: { class: 'connecting', text: 'Esperando QR...' },
+                disconnected: { class: 'disconnected', text: 'Desconectado' }
+            };
+            
+            const config = statusConfig[this.currentStatus] || statusConfig.disconnected;
+            
+            this.elements.statusIndicator.className = `status-indicator w-3 h-3 rounded-full ${config.class}`;
+            this.elements.statusText.textContent = config.text;
+        }
 
-async function loadInitialData() {
-    try {
-        await Promise.all([
-            loadStats(),
-            loadConversationsPreview(),
-           //refreshServerStatus()
-        ]);
-    } catch (error) {
-        console.error('Error cargando datos iniciales:', error);
-    }
-}
+        showCorrectState() {
+            // Ocultar todos los estados
+            [this.elements.disconnectedState, this.elements.qrState, this.elements.connectedState]
+                .forEach(el => el?.classList.add('hidden'));
+            
+            // Mostrar el estado correcto
+            switch (this.currentStatus) {
+                case 'disconnected':
+                    this.elements.disconnectedState?.classList.remove('hidden');
+                    break;
+                case 'connecting':
+                case 'waiting_qr':
+                    this.elements.qrState?.classList.remove('hidden');
+                    break;
+                case 'connected':
+                case 'ready':
+                    this.elements.connectedState?.classList.remove('hidden');
+                    break;
+            }
+        }
 
-async function loadConversationsPreview() {
-    try {
-        const response = await fetch('/api/whatsapp-conversations?limit=3');
-        const data = await response.json();
-        
-        const container = document.getElementById('conversationsPreview');
-        if (!container) return;
-        
-        if (data.success && data.conversations.length > 0) {
-            container.innerHTML = data.conversations.map(conv => `
-                <div class="p-3 bg-gray-50 rounded-lg">
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="font-medium text-sm">${conv.name || conv.phone}</span>
-                        <span class="text-xs text-gray-500">${conv.lastMessageTime}</span>
+        updatePhoneNumber(phoneNumber) {
+            const phoneElements = document.querySelectorAll('#connectedState .text-green-800');
+            phoneElements.forEach(el => {
+                if (el.textContent.includes('34') || el.textContent === '') {
+                    el.textContent = phoneNumber;
+                }
+            });
+        }
+
+        toggleSections() {
+            const dependentSections = [
+                'autoMessagesSection', 'statsCard', 
+                'conversationsCard', 'quickMessageSection'
+            ];
+            
+            const isActive = this.currentStatus === 'connected';
+            
+            dependentSections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.classList.toggle('opacity-50', !isActive);
+                    section.classList.toggle('pointer-events-none', !isActive);
+                }
+            });
+        }
+
+        // =============== VERIFICACIÓN DE ESTADO ===============
+
+        startStatusCheck() {
+            if (this.statusInterval) return;
+            
+            console.log('Iniciando verificación de estado...');
+            this.statusInterval = setInterval(() => this.checkStatus(), 3000);
+        }
+
+        stopStatusCheck() {
+            if (this.statusInterval) {
+                clearInterval(this.statusInterval);
+                this.statusInterval = null;
+                console.log('Deteniendo verificación de estado...');
+            }
+        }
+
+        async checkStatus() {
+            try {
+                const response = await fetch('/api/whatsapp-status');
+                const data = await response.json();
+                
+                console.log('Comprobando estado server: api/whatsapp-status');
+                if (data.success) {
+                    
+                    console.log('Obtenido estado server: ', data.status, '. Estado cliente:' , this.currentStatus);
+                    // Solo actualizar si hay cambio de estado
+                    if (data.status !== this.currentStatus) {
+                        this.updateStatus(data.status, data.phoneNumber);
+                    }
+                    
+                    // Actualizar QR si está disponible
+                    if (data.qr && (this.currentStatus === 'connecting' || this.currentStatus === 'waiting_qr')) {
+                        this.updateQR(data.qr);
+                    }
+                }
+            } catch (error) {
+                console.error('Error verificando estado:', error);
+            }
+        }
+
+        // =============== CONEXIÓN/DESCONEXIÓN ===============
+
+        async connect() {
+            try {
+                this.setButtonLoading(this.elements.connectBtn, true, 'Conectando...');
+                
+                const response = await fetch('/api/whatsapp-connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.updateStatus('connecting');
+                    this.showNotification('Iniciando conexión de WhatsApp...', 'info');
+                } else {
+                    throw new Error(data.error || 'Error desconocido');
+                }
+            } catch (error) {
+                console.error('Error conectando:', error);
+                this.showNotification('Error al conectar: ' + error.message, 'error');
+                this.setButtonLoading(this.elements.connectBtn, false, '<i class="ri-qr-code-line mr-2"></i>Conectar WhatsApp');
+            }
+        }
+
+        async disconnect() {
+            try {
+                this.setButtonLoading(this.elements.confirmDisconnect, true, 'Desconectando...');
+                
+                const response = await fetch('/api/whatsapp-disconnect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.updateStatus('disconnected');
+                    this.hideDisconnectModal();
+                    this.showNotification('WhatsApp desconectado correctamente', 'success');
+                } else {
+                    throw new Error(data.error || 'Error desconocido');
+                }
+            } catch (error) {
+                console.error('Error desconectando:', error);
+                this.showNotification('Error al desconectar: ' + error.message, 'error');
+            } finally {
+                this.setButtonLoading(this.elements.confirmDisconnect, false, 'Desconectar');
+            }
+        }
+
+        refreshQR() {
+            this.showQRLoading();
+            this.connect(); // Reiniciar conexión para nuevo QR
+        }
+
+        updateQR(qrDataUrl) {
+            if (this.elements.qrContainer) {
+                this.elements.qrContainer.innerHTML = `
+                    <div class="bg-white p-4 rounded-lg shadow-sm inline-block">
+                        <img src="${qrDataUrl}" alt="Código QR WhatsApp" class="w-full max-w-xs mx-auto rounded-lg">
                     </div>
-                    <p class="text-sm text-gray-600 truncate">${conv.lastMessage}</p>
-                </div>
-            `).join('');
-        } else {
-            container.innerHTML = `
-                <div class="text-center text-gray-500 py-4">
-                    <i class="ri-chat-3-line text-2xl mb-2"></i>
-                    <p class="text-sm">No hay conversaciones recientes</p>
+                `;
+                this.elements.qrContainer.classList.add('active');
+            }
+        }
+
+        showQRLoading() {
+            if (this.elements.qrContainer) {
+                this.elements.qrContainer.innerHTML = `
+                    <div class="text-center">
+                        <div class="pulse-animation mb-4">
+                            <i class="ri-qr-code-line text-gray-400 text-6xl"></i>
+                        </div>
+                        <p class="text-gray-500">Generando código QR...</p>
+                    </div>
+                `;
+                this.elements.qrContainer.classList.remove('active');
+            }
+        }
+
+        // =============== MENSAJES ===============
+
+        async sendQuickMessage() {
+            const phone = this.elements.quickMessagePhone?.value.trim();
+            const message = this.elements.quickMessageText?.value.trim();
+            
+            if (!this.validateQuickMessage(phone, message)) return;
+            
+            try {
+                this.setButtonLoading(this.elements.sendQuickBtn, true, 'Enviando...');
+                
+                const response = await fetch('/api/send-whatsapp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to: phone, message, clientName: null })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.showNotification('Mensaje enviado correctamente', 'success');
+                    this.clearQuickMessageForm();
+                    setTimeout(() => this.loadStats(), 1000);
+                } else if (data.queued) {
+                    this.showNotification('Mensaje añadido a la cola (WhatsApp no conectado)', 'warning');
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Error enviando mensaje:', error);
+                this.showNotification('Error enviando mensaje: ' + error.message, 'error');
+            } finally {
+                this.setButtonLoading(this.elements.sendQuickBtn, false, '<i class="ri-send-plane-fill mr-2"></i>Enviar Mensaje');
+            }
+        }
+
+        validateQuickMessage(phone, message) {
+            if (!phone || !message) {
+                this.showNotification('Por favor, completa todos los campos', 'warning');
+                return false;
+            }
+            
+            if (!/^\d{8,15}$/.test(phone.replace(/[^\d]/g, ''))) {
+                this.showNotification('Formato de teléfono inválido. Usa solo números (ej: 34612345678)', 'error');
+                return false;
+            }
+            
+            if (message.length > 1000) {
+                this.showNotification('El mensaje no puede tener más de 1000 caracteres', 'error');
+                return false;
+            }
+            
+            return true;
+        }
+
+        clearQuickMessageForm() {
+            if (this.elements.quickMessagePhone) this.elements.quickMessagePhone.value = '';
+            if (this.elements.quickMessageText) this.elements.quickMessageText.value = '';
+            if (this.elements.charCount) this.elements.charCount.textContent = '0/1000';
+        }
+
+        updateCharCount(e) {
+            const count = e.target.value.length;
+            if (this.elements.charCount) {
+                this.elements.charCount.textContent = `${count}/1000`;
+                this.elements.charCount.classList.toggle('text-red-500', count > 1000);
+            }
+            
+            if (count > 1000) {
+                e.target.value = e.target.value.substring(0, 1000);
+                if (this.elements.charCount) this.elements.charCount.textContent = '1000/1000';
+            }
+        }
+
+        // =============== DATOS Y ESTADÍSTICAS ===============
+
+        async loadConnectedData() {
+            try {
+                await Promise.all([
+                    this.loadStats(),
+                    this.loadConversations(),
+                    this.loadAutoMessageConfig()
+                ]);
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+            }
+        }
+
+        async loadStats() {
+            try {
+                const response = await fetch('/api/whatsapp-stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.updateStatsDisplay(data.stats);
+                }
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        updateStatsDisplay(stats) {
+            const updates = {
+                messagesSent: stats.messagesSent || 0,
+                messagesReceived: stats.messagesReceived || 0,
+                activeChats: stats.activeChats || 0
+            };
+            
+            Object.entries(updates).forEach(([key, value]) => {
+                const element = this.elements[key];
+                if (element) element.textContent = value;
+            });
+        }
+
+        async loadConversations() {
+            try {
+                const response = await fetch('/api/whatsapp-conversations?limit=3');
+                const data = await response.json();
+                
+                if (!this.elements.conversationsPreview) return;
+                
+                if (data.success && data.conversations.length > 0) {
+                    this.elements.conversationsPreview.innerHTML = data.conversations.map(conv => `
+                        <div class="p-3 bg-gray-50 rounded-lg">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="font-medium text-sm">${conv.name || conv.phone}</span>
+                                <span class="text-xs text-gray-500">${conv.lastMessageTime}</span>
+                            </div>
+                            <p class="text-sm text-gray-600 truncate">${conv.lastMessage}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    this.elements.conversationsPreview.innerHTML = `
+                        <div class="text-center text-gray-500 py-4">
+                            <i class="ri-chat-3-line text-2xl mb-2"></i>
+                            <p class="text-sm">No hay conversaciones recientes</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error cargando conversaciones:', error);
+            }
+        }
+
+        async loadAutoMessageConfig() {
+            try {
+                const response = await fetch('/api/get-auto-message-config');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const checkboxes = {
+                        autoConfirmation: data.config.confirmacion || false,
+                        autoReminders: data.config.recordatorio || false,
+                        autoWelcome: data.config.bienvenida || false
+                    };
+                    
+                    Object.entries(checkboxes).forEach(([id, checked]) => {
+                        const checkbox = document.getElementById(id);
+                        if (checkbox) checkbox.checked = checked;
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando configuración:', error);
+            }
+        }
+
+        // =============== MODAL ===============
+
+        showDisconnectModal() {
+            this.elements.disconnectModal?.classList.remove('hidden');
+            this.elements.disconnectModal?.classList.add('flex');
+        }
+
+        hideDisconnectModal() {
+            this.elements.disconnectModal?.classList.add('hidden');
+            this.elements.disconnectModal?.classList.remove('flex');
+        }
+
+        // =============== UTILIDADES ===============
+
+        setButtonLoading(button, loading, text) {
+            if (!button) return;
+            
+            button.disabled = loading;
+            
+            if (loading) {
+                button.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    ${text}
+                `;
+            } else {
+                button.innerHTML = text;
+            }
+        }
+
+        showNotification(message, type = 'info') {
+            // Crear o obtener elemento de notificación
+            let notification = document.getElementById('notification');
+            if (!notification) {
+                notification = document.createElement('div');
+                notification.id = 'notification';
+                notification.className = 'fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 hidden';
+                document.body.appendChild(notification);
+            }
+            
+            const colors = {
+                success: 'bg-green-100 text-green-800',
+                error: 'bg-red-100 text-red-800',
+                warning: 'bg-yellow-100 text-yellow-800',
+                info: 'bg-blue-100 text-blue-800'
+            };
+            
+            const icons = {
+                success: 'ri-check-line',
+                error: 'ri-error-warning-line',
+                warning: 'ri-alert-line',
+                info: 'ri-information-line'
+            };
+            
+            notification.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 ${colors[type] || colors.info}`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="${icons[type] || icons.info} mr-2"></i>
+                    <span>${message}</span>
                 </div>
             `;
+            
+            notification.classList.remove('hidden');
+            
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
         }
-    } catch (error) {
-        console.error('Error cargando conversaciones:', error);
-    }
-}
 
-// =============== FUNCIONES DE SERVIDOR ===============
+        // =============== CLEANUP ===============
 
-async function testWhatsAppConnection() {
-    showNotification('Probando conexión...', 'info');
-    
-    try {
-        const startTime = Date.now();
-        const response = await fetch('/api/whatsapp-status');
-        const responseTime = Date.now() - startTime;
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showNotification(`Conexión OK (${responseTime}ms)`, 'success');
-            updateServerStatus('online', responseTime);
-        } else {
-            showNotification('Error en la conexión: ' + data.error, 'error');
-            updateServerStatus('error', responseTime);
+        destroy() {
+            this.stopStatusCheck();
         }
-    } catch (error) {
-        console.error('Error:', error);
-        showNotification('No se pudo conectar con el servidor', 'error');
-        updateServerStatus('offline', null);
     }
-}
 
-function updateServerStatus(status, responseTime) {
-    const serverStatusEl = document.getElementById('serverStatus');
-    const lastCheckEl = document.getElementById('lastCheck');
-    const responseTimeEl = document.getElementById('responseTime');
-    
-    if (serverStatusEl) {
-        const statusConfig = {
-            online: {
-                class: 'bg-green-100 text-green-800',
-                text: 'Online',
-                icon: 'bg-green-500'
-            },
-            offline: {
-                class: 'bg-red-100 text-red-800',
-                text: 'Offline',
-                icon: 'bg-red-500'
-            },
-            error: {
-                class: 'bg-yellow-100 text-yellow-800',
-                text: 'Error',
-                icon: 'bg-yellow-500'
-            }
+    async function saveAutoMessageConfig() {
+        const config = {
+            confirmacion: document.getElementById('autoConfirmation')?.checked || false,
+            recordatorio: document.getElementById('autoReminders')?.checked || false,
+            bienvenida: document.getElementById('autoWelcome')?.checked || false
         };
         
-        const config = statusConfig[status] || statusConfig.offline;
-        serverStatusEl.className = `inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.class}`;
-        serverStatusEl.innerHTML = `<span class="w-1.5 h-1.5 ${config.icon} rounded-full mr-1"></span>${config.text}`;
-    }
-    
-    if (lastCheckEl) {
-        lastCheckEl.textContent = new Date().toLocaleTimeString('es-ES', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            second: '2-digit'
-        });
-    }
-    
-    if (responseTimeEl) {
-        responseTimeEl.textContent = responseTime ? `${responseTime} ms` : '-- ms';
-    }
-}
-
-async function refreshServerStatus() {
-    await testWhatsAppConnection();
-}
-
-// =============== FUNCIONES HELPER ===============
-
-function updateButtonState(button, loading, text) {
-    if (!button) return;
-    
-    if (loading) {
-        button.disabled = true;
-        if (typeof text === 'string' && !text.includes('<')) {
-            button.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                ${text}
-            `;
-        } else {
-            button.innerHTML = text;
+        try {
+            const response = await fetch('/api/save-auto-message-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                window.whatsappManager?.showNotification('Configuración guardada correctamente', 'success');
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            window.whatsappManager?.showNotification('Error guardando configuración: ' + error.message, 'error');
         }
-    } else {
-        button.disabled = false;
-        button.innerHTML = text;
     }
-}
 
-function showNotification(message, type = 'info') {
-    // Buscar elementos de notificación existentes
-    let successMessage = document.getElementById('successMessage');
-    let errorMessage = document.getElementById('errorMessage');
-    
-    // Si no existen, crearlos dinámicamente
-    if (!successMessage) {
-        successMessage = createNotificationElement('successMessage', 'success');
-    }
-    if (!errorMessage) {
-        errorMessage = createNotificationElement('errorMessage', 'error');
-    }
-    
-    const isSuccess = type === 'success' || type === 'info';
-    const messageEl = isSuccess ? successMessage : errorMessage;
-    const textEl = messageEl.querySelector('[id$="Text"]');
-    
-    if (textEl) {
-        textEl.textContent = message;
-        messageEl.classList.remove('hidden');
+    async function testWhatsAppConnection() {
+        window.whatsappManager?.showNotification('Probando conexión...', 'info');
         
-        setTimeout(() => {
-            messageEl.classList.add('hidden');
-        }, 5000);
-    } else {
-        // Fallback
-        console.log(`${type.toUpperCase()}:`, message);
-        if (type === 'error') {
-            alert('Error: ' + message);
+        try {
+            const startTime = Date.now();
+            const response = await fetch('/api/whatsapp-status');
+            const responseTime = Date.now() - startTime;
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                window.whatsappManager?.showNotification(`Conexión OK (${responseTime}ms)`, 'success');
+            } else {
+                window.whatsappManager?.showNotification('Error en la conexión: ' + data.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            window.whatsappManager?.showNotification('No se pudo conectar con el servidor', 'error');
         }
     }
-}
 
-function createNotificationElement(id, type) {
-    const isSuccess = type === 'success';
-    const bgColor = isSuccess ? 'bg-green-100' : 'bg-red-100';
-    const textColor = isSuccess ? 'text-green-800' : 'text-red-800';
-    const icon = isSuccess ? 'ri-check-line' : 'ri-error-warning-line';
-    
-    const element = document.createElement('div');
-    element.id = id;
-    element.className = `hidden fixed top-4 right-4 ${bgColor} ${textColor} px-4 py-3 rounded-lg shadow-lg z-50`;
-    element.innerHTML = `
-        <div class="flex items-center">
-            <i class="${icon} mr-2"></i>
-            <span id="${id.replace('Message', 'Text')}"></span>
-        </div>
-    `;
-    
-    document.body.appendChild(element);
-    return element;
-}
+    // =============== INICIALIZACIÓN ===============
 
-// Cleanup al salir de la página
-window.addEventListener('beforeunload', function() {
-    stopStatusCheck();
-});
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtener estado inicial del PHP
+        const statusFromPHP = '<?php echo $connectionStatus; ?>';
+        
+        // Agregar atributo data para que el manager lo pueda leer
+        const statusContainer = document.querySelector('.status-indicator')?.parentElement;
+        if (statusContainer) {
+            statusContainer.setAttribute('data-status', statusFromPHP);
+        }
+        
+        // Inicializar manager
+        window.whatsappManager = new WhatsAppManager();
+        
+        // Cleanup al salir
+        window.addEventListener('beforeunload', () => {
+            window.whatsappManager?.destroy();
+        });
+    });
 
-// Exponer funciones globales necesarias
-window.sendQuickMessage = sendQuickMessage;
-window.saveAutoMessageConfig = saveAutoMessageConfig;
-window.testWhatsAppConnection = testWhatsAppConnection;
-window.refreshServerStatus = refreshServerStatus;
+    // Exponer funciones globales para usar desde HTML
+    window.saveAutoMessageConfig = saveAutoMessageConfig;
+    window.testWhatsAppConnection = testWhatsAppConnection;
 </script>
 
 <?php 

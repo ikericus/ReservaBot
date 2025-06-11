@@ -30,83 +30,99 @@ try {
     $token = generateJWT($userId, $JWT_SECRET);
     $headers = ["Authorization: Bearer " . $token];
     
-    $serverStatus = makeRequest($WHATSAPP_SERVER_URL . '/api/status', 'GET', null, $headers);
-    
-    $status = 'disconnected';
-    $phoneNumber = null;
-    $qr = null;
-    $info = null;
-    $lastActivity = null;
-    
-    if ($serverStatus && $serverStatus['success']) {
-        // Usar datos del servidor como fuente de verdad
-        $status = $serverStatus['status'];
-        $qr = $serverStatus['qr'] ?? null;
-        $info = $serverStatus['info'] ?? null;
-        $phoneNumber = $info['phoneNumber'] ?? null;
-        
-        // Actualizar BD local con datos del servidor
-        if ($status === 'ready' && $phoneNumber) {
-            $stmt = getPDO()->prepare('
-                INSERT INTO whatsapp_config (usuario_id, status, phone_number, last_activity, updated_at) 
-                VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ON DUPLICATE KEY UPDATE 
-                status = VALUES(status), 
-                phone_number = VALUES(phone_number),
-                last_activity = CURRENT_TIMESTAMP,
-                qr_code = NULL,
-                updated_at = CURRENT_TIMESTAMP
-            ');
-            $stmt->execute([$userId, $status, $phoneNumber]);
-        } elseif ($status === 'waiting_qr' && $qr) {
-            $stmt = getPDO()->prepare('
-                INSERT INTO whatsapp_config (usuario_id, status, qr_code, updated_at) 
-                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-                ON DUPLICATE KEY UPDATE 
-                status = VALUES(status), 
-                qr_code = VALUES(qr_code),
-                updated_at = CURRENT_TIMESTAMP
-            ');
-            $stmt->execute([$userId, $status, $qr]);
-        } else {
-            $stmt = getPDO()->prepare('
-                INSERT INTO whatsapp_config (usuario_id, status, updated_at) 
-                VALUES (?, ?, CURRENT_TIMESTAMP)
-                ON DUPLICATE KEY UPDATE 
-                status = VALUES(status), 
-                updated_at = CURRENT_TIMESTAMP
-            ');
-            $stmt->execute([$userId, $status]);
-        }
-        
-    } else {
-        // Si no hay conexión con servidor, usar datos locales
-        if ($localConfig) {
-            $status = $localConfig['status'];
-            $phoneNumber = $localConfig['phone_number'];
-            $qr = $localConfig['qr_code'];
-            $lastActivity = $localConfig['last_activity'];
-        }
-        
-        // Marcar como error de servidor si había conexión previa
-        if ($localConfig && in_array($localConfig['status'], ['ready', 'connecting', 'waiting_qr'])) {
-            $stmt = getPDO()->prepare('
-                UPDATE whatsapp_config 
-                SET status = "server_error", updated_at = CURRENT_TIMESTAMP 
-                WHERE usuario_id = ?
-            ');
-            $stmt->execute([$userId]);
-            $status = 'server_error';
-        }
+    $serverResponse = makeRequest($WHATSAPP_SERVER_URL . '/api/status', 'GET', null, $headers);
+    $status = $serverResponse['status'];
+
+    $message = $serverResponse['message'] ?? null;
+    $qr = $serverResponse['qr'] ?? null;
+    $info = $serverResponse['info'] ?? null;
+
+    if ($status === 'ready') {
+        $status = 'connected';  // unificamos estados de whatsapp 'ready' y 'connected' para simplificar
     }
+
+    error_log('Estado servidor: ' . $status . '. Mensaje: ' . $message);
+
+    // $status = 'disconnected';
+    // $phoneNumber = null;
+    // $qr = null;
+    // $info = null;
+    // $lastActivity = null;
+    
+    // if ($serverResponse && $serverResponse['success']) {
+    //     // Usar datos del servidor como fuente de verdad
+    //     $status = $serverResponse['status'];
+    //     $qr = $serverResponse['qr'] ?? null;
+    //     $info = $serverResponse['info'] ?? null;
+    //     $phoneNumber = $info['phoneNumber'] ?? null;
+        
+        
+    //     error_log("Actualizando BD local con datos del servidor {$userId}");
+
+    //     // Actualizar BD local con datos del servidor
+    //     if ($status === 'ready' && $phoneNumber) {
+    //         $stmt = getPDO()->prepare('
+    //             INSERT INTO whatsapp_config (usuario_id, status, phone_number, last_activity, updated_at) 
+    //             VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    //             ON DUPLICATE KEY UPDATE 
+    //             status = VALUES(status), 
+    //             phone_number = VALUES(phone_number),
+    //             last_activity = CURRENT_TIMESTAMP,
+    //             qr_code = NULL,
+    //             updated_at = CURRENT_TIMESTAMP
+    //         ');
+    //         $stmt->execute([$userId, $status, $phoneNumber]);
+    //     } elseif ($status === 'waiting_qr' && $qr) {
+    //         $stmt = getPDO()->prepare('
+    //             INSERT INTO whatsapp_config (usuario_id, status, qr_code, updated_at) 
+    //             VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+    //             ON DUPLICATE KEY UPDATE 
+    //             status = VALUES(status), 
+    //             qr_code = VALUES(qr_code),
+    //             updated_at = CURRENT_TIMESTAMP
+    //         ');
+    //         $stmt->execute([$userId, $status, $qr]);
+    //     } else {
+    //         $stmt = getPDO()->prepare('
+    //             INSERT INTO whatsapp_config (usuario_id, status, updated_at) 
+    //             VALUES (?, ?, CURRENT_TIMESTAMP)
+    //             ON DUPLICATE KEY UPDATE 
+    //             status = VALUES(status), 
+    //             updated_at = CURRENT_TIMESTAMP
+    //         ');
+    //         $stmt->execute([$userId, $status]);
+            
+    //         error_log("QR generado para usuario {$userId}");
+    //     }
+        
+    // } else {
+    //     // Si no hay conexión con servidor, usar datos locales
+    //     if ($localConfig) {
+    //         $status = $localConfig['status'];
+    //         $phoneNumber = $localConfig['phone_number'];
+    //         $qr = $localConfig['qr_code'];
+    //         $lastActivity = $localConfig['last_activity'];
+    //     }
+        
+    //     // Marcar como error de servidor si había conexión previa
+    //     if ($localConfig && in_array($localConfig['status'], ['ready', 'connecting', 'waiting_qr'])) {
+    //         $stmt = getPDO()->prepare('
+    //             UPDATE whatsapp_config 
+    //             SET status = "server_error", updated_at = CURRENT_TIMESTAMP 
+    //             WHERE usuario_id = ?
+    //         ');
+    //         $stmt->execute([$userId]);
+    //         $status = 'server_error';
+    //     }
+    // }
     
     // Preparar respuesta
     $response = [
         'success' => true,
         'status' => $status,
-        'phoneNumber' => $phoneNumber,
-        'lastActivity' => $lastActivity,
-        'serverConnected' => $serverStatus && $serverStatus['success']
+        //'phoneNumber' => $phoneNumber,
+        //'lastActivity' => $lastActivity,
+        'serverConnected' => $serverResponse && $serverResponse['success']
     ];
     
     // Incluir QR solo si está disponible
