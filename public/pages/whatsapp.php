@@ -155,6 +155,7 @@ include 'includes/header.php';
             <?php 
             $statusLabels = [
                 'connected' => 'Conectado',
+                'waiting_qr' => 'Esperando QR...',
                 'connecting' => 'Conectando...',
                 'disconnected' => 'Desconectado'
             ];
@@ -462,10 +463,10 @@ include 'includes/header.php';
                 </div>
             </div>
             
-            <button onclick="refreshServerStatus()" class="mt-4 w-full text-sm text-green-600 hover:text-green-700 font-medium">
+            <!-- <button onclick="refreshServerStatus()" class="mt-4 w-full text-sm text-green-600 hover:text-green-700 font-medium">
                 <i class="ri-refresh-line mr-1"></i>
                 Actualizar Estado
-            </button>
+            </button> -->
         </div>
         
         <!-- Funcionalidades próximas -->
@@ -525,7 +526,6 @@ include 'includes/header.php';
 </div>
 
 <script>
-    // JavaScript para whatsapp.php - Versión corregida
 // Variables globales
 let currentStatus = '<?php echo $connectionStatus; ?>';
 let checkStatusInterval = null;
@@ -598,9 +598,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePage();
     
     // Auto-verificar estado del servidor cada 2 minutos si está conectado
-    if (currentStatus === 'connected' || currentStatus === 'ready') {
-        setInterval(refreshServerStatus, 120000);
-    }
+    // if (currentStatus === 'connected' || currentStatus === 'ready') {
+    //     setInterval(refreshServerStatus, 120000);
+    // }
 });
 
 // Inicializar página según estado
@@ -616,7 +616,7 @@ function initializePage() {
     }
     
     // Actualizar estado del servidor
-    refreshServerStatus();
+    //refreshServerStatus();
 }
 
 // =============== FUNCIONES DE CONEXIÓN ===============
@@ -683,25 +683,39 @@ async function disconnectWhatsApp() {
 
 async function checkStatus() {
     try {
+        console.log('Invocando api/whatsapp-status');
         const response = await fetch('/api/whatsapp-status');
-        const data = await response.json();
-        
-        if (data.success && data.status !== currentStatus) {
-            updateConnectionStatus(data.status, data.phoneNumber);
-            
-            if (data.status === 'ready' || data.status === 'connected') {
-                stopStatusCheck();
-                showNotification('¡WhatsApp conectado correctamente!', 'success');
-                loadInitialData();
-                loadAutoMessageConfig();
-                loadStats();
-            } else if (data.status === 'disconnected') {
-                stopStatusCheck();
-            }
+        const data = await response.json();        
+
+        if (data.success)
+        {
+            console.log('Obtenido status: ', data.status);
+
+           // if(data.status !== currentStatus) {
+                updateConnectionStatus(data.status, data.phoneNumber);
+                
+                if (data.status === 'ready' || data.status === 'connected') {
+                    stopStatusCheck();
+                    showNotification('¡WhatsApp conectado correctamente!', 'success');
+                    loadInitialData();
+                    loadAutoMessageConfig();
+                    loadStats();
+                } else if (data.status === 'disconnected') {
+                    stopStatusCheck();
+                }
+                else
+                {
+                    console.log('status sin acción');
+                }
+            //}
+        }
+        else {            
+            console.error('Error al obtener status', data.status);
         }
         
         // Actualizar QR si está disponible
         if (data.qr && (currentStatus === 'connecting' || currentStatus === 'waiting_qr')) {
+            console.log('updateQRCode:', data.qr);
             updateQRCode(data.qr);
         }
     } catch (error) {
@@ -988,7 +1002,7 @@ async function loadInitialData() {
         await Promise.all([
             loadStats(),
             loadConversationsPreview(),
-            refreshServerStatus()
+           //refreshServerStatus()
         ]);
     } catch (error) {
         console.error('Error cargando datos iniciales:', error);

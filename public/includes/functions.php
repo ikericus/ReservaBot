@@ -63,11 +63,11 @@ function generateJWT($userId, $secret) {
 
 // Función mejorada para hacer requests HTTP con debug detallado
 function makeRequest($url, $method = 'GET', $data = null, $headers = []) {
-    error_log("=== INICIO REQUEST ===");
-    error_log("URL: " . $url);
-    error_log("Método: " . $method);
-    error_log("Headers: " . json_encode($headers));
-    error_log("Data: " . ($data ? json_encode($data) : 'null'));
+    // error_log("=== INICIO REQUEST ===");
+    // error_log("URL: " . $url);
+    // error_log("Método: " . $method);
+    // error_log("Headers: " . json_encode($headers));
+    // error_log("Data: " . ($data ? json_encode($data) : 'null'));
     
     $ch = curl_init();
     
@@ -124,19 +124,19 @@ function makeRequest($url, $method = 'GET', $data = null, $headers = []) {
     
     curl_close($ch);
     
-    error_log("=== RESPUESTA ===");
-    error_log("HTTP Code: " . $httpCode);
-    error_log("Duración: " . $duration . "ms");
-    error_log("Error cURL: " . ($error ?: 'ninguno'));
-    error_log("Info cURL: " . json_encode([
-        'url' => $info['url'],
-        'content_type' => $info['content_type'],
-        'total_time' => $info['total_time'],
-        'namelookup_time' => $info['namelookup_time'],
-        'connect_time' => $info['connect_time']
-    ]));
-    error_log("Response body: " . substr($response, 0, 1000) . (strlen($response) > 1000 ? '...[truncated]' : ''));
-    error_log("=== FIN REQUEST ===");
+    // error_log("=== RESPUESTA ===");
+    // error_log("HTTP Code: " . $httpCode);
+    // error_log("Duración: " . $duration . "ms");
+    // error_log("Error cURL: " . ($error ?: 'ninguno'));
+    // error_log("Info cURL: " . json_encode([
+    //     'url' => $info['url'],
+    //     'content_type' => $info['content_type'],
+    //     'total_time' => $info['total_time'],
+    //     'namelookup_time' => $info['namelookup_time'],
+    //     'connect_time' => $info['connect_time']
+    // ]));
+    // error_log("Response body: " . substr($response, 0, 1000) . (strlen($response) > 1000 ? '...[truncated]' : ''));
+    // error_log("=== FIN REQUEST ===");
     
     // Verificar errores
     if ($error) {

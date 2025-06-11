@@ -21,52 +21,6 @@ function logDebug($message, $data = null) {
     error_log($logEntry);
 }
 
-// Función para verificar prerequisites
-function checkPrerequisites() {
-    $checks = [];
-    
-    // Verificar extensiones PHP
-    $checks['curl_extension'] = extension_loaded('curl');
-    $checks['json_extension'] = extension_loaded('json');
-    $checks['openssl_extension'] = extension_loaded('openssl');
-    
-    // Verificar funciones
-    $checks['curl_init'] = function_exists('curl_init');
-    $checks['json_encode'] = function_exists('json_encode');
-    $checks['hash_hmac'] = function_exists('hash_hmac');
-    
-    // Verificar conectividad DNS
-    //$checks['dns_resolution'] = gethostbyname('37.59.109.167') !== '37.59.109.167';
-    
-    // Solo si usaras un hostname en lugar de IP
-    $checks['dns_resolution'] = gethostbyname('server.reservabot.es') !== 'server.reservabot.es';
-    
-    logDebug("Prerequisites check", $checks);
-    
-    foreach ($checks as $check => $result) {
-        if (!$result) {
-            throw new Exception("Prerequisite failed: {$check}");
-        }
-    }
-    
-    return $checks;
-}
-
-// Función para ping básico
-function testServerPing($host, $port) {
-    logDebug("Testing server ping", ['host' => $host, 'port' => $port]);
-    
-    $connection = @fsockopen($host, $port, $errno, $errstr, 5);
-    if ($connection) {
-        fclose($connection);
-        logDebug("Ping successful");
-        return true;
-    } else {
-        logDebug("Ping failed", ['errno' => $errno, 'errstr' => $errstr]);
-        return false;
-    }
-}
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     logDebug("Invalid method", ['method' => $_SERVER['REQUEST_METHOD']]);
     echo json_encode(['success' => false, 'error' => 'Método no permitido']);
@@ -89,48 +43,29 @@ logDebug("Starting WhatsApp connection process", [
 ]);
 
 try {
-    // 1. Verificar prerequisites
-    logDebug("Step 1: Checking prerequisites");
-    checkPrerequisites();
-    
-    // 2. Test básico de conectividad
-    logDebug("Step 2: Testing basic connectivity");
-    $serverHost = parse_url($WHATSAPP_SERVER_URL, PHP_URL_HOST);
-    $serverPort = parse_url($WHATSAPP_SERVER_URL, PHP_URL_PORT) ?: 3001;
-    
-    if (!testServerPing($serverHost, $serverPort)) {
-        throw new Exception("No se puede conectar al servidor {$serverHost}:{$serverPort}");
-    }
-    
-    // 3. Generar JWT token
-    logDebug("Step 3: Generating JWT token");
-    $token = generateJWT($userId, $JWT_SECRET);
-    logDebug("JWT generated", ['token_length' => strlen($token), 'token_preview' => substr($token, 0, 50) . '...']);
-    
+    $token = generateJWT($userId, $JWT_SECRET);    
     $headers = ["Authorization: Bearer " . $token];
-    
-    // 4. Verificar estado actual en el servidor
-    logDebug("Step 4: Checking current server status");
-    
+        
     try {
         $statusResult = makeRequest($WHATSAPP_SERVER_URL . '/api/status', 'GET', null, $headers);
         logDebug("Status check result", $statusResult);
         
         if ($statusResult && $statusResult['success']) {
-            if ($statusResult['status'] === 'ready') {
+            if ($statusResult['status'] === 'connected') {
                 logDebug("WhatsApp already connected, updating database");
                 
+                $phoneNumber = $statusResult['info']['phoneNumber'] ?? null;
                 $stmt = getPDO()->prepare('
                     INSERT INTO whatsapp_config (usuario_id, status, phone_number, updated_at) 
-                    VALUES (?, "ready", ?, CURRENT_TIMESTAMP)
+                    VALUES (?, "connected", ?, CURRENT_TIMESTAMP)
                     ON DUPLICATE KEY UPDATE 
-                    status = "ready", 
+                    status = "connected", 
                     phone_number = VALUES(phone_number),
                     updated_at = CURRENT_TIMESTAMP
                 ');
-                $stmt->execute([$userId, $statusResult['info']['phoneNumber'] ?? null]);
+                $stmt->execute([$userId, $phoneNumber]);
                 
-                logDebug("Database updated successfully");
+                logDebug("Database updated successfully", ['usuario_id' => $userId, "status" => "ready", "phone_number" => $phoneNumber]);
                 
                 echo json_encode([
                     'success' => true,
@@ -174,8 +109,6 @@ try {
         // Continuar con nueva conexión aunque falle el status check
     }
     
-    // 5. Iniciar nueva conexión
-    logDebug("Step 5: Starting new connection");
     $connectData = ['userId' => $userId];
     
     try {
@@ -199,9 +132,6 @@ try {
         throw $connectError;
     }
     
-    // 6. Actualizar base de datos
-    logDebug("Step 6: Updating database");
-    
     try {
         $stmt = getPDO()->prepare('
             INSERT INTO whatsapp_config (usuario_id, status, updated_at) 
@@ -213,7 +143,7 @@ try {
             updated_at = CURRENT_TIMESTAMP
         ');
         $stmt->execute([$userId]);
-        logDebug("Database updated successfully");
+        logDebug("Database updated successfully", ['usuario_id' => $userId, "status" => "connecting"]);
         
     } catch (Exception $dbError) {
         logDebug("Database update error", ['error' => $dbError->getMessage()]);
@@ -272,6 +202,4 @@ try {
     
     echo json_encode($response);
 }
-
-logDebug("Request processing completed");
 ?>

@@ -89,21 +89,21 @@ logSendMessage("Iniciando envío de mensaje", [
 
 try {
     // 1. Verificar que WhatsApp esté conectado
-    logSendMessage("Verificando estado de WhatsApp");
+    // logSendMessage("Verificando estado de WhatsApp");
     
-    $stmt = getPDO()->prepare('SELECT status, phone_number FROM whatsapp_config WHERE usuario_id = ?');
-    $stmt->execute([$userId]);
-    $config = $stmt->fetch();
+    // $stmt = getPDO()->prepare('SELECT status, phone_number FROM whatsapp_config WHERE usuario_id = ?');
+    // $stmt->execute([$userId]);
+    // $config = $stmt->fetch();
     
-    if (!$config || $config['status'] !== 'ready') {
-        logSendMessage("WhatsApp no está conectado", ['status' => $config['status'] ?? 'no_config']);
-        echo json_encode([
-            'success' => false,
-            'error' => 'WhatsApp no está conectado',
-            'status' => $config['status'] ?? 'disconnected'
-        ]);
-        exit;
-    }
+    // if (!$config || $config['status'] !== 'ready') {
+    //     logSendMessage("WhatsApp no está conectado", ['status' => $config['status'] ?? 'no_config']);
+    //     echo json_encode([
+    //         'success' => false,
+    //         'error' => 'WhatsApp no está conectado',
+    //         'status' => $config['status'] ?? 'disconnected'
+    //     ]);
+    //     exit;
+    // }
     
     // 2. Generar JWT token para autenticación
     logSendMessage("Generando token JWT");

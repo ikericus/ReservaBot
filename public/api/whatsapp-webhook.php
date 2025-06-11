@@ -63,7 +63,7 @@ try {
         case 'connected':
             handleConnected($userId, $eventData);
             break;
-            
+
         case 'disconnected':
             handleDisconnected($userId, $eventData);
             break;
@@ -136,9 +136,9 @@ function handleConnected($userId, $data) {
     $pdo = getPDO();
     $stmt = $pdo->prepare("
         INSERT INTO whatsapp_config (usuario_id, status, phone_number, qr_code, updated_at, last_activity) 
-        VALUES (?, 'ready', ?, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        VALUES (?, 'connected', ?, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ON DUPLICATE KEY UPDATE 
-        status = 'ready',
+        status = 'connected',
         phone_number = VALUES(phone_number),
         qr_code = NULL,
         last_activity = CURRENT_TIMESTAMP,
