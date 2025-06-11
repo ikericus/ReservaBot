@@ -100,11 +100,6 @@ include 'includes/header.php';
     transform: translateX(5px);
 }
 
-.stats-card {
-    background: linear-gradient(135deg, rgba(37, 211, 102, 0.1) 0%, rgba(18, 140, 126, 0.05) 100%);
-    border: 1px solid rgba(37, 211, 102, 0.2);
-}
-
 .pulse-animation {
     animation: pulse-custom 2s infinite;
 }
@@ -121,6 +116,12 @@ include 'includes/header.php';
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Configuración compacta para estado conectado */
+.connection-compact {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 /* Responsive adjustments */
@@ -165,21 +166,16 @@ include 'includes/header.php';
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Layout dinámico basado en estado de conexión -->
+<div id="mainLayout" class="grid gap-6 items-start <?php echo ($connectionStatus === 'connected' || $connectionStatus === 'ready') ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 lg:grid-cols-3'; ?>">
     
-    <!-- Panel principal de configuración -->
-    <div class="lg:col-span-2 space-y-6">
+    <!-- Primera columna -->
+    <div id="firstColumn" class="<?php echo ($connectionStatus === 'connected' || $connectionStatus === 'ready') ? '' : 'lg:col-span-2'; ?> space-y-6">
         
-        <!-- Tarjeta de conexión principal -->
-        <div class="whatsapp-card rounded-xl shadow-lg p-6">
+        <!-- Configuración principal de conexión (solo cuando NO está conectado) -->
+        <div id="mainConnectionCard" class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo ($connectionStatus === 'connected' || $connectionStatus === 'ready') ? 'hidden' : ''; ?>">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-semibold text-gray-900">Configuración de Conexión</h2>
-                <?php if ($connectionStatus === 'connected' && $phoneNumber): ?>
-                    <div class="flex items-center space-x-2 bg-green-50 px-3 py-1 rounded-full">
-                        <i class="ri-phone-line text-green-600"></i>
-                        <span class="text-sm font-medium text-green-800"><?php echo htmlspecialchars($phoneNumber); ?></span>
-                    </div>
-                <?php endif; ?>
             </div>
             
             <!-- Estado desconectado -->
@@ -224,35 +220,90 @@ include 'includes/header.php';
                     Actualizar código QR
                 </button>
             </div>
+        </div>
+        
+        <!-- Conversaciones recientes -->
+        <div id="conversationsCard" class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo ($connectionStatus !== 'connected' && $connectionStatus !== 'ready') ? 'opacity-50' : ''; ?>">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="ri-chat-history-line mr-2 text-green-600"></i>
+                    Conversaciones Recientes
+                </h3>
+                <a href="/mensajes" class="text-green-600 hover:text-green-700 text-sm font-medium">
+                    Ver todas →
+                </a>
+            </div>
             
-            <!-- Estado conectado -->
-            <div id="connectedState" class="<?php echo $connectionStatus == 'connected' ||  $connectionStatus == 'ready' ? '' : 'hidden'; ?>">
-                <div class="text-center py-6 mb-6">
-                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="ri-whatsapp-line text-green-600 text-3xl"></i>
-                    </div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">¡WhatsApp conectado correctamente!</h3>
-                    <p class="text-gray-600 mb-4">Tu cuenta está lista para enviar y recibir mensajes automáticamente.</p>
-                    
-                    <?php if ($lastActivity): ?>
-                        <p class="text-sm text-gray-500">
-                            Última actividad: <?php echo date('d/m/Y H:i', strtotime($lastActivity)); ?>
-                        </p>
-                    <?php endif; ?>
-                </div>
-                
-                <div class="bg-red-50 rounded-lg p-4 text-center">
-                    <button id="disconnectBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">
-                        <i class="ri-logout-box-line mr-2"></i>
-                        Desconectar WhatsApp
-                    </button>
-                    <p class="text-sm text-red-600 mt-2">Esto desvinculará tu cuenta de WhatsApp de ReservaBot</p>
+            <div id="conversationsPreview" class="space-y-2">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="ri-chat-3-line text-4xl mb-3"></i>
+                    <p class="text-sm">Conecta WhatsApp para ver conversaciones</p>
                 </div>
             </div>
         </div>
         
+        <!-- Envío rápido de mensaje -->
+        <div id="quickMessageSection" class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo ($connectionStatus !== 'connected' && $connectionStatus !== 'ready') ? 'opacity-50 pointer-events-none' : ''; ?>">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="ri-send-plane-line text-green-600 mr-2"></i>
+                Envío Rápido
+            </h3>
+            <p class="text-gray-600 mb-4">Envía un mensaje rápido a cualquier cliente.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Número de teléfono</label>
+                    <input type="tel" id="quickMessagePhone" placeholder="Ej: 34612345678" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    <p class="text-xs text-gray-500 mt-1">Incluye código de país (ej: 34 para España)</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mensaje</label>
+                    <textarea id="quickMessageText" rows="3" placeholder="Escribe tu mensaje aquí..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 resize-none"></textarea>
+                    <p class="text-xs text-gray-500 mt-1 flex justify-between">
+                        <span>Máximo 1000 caracteres</span>
+                        <span id="charCount">0/1000</span>
+                    </p>
+                </div>
+                
+                <button onclick="sendQuickMessage()" id="sendQuickBtn" 
+                        class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center">
+                    <i class="ri-send-plane-fill mr-2"></i>
+                    Enviar Mensaje
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Segunda columna -->
+    <div id="secondColumn" class="space-y-6">
+        
+        <!-- Configuración compacta de conexión (solo cuando SÍ está conectado) -->
+        <div id="compactConnectionCard" class="connection-compact whatsapp-card rounded-xl shadow-lg p-6 <?php echo ($connectionStatus !== 'connected' && $connectionStatus !== 'ready') ? 'hidden' : ''; ?>">
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-3 mb-3">
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <h3 class="font-medium text-gray-900">WhatsApp Conectado</h3>
+                </div>
+                
+                <?php if ($phoneNumber): ?>
+                    <div class="flex items-center justify-center space-x-2 bg-white bg-opacity-60 px-3 py-1 rounded-full mb-4">
+                        <i class="ri-phone-line text-green-600"></i>
+                        <span class="text-sm font-medium text-green-800"><?php echo htmlspecialchars($phoneNumber); ?></span>
+                    </div>
+                <?php endif; ?>
+                
+                <button id="disconnectBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm">
+                    <i class="ri-logout-box-line mr-2"></i>
+                    Desconectar
+                </button>
+            </div>
+        </div>
+        
         <!-- Configuración de mensajes automáticos -->
-        <div id="autoMessagesSection" class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo $connectionStatus !== 'connected' ? 'opacity-50 pointer-events-none' : ''; ?>">
+        <div id="autoMessagesSection" class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo ($connectionStatus !== 'connected' && $connectionStatus !== 'ready') ? 'opacity-50 pointer-events-none' : ''; ?>">
             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <i class="ri-message-line text-green-600 mr-2"></i>
                 Mensajes Automáticos
@@ -299,207 +350,21 @@ include 'includes/header.php';
             </div>
         </div>
         
-        <!-- Nueva sección: Envío rápido de mensaje -->
-        <div id="quickMessageSection" class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo $connectionStatus !== 'connected' ? 'opacity-50 pointer-events-none' : ''; ?>">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <i class="ri-send-plane-line text-green-600 mr-2"></i>
-                Envío Rápido
-            </h3>
-            <p class="text-gray-600 mb-4">Envía un mensaje rápido a cualquier cliente.</p>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Número de teléfono</label>
-                    <input type="tel" id="quickMessagePhone" placeholder="Ej: 34612345678" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                    <p class="text-xs text-gray-500 mt-1">Incluye código de país (ej: 34 para España)</p>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Mensaje</label>
-                    <textarea id="quickMessageText" rows="3" placeholder="Escribe tu mensaje aquí..."
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 resize-none"></textarea>
-                    <p class="text-xs text-gray-500 mt-1 flex justify-between">
-                        <span>Máximo 1000 caracteres</span>
-                        <span id="charCount">0/1000</span>
-                    </p>
-                </div>
-                
-                <button onclick="sendQuickMessage()" id="sendQuickBtn" 
-                        class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center">
-                    <i class="ri-send-plane-fill mr-2"></i>
-                    Enviar Mensaje
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Panel lateral -->
-    <div class="space-y-6">
-        
-        <!-- Estadísticas de WhatsApp -->
-        <div id="statsCard" class="stats-card whatsapp-card rounded-xl shadow-lg p-6 <?php echo $connectionStatus !== 'connected' ? 'opacity-50' : ''; ?>">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <i class="ri-bar-chart-line mr-2 text-green-600"></i>
-                Estadísticas de Hoy
-            </h3>
-            
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Mensajes enviados</span>
-                    <span class="text-lg font-bold text-gray-900" id="messagesSent">0</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Mensajes recibidos</span>
-                    <span class="text-lg font-bold text-gray-900" id="messagesReceived">0</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Conversaciones activas</span>
-                    <span class="text-lg font-bold text-gray-900" id="activeChats">0</span>
-                </div>
-            </div>
-            
-            <!-- Gráfico simple de estadísticas -->
-            <div id="statsChart" class="mt-4 pt-4 border-t border-green-200">
-                <!-- El gráfico se renderiza dinámicamente -->
-            </div>
-            
-            <div class="mt-4 pt-4 border-t border-green-200">
-                <a href="/estadisticas?filter=whatsapp" class="text-green-600 hover:text-green-700 text-sm font-medium inline-flex items-center">
-                    Ver estadísticas completas
-                    <i class="ri-arrow-right-line ml-1"></i>
-                </a>
-            </div>
-        </div>
-        
-        <!-- Preview de conversaciones recientes -->
-        <div id="conversationsCard" class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo $connectionStatus !== 'connected' ? 'opacity-50' : ''; ?>">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                    <i class="ri-chat-history-line mr-2 text-green-600"></i>
-                    Conversaciones Recientes
-                </h3>
-                <a href="/mensajes" class="text-green-600 hover:text-green-700 text-sm font-medium">
-                    Ver todas →
-                </a>
-            </div>
-            
-            <div id="conversationsPreview" class="space-y-2">
-                <div class="text-center text-gray-500 py-4">
-                    <i class="ri-chat-3-line text-2xl mb-2"></i>
-                    <p class="text-sm">Conecta WhatsApp para ver conversaciones</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Enlaces rápidos -->
-        <div class="whatsapp-card rounded-xl shadow-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Enlaces Rápidos</h3>
-            
-            <div class="space-y-3">
-                <a href="/mensajes" class="feature-item p-3 rounded-lg block">
-                    <div class="flex items-center">
-                        <i class="ri-chat-history-line text-green-600 mr-3"></i>
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-900">Historial Completo</h4>
-                            <p class="text-xs text-gray-600">Todas las conversaciones</p>
-                        </div>
-                    </div>
-                </a>
-                
-                <a href="/configuracion#whatsapp" class="feature-item p-3 rounded-lg block">
-                    <div class="flex items-center">
-                        <i class="ri-settings-line text-green-600 mr-3"></i>
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-900">Configuración Avanzada</h4>
-                            <p class="text-xs text-gray-600">Personalizar mensajes</p>
-                        </div>
-                    </div>
-                </a>
-                
-                <a href="/clientes" class="feature-item p-3 rounded-lg block">
-                    <div class="flex items-center">
-                        <i class="ri-user-line text-green-600 mr-3"></i>
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-900">Base de Clientes</h4>
-                            <p class="text-xs text-gray-600">Gestionar contactos</p>
-                        </div>
-                    </div>
-                </a>
-                
-                <button onclick="testWhatsAppConnection()" class="feature-item p-3 rounded-lg block w-full text-left">
-                    <div class="flex items-center">
-                        <i class="ri-test-tube-line text-green-600 mr-3"></i>
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-900">Probar Conexión</h4>
-                            <p class="text-xs text-gray-600">Verificar estado del servidor</p>
-                        </div>
-                    </div>
-                </button>
-            </div>
-        </div>
-        
-        <!-- Estado del servidor -->
-        <div id="serverStatusCard" class="whatsapp-card rounded-xl shadow-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Estado del Servidor</h3>
-            
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-600">Servidor WhatsApp</span>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800" id="serverStatus">
-                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></span>
-                        Online
-                    </span>
-                </div>
-                
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-600">Última verificación</span>
-                    <span class="text-xs text-gray-500" id="lastCheck">--</span>
-                </div>
-                
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-600">Tiempo de respuesta</span>
-                    <span class="text-xs text-gray-500" id="responseTime">-- ms</span>
-                </div>
-            </div>
-            
-            <!-- <button onclick="refreshServerStatus()" class="mt-4 w-full text-sm text-green-600 hover:text-green-700 font-medium">
-                <i class="ri-refresh-line mr-1"></i>
-                Actualizar Estado
-            </button> -->
-        </div>
-        
-        <!-- Funcionalidades próximas -->
+        <!-- Funcionalidades próximas (solo IA) -->
         <div class="whatsapp-card rounded-xl shadow-lg p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Próximamente</h3>
             
-            <div class="space-y-3">
-                <div class="feature-item p-3 rounded-lg opacity-60">
-                    <div class="flex items-center">
-                        <i class="ri-robot-line text-gray-400 mr-3"></i>
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-500">IA para Reservas</h4>
-                            <p class="text-xs text-gray-400">Reservas automáticas con IA</p>
-                        </div>
+            <div class="feature-item p-4 rounded-lg opacity-60 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center mr-4">
+                        <i class="ri-robot-line text-white text-lg"></i>
                     </div>
-                </div>
-                
-                <div class="feature-item p-3 rounded-lg opacity-60">
-                    <div class="flex items-center">
-                        <i class="ri-team-line text-gray-400 mr-3"></i>
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-500">Grupos WhatsApp</h4>
-                            <p class="text-xs text-gray-400">Gestión de grupos</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="feature-item p-3 rounded-lg opacity-60">
-                    <div class="flex items-center">
-                        <i class="ri-file-line text-gray-400 mr-3"></i>
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-500">Multimedia</h4>
-                            <p class="text-xs text-gray-400">Envío de archivos</p>
+                    <div class="flex-1">
+                        <h4 class="text-sm font-medium text-gray-900 mb-1">IA para Reservas Automáticas</h4>
+                        <p class="text-xs text-gray-600 mb-2">Inteligencia artificial que gestiona reservas automáticamente via WhatsApp</p>
+                        <div class="flex items-center text-xs text-purple-600">
+                            <i class="ri-time-line mr-1"></i>
+                            <span>Próximo trimestre</span>
                         </div>
                     </div>
                 </div>
@@ -543,17 +408,29 @@ include 'includes/header.php';
             // Auto-inicializar según estado
             if (this.currentStatus === 'connecting') {
                 this.startStatusCheck();
-            } else if (this.currentStatus === 'connected') {
+            } else if (this.currentStatus === 'connected' || this.currentStatus === 'ready') {
                 this.loadConnectedData();
             }
+            
+            // Asegurar que la UI esté correcta desde el inicio
+            this.updateLayout();
+            this.updateConnectionCards();
         }
 
         cacheElements() {
             this.elements = {
+                // Layout
+                mainLayout: document.getElementById('mainLayout'),
+                firstColumn: document.getElementById('firstColumn'),
+                secondColumn: document.getElementById('secondColumn'),
+                
+                // Cards de conexión
+                mainConnectionCard: document.getElementById('mainConnectionCard'),
+                compactConnectionCard: document.getElementById('compactConnectionCard'),
+                
                 // Estados
                 disconnectedState: document.getElementById('disconnectedState'),
                 qrState: document.getElementById('qrState'),
-                connectedState: document.getElementById('connectedState'),
                 
                 // Botones principales
                 connectBtn: document.getElementById('connectBtn'),
@@ -576,10 +453,7 @@ include 'includes/header.php';
                 statusText: document.querySelector('.status-indicator + span'),
                 qrContainer: document.getElementById('qrContainer'),
                 
-                // Stats
-                messagesSent: document.getElementById('messagesSent'),
-                messagesReceived: document.getElementById('messagesReceived'),
-                activeChats: document.getElementById('activeChats'),
+                // Conversaciones
                 conversationsPreview: document.getElementById('conversationsPreview')
             };
         }
@@ -629,16 +503,50 @@ include 'includes/header.php';
             // Actualizar indicador visual
             this.updateStatusIndicator();
             
-            // Mostrar/ocultar estados
+            // Reorganizar layout según estado
+            this.updateLayout();
+            
+            // Mostrar/ocultar estados de conexión
             this.showCorrectState();
             
+            // Mostrar/ocultar tarjetas de conexión
+            this.updateConnectionCards();
+            
             // Actualizar número de teléfono si se proporciona
-            if (phoneNumber && this.currentStatus === 'connected') {
+            if (phoneNumber && (this.currentStatus === 'connected' || this.currentStatus === 'ready')) {
                 this.updatePhoneNumber(phoneNumber);
             }
             
             // Habilitar/deshabilitar secciones
             this.toggleSections();
+        }
+
+        updateConnectionCards() {
+            const isConnected = this.currentStatus === 'connected' || this.currentStatus === 'ready';
+            
+            if (isConnected) {
+                // Ocultar configuración principal y mostrar compacta
+                this.elements.mainConnectionCard?.classList.add('hidden');
+                this.elements.compactConnectionCard?.classList.remove('hidden');
+            } else {
+                // Mostrar configuración principal y ocultar compacta
+                this.elements.mainConnectionCard?.classList.remove('hidden');
+                this.elements.compactConnectionCard?.classList.add('hidden');
+            }
+        }
+
+        updateLayout() {
+            const isConnected = this.currentStatus === 'connected' || this.currentStatus === 'ready';
+            
+            if (isConnected) {
+                // Cambiar a layout de 2 columnas
+                this.elements.mainLayout.className = 'grid gap-6 items-start grid-cols-1 lg:grid-cols-2';
+                this.elements.firstColumn.className = 'space-y-6';
+            } else {
+                // Cambiar a layout de 3 columnas (2+1)
+                this.elements.mainLayout.className = 'grid gap-6 items-start grid-cols-1 lg:grid-cols-3';
+                this.elements.firstColumn.className = 'lg:col-span-2 space-y-6';
+            }
         }
 
         updateStatusIndicator() {
@@ -659,8 +567,8 @@ include 'includes/header.php';
         }
 
         showCorrectState() {
-            // Ocultar todos los estados
-            [this.elements.disconnectedState, this.elements.qrState, this.elements.connectedState]
+            // Ocultar todos los estados de conexión principal
+            [this.elements.disconnectedState, this.elements.qrState]
                 .forEach(el => el?.classList.add('hidden'));
             
             // Mostrar el estado correcto
@@ -672,15 +580,11 @@ include 'includes/header.php';
                 case 'waiting_qr':
                     this.elements.qrState?.classList.remove('hidden');
                     break;
-                case 'connected':
-                case 'ready':
-                    this.elements.connectedState?.classList.remove('hidden');
-                    break;
             }
         }
 
         updatePhoneNumber(phoneNumber) {
-            const phoneElements = document.querySelectorAll('#connectedState .text-green-800');
+            const phoneElements = document.querySelectorAll('#compactConnectionCard .text-green-800');
             phoneElements.forEach(el => {
                 if (el.textContent.includes('34') || el.textContent === '') {
                     el.textContent = phoneNumber;
@@ -690,11 +594,10 @@ include 'includes/header.php';
 
         toggleSections() {
             const dependentSections = [
-                'autoMessagesSection', 'statsCard', 
-                'conversationsCard', 'quickMessageSection'
+                'autoMessagesSection', 'conversationsCard', 'quickMessageSection'
             ];
             
-            const isActive = this.currentStatus === 'connected';
+            const isActive = this.currentStatus === 'connected' || this.currentStatus === 'ready';
             
             dependentSections.forEach(sectionId => {
                 const section = document.getElementById(sectionId);
@@ -850,7 +753,6 @@ include 'includes/header.php';
                 if (data.success) {
                     this.showNotification('Mensaje enviado correctamente', 'success');
                     this.clearQuickMessageForm();
-                    setTimeout(() => this.loadStats(), 1000);
                 } else if (data.queued) {
                     this.showNotification('Mensaje añadido a la cola (WhatsApp no conectado)', 'warning');
                 } else {
@@ -907,7 +809,6 @@ include 'includes/header.php';
         async loadConnectedData() {
             try {
                 await Promise.all([
-                    this.loadStats(),
                     this.loadConversations(),
                     this.loadAutoMessageConfig()
                 ]);
@@ -916,44 +817,18 @@ include 'includes/header.php';
             }
         }
 
-        async loadStats() {
-            try {
-                const response = await fetch('/api/whatsapp-stats');
-                const data = await response.json();
-                
-                if (data.success) {
-                    this.updateStatsDisplay(data.stats);
-                }
-            } catch (error) {
-                console.error('Error cargando estadísticas:', error);
-            }
-        }
-
-        updateStatsDisplay(stats) {
-            const updates = {
-                messagesSent: stats.messagesSent || 0,
-                messagesReceived: stats.messagesReceived || 0,
-                activeChats: stats.activeChats || 0
-            };
-            
-            Object.entries(updates).forEach(([key, value]) => {
-                const element = this.elements[key];
-                if (element) element.textContent = value;
-            });
-        }
-
         async loadConversations() {
             try {
-                const response = await fetch('/api/whatsapp-conversations?limit=3');
+                const response = await fetch('/api/whatsapp-conversations?limit=4');
                 const data = await response.json();
                 
                 if (!this.elements.conversationsPreview) return;
                 
                 if (data.success && data.conversations.length > 0) {
                     this.elements.conversationsPreview.innerHTML = data.conversations.map(conv => `
-                        <div class="p-3 bg-gray-50 rounded-lg">
+                        <div class="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                             <div class="flex justify-between items-start mb-1">
-                                <span class="font-medium text-sm">${conv.name || conv.phone}</span>
+                                <span class="font-medium text-sm text-gray-900">${conv.name || conv.phone}</span>
                                 <span class="text-xs text-gray-500">${conv.lastMessageTime}</span>
                             </div>
                             <p class="text-sm text-gray-600 truncate">${conv.lastMessage}</p>
@@ -961,9 +836,10 @@ include 'includes/header.php';
                     `).join('');
                 } else {
                     this.elements.conversationsPreview.innerHTML = `
-                        <div class="text-center text-gray-500 py-4">
-                            <i class="ri-chat-3-line text-2xl mb-2"></i>
+                        <div class="text-center text-gray-500 py-8">
+                            <i class="ri-chat-3-line text-4xl mb-3"></i>
                             <p class="text-sm">No hay conversaciones recientes</p>
+                            <p class="text-xs text-gray-400 mt-1">Las conversaciones aparecerán aquí cuando recibas mensajes</p>
                         </div>
                     `;
                 }
@@ -1099,27 +975,6 @@ include 'includes/header.php';
         }
     }
 
-    async function testWhatsAppConnection() {
-        window.whatsappManager?.showNotification('Probando conexión...', 'info');
-        
-        try {
-            const startTime = Date.now();
-            const response = await fetch('/api/whatsapp-status');
-            const responseTime = Date.now() - startTime;
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                window.whatsappManager?.showNotification(`Conexión OK (${responseTime}ms)`, 'success');
-            } else {
-                window.whatsappManager?.showNotification('Error en la conexión: ' + data.error, 'error');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            window.whatsappManager?.showNotification('No se pudo conectar con el servidor', 'error');
-        }
-    }
-
     // =============== INICIALIZACIÓN ===============
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -1143,7 +998,6 @@ include 'includes/header.php';
 
     // Exponer funciones globales para usar desde HTML
     window.saveAutoMessageConfig = saveAutoMessageConfig;
-    window.testWhatsAppConnection = testWhatsAppConnection;
 </script>
 
 <?php 
