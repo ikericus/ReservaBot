@@ -326,7 +326,8 @@
                                         'clientes' => 'Clientes',
                                         'whatsapp' => 'WhatsApp',
                                         'formularios' => 'Formularios',
-                                        'configuracion' => 'Configuración'
+                                        'configuracion' => 'Configuración',                                        
+                                        'conversaciones' => 'Conversaciones'
                                     ];
                                     echo $pageNames[$currentPage] ?? 'Reservas';
                                     ?>

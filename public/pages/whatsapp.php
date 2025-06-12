@@ -229,7 +229,7 @@ include 'includes/header.php';
                     <i class="ri-chat-history-line mr-2 text-green-600"></i>
                     Conversaciones Recientes
                 </h3>
-                <a href="/mensajes" class="text-green-600 hover:text-green-700 text-sm font-medium">
+                <a href="/conversaciones" class="text-green-600 hover:text-green-700 text-sm font-medium">
                     Ver todas →
                 </a>
             </div>
@@ -486,6 +486,11 @@ include 'includes/header.php';
             console.log('Actualizando estado:', this.currentStatus, '->', newStatus);
             this.currentStatus = newStatus;
             this.updateUI(phoneNumber);
+            
+            // Actualizar sidebar y header móvil si existen las funciones globales
+            if (typeof window.updateSidebarWhatsAppStatus === 'function') {
+                window.updateSidebarWhatsAppStatus(newStatus);
+            }
             
             // Gestionar verificación automática
             if (newStatus === 'connecting') {
