@@ -292,40 +292,62 @@ include dirname(__DIR__) . '/includes/header.php';
     gap: 0.5rem;
 }
 
-/* Responsive */
+/* Responsive - CORREGIDO */
 @media (max-width: 768px) {
     .conversations-container {
-        height: calc(100vh - 120px);
+        height: calc(100vh - 140px);
+        flex-direction: column;
     }
     
+    /* En móvil, mostrar solo la lista por defecto */
     .conversations-sidebar {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
         width: 100%;
-        z-index: 15;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    /* Área de chat oculta por defecto en móvil */
+    .chat-area {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 50;
         background: white;
     }
     
-    .conversations-sidebar.show-mobile {
-        transform: translateX(0);
+    /* Cuando se muestra el chat en móvil */
+    .chat-area.mobile-active {
+        display: flex;
     }
     
-    .chat-area {
-        width: 100%;
+    /* Ocultar sidebar cuando se muestra chat */
+    .conversations-sidebar.mobile-hidden {
+        display: none;
     }
     
     .mobile-back-btn {
-        display: block;
+        display: flex;
+    }
+    
+    .message-bubble {
+        max-width: 85%;
     }
 }
 
 @media (min-width: 769px) {
     .mobile-back-btn {
         display: none;
+    }
+    
+    .chat-area {
+        display: flex !important;
+    }
+    
+    .conversations-sidebar {
+        display: flex !important;
     }
 }
 
@@ -392,21 +414,22 @@ include dirname(__DIR__) . '/includes/header.php';
         <p class="text-gray-600 mt-1">Gestiona todas tus conversaciones de WhatsApp</p>
     </div>
     
-    <div class="flex items-center space-x-4">
-        <!-- Estado de conexión -->
+    <!-- Estado de conexión -->
+    <!-- <div class="flex items-center space-x-4">
+        
         <div class="connection-status <?php echo $whatsappConnected ? 'connected' : 'disconnected'; ?>">
             <i class="ri-whatsapp-line mr-2"></i>
             <?php if ($whatsappConnected): ?>
                 WhatsApp Conectado
                 <?php if ($phoneNumber): ?>
-                    (<?php echo htmlspecialchars($phoneNumber); ?>)
+                    <span class="hidden sm:inline">(<?php echo htmlspecialchars($phoneNumber); ?>)</span>
                 <?php endif; ?>
             <?php else: ?>
                 WhatsApp Desconectado
                 <a href="/whatsapp" class="ml-2 underline hover:no-underline">Conectar</a>
             <?php endif; ?>
         </div>
-    </div>
+    </div> -->
 </div>
 
 <!-- Contenedor principal de conversaciones -->
@@ -438,7 +461,7 @@ include dirname(__DIR__) . '/includes/header.php';
         </div>
         
         <!-- Columna 2: Área de chat -->
-        <div class="chat-area flex-1 hidden md:flex" id="chatArea">
+        <div class="chat-area flex-1" id="chatArea">
             
             <!-- Header del chat -->
             <div class="chat-header" id="chatHeader" style="display: none;">
@@ -514,54 +537,6 @@ include dirname(__DIR__) . '/includes/header.php';
     </div>
 </div>
 
-<!-- Chat móvil overlay -->
-<!-- <div class="md:hidden chat-area fixed inset-0 z-40 hidden" id="mobileChatArea">
-    <div class="flex flex-col h-full bg-white">
-        <div class="chat-header" id="mobileChatHeader">
-            <button class="p-2 rounded-lg hover:bg-gray-100" onclick="closeMobileChat()">
-                <i class="ri-arrow-left-line text-xl"></i>
-            </button>
-            
-            <div class="conversation-avatar" id="mobileChatAvatar">
-                <i class="ri-user-line"></i>
-            </div>
-            
-            <div class="flex-1">
-                <h3 class="font-semibold text-gray-900" id="mobileChatName">Contacto</h3>
-                <p class="text-sm text-gray-500" id="mobileChatPhone">+34 000 000 000</p>
-            </div>
-        </div>
-        
-        <div class="messages-container" id="mobileMessagesContainer">
-            
-        </div>
-        
-        <div class="chat-input-area" id="mobileChatInputArea">
-            <div class="flex items-end space-x-3">
-                <div class="flex-1">
-                    <textarea 
-                        id="mobileMessageInput"
-                        class="chat-input"
-                        placeholder="Escribe un mensaje..."
-                        rows="1"
-                        maxlength="1000"
-                        <?php echo !$whatsappConnected ? 'disabled' : ''; ?>
-                    ></textarea>
-                </div>
-                
-                <button 
-                    id="mobileSendButton"
-                    class="send-button"
-                    onclick="sendMessage(true)"
-                    <?php echo !$whatsappConnected ? 'disabled' : ''; ?>
-                >
-                    <i class="ri-send-plane-fill text-xl"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</div> -->
-
 <script>
 class ConversationsManager {
     constructor() {
@@ -573,8 +548,10 @@ class ConversationsManager {
         this.searchTerm = '';
         this.refreshInterval = null;
         this.whatsappConnected = <?php echo $whatsappConnected ? 'true' : 'false'; ?>;
+        this.isMobile = window.innerWidth < 768;
         
         console.log('🔗 WhatsApp conectado:', this.whatsappConnected);
+        console.log('📱 Es móvil:', this.isMobile);
         
         this.init();
     }
@@ -586,6 +563,7 @@ class ConversationsManager {
         this.loadConversations();
         this.setupAutoRefresh();
         this.setupTextareaAutoResize();
+        this.handleResize();
         
         console.log('✅ ConversationsManager inicializado correctamente');
     }
@@ -602,8 +580,6 @@ class ConversationsManager {
                 this.filterConversations();
             });
             console.log('✅ Evento de búsqueda vinculado');
-        } else {
-            console.error('❌ No se encontró el input de búsqueda');
         }
 
         // Enter para enviar mensaje
@@ -611,25 +587,18 @@ class ConversationsManager {
         if (messageInput) {
             messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
-                    console.log('⌨️ Enter presionado en mensaje desktop');
+                    console.log('⌨️ Enter presionado en mensaje');
                     e.preventDefault();
                     this.sendMessage();
                 }
             });
-            console.log('✅ Evento Enter desktop vinculado');
+            console.log('✅ Evento Enter vinculado');
         }
 
-        const mobileMessageInput = document.getElementById('mobileMessageInput');
-        if (mobileMessageInput) {
-            mobileMessageInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    console.log('⌨️ Enter presionado en mensaje móvil');
-                    e.preventDefault();
-                    this.sendMessage(true);
-                }
-            });
-            console.log('✅ Evento Enter móvil vinculado');
-        }
+        // Resize para detectar cambios móvil/desktop
+        window.addEventListener('resize', () => {
+            this.handleResize();
+        });
 
         // Cleanup al salir
         window.addEventListener('beforeunload', () => {
@@ -638,6 +607,73 @@ class ConversationsManager {
         });
         
         console.log('✅ Todos los eventos vinculados');
+    }
+
+    handleResize() {
+        const wasMobile = this.isMobile;
+        this.isMobile = window.innerWidth < 768;
+        
+        if (wasMobile !== this.isMobile) {
+            console.log('📱 Cambio de vista:', this.isMobile ? 'móvil' : 'desktop');
+            
+            if (!this.isMobile) {
+                // Volviendo a desktop, mostrar ambas columnas
+                this.showDesktopView();
+            } else {
+                // Cambiando a móvil, resetear vista
+                this.showMobileList();
+            }
+        }
+    }
+
+    showDesktopView() {
+        console.log('🖥️ Mostrando vista desktop');
+        
+        const sidebar = document.getElementById('conversationsSidebar');
+        const chatArea = document.getElementById('chatArea');
+        
+        if (sidebar) {
+            sidebar.classList.remove('mobile-hidden');
+        }
+        
+        if (chatArea) {
+            chatArea.classList.remove('mobile-active');
+        }
+    }
+
+    showMobileList() {
+        console.log('📱 Mostrando lista móvil');
+        
+        const sidebar = document.getElementById('conversationsSidebar');
+        const chatArea = document.getElementById('chatArea');
+        
+        if (sidebar) {
+            sidebar.classList.remove('mobile-hidden');
+        }
+        
+        if (chatArea) {
+            chatArea.classList.remove('mobile-active');
+        }
+    }
+
+    showMobileChat() {
+        console.log('📱 Mostrando chat móvil');
+        
+        const sidebar = document.getElementById('conversationsSidebar');
+        const chatArea = document.getElementById('chatArea');
+        
+        if (sidebar) {
+            sidebar.classList.add('mobile-hidden');
+        }
+        
+        if (chatArea) {
+            chatArea.classList.add('mobile-active');
+        }
+    }
+
+    closeMobileChat() {
+        console.log('📱 Cerrando chat móvil');
+        this.showMobileList();
     }
 
     async loadConversations() {
@@ -656,7 +692,6 @@ class ConversationsManager {
             const response = await fetch('/api/whatsapp-conversations?include_messages=true&limit=50');
             
             console.log('📡 Response status:', response.status);
-            console.log('📡 Response headers:', [...response.headers.entries()]);
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -684,7 +719,6 @@ class ConversationsManager {
             }
         } catch (error) {
             console.error('💥 Error en loadConversations:', error);
-            console.error('📋 Stack trace:', error.stack);
             this.showError('Error de conexión al cargar conversaciones: ' + error.message);
         } finally {
             this.isLoading = false;
@@ -702,8 +736,6 @@ class ConversationsManager {
             return;
         }
         
-        console.log('📦 Contenedor encontrado:', container);
-        
         if (this.conversations.length === 0) {
             console.log('📭 No hay conversaciones, mostrando estado vacío');
             container.innerHTML = `
@@ -719,42 +751,20 @@ class ConversationsManager {
                     </a>
                 </div>
             `;
-            console.log('✅ Estado vacío renderizado');
             return;
         }
 
-        console.log('🔄 Generando HTML para cada conversación...');
-        const html = this.conversations.map((conv, index) => {
-            console.log(`📝 Renderizando conversación ${index}:`, conv);
-            return this.renderConversationItem(conv);
-        }).join('');
-        
-        console.log('📄 HTML generado (primeros 500 chars):', html.substring(0, 500));
-        
+        const html = this.conversations.map(conv => this.renderConversationItem(conv)).join('');
         container.innerHTML = html;
-        console.log('✅ HTML insertado en el contenedor');
-        
-        // Verificar que se insertó correctamente
-        const insertedItems = container.querySelectorAll('.conversation-item');
-        console.log('🔍 Elementos conversation-item insertados:', insertedItems.length);
+        console.log('✅ Conversaciones renderizadas');
     }
 
     renderConversationItem(conversation) {
-        console.log('🖼️ Renderizando item de conversación:', conversation);
-        
         const isActive = this.currentConversation && this.currentConversation.phone === conversation.phone;
         const lastMessagePreview = this.truncateMessage(conversation.lastMessage, 50);
         const initials = this.getContactInitials(conversation.name);
         
-        console.log('📋 Datos del item:', {
-            isActive,
-            lastMessagePreview,
-            initials,
-            phone: conversation.phone,
-            name: conversation.name
-        });
-        
-        const html = `
+        return `
             <div class="conversation-item ${isActive ? 'active' : ''}" 
                  onclick="window.conversationsManager.selectConversation('${conversation.phone}')"
                  data-phone="${conversation.phone}">
@@ -778,9 +788,6 @@ class ConversationsManager {
                 </div>
             </div>
         `;
-        
-        console.log('✅ HTML del item generado');
-        return html;
     }
 
     async selectConversation(phoneNumber) {
@@ -791,48 +798,35 @@ class ConversationsManager {
             console.error('❌ Conversación no encontrada:', phoneNumber);
             return;
         }
-        
-        console.log('✅ Conversación encontrada:', conversation);
 
         // Marcar conversación anterior como inactiva
         document.querySelectorAll('.conversation-item').forEach(item => {
             item.classList.remove('active');
         });
-        console.log('🔄 Conversaciones anteriores desmarcadas');
 
         // Marcar nueva conversación como activa
         const conversationElement = document.querySelector(`[data-phone="${phoneNumber}"]`);
         if (conversationElement) {
             conversationElement.classList.add('active');
-            console.log('✅ Conversación marcada como activa');
-        } else {
-            console.error('❌ No se encontró el elemento de conversación');
         }
 
         this.currentConversation = conversation;
-        console.log('💾 Conversación actual actualizada');
         
         // Cargar mensajes de la conversación
-        console.log('📥 Cargando mensajes...');
         await this.loadMessages(phoneNumber);
         
         // Mostrar área de chat
-        console.log('🖼️ Mostrando área de chat...');
         this.showChatArea();
         
         // Marcar conversación como leída
         if (conversation.unreadCount > 0) {
-            console.log('📖 Marcando como leída...');
             this.markAsRead(phoneNumber);
         }
 
-        // En móvil, mostrar chat overlay
-        if (window.innerWidth < 768) {
-            console.log('📱 Mostrando chat móvil...');
+        // En móvil, mostrar chat
+        if (this.isMobile) {
             this.showMobileChat();
         }
-        
-        console.log('✅ Conversación seleccionada correctamente');
     }
 
     async loadMessages(phoneNumber) {
@@ -840,18 +834,12 @@ class ConversationsManager {
         
         try {
             const response = await fetch(`/api/whatsapp-conversations?search=${phoneNumber}&include_messages=true&limit=1`);
-            console.log('📡 Response status para mensajes:', response.status);
-            
             const data = await response.json();
-            console.log('📊 Datos de mensajes recibidos:', data);
             
             if (data.success && data.conversations.length > 0) {
                 const conversation = data.conversations[0];
-                console.log('💬 Mensajes encontrados:', conversation.recentMessages?.length || 0);
                 this.renderMessages(conversation.recentMessages || []);
                 this.updateChatHeader(conversation);
-            } else {
-                console.warn('⚠️ No se encontraron mensajes para la conversación');
             }
         } catch (error) {
             console.error('💥 Error cargando mensajes:', error);
@@ -862,16 +850,10 @@ class ConversationsManager {
         console.log('💬 Renderizando mensajes:', messages.length);
         
         const container = document.getElementById('messagesContainer');
-        const mobileContainer = document.getElementById('mobileMessagesContainer');
-        
-        if (!container) {
-            console.error('❌ No se encontró messagesContainer');
-            return;
-        }
+        if (!container) return;
         
         if (messages.length === 0) {
-            console.log('📭 No hay mensajes, mostrando estado vacío');
-            const emptyHtml = `
+            container.innerHTML = `
                 <div class="empty-chat">
                     <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                         <i class="ri-chat-3-line text-gray-400 text-2xl"></i>
@@ -879,23 +861,12 @@ class ConversationsManager {
                     <p class="text-gray-500">No hay mensajes en esta conversación</p>
                 </div>
             `;
-            container.innerHTML = emptyHtml;
-            if (mobileContainer) mobileContainer.innerHTML = emptyHtml;
-            console.log('✅ Estado vacío de mensajes renderizado');
             return;
         }
 
-        console.log('🔄 Generando HTML de mensajes...');
-        const html = messages.map(message => {
-            console.log('📝 Renderizando mensaje:', message);
-            return this.renderMessage(message);
-        }).join('');
+        const html = messages.map(message => this.renderMessage(message)).join('');
         
         container.innerHTML = html;
-        if (mobileContainer) mobileContainer.innerHTML = html;
-        console.log('✅ Mensajes renderizados');
-        
-        // Scroll al final
         this.scrollToBottom();
     }
 
@@ -922,7 +893,6 @@ class ConversationsManager {
         const phone = conversation.phone;
         const initials = this.getContactInitials(name);
 
-        // Desktop
         const chatName = document.getElementById('chatName');
         const chatPhone = document.getElementById('chatPhone');
         const chatAvatar = document.getElementById('chatAvatar');
@@ -930,17 +900,6 @@ class ConversationsManager {
         if (chatName) chatName.textContent = name;
         if (chatPhone) chatPhone.textContent = phone;
         if (chatAvatar) chatAvatar.textContent = initials;
-
-        // Mobile
-        const mobileChatName = document.getElementById('mobileChatName');
-        const mobileChatPhone = document.getElementById('mobileChatPhone');
-        const mobileChatAvatar = document.getElementById('mobileChatAvatar');
-        
-        if (mobileChatName) mobileChatName.textContent = name;
-        if (mobileChatPhone) mobileChatPhone.textContent = phone;
-        if (mobileChatAvatar) mobileChatAvatar.textContent = initials;
-        
-        console.log('✅ Header del chat actualizado');
     }
 
     showChatArea() {
@@ -951,77 +910,33 @@ class ConversationsManager {
         
         if (chatHeader) {
             chatHeader.style.display = 'flex';
-            console.log('✅ Header del chat mostrado');
         }
         
         if (chatInputArea) {
             chatInputArea.style.display = 'block';
-            console.log('✅ Área de input mostrada');
         }
         
         const emptyChat = document.querySelector('.empty-chat');
         if (emptyChat) {
             emptyChat.style.display = 'none';
-            console.log('✅ Estado vacío ocultado');
         }
     }
 
-    showMobileChat() {
-        console.log('📱 Mostrando chat móvil...');
-        
-        const mobileChatArea = document.getElementById('mobileChatArea');
-        const conversationsSidebar = document.getElementById('conversationsSidebar');
-        
-        if (mobileChatArea) {
-            mobileChatArea.classList.remove('hidden');
-            console.log('✅ Área de chat móvil mostrada');
-        }
-        
-        if (conversationsSidebar) {
-            conversationsSidebar.classList.add('show-mobile');
-            console.log('✅ Sidebar móvil mostrado');
-        }
-        
-        document.body.style.overflow = 'hidden';
-        console.log('✅ Scroll del body deshabilitado');
-    }
-
-    closeMobileChat() {
-        console.log('📱 Cerrando chat móvil...');
-        
-        const mobileChatArea = document.getElementById('mobileChatArea');
-        const conversationsSidebar = document.getElementById('conversationsSidebar');
-        
-        if (mobileChatArea) {
-            mobileChatArea.classList.add('hidden');
-        }
-        
-        if (conversationsSidebar) {
-            conversationsSidebar.classList.remove('show-mobile');
-        }
-        
-        document.body.style.overflow = '';
-        console.log('✅ Chat móvil cerrado');
-    }
-
-    async sendMessage(isMobile = false) {
-        console.log('📤 Enviando mensaje (móvil:', isMobile, ')');
+    async sendMessage() {
+        console.log('📤 Enviando mensaje');
         
         if (!this.currentConversation || !this.whatsappConnected) {
-            console.log('❌ No se puede enviar: conversación actual =', this.currentConversation, ', WhatsApp conectado =', this.whatsappConnected);
+            console.log('❌ No se puede enviar mensaje');
             return;
         }
 
-        const inputId = isMobile ? 'mobileMessageInput' : 'messageInput';
-        const buttonId = isMobile ? 'mobileSendButton' : 'sendButton';
-        const input = document.getElementById(inputId);
-        const button = document.getElementById(buttonId);
+        const input = document.getElementById('messageInput');
+        const button = document.getElementById('sendButton');
         
         const message = input.value.trim();
         console.log('📝 Mensaje a enviar:', message);
         
         if (!message) {
-            console.log('❌ Mensaje vacío');
             return;
         }
 
@@ -1029,7 +944,6 @@ class ConversationsManager {
         input.disabled = true;
         button.disabled = true;
         button.innerHTML = '<div class="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>';
-        console.log('🔒 Input y botón deshabilitados');
 
         try {
             // Añadir mensaje temporal a la UI
@@ -1042,12 +956,10 @@ class ConversationsManager {
                 status: 'sending'
             };
             
-            console.log('🔄 Añadiendo mensaje temporal:', tempMessage);
             this.addMessageToUI(tempMessage);
             input.value = '';
 
             // Enviar mensaje
-            console.log('🌐 Enviando a API...');
             const response = await fetch('/api/send-whatsapp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1059,7 +971,6 @@ class ConversationsManager {
             });
 
             const data = await response.json();
-            console.log('📊 Respuesta de envío:', data);
 
             if (data.success) {
                 // Actualizar mensaje temporal con datos reales
@@ -1069,7 +980,6 @@ class ConversationsManager {
                 });
                 
                 this.showNotification('Mensaje enviado', 'success');
-                console.log('✅ Mensaje enviado correctamente');
             } else {
                 // Marcar mensaje como fallido
                 this.updateMessageInUI(tempMessage.messageId, {
@@ -1077,7 +987,6 @@ class ConversationsManager {
                 });
                 
                 this.showNotification('Error enviando mensaje: ' + data.error, 'error');
-                console.log('❌ Error enviando mensaje:', data.error);
             }
 
         } catch (error) {
@@ -1089,31 +998,23 @@ class ConversationsManager {
             button.disabled = false;
             button.innerHTML = '<i class="ri-send-plane-fill text-xl"></i>';
             input.focus();
-            console.log('🔓 Input y botón rehabilitados');
         }
     }
 
     addMessageToUI(message) {
         console.log('➕ Añadiendo mensaje a UI:', message);
         
-        const containers = ['messagesContainer', 'mobileMessagesContainer'];
-        
-        containers.forEach(containerId => {
-            const container = document.getElementById(containerId);
-            if (!container) return;
+        const container = document.getElementById('messagesContainer');
+        if (!container) return;
 
-            // Remover empty chat si existe
-            const emptyChat = container.querySelector('.empty-chat');
-            if (emptyChat) {
-                emptyChat.remove();
-                console.log('🗑️ Estado vacío removido de', containerId);
-            }
+        // Remover empty chat si existe
+        const emptyChat = container.querySelector('.empty-chat');
+        if (emptyChat) {
+            emptyChat.remove();
+        }
 
-            const messageHtml = this.renderMessage(message);
-            container.insertAdjacentHTML('beforeend', messageHtml);
-            console.log('✅ Mensaje añadido a', containerId);
-        });
-
+        const messageHtml = this.renderMessage(message);
+        container.insertAdjacentHTML('beforeend', messageHtml);
         this.scrollToBottom();
     }
 
@@ -1121,7 +1022,6 @@ class ConversationsManager {
         console.log('🔄 Actualizando mensaje en UI:', tempMessageId, updates);
         
         const messageElements = document.querySelectorAll(`[data-message-id="${tempMessageId}"]`);
-        console.log('🔍 Elementos encontrados:', messageElements.length);
         
         messageElements.forEach(element => {
             if (updates.messageId) {
@@ -1142,8 +1042,6 @@ class ConversationsManager {
                 }
             }
         });
-        
-        console.log('✅ Mensaje actualizado en UI');
     }
 
     async markAsRead(phoneNumber) {
@@ -1169,7 +1067,6 @@ class ConversationsManager {
                     if (badge) badge.remove();
                 }
             }
-            console.log('✅ Marcado como leído');
         } catch (error) {
             console.error('💥 Error marcando como leído:', error);
         }
@@ -1184,57 +1081,40 @@ class ConversationsManager {
                    conv.lastMessage.toLowerCase().includes(this.searchTerm);
         });
 
-        console.log('📊 Conversaciones filtradas:', filtered.length);
-
         const container = document.getElementById('conversationsList');
-        if (!container) {
-            console.error('❌ No se encontró contenedor para filtrado');
-            return;
-        }
+        if (!container) return;
         
         const html = filtered.map(conv => this.renderConversationItem(conv)).join('');
         container.innerHTML = html || '<div class="no-conversations"><p>No se encontraron conversaciones</p></div>';
-        console.log('✅ Conversaciones filtradas renderizadas');
     }
 
     setupAutoRefresh() {
         console.log('🔄 Configurando auto-refresh...');
         // Refrescar conversaciones cada 30 segundos
         this.refreshInterval = setInterval(() => {
-            console.log('🔄 Auto-refresh ejecutándose...');
             this.loadConversations();
         }, 30000);
-        console.log('✅ Auto-refresh configurado (30s)');
     }
 
     setupTextareaAutoResize() {
-        console.log('📏 Configurando auto-resize de textareas...');
+        console.log('📏 Configurando auto-resize de textarea...');
         
-        const textareas = ['messageInput', 'mobileMessageInput'];
-        
-        textareas.forEach(id => {
-            const textarea = document.getElementById(id);
-            if (textarea) {
-                textarea.addEventListener('input', () => {
-                    textarea.style.height = 'auto';
-                    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-                });
-                console.log('✅ Auto-resize configurado para', id);
-            }
-        });
+        const textarea = document.getElementById('messageInput');
+        if (textarea) {
+            textarea.addEventListener('input', () => {
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+            });
+        }
     }
 
     scrollToBottom() {
-        const containers = ['messagesContainer', 'mobileMessagesContainer'];
-        
-        containers.forEach(containerId => {
-            const container = document.getElementById(containerId);
-            if (container) {
-                setTimeout(() => {
-                    container.scrollTop = container.scrollHeight;
-                }, 100);
-            }
-        });
+        const container = document.getElementById('messagesContainer');
+        if (container) {
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 100);
+        }
     }
 
     // Utilidades
@@ -1310,10 +1190,7 @@ class ConversationsManager {
         console.log('❌ Mostrando error:', message);
         
         const container = document.getElementById('conversationsList');
-        if (!container) {
-            console.error('❌ No se encontró contenedor para mostrar error');
-            return;
-        }
+        if (!container) return;
         
         container.innerHTML = `
             <div class="no-conversations">
@@ -1326,7 +1203,6 @@ class ConversationsManager {
                 </button>
             </div>
         `;
-        console.log('✅ Error mostrado en UI');
     }
 
     cleanup() {
@@ -1334,19 +1210,16 @@ class ConversationsManager {
         
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
-            console.log('✅ Interval de refresh limpiado');
         }
     }
 }
 
 // Funciones globales
-window.sendMessage = function(isMobile = false) {
-    console.log('🌐 Función global sendMessage llamada');
-    window.conversationsManager.sendMessage(isMobile);
+window.sendMessage = function() {
+    window.conversationsManager.sendMessage();
 };
 
 window.closeMobileChat = function() {
-    console.log('🌐 Función global closeMobileChat llamada');
     window.conversationsManager.closeMobileChat();
 };
 
