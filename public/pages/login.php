@@ -221,7 +221,7 @@ unset($_SESSION['login_errors'], $_SESSION['login_message'], $_SESSION['login_em
                 <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
                     <p class="text-blue-800 text-sm text-center">
                         <i class="ri-information-line mr-1"></i>
-                        <strong>Demo:</strong> admin@reservabot.com / demo123
+                        <strong>Demo:</strong> demo@reservabot.com / demo123
                     </p>
                 </div>
                 

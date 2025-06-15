@@ -19,6 +19,7 @@ class Router {
     private function defineRoutes() {
                 
         // Rutas públicas
+        $this->addRoute('GET',      '/',                        'pages/home.php');
         $this->addRoute('GET',      '/landing',                 'pages/landing.php');
         $this->addRoute('GET',      '/login',                   'pages/login.php');
         $this->addRoute('GET',      '/signup',                  'pages/signup.php');
@@ -36,7 +37,7 @@ class Router {
         $this->addRoute('POST',     '/api/contacto-handler',    'api/contacto-handler.php');
 
         // Rutas protegidas        
-        $this->addRoute('GET',      '/',                 'pages/reservas.php',         ['auth']);
+        //$this->addRoute('GET',      '/',                 'pages/reservas.php',         ['auth']);
         $this->addRoute('GET',      '/calendario',       'pages/calendario.php',       ['auth']);
         $this->addRoute('GET',      '/reservas',         'pages/reservas.php',         ['auth']);
         $this->addRoute('GET',      '/clientes',         'pages/clientes.php',         ['auth']);
@@ -66,6 +67,7 @@ class Router {
         $this->addRoute('POST',     '/api/whatsapp-stats',              'api/whatsapp-stats.php',           ['auth']);
         $this->addRoute('POST',     '/api/send-whatsapp',               'api/whatsapp-send.php',            ['auth']);
         $this->addRoute('GET',      '/api/whatsapp-conversations',      'api/whatsapp-conversations.php',   ['auth']);
+        $this->addRoute('POST',     '/api/buscar-clientes',             'api/buscar-clientes.php',          ['auth']);
         
         // Webhook para WhatsApp
         $this->addRoute('POST',     '/api/whatsapp-webhook',    'api/whatsapp-webhook.php');
