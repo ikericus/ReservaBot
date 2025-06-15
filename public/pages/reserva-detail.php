@@ -29,9 +29,46 @@ try {
     exit;
 }
 
+// Obtener usuario actual para verificar conexión WhatsApp
+$currentUser = getAuthenticatedUser();
+$userId = $currentUser['id'];
+
+// Verificar estado de WhatsApp
+$whatsappConfig = null;
+try {
+    $stmt = getPDO()->prepare('SELECT status, phone_number FROM whatsapp_config WHERE usuario_id = ?');
+    $stmt->execute([$userId]);
+    $whatsappConfig = $stmt->fetch();
+} catch (PDOException $e) {
+    error_log('Error obteniendo configuración WhatsApp: ' . $e->getMessage());
+}
+
+$whatsappConnected = $whatsappConfig && in_array($whatsappConfig['status'], ['connected', 'ready']);
+
 // Incluir la cabecera
 include 'includes/header.php';
 ?>
+
+<style>
+/* Estilos para el botón de WhatsApp */
+.whatsapp-button {
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+    box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+    transition: all 0.3s ease;
+}
+
+.whatsapp-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+}
+
+.whatsapp-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+</style>
 
 <div class="flex items-center mb-6">
     <a href="/day?date=<?php echo $reserva['fecha']; ?>" class="mr-4 p-2 rounded-full hover:bg-gray-100">
@@ -65,20 +102,10 @@ include 'includes/header.php';
             
             <div>
                 <h3 class="text-sm font-medium text-gray-500">CONTACTO</h3>
-                    <p class="mt-1 text-base text-gray-900 flex items-center">
-                        <i class="ri-phone-line mr-2 text-gray-500"></i>
-                        <?php echo htmlspecialchars($reserva['telefono']); ?>
-                    </p>
-                    <?php if (!empty($reserva['whatsapp_id'])): ?>
-                    <p class="mt-1 text-base text-gray-900 flex items-center">
-                        <i class="ri-whatsapp-line mr-2 text-green-500"></i>
-                        <?php echo htmlspecialchars($reserva['whatsapp_id']); ?>
-                        <a href="#" class="ml-2 text-sm text-blue-600 hover:text-blue-800 flex items-center" 
-                        id="sendWhatsAppBtn" data-id="<?php echo $reserva['id']; ?>">
-                            <i class="ri-send-plane-line mr-1"></i> Enviar mensaje
-                        </a>
-                    </p>
-                    <?php endif; ?>
+                <p class="mt-1 text-base text-gray-900 flex items-center">
+                    <i class="ri-phone-line mr-2 text-gray-500"></i>
+                    <?php echo htmlspecialchars($reserva['telefono']); ?>
+                </p>
             </div>
         </div>
         
@@ -105,16 +132,15 @@ include 'includes/header.php';
                 <i class="ri-check-line mr-2"></i>
                 Confirmar Reserva
             </button>
-        <?php else: ?>
-            <button id="cancelarStatusBtn" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
-                <i class="ri-close-line mr-2"></i>
-                Marcar como Pendiente
-            </button>
         <?php endif; ?>
         
-        <button id="mensajeBtn" class="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <i class="ri-message-line mr-2"></i>
-            Enviar Mensaje
+        <button 
+            onclick="openWhatsAppChat('<?php echo addslashes($reserva['telefono']); ?>', '<?php echo addslashes($reserva['nombre']); ?>')" 
+            class="whatsapp-button inline-flex items-center px-3 py-2 border border-green-300 shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 <?php echo !$whatsappConnected ? 'opacity-50 cursor-not-allowed' : ''; ?>"
+            <?php echo !$whatsappConnected ? 'disabled title="WhatsApp no está conectado"' : ''; ?>
+        >
+            <i class="ri-whatsapp-line mr-2"></i>
+            Enviar Mensaje WhatsApp
         </button>
         
         <button id="eliminarBtn" class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
@@ -189,14 +215,14 @@ include 'includes/header.php';
     </div>
 </div>
 
-<!-- Pasar datos al JavaScript -->
-<script>
-    // Pasar información de la reserva al JavaScript
-    const reservaId = <?php echo $reserva['id']; ?>;
-    const reservaFecha = "<?php echo $reserva['fecha']; ?>";
-</script>
+<?php
+// Definir variables para el componente de conversación
+$clientPhone = $reserva['telefono'];
+$clientName = $reserva['nombre'];
 
-<?php 
+// Incluir componente de conversación
+include 'components/conversacion.php';
+
 // Incluir el pie de página
 include 'includes/footer.php'; 
 ?>
