@@ -428,6 +428,61 @@ app.get('/api/status', authenticateJWT, (req, res) => {
     });
 });
 
+app.post('/api/isuser', authenticateJWT, async (req, res) => {
+    
+    const phoneNum = req.phoneNum;
+    const userId = req.userId;    
+
+    try {
+        // Validar parámetros
+        if (!phoneNum) {
+            return res.status(400).json({
+                success: false,
+                error: 'Parámetro "phoneNum" es requerido'
+            });
+        }
+        
+        // Verificar cliente conectado
+        if (!clients.has(userId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Cliente no conectado'
+            });
+        }
+        
+        const clientData = clients.get(userId);
+        if (clientData.status !== 'ready') {
+            return res.status(400).json({
+                success: false,
+                error: 'Cliente no está listo para comprobar nº'
+            });
+        }
+        
+        const client = clientData.client;
+        
+        // Formatear número
+        const user = phoneNum.includes('@') ? phoneNum : `${phoneNum}@c.us`;
+        
+        logger.info(`Enviando mensaje de usuario ${userId} a ${phoneNumber}`);
+        
+        // Enviar mensaje
+        const isRegistered  = await client.isRegisteredUser(user);
+        
+        res.json({
+            success: true,
+            isRegistered: isRegistered
+        });
+        
+    } catch (error) {
+        logger.error(`Error comprobando nº:`, error);
+        
+        res.status(500).json({
+            success: false,
+            error: 'Error comprobando nº'
+        });
+    }
+});
+
 // Enviar mensaje
 app.post('/api/send', authenticateJWT, async (req, res) => {
     const userId = req.userId;
