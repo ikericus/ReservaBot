@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReservaBot - Automatiza tus Reservas con WhatsApp</title>
-    <meta name="description" content="Sistema inteligente de reservas con integración WhatsApp. Automatiza tu negocio, reduce llamadas y mejora la experiencia de tus clientes.">
+    <title>ReservaBot - Sistema Completo de Gestión de Citas</title>
+    <meta name="description" content="Plataforma integral de gestión de citas con WhatsApp, calendario, agenda de clientes y comunicación automática. Para cualquier negocio que trabaje con citas.">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -141,6 +141,7 @@
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-8">
                         <a href="#inicio" class="text-gray-700 hover:text-blue-600 transition-colors">Inicio</a>
+                        <a href="#funcionalidades" class="text-gray-700 hover:text-blue-600 transition-colors">Funcionalidades</a>
                         <a href="#planes" class="text-gray-700 hover:text-blue-600 transition-colors">Planes</a>
                         <button onclick="openContactModal()" class="text-gray-700 hover:text-blue-600 transition-colors">Contacto</button>
                     </div>
@@ -184,6 +185,10 @@
                         <a href="#inicio" class="flex items-center px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors group" onclick="closeMobileMenu()">
                             <i class="ri-home-line mr-3 text-gray-400 group-hover:text-blue-600"></i>
                             <span class="font-medium">Inicio</span>
+                        </a>
+                        <a href="#funcionalidades" class="flex items-center px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors group" onclick="closeMobileMenu()">
+                            <i class="ri-tools-line mr-3 text-gray-400 group-hover:text-blue-600"></i>
+                            <span class="font-medium">Funcionalidades</span>
                         </a>
                         <a href="#planes" class="flex items-center px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors group" onclick="closeMobileMenu()">
                             <i class="ri-price-tag-3-line mr-3 text-gray-400 group-hover:text-blue-600"></i>
@@ -237,14 +242,40 @@
             <div class="grid lg:grid-cols-2 gap-12 items-center">
                 <div class="text-white fade-in-up">
                     <h1 class="text-5xl lg:text-7xl font-bold leading-tight mb-6">
-                        Automatiza tus
-                        <span class="block text-yellow-300">Reservas</span>
-                        con WhatsApp
+                        Gestión Completa de 
+                        <span class="block text-yellow-300">Citas</span>
+                        para tu Negocio
                     </h1>
                     
-                    <p class="text-xl lg:text-2xl text-blue-100 mb-8 leading-relaxed">
-                        Reduce llamadas, mejora la experiencia del cliente y gestiona tu negocio 24/7 con nuestro sistema inteligente de reservas.
+                    <p class="text-xl lg:text-2xl text-blue-100 mb-6 leading-relaxed">
+                        Plataforma integral con WhatsApp, calendario, agenda de clientes y comunicación automática.
                     </p>
+                    
+                    <!-- Target específico -->
+                    <div class="mb-8 p-4 bg-white/10 rounded-xl backdrop-blur-sm">
+                        <p class="text-lg text-blue-100 mb-3">
+                            <i class="ri-check-double-line text-yellow-300 mr-2"></i>
+                            Ideal para:
+                        </p>
+                        <div class="grid grid-cols-2 gap-2 text-blue-100">
+                            <div class="flex items-center">
+                                <i class="ri-scissors-line mr-2 text-yellow-300"></i>
+                                <span>Peluquerías</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="ri-hand-heart-line mr-2 text-yellow-300"></i>
+                                <span>Estética</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="ri-heart-pulse-line mr-2 text-yellow-300"></i>
+                                <span>Fisioterapia</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="ri-psychology-line mr-2 text-yellow-300"></i>
+                                <span>Consultoría</span>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div class="flex flex-col sm:flex-row gap-4 mb-8">
                         <a href="/login" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all">
@@ -283,7 +314,7 @@
                                         <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                                             <i class="ri-whatsapp-line text-white text-sm"></i>
                                         </div>
-                                        <span class="ml-2 font-semibold text-sm">Barbería Style</span>
+                                        <span class="ml-2 font-semibold text-sm">Beauty Center</span>
                                     </div>
                                     <span class="text-xs text-gray-500">Online</span>
                                 </div>
@@ -297,13 +328,13 @@
                                     
                                     <div class="flex justify-end">
                                         <div class="bg-blue-500 text-white rounded-2xl rounded-br-md px-4 py-2 max-w-xs">
-                                            <p class="text-sm">Sí, para mañana por la tarde</p>
+                                            <p class="text-sm">Sí, para tratamiento facial</p>
                                         </div>
                                     </div>
                                     
                                     <div class="flex justify-start">
                                         <div class="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-2 max-w-xs">
-                                            <p class="text-sm">Perfecto! Tengo disponible 16:00, 17:30 y 18:00. ¿Cuál prefieres?</p>
+                                            <p class="text-sm">Perfecto! Tengo disponible mañana 16:00, 17:30 y 18:00. ¿Cuál prefieres?</p>
                                         </div>
                                     </div>
                                     
@@ -336,14 +367,102 @@
     </section>
 
     <!-- Features Section -->
-    <section id="planes" class="py-20 bg-gray-50">
+    <section id="funcionalidades" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+                    Más que un <span class="gradient-text">chatbot</span>
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Simplifica tu día a día y enfócate en lo que realmente importa: tus clientes.
+                </p>
+            </div>
+            
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="space-y-8">
+                        <div class="flex items-start">
+                            <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                                <i class="ri-phone-line text-red-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">Reduce las llamadas constantes</h3>
+                                <p class="text-gray-600">Deja que tus clientes reserven automáticamente por WhatsApp, sin interrumpir tu trabajo con llamadas continuas.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                                <i class="ri-time-line text-blue-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">Disponible 24/7 para tus clientes</h3>
+                                <p class="text-gray-600">Tus clientes pueden reservar incluso cuando duermes. El sistema trabaja por ti las 24 horas del día.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                                <i class="ri-calendar-check-line text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">Evita dobles reservas</h3>
+                                <p class="text-gray-600">El calendario se actualiza automáticamente. Nunca más tendrás dos clientes a la misma hora.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                                <i class="ri-user-heart-line text-purple-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">Mejora la experiencia del cliente</h3>
+                                <p class="text-gray-600">Respuestas instantáneas, confirmaciones automáticas y recordatorios que reducen los no-shows.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lg:text-center">
+                    <div class="bg-white rounded-2xl p-8 shadow-xl">
+                        <div class="text-center mb-8">
+                            <div class="w-20 h-20 gradient-bg rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="ri-lightbulb-line text-white text-3xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900">¿Sabías que...</h3>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <div class="text-center p-4 bg-blue-50 rounded-xl">
+                                <div class="text-3xl font-bold text-blue-600 mb-2">67%</div>
+                                <p class="text-gray-600">de los profesionales pierden clientes por no contestar el teléfono</p>
+                            </div>
+                            
+                            <div class="text-center p-4 bg-green-50 rounded-xl">
+                                <div class="text-3xl font-bold text-green-600 mb-2">2 horas</div>
+                                <p class="text-gray-600">diarias ahorras automatizando las reservas</p>
+                            </div>
+                            
+                            <div class="text-center p-4 bg-purple-50 rounded-xl">
+                                <div class="text-3xl font-bold text-purple-600 mb-2">95%</div>
+                                <p class="text-gray-600">de las personas usa WhatsApp a diario</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="planes" class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
                     Planes adaptados a tu <span class="gradient-text">negocio</span>
                 </h2>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                    Elige el plan perfecto para tu tipo de negocio. Sin compromisos, cancela cuando quieras.
+                    Empieza gratis y escala según crezca tu negocio. Sin compromisos, cancela cuando quieras.
                 </p>
             </div>
             
@@ -351,8 +470,8 @@
                 <!-- Plan Gratis -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg border-2 border-gray-100">
                     <div class="text-center">
-                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Gratis</h3>
-                        <p class="text-gray-600 mb-6">Perfecto para empezar</p>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Básico</h3>
+                        <p class="text-gray-600 mb-6">Para empezar sin compromisos</p>
                         <div class="mb-8">
                             <span class="text-5xl font-bold text-gray-900">0€</span>
                             <span class="text-gray-600">/mes</span>
@@ -362,11 +481,7 @@
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Reservas manuales y por formulario</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Confirmación automática básica</span>
+                            <span>Reservas por formulario web</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
@@ -374,7 +489,11 @@
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Agenda de clientes básica</span>
+                            <span>Agenda básica de clientes</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span>Confirmaciones automáticas</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-close-line text-red-500 mr-3"></i>
@@ -395,13 +514,13 @@
                 <div class="bg-white rounded-2xl p-8 shadow-xl border-2 border-blue-500 relative transform scale-105">
                     <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
                         <span class="bg-blue-500 text-white px-6 py-2 rounded-full text-sm font-semibold">
-                            Recomendado
+                            Más Popular
                         </span>
                     </div>
                     
                     <div class="text-center">
-                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Estándar</h3>
-                        <p class="text-gray-600 mb-6">Para negocios activos</p>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Profesional</h3>
+                        <p class="text-gray-600 mb-6">Para profesionales activos</p>
                         <div class="mb-8">
                             <div class="flex items-center justify-center gap-2 mb-2">
                                 <span class="text-2xl font-bold price-old">9€</span>
@@ -414,23 +533,23 @@
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Todo del plan Gratis</span>
+                            <span>Todo del plan Básico</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Agenda de clientes completa</span>
+                            <span><strong>Integración WhatsApp completa</strong></span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Integración WhatsApp</span>
+                            <span>Agenda completa de clientes</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Comunicación con clientes</span>
+                            <span>Comunicación directa con clientes</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Confirmaciones automáticas</span>
+                            <span>Recordatorios automáticos</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-close-line text-red-500 mr-3"></i>
@@ -443,15 +562,15 @@
                     </ul>
                     
                     <a href="/signup?plan=estandar" class="btn-shine w-full block text-center py-3 px-6 gradient-bg text-white rounded-full font-semibold hover:shadow-lg transition-all">
-                        Empezar Gratis
+                        Empezar Beta Gratis
                     </a>
                 </div>
                 
                 <!-- Plan Premium -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg border-2 border-gray-100">
                     <div class="text-center">
-                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Premium</h3>
-                        <p class="text-gray-600 mb-6">Automatización completa</p>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Automático</h3>
+                        <p class="text-gray-600 mb-6">Automatización completa con IA</p>
                         <div class="mb-8">
                             <div class="flex items-center justify-center gap-2 mb-2">
                                 <span class="text-2xl font-bold price-old">19€</span>
@@ -464,23 +583,23 @@
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Todo del plan Estándar</span>
+                            <span>Todo del plan Profesional</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>IA para reservas automáticas</span>
+                            <span><strong>IA para reservas automáticas</strong></span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Respuestas automáticas</span>
+                            <span>Respuestas automáticas inteligentes</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Recordatorios automáticos</span>
+                            <span>Gestión automática de cancelaciones</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Blacklist de clientes</span>
+                            <span>Blacklist de clientes automática</span>
                         </li>
                         <li class="flex items-center">
                             <i class="ri-check-line text-green-500 mr-3"></i>
@@ -513,7 +632,7 @@
     </section>
 
     <!-- FAQ Section -->
-    <section class="py-20 bg-white">
+    <section class="py-20 bg-gray-50">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
@@ -525,62 +644,62 @@
             </div>
             
             <div class="space-y-6">
-                <div class="bg-gray-50 rounded-2xl p-6">
-                    <button class="w-full text-left flex justify-between items-center">
+                <div class="bg-white rounded-2xl p-6 shadow-sm">
+                    <button class="w-full text-left flex justify-between items-center" onclick="toggleFAQ(this)">
+                        <h3 class="text-lg font-semibold text-gray-900">¿ReservaBot es solo un chatbot de WhatsApp?</h3>
+                        <i class="ri-arrow-down-s-line text-gray-600 transition-transform"></i>
+                    </button>
+                    <div class="mt-4 hidden">
+                        <p class="text-gray-600">
+                            No, ReservaBot es mucho más que un chatbot. Es una plataforma completa que incluye calendario de citas, agenda de clientes, formularios web, comunicación por WhatsApp, recordatorios automáticos y analytics. Es todo lo que necesitas para gestionar las citas de tu negocio.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-2xl p-6 shadow-sm">
+                    <button class="w-full text-left flex justify-between items-center" onclick="toggleFAQ(this)">
                         <h3 class="text-lg font-semibold text-gray-900">¿Necesito instalar algo en mi teléfono?</h3>
-                        <i class="ri-arrow-down-s-line text-gray-600"></i>
+                        <i class="ri-arrow-down-s-line text-gray-600 transition-transform"></i>
                     </button>
-                    <div class="mt-4">
+                    <div class="mt-4 hidden">
                         <p class="text-gray-600">
-                            No, ReservaBot funciona 100% en la nube. Solo necesitas tu WhatsApp normal y acceso a internet. Todo se gestiona desde el panel web.
+                            No necesitas instalar nada. ReservaBot funciona 100% en la nube. Solo necesitas tu WhatsApp normal (recomendamos WhatsApp Business) y acceso a internet. Todo se gestiona desde el panel web.
                         </p>
                     </div>
                 </div>
                 
-                <div class="bg-gray-50 rounded-2xl p-6">
-                    <button class="w-full text-left flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-gray-900">¿Funciona con WhatsApp Business?</h3>
-                        <i class="ri-arrow-down-s-line text-gray-600"></i>
+                <div class="bg-white rounded-2xl p-6 shadow-sm">
+                    <button class="w-full text-left flex justify-between items-center" onclick="toggleFAQ(this)">
+                        <h3 class="text-lg font-semibold text-gray-900">¿Funciona para cualquier tipo de negocio?</h3>
+                        <i class="ri-arrow-down-s-line text-gray-600 transition-transform"></i>
                     </button>
-                    <div class="mt-4">
+                    <div class="mt-4 hidden">
                         <p class="text-gray-600">
-                            Sí, ReservaBot es compatible tanto con WhatsApp normal como con WhatsApp Business. Recomendamos Business para funciones adicionales.
+                            ReservaBot está optimizado para negocios que trabajan con citas individuales: peluquerías, centros de estética, fisioterapeutas, psicólogos, consultores, coaches, etc. Es perfecto para profesionales que atienden un cliente a la vez.
                         </p>
                     </div>
                 </div>
                 
-                <div class="bg-gray-50 rounded-2xl p-6">
-                    <button class="w-full text-left flex justify-between items-center">
+                <div class="bg-white rounded-2xl p-6 shadow-sm">
+                    <button class="w-full text-left flex justify-between items-center" onclick="toggleFAQ(this)">
                         <h3 class="text-lg font-semibold text-gray-900">¿Puedo personalizar los mensajes automáticos?</h3>
-                        <i class="ri-arrow-down-s-line text-gray-600"></i>
+                        <i class="ri-arrow-down-s-line text-gray-600 transition-transform"></i>
                     </button>
-                    <div class="mt-4">
+                    <div class="mt-4 hidden">
                         <p class="text-gray-600">
-                            Por supuesto. Puedes personalizar completamente todos los mensajes, desde saludos hasta confirmaciones y recordatorios.
+                            Por supuesto. Puedes personalizar completamente todos los mensajes: saludos, confirmaciones, recordatorios, despedidas, etc. También puedes configurar tu horario de atención, tipos de servicios y precios.
                         </p>
                     </div>
                 </div>
                 
-                <div class="bg-gray-50 rounded-2xl p-6">
-                    <button class="w-full text-left flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-gray-900">¿Hay límite en el número de clientes?</h3>
-                        <i class="ri-arrow-down-s-line text-gray-600"></i>
-                    </button>
-                    <div class="mt-4">
-                        <p class="text-gray-600">
-                            No hay límite en el número de clientes que puedes gestionar. Solo limitamos las reservas por mes según el plan elegido.
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="bg-gray-50 rounded-2xl p-6">
-                    <button class="w-full text-left flex justify-between items-center">
+                <div class="bg-white rounded-2xl p-6 shadow-sm">
+                    <button class="w-full text-left flex justify-between items-center" onclick="toggleFAQ(this)">
                         <h3 class="text-lg font-semibold text-gray-900">¿Qué pasa cuando termine la fase beta?</h3>
-                        <i class="ri-arrow-down-s-line text-gray-600"></i>
+                        <i class="ri-arrow-down-s-line text-gray-600 transition-transform"></i>
                     </button>
-                    <div class="mt-4">
+                    <div class="mt-4 hidden">
                         <p class="text-gray-600">
-                            Los usuarios que se registren durante la beta mantendrán precios especiales. Te notificaremos con tiempo suficiente antes de cualquier cambio.
+                            Los usuarios que se registren durante la beta mantendrán precios especiales de forma permanente. Te notificaremos con al menos 30 días de antelación antes de cualquier cambio en los precios.
                         </p>
                     </div>
                 </div>
@@ -596,16 +715,16 @@
         
         <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-4xl lg:text-6xl font-bold text-white mb-6">
-                ¿Listo para automatizar tu negocio?
+                ¿Listo para automatizar tu agenda?
             </h2>
             <p class="text-xl lg:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
-                Prueba ReservaBot gratis y descubre cómo puede transformar la gestión de reservas de tu negocio
+                Únete a la beta gratuita y descubre cómo ReservaBot puede transformar la gestión de citas de tu negocio.
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
                 <a href="/login" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all">
                     <i class="ri-rocket-line mr-2"></i>
-                    Iniciar Demo Gratis
+                    Probar Beta Gratis
                 </a>
                 <button onclick="openContactModal()" class="glass-effect text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/20 transition-all">
                     <i class="ri-mail-line mr-2"></i>
@@ -642,7 +761,7 @@
                         <span class="ml-3 text-2xl font-bold">ReservaBot</span>
                     </div>
                     <p class="text-gray-400 text-lg leading-relaxed max-w-md">
-                        Automatiza las reservas de tu negocio con WhatsApp. La solución más completa para gestionar citas, clientes y comunicaciones.
+                        Plataforma completa de gestión de citas con WhatsApp, calendario, agenda de clientes y comunicación automática. Perfecto para profesionales que trabajan con citas individuales.
                     </p>
                     <div class="flex space-x-4 mt-6">
                         <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
@@ -663,7 +782,7 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-6">Producto</h3>
                     <ul class="space-y-3 text-gray-400">
-                        <li><a href="#planes" class="hover:text-white transition-colors">Características</a></li>
+                        <li><a href="#funcionalidades" class="hover:text-white transition-colors">Funcionalidades</a></li>
                         <li><a href="#planes" class="hover:text-white transition-colors">Precios</a></li>
                         <li><a href="/login" class="hover:text-white transition-colors">Demo</a></li>
                         <li><a href="#" class="hover:text-white transition-colors">API</a></li>
@@ -695,7 +814,35 @@
     </footer>
 
     <!-- Contact Modal -->
-    <?php include __DIR__ . '/../components/contacto.php'; ?>
+    <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900">Contáctanos</h3>
+                <button onclick="closeContactModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="ri-close-line text-2xl"></i>
+                </button>
+            </div>
+            <form>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                        <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mensaje</label>
+                        <textarea rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="w-full mt-6 gradient-bg text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                    Enviar Mensaje
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script>
@@ -705,11 +852,9 @@
             const overlay = document.getElementById('mobileMenuOverlay');
             const menuIcon = document.getElementById('menuIcon');
             
-            // Mostrar el menú y overlay
             menu.style.visibility = 'visible';
             overlay.classList.remove('hidden');
             
-            // Pequeño delay para la animación
             setTimeout(() => {
                 menu.classList.add('open');
                 overlay.style.opacity = '1';
@@ -731,14 +876,38 @@
             menuIcon.classList.add('ri-menu-line');
             document.body.style.overflow = 'auto';
             
-            // Ocultar menú y overlay después de la animación
             setTimeout(() => {
                 menu.style.visibility = 'hidden';
                 overlay.classList.add('hidden');
             }, 300);
         }
         
-        // Asegurar que el menú esté cerrado al cargar la página
+        // Contact modal functions
+        function openContactModal() {
+            document.getElementById('contactModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeContactModal() {
+            document.getElementById('contactModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+        
+        // FAQ toggle function
+        function toggleFAQ(button) {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('i');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             const menu = document.getElementById('mobileMenu');
             const overlay = document.getElementById('mobileMenuOverlay');
@@ -747,6 +916,17 @@
             menu.style.visibility = 'hidden';
             overlay.classList.add('hidden');
             overlay.style.opacity = '0';
+            
+            // Show first FAQ open by default
+            const firstFAQ = document.querySelector('.space-y-6 > div:first-child');
+            if (firstFAQ) {
+                const button = firstFAQ.querySelector('button');
+                const content = firstFAQ.querySelector('div:last-child');
+                const icon = firstFAQ.querySelector('i');
+                
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            }
         });
         
         // Mobile menu toggle
@@ -771,7 +951,6 @@
                         behavior: 'smooth',
                         block: 'start'
                     });
-                    // Close mobile menu if open
                     closeMobileMenu();
                 }
             });
@@ -786,36 +965,6 @@
             } else {
                 nav.classList.add('bg-white/90');
                 nav.classList.remove('bg-white/95');
-            }
-        });
-        
-        // FAQ Accordion
-        document.querySelectorAll('.space-y-6 button').forEach(button => {
-            button.addEventListener('click', function() {
-                const content = this.nextElementSibling;
-                const icon = this.querySelector('i');
-                
-                if (content.style.display === 'none' || !content.style.display) {
-                    content.style.display = 'block';
-                    icon.classList.remove('ri-arrow-down-s-line');
-                    icon.classList.add('ri-arrow-up-s-line');
-                } else {
-                    content.style.display = 'none';
-                    icon.classList.remove('ri-arrow-up-s-line');
-                    icon.classList.add('ri-arrow-down-s-line');
-                }
-            });
-        });
-        
-        // Initialize FAQ state - Show first FAQ open by default
-        document.querySelectorAll('.space-y-6 > div > div:last-child').forEach((content, index) => {
-            if (index === 0) {
-                content.style.display = 'block';
-                const button = content.previousElementSibling.querySelector('i');
-                button.classList.remove('ri-arrow-down-s-line');
-                button.classList.add('ri-arrow-up-s-line');
-            } else {
-                content.style.display = 'none';
             }
         });
     </script>
