@@ -438,7 +438,7 @@ app.post('/api/isuser', authenticateJWT, async (req, res) => {
         if (!phoneNum) {
             return res.status(400).json({
                 success: false,
-                error: 'Parámetro "phoneNum" es obligatario '
+                error: 'Parámetro "phoneNum" es obligatario'
             });
         }
         
