@@ -17,9 +17,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Paso 1: Despliegue FTP
+      - name: Check which paths changed
+        id: check
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            public:
+              - 'public/**'
+            server:
+              - 'server/server.js'
+
+      # 🚀 FTP Deploy
       - name: Deploy public/ via FTP
-        if: ${{ github.event.head_commit.modified && contains(join(github.event.head_commit.modified, ','), 'public/') }}
+        if: steps.check.outputs.public == 'true'
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_HOST }}
@@ -29,17 +39,17 @@ jobs:
           server-dir: /
           dangerous-clean-slate: false
 
-      # Paso 2: Copiar server.js al VPS vía SSH y reiniciar con pm2
+      # 🔐 SSH + pm2
       - name: Deploy server.js to VPS
-        if: ${{ github.event.head_commit.modified && contains(join(github.event.head_commit.modified, ','), 'server/server.js') }}
+        if: steps.check.outputs.server == 'true'
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
           chmod 600 private_key
-          
-          # Copiar el fichero
-          scp -i private_key -o StrictHostKeyChecking=no server/server.js ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/whatsapp-server/server.js
 
-          # Reiniciar la app con pm2
+          # Copiar server.js
+          scp -i private_key -o StrictHostKeyChecking=no server/server.js ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/ruta/en/el/vps/server.js
+
+          # Reiniciar aplicación con pm2
           ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
           cd /ruta/en/el/vps
           pm2 start server.js --name whatsappbot || pm2 restart whatsappbot
