@@ -280,7 +280,7 @@
                     <div class="flex flex-col sm:flex-row gap-4 mb-8">
                         <a href="/login" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all">
                             <i class="ri-play-circle-line mr-2"></i>
-                            Iniciar Demo
+                            Iniciar prueba
                         </a>
                         <button onclick="openContactModal()" class="glass-effect text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/20 transition-all">
                             <i class="ri-mail-line mr-2"></i>
