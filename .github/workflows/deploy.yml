@@ -47,7 +47,7 @@ jobs:
           chmod 600 private_key
 
           # Copiar server.js
-          scp -i private_key -o StrictHostKeyChecking=no server/server.js ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/whatsapp-server/server.js
+          scp -i private_key -o StrictHostKeyChecking=no server/server.js ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/debian/whatsapp-server/server.js
 
           # Reiniciar aplicación con pm2
           ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
