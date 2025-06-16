@@ -51,6 +51,6 @@ jobs:
 
           # Reiniciar aplicación con pm2
           ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-          cd /ruta/en/el/vps
-          pm2 start server.js --name whatsappbot || pm2 restart whatsappbot
+          cd /home/debian/whatsapp-server
+          pm2 start server.js --name whatsapp-server || pm2 restart whatsapp-server
           EOF
