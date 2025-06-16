@@ -1,4 +1,4 @@
-name: Deploy to FTP on push to main
+name: Deploy to FTP and VPS on push to main
 
 on:
   push:
@@ -6,18 +6,20 @@ on:
       - main
     paths:
       - 'public/**'
-
+      - 'server/server.js'
 
 jobs:
-  ftp-deploy:
-    name: Upload to FTP
+  deploy:
+    name: Deploy to FTP and VPS
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy via FTP
+      # Paso 1: Despliegue FTP
+      - name: Deploy public/ via FTP
+        if: ${{ github.event.head_commit.modified && contains(join(github.event.head_commit.modified, ','), 'public/') }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_HOST }}
@@ -26,3 +28,19 @@ jobs:
           local-dir: ./public/
           server-dir: /
           dangerous-clean-slate: false
+
+      # Paso 2: Copiar server.js al VPS vía SSH y reiniciar con pm2
+      - name: Deploy server.js to VPS
+        if: ${{ github.event.head_commit.modified && contains(join(github.event.head_commit.modified, ','), 'server/server.js') }}
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
+          chmod 600 private_key
+          
+          # Copiar el fichero
+          scp -i private_key -o StrictHostKeyChecking=no server/server.js ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/whatsapp-server/server.js
+
+          # Reiniciar la app con pm2
+          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+          cd /ruta/en/el/vps
+          pm2 start server.js --name whatsappbot || pm2 restart whatsappbot
+          EOF
