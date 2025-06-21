@@ -416,7 +416,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
             </div>
             
             <!-- Features destacadas -->
-            <div class="mt-8 grid grid-cols-4 gap-4 text-center">
+            <!-- <div class="mt-8 grid grid-cols-4 gap-4 text-center">
                 <div class="text-white">
                     <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
                         <i class="ri-shield-check-line"></i>
@@ -441,7 +441,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                     </div>
                     <p class="text-xs text-blue-100">Soporte 24/7</p>
                 </div>
-            </div>
+            </div> -->
             
         </div>
     </div>

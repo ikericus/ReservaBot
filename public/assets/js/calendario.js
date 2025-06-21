@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variables globales
     let currentDate = new Date();
     let currentMobileDate = new Date();
-    let currentMobileView = 'month';
+    let currentMobileView = 'day';
     let currentWeekStart = null;
     
     // Actualizar con fecha de demo si es necesario
@@ -194,7 +194,6 @@ document.addEventListener('DOMContentLoaded', function() {
      * Inicializa las vistas móviles
      */
     function initMobileViews() {
-        updateMobileMonthStats();
         renderMobileMonthView();
         renderMobileWeekView();
         renderMobileDayView();
@@ -221,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (dayView) dayView.style.display = view === 'day' ? 'block' : 'none';
         
         // Renderizar vista específica
+        if (view === 'month') renderMobileMonthView();
         if (view === 'week') renderMobileWeekView();
         if (view === 'day') renderMobileDayView();
     }
@@ -232,7 +232,6 @@ document.addEventListener('DOMContentLoaded', function() {
         switch (unit) {
             case 'month':
                 currentMobileDate.setMonth(currentMobileDate.getMonth() + direction);
-                updateMobileMonthStats();
                 renderMobileMonthView();
                 break;
             case 'week':
@@ -250,40 +249,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
-     * Actualiza las estadísticas del mes móvil
+     * Renderiza la vista de mes móvil
      */
-    function updateMobileMonthStats() {
+    function renderMobileMonthView() {
+        // Actualizar display del mes
         const mobileMonthDisplay = document.getElementById('mobileMonthDisplay');
-        const confirmadasCount = document.getElementById('mobileConfirmadasCount');
-        const pendientesCount = document.getElementById('mobilePendientesCount');
-        
         if (mobileMonthDisplay) {
             mobileMonthDisplay.textContent = 
                 `${monthNames[currentMobileDate.getMonth()]} ${currentMobileDate.getFullYear()}`;
         }
         
-        // Calcular estadísticas del mes
-        const monthStart = new Date(currentMobileDate.getFullYear(), currentMobileDate.getMonth(), 1);
-        const monthEnd = new Date(currentMobileDate.getFullYear(), currentMobileDate.getMonth() + 1, 0);
-        
-        let confirmadas = 0, pendientes = 0;
-        
-        window.reservas.forEach(reserva => {
-            const fechaReserva = new Date(reserva.fecha);
-            if (fechaReserva >= monthStart && fechaReserva <= monthEnd) {
-                if (reserva.estado === 'confirmada') confirmadas++;
-                if (reserva.estado === 'pendiente') pendientes++;
-            }
-        });
-        
-        if (confirmadasCount) confirmadasCount.textContent = confirmadas;
-        if (pendientesCount) pendientesCount.textContent = pendientes;
-    }
-    
-    /**
-     * Renderiza la vista de mes móvil
-     */
-    function renderMobileMonthView() {
         const calendarBody = document.getElementById('mobileCalendarBody');
         if (!calendarBody) return;
         
@@ -403,8 +378,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const endStr = weekEnd.toLocaleDateString('es-ES', formatOptions);
             weekTitle.textContent = `${startStr} - ${endStr}`;
         }
-        
-        const today = new Date();
         
         for (let i = 0; i < 7; i++) {
             const currentDay = new Date(currentWeekStart);

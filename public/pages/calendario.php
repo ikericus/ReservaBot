@@ -32,77 +32,6 @@ include 'includes/header.php';
 <style>
 /* Estilos específicos para móvil - Calendario */
 @media (max-width: 768px) {
-    .mobile-calendar-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 1rem;
-        padding: 1.25rem;
-        margin-bottom: 1rem;
-        color: white;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-    
-    .mobile-month-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-    
-    .mobile-nav-btn {
-        width: 2.5rem;
-        height: 2.5rem;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-    
-    .mobile-nav-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: scale(1.05);
-    }
-    
-    .mobile-month-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        text-align: center;
-    }
-    
-    .mobile-month-stats {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.75rem;
-        margin-top: 1rem;
-    }
-    
-    .mobile-stat-item {
-        text-align: center;
-        background: rgba(255, 255, 255, 0.15);
-        padding: 0.75rem;
-        border-radius: 0.75rem;
-        backdrop-filter: blur(10px);
-    }
-    
-    .mobile-stat-number {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin: 0;
-    }
-    
-    .mobile-stat-label {
-        font-size: 0.75rem;
-        opacity: 0.9;
-        margin: 0.25rem 0 0 0;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    
     /* Selector de vista */
     .mobile-view-selector {
         background: white;
@@ -134,6 +63,46 @@ include 'includes/header.php';
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Navegación común para todas las vistas */
+    .mobile-nav-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 1rem;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .mobile-nav-btn {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .mobile-nav-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+    }
+    
+    .mobile-nav-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        text-align: center;
+        margin: 0;
     }
     
     /* Vista de mes - Grid simplificado */
@@ -256,20 +225,6 @@ include 'includes/header.php';
         border-radius: 1rem;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .mobile-week-header {
-        background: #f8fafc;
-        padding: 1rem;
-        border-bottom: 1px solid #e5e7eb;
-        text-align: center;
-    }
-    
-    .mobile-week-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #374151;
-        margin: 0;
     }
     
     .mobile-week-days {
@@ -433,33 +388,6 @@ include 'includes/header.php';
         color: #d97706;
     }
     
-    /* Navegación de día */
-    .mobile-day-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-
-    .mobile-day-nav-btn {
-        width: 2.5rem;
-        height: 2.5rem;
-        border-radius: 50%;
-        background: rgba(102, 126, 234, 0.2);
-        color: #667eea;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-    
-    .mobile-day-nav-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-    }
-    
     /* Estados vacíos */
     .mobile-empty-state {
         text-align: center;
@@ -546,10 +474,6 @@ include 'includes/header.php';
 }
 </style>
 
-<!-- <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Calendario de Reservas</h1>
-</div> -->
-
 <!-- Vista Desktop - Calendario Original -->
 <div class="desktop-view bg-white rounded-lg shadow-sm p-6">
     <div class="flex justify-between items-center mb-6">
@@ -593,99 +517,94 @@ include 'includes/header.php';
 
 <!-- Vista Mobile - Calendario Optimizado -->
 <div class="mobile-view">
-    <!-- Header con estadísticas del mes -->
-    <div class="mobile-calendar-header">
-        <div class="mobile-month-nav">
-            <button id="mobilePrevMonth" class="mobile-nav-btn">
-                <i class="ri-arrow-left-s-line"></i>
-            </button>
-            <h2 id="mobileMonthDisplay" class="mobile-month-title">Mayo 2025</h2>
-            <button id="mobileNextMonth" class="mobile-nav-btn">
-                <i class="ri-arrow-right-s-line"></i>
-            </button>
-        </div>
-        
-        <!-- <div class="mobile-month-stats">
-            <div class="mobile-stat-item">
-                <div class="mobile-stat-number" id="mobileConfirmadasCount">0</div>
-                <div class="mobile-stat-label">Confirmadas</div>
-            </div>
-            <div class="mobile-stat-item">
-                <div class="mobile-stat-number" id="mobilePendientesCount">0</div>
-                <div class="mobile-stat-label">Pendientes</div>
-            </div>
-        </div> -->
-    </div>
-    
-    <!-- Selector de vista -->
+    <!-- Selector de vista (en orden inverso) -->
     <div class="mobile-view-selector">
-        <button id="mobileViewMonth" class="mobile-view-btn active">
-            <i class="ri-calendar-2-line"></i>
-            Mes
+        <button id="mobileViewDay" class="mobile-view-btn active">
+            <i class="ri-calendar-event-line"></i>
+            Día
         </button>
         <button id="mobileViewWeek" class="mobile-view-btn">
             <i class="ri-calendar-line"></i>
             Semana
         </button>
-        <button id="mobileViewDay" class="mobile-view-btn">
-            <i class="ri-calendar-event-line"></i>
-            Día
+        <button id="mobileViewMonth" class="mobile-view-btn">
+            <i class="ri-calendar-2-line"></i>
+            Mes
         </button>
     </div>
     
     <!-- Vista de Mes -->
-    <div id="mobileMonthView" class="mobile-calendar-grid fade-in-mobile">
-        <div class="mobile-calendar-header-row">
-            <div class="mobile-day-header">L</div>
-            <div class="mobile-day-header">M</div>
-            <div class="mobile-day-header">X</div>
-            <div class="mobile-day-header">J</div>
-            <div class="mobile-day-header">V</div>
-            <div class="mobile-day-header">S</div>
-            <div class="mobile-day-header">D</div>
+    <div id="mobileMonthView" class="fade-in-mobile" style="display: none;">
+        <!-- Navegación del mes -->
+        <div class="mobile-nav-header">
+            <button id="mobilePrevMonth" class="mobile-nav-btn">
+                <i class="ri-arrow-left-s-line"></i>
+            </button>
+            <h2 id="mobileMonthDisplay" class="mobile-nav-title">Mayo 2025</h2>
+            <button id="mobileNextMonth" class="mobile-nav-btn">
+                <i class="ri-arrow-right-s-line"></i>
+            </button>
         </div>
-        <div id="mobileCalendarBody" class="mobile-calendar-body">
-            <!-- Las celdas se generarán con JavaScript -->
+        
+        <!-- Grid del calendario -->
+        <div class="mobile-calendar-grid">
+            <div class="mobile-calendar-header-row">
+                <div class="mobile-day-header">L</div>
+                <div class="mobile-day-header">M</div>
+                <div class="mobile-day-header">X</div>
+                <div class="mobile-day-header">J</div>
+                <div class="mobile-day-header">V</div>
+                <div class="mobile-day-header">S</div>
+                <div class="mobile-day-header">D</div>
+            </div>
+            <div id="mobileCalendarBody" class="mobile-calendar-body">
+                <!-- Las celdas se generarán con JavaScript -->
+            </div>
         </div>
     </div>
     
     <!-- Vista de Semana -->
-    <div id="mobileWeekView" class="mobile-week-view fade-in-mobile" style="display: none;">
-        <div class="mobile-week-header">
-            <div class="mobile-month-nav">
-                <button id="mobilePrevWeek" class="mobile-nav-btn" style="background: rgba(102, 126, 234, 0.2); color: #667eea;">
-                    <i class="ri-arrow-left-s-line"></i>
-                </button>
-                <h3 id="mobileWeekTitle" class="mobile-week-title">Semana del 1 - 7 Mayo</h3>
-                <button id="mobileNextWeek" class="mobile-nav-btn" style="background: rgba(102, 126, 234, 0.2); color: #667eea;">
-                    <i class="ri-arrow-right-s-line"></i>
-                </button>
-            </div>
+    <div id="mobileWeekView" class="fade-in-mobile" style="display: none;">
+        <!-- Navegación de la semana -->
+        <div class="mobile-nav-header">
+            <button id="mobilePrevWeek" class="mobile-nav-btn">
+                <i class="ri-arrow-left-s-line"></i>
+            </button>
+            <h3 id="mobileWeekTitle" class="mobile-nav-title">Semana del 1 - 7 Mayo</h3>
+            <button id="mobileNextWeek" class="mobile-nav-btn">
+                <i class="ri-arrow-right-s-line"></i>
+            </button>
         </div>
-        <div id="mobileWeekDays" class="mobile-week-days">
-            <!-- Los días de la semana se generarán con JavaScript -->
+        
+        <!-- Grid de la semana -->
+        <div class="mobile-week-view">
+            <div id="mobileWeekDays" class="mobile-week-days">
+                <!-- Los días de la semana se generarán con JavaScript -->
+            </div>
         </div>
     </div>
     
     <!-- Vista de Día -->
-    <div id="mobileDayView" class="mobile-day-view fade-in-mobile" style="display: none;">
-        <div class="mobile-day-header-section">
-            <div class="mobile-day-nav">
-                <button id="mobilePrevDay" class="mobile-day-nav-btn">
-                    <i class="ri-arrow-left-s-line"></i>
-                </button>
-                <div>
-                    <h3 id="mobileDayDate" class="mobile-day-date">25</h3>
-                    <p id="mobileDayName" class="mobile-day-name">Domingo, Mayo 2025</p>
-                </div>
-                <button id="mobileNextDay" class="mobile-day-nav-btn">
-                    <i class="ri-arrow-right-s-line"></i>
-                </button>
+    <div id="mobileDayView" class="fade-in-mobile">
+        <!-- Navegación del día -->
+        <div class="mobile-nav-header">
+            <button id="mobilePrevDay" class="mobile-nav-btn">
+                <i class="ri-arrow-left-s-line"></i>
+            </button>
+            <div>
+                <h3 id="mobileDayDate" class="mobile-nav-title">25</h3>
+                <p id="mobileDayName" style="font-size: 0.875rem; opacity: 0.9; margin: 0.25rem 0 0 0;">Domingo, Mayo 2025</p>
             </div>
+            <button id="mobileNextDay" class="mobile-nav-btn">
+                <i class="ri-arrow-right-s-line"></i>
+            </button>
         </div>
         
-        <div id="mobileReservationsList" class="mobile-reservations-list">
-            <!-- Las reservas del día se mostrarán aquí -->
+        <!-- Lista de reservas -->
+        <div class="mobile-day-view">
+            <div id="mobileReservationsList" class="mobile-reservations-list">
+                <!-- Las reservas del día se mostrarán aquí -->
+            </div>
         </div>
     </div>
 </div>
