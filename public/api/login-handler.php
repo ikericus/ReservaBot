@@ -3,11 +3,9 @@
 require_once dirname(__DIR__) . '/includes/db-config.php';
 require_once dirname(__DIR__) . '/includes/auth.php';
 
-
 /**
  * Procesamiento del formulario de login
  */
-
 
 // Solo procesar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -64,6 +62,9 @@ if ($authResult['success']) {
     session_start();
     unset($_SESSION['login_errors'], $_SESSION['login_email'], $_SESSION['login_message']);
     
+    // Generar datos de demo si es necesario
+    handleDemoDataGeneration($email);
+    
     $redirectTo = $_SESSION['intended_url'] ?? '/';
     unset($_SESSION['intended_url']);
     
@@ -80,3 +81,4 @@ if ($authResult['success']) {
     header('Location: /login');
     exit;
 }
+?>

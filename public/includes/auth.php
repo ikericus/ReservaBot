@@ -195,6 +195,65 @@ function createUserSession($user, $source = 'database', $role = 'user') {
 }
 
 /**
+ * Maneja la generación de datos de demo para usuarios demo
+ */
+function handleDemoDataGeneration($email) {
+    // Verificar si es usuario demo
+    if (!isDemoUser($email)) {
+        return false;
+    }
+    
+    global $pdo;
+    
+    // Verificar que existe la conexión a la base de datos
+    if (!isset($pdo)) {
+        error_log("Error: No hay conexión a la base de datos para generar datos demo");
+        $_SESSION['demo_message'] = 'Error: No se pudo conectar a la base de datos.';
+        return false;
+    }
+    
+    try {
+        error_log("Generando datos de demo para usuario: $email");
+        
+        // Ejecutar el procedimiento almacenado
+        $stmt = $pdo->prepare("CALL GenerateDemoData(CURDATE())");
+        $stmt->execute();
+        
+        // Liberar el cursor para evitar errores con múltiples queries
+        $stmt->closeCursor();
+        
+        // Contar las reservas generadas para confirmar
+        $countStmt = $pdo->prepare("
+            SELECT COUNT(*) as total 
+            FROM reservas r 
+            INNER JOIN usuarios u ON r.usuario_id = u.id 
+            WHERE u.email = ? AND r.notas_internas LIKE '%[DEMO]%'
+        ");
+        $countStmt->execute([$email]);
+        $count = $countStmt->fetch(PDO::FETCH_ASSOC);
+        
+        $totalReservas = $count['total'] ?? 0;
+        
+        $_SESSION['demo_message'] = "✅ Datos de demo generados correctamente. Se crearon $totalReservas reservas de ejemplo actualizadas a la fecha actual.";
+        
+        error_log("Datos de demo generados exitosamente para $email - Total reservas: $totalReservas");
+        return true;
+        
+    } catch (Exception $e) {
+        error_log("Error generando datos de demo para $email: " . $e->getMessage());
+        $_SESSION['demo_message'] = '⚠️ Datos de demo cargados (puede haber habido un problema menor al actualizar).';
+        return false;
+    }
+}
+
+/**
+ * Verifica si un email corresponde al usuario demo
+ */
+function isDemoUser($email) {
+    return strtolower(trim($email)) === 'demo@reservabot.es';
+}
+
+/**
  * Cierra la sesión del usuario
  */
 function logout() {

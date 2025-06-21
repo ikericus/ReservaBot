@@ -18,6 +18,16 @@ $email = $_SESSION['login_email'] ?? '';
 
 // Limpiar mensajes de la sesión
 unset($_SESSION['login_errors'], $_SESSION['login_message'], $_SESSION['login_email']);
+
+// Obtener parámetros de la URL
+$showDemo = isset($_GET['demo']) && $_GET['demo'] === 'si';
+$urlUser = $_GET['user'] ?? '';
+$urlPass = $_GET['pass'] ?? '';
+
+// Si se pasó email por URL, usarlo
+if (!empty($urlUser)) {
+    $email = $urlUser;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -101,8 +111,8 @@ unset($_SESSION['login_errors'], $_SESSION['login_message'], $_SESSION['login_em
             <!-- Logo y título -->
             <div class="text-center mb-8">
                 <div class="flex items-center justify-center mb-6">
-                    <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                        <i class="ri-calendar-line text-purple-600 text-2xl"></i>
+                    <div class="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+                        <i class="ri-calendar-line text-purple-600 text-xl"></i>
                     </div>
                 </div>
                 <h1 class="text-3xl font-bold text-white mb-2">Bienvenido a ReservaBot</h1>
@@ -173,6 +183,7 @@ unset($_SESSION['login_errors'], $_SESSION['login_message'], $_SESSION['login_em
                                 required
                                 class="input-focus block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                                 placeholder="Tu contraseña"
+                                value="<?php echo htmlspecialchars($urlPass); ?>"
                             >
                             <button
                                 type="button"
@@ -217,13 +228,15 @@ unset($_SESSION['login_errors'], $_SESSION['login_message'], $_SESSION['login_em
                     
                 </form>
                 
-                <!-- Demo info -->
+                <!-- Demo info - Solo se muestra si demo=si en la URL -->
+                <?php if ($showDemo): ?>
                 <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
                     <p class="text-blue-800 text-sm text-center">
                         <i class="ri-information-line mr-1"></i>
                         <strong>Demo:</strong> demo@reservabot.com / demo123
                     </p>
                 </div>
+                <?php endif; ?>
                 
                 <!-- Enlaces adicionales -->
                 <div class="mt-6 text-center space-y-2">
@@ -235,28 +248,6 @@ unset($_SESSION['login_errors'], $_SESSION['login_message'], $_SESSION['login_em
                     </p>
                 </div>
                 
-            </div>
-            
-            <!-- Features destacadas -->
-            <div class="mt-8 grid grid-cols-3 gap-4 text-center">
-                <div class="text-white">
-                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <i class="ri-shield-check-line"></i>
-                    </div>
-                    <p class="text-xs text-blue-100">100% Seguro</p>
-                </div>
-                <div class="text-white">
-                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <i class="ri-whatsapp-line"></i>
-                    </div>
-                    <p class="text-xs text-blue-100">WhatsApp</p>
-                </div>
-                <div class="text-white">
-                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <i class="ri-support-line"></i>
-                    </div>
-                    <p class="text-xs text-blue-100">Soporte 24/7</p>
-                </div>
             </div>
             
         </div>

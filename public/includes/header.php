@@ -367,7 +367,7 @@
                             </div> -->
                             
                             <!-- Usuario -->
-                            <div class="user-avatar h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                            <!-- <div class="user-avatar h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                                 <?php 
                                 $user = getAuthenticatedUser();
                                 echo strtoupper(substr($user['nombre'] ?? 'U', 0, 1));
@@ -376,7 +376,7 @@
                             <div class="hidden xl:block">
                                 <p class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($user['negocio'] ?? 'Mi Negocio'); ?></p>
                                 <p class="text-xs text-gray-500"><?php echo htmlspecialchars($user['nombre'] ?? 'Usuario'); ?></p>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                 </div>
