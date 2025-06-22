@@ -287,7 +287,7 @@ include 'includes/header.php';
                         </div>
                         
                         <div class="flex space-x-2">
-                            <a href="/reserva-detail?id=<?php echo $reserva['id']; ?>" 
+                            <a href="/reserva?id=<?php echo $reserva['id']; ?>" 
                                class="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <i class="ri-eye-line"></i>
                             </a>

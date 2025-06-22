@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hacer que el item sea clickable y evitar propagación
             reservaItem.addEventListener('click', function(e) {
                 e.stopPropagation();
-                window.location.href = `/reserva-detail?id=${reserva.id}`;
+                window.location.href = `/reserva?id=${reserva.id}`;
             });
             
             reservasContainer.appendChild(reservaItem);
@@ -476,21 +476,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 const reservationItem = document.createElement('div');
                 reservationItem.className = `mobile-reservation-item ${reserva.estado}`;
                 reservationItem.onclick = () => {
-                    window.location.href = `/reserva-detail?id=${reserva.id}`;
+                    window.location.href = `/reserva?id=${reserva.id}`;
                 };
                 
                 reservationItem.innerHTML = `
-                    <div class="mobile-reservation-time">${reserva.hora.substring(0, 5)}</div>
-                    <div class="mobile-reservation-client">
-                        <i class="ri-user-line mr-1"></i>
-                        ${reserva.nombre}
-                        <br>
-                        <i class="ri-phone-line mr-1"></i>
-                        ${reserva.telefono}
+                    <div class="mobile-reservation-main">
+                        <div class="mobile-reservation-time">${reserva.hora.substring(0, 5)}</div>
+                        <div class="mobile-reservation-client">
+                            <i class="ri-user-line"></i>
+                            ${reserva.nombre}
+                        </div>
+                        <div class="mobile-reservation-phone">
+                            <i class="ri-phone-line"></i>
+                            ${reserva.telefono}
+                        </div>
                     </div>
                     <div class="mobile-reservation-status ${reserva.estado}">
                         <i class="ri-${reserva.estado === 'confirmada' ? 'check' : 'time'}-line"></i>
-                        ${reserva.estado === 'confirmada' ? 'Confirmada' : 'Pendiente'}
+                        ${reserva.estado === 'confirmada' ? 'OK' : 'Pend'}
                     </div>
                 `;
                 

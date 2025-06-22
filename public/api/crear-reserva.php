@@ -163,7 +163,7 @@ try {
         unset($_SESSION['error']);
         
         // Redirigir al detalle de la reserva
-        header("Location: /reserva-detail?id={$id}");
+        header("Location: /reserva?id={$id}");
         exit;
     } else {
         redirectWithError('Error al crear la reserva en la base de datos', $data);

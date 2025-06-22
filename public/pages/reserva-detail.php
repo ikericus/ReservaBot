@@ -20,12 +20,12 @@ try {
     
     if (!$reserva) {
         // Si la reserva no existe, redirigir al calendario
-        header('Location: /calendario');
+        header('Location: /dia');
         exit;
     }
 } catch (\PDOException $e) {
     // Si hay un error, redirigir al calendario
-    header('Location: /calendario');
+    header('Location: /dia');
     exit;
 }
 

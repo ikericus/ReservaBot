@@ -224,7 +224,7 @@
                                 <i class="ri-home-line mr-3 text-lg nav-icon"></i>
                                 Reservas
                             </a>
-                            <a href="/calendario" class="mobile-nav-item <?php echo $currentPage === 'calendario' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
+                            <a href="/dia" class="mobile-nav-item <?php echo $currentPage === 'calendario' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
                                 <i class="ri-calendar-line mr-3 text-lg nav-icon"></i>
                                 Calendario
                             </a>

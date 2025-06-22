@@ -36,9 +36,12 @@ class Router {
         $this->addRoute('GET',      '/mi-reserva',              'pages/mi-reserva.php');
         $this->addRoute('POST',     '/api/contacto-handler',    'api/contacto-handler.php');
 
-        // Rutas protegidas        
-        //$this->addRoute('GET',      '/',                 'pages/reservas.php',         ['auth']);
-        $this->addRoute('GET',      '/calendario',       'pages/calendario.php',       ['auth']);
+        // Rutas protegidas            
+        $this->addRoute('GET',      '/dia',              'pages/dia.php',              ['auth']);        
+        $this->addRoute('GET',      '/semana',           'pages/semana.php',           ['auth']);        
+        $this->addRoute('GET',      '/mes',              'pages/mes.php',              ['auth']);
+
+        //$this->addRoute('GET',      '/calendario',       'pages/calendario.php',       ['auth']);
         $this->addRoute('GET',      '/reservas',         'pages/reservas.php',         ['auth']);
         $this->addRoute('GET',      '/clientes',         'pages/clientes.php',         ['auth']);
         $this->addRoute('GET',      '/formularios',      'pages/formularios.php',      ['auth']);
@@ -50,8 +53,9 @@ class Router {
         $this->addRoute('GET',      '/perfil',           'pages/perfil.php',           ['auth']);  
         $this->addRoute('GET',      '/day',              'pages/day.php',              ['auth']);
         $this->addRoute('GET',      '/cliente-detail',   'pages/cliente-detail.php',   ['auth']);        
+        $this->addRoute('GET',      '/reserva',          'pages/reserva.php',          ['auth']);        
         $this->addRoute('GET',      '/reserva-form',     'pages/reserva-form.php',     ['auth']);    
-        $this->addRoute('GET',      '/reserva-detail',   'pages/reserva-detail.php',   ['auth']);  
+        //$this->addRoute('GET',      '/reserva-detail',   'pages/reserva-detail.php',   ['auth']);  
         $this->addRoute('GET',      '/whatsapp',         'pages/whatsapp.php',         ['auth']);          
         $this->addRoute('GET',      '/conversaciones',   'pages/conversaciones.php',   ['auth']);  
         

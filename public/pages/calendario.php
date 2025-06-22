@@ -301,7 +301,7 @@ include 'includes/header.php';
         color: #d97706;
     }
     
-    /* Vista de lista diaria */
+    /* Vista de lista diaria - Compacta */
     .mobile-day-view {
         background: white;
         border-radius: 1rem;
@@ -311,35 +311,41 @@ include 'includes/header.php';
 
     .mobile-day-header-section {
         background: #f8fafc;
-        padding: 1rem;
+        padding: 0.75rem;
         border-bottom: 1px solid #e5e7eb;
         text-align: center;
     }
     
     .mobile-day-date {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         font-weight: 700;
-        margin: 0 0 0.25rem 0;
+        margin: 0 0 0.125rem 0;
     }
     
     .mobile-day-name {
-        font-size: 0.875rem;
+        font-size: 0.75rem;
         opacity: 0.9;
         margin: 0;
     }
     
     .mobile-reservations-list {
-        padding: 1rem;
+        padding: 0.5rem;
+        max-height: calc(100vh - 220px);
+        overflow-y: auto;
     }
     
     .mobile-reservation-item {
         background: #f8fafc;
-        border-radius: 0.75rem;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        border-left: 4px solid;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.375rem;
+        border-left: 3px solid;
         transition: all 0.2s ease;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 3rem;
     }
     
     .mobile-reservation-item.confirmada {
@@ -355,27 +361,49 @@ include 'includes/header.php';
         transform: translateX(2px);
     }
     
+    .mobile-reservation-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .mobile-reservation-main {
+        flex: 1;
+        min-width: 0;
+    }
+    
     .mobile-reservation-time {
-        font-size: 1.125rem;
+        font-size: 1rem;
         font-weight: 600;
         color: #374151;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.125rem;
     }
     
     .mobile-reservation-client {
-        font-size: 0.875rem;
+        font-size: 0.75rem;
         color: #6b7280;
-        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-bottom: 0.125rem;
+    }
+    
+    .mobile-reservation-phone {
+        font-size: 0.7rem;
+        color: #9ca3af;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
     }
     
     .mobile-reservation-status {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         gap: 0.25rem;
         padding: 0.25rem 0.5rem;
         border-radius: 0.375rem;
-        font-size: 0.75rem;
+        font-size: 0.625rem;
         font-weight: 500;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
     
     .mobile-reservation-status.confirmada {
@@ -386,6 +414,10 @@ include 'includes/header.php';
     .mobile-reservation-status.pendiente {
         background: rgba(245, 158, 11, 0.1);
         color: #d97706;
+    }
+    
+    .mobile-reservation-status i {
+        font-size: 0.75rem;
     }
     
     /* Estados vacíos */
