@@ -451,8 +451,8 @@ include 'includes/header.php';
 
     .mobile-reservations-list {
         padding: 0.5rem;
-        max-height: calc(100vh - 220px);
-        overflow-y: auto;
+        /* max-height: calc(100vh - 220px);
+        overflow-y: auto; */
     }
     
     .mobile-timeline-container {

@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
     ];
     
-    // Horarios del día (de 8:00 a 22:00)
+    // Slots fijos de 1 hora (de 8:00 a 22:00)
     const horasDelDia = [
         '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
         '14:00', '15:00', '16:00', '17:00', '18:00', '19:00',
@@ -67,6 +67,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
+     * Agrupa las reservas por franja horaria (por hora, no por minuto exacto)
+     * Ejemplo: 14:10, 14:30, 14:55 → todas van al slot "14:00"
+     */
+    function groupReservationsByHourSlot() {
+        const reservasPorSlot = {};
+        
+        // Inicializar todos los slots vacíos
+        horasDelDia.forEach(slot => {
+            reservasPorSlot[slot] = [];
+        });
+        
+        // Agrupar reservas por slot horario
+        reservas.forEach(reserva => {
+            const horaReserva = reserva.hora.substring(0, 5); // HH:MM
+            const [hora, minuto] = horaReserva.split(':');
+            const horaNum = parseInt(hora);
+            
+            // Determinar a qué slot pertenece esta reserva
+            const slotCorrespondiente = `${hora.padStart(2, '0')}:00`;
+            
+            // Solo agregar si el slot existe en nuestro rango (8:00-22:00)
+            if (reservasPorSlot.hasOwnProperty(slotCorrespondiente)) {
+                reservasPorSlot[slotCorrespondiente].push(reserva);
+            }
+        });
+        
+        // Ordenar las reservas dentro de cada slot cronológicamente
+        Object.keys(reservasPorSlot).forEach(slot => {
+            reservasPorSlot[slot].sort((a, b) => {
+                return a.hora.localeCompare(b.hora);
+            });
+        });
+        
+        console.log('Reservas agrupadas por slots:', reservasPorSlot);
+        return reservasPorSlot;
+    }
+    
+    /**
      * Inicializa la vista del día
      */
     function initDayView() {
@@ -98,23 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
-     * Agrupa las reservas por hora
-     */
-    function groupReservationsByHour() {
-        const reservasPorHora = {};
-        
-        reservas.forEach(reserva => {
-            const hora = reserva.hora.substring(0, 5); // HH:MM
-            if (!reservasPorHora[hora]) {
-                reservasPorHora[hora] = [];
-            }
-            reservasPorHora[hora].push(reserva);
-        });
-        
-        return reservasPorHora;
-    }
-    
-    /**
      * Renderiza el timeline de reservas para desktop
      */
     function renderTimelineReservations() {
@@ -130,38 +151,44 @@ document.addEventListener('DOMContentLoaded', function() {
             timelineContainer.appendChild(timelineLine);
         }
         
-        const reservasPorHora = groupReservationsByHour();
+        const reservasPorSlot = groupReservationsByHourSlot();
         
-        // Renderizar cada hora del día
-        horasDelDia.forEach(hora => {
+        // Renderizar cada slot de hora
+        horasDelDia.forEach(slot => {
             const timelineHour = document.createElement('div');
             timelineHour.className = 'timeline-hour';
             
             const hourLabel = document.createElement('div');
             hourLabel.className = 'hour-label';
-            hourLabel.textContent = formatHourDisplay(hora);
+            hourLabel.textContent = formatHourDisplay(slot);
             
             const hourContent = document.createElement('div');
             hourContent.className = 'hour-content';
             
-            const hourDot = document.createElement('div');
-            hourDot.className = 'hour-dot';
+            // const hourDot = document.createElement('div');
+            // hourDot.className = 'hour-dot';
             
-            // Verificar si hay reservas en esta hora
-            const reservasEnHora = reservasPorHora[hora] || [];
+            // Obtener reservas de este slot
+            const reservasEnSlot = reservasPorSlot[slot] || [];
             
-            if (reservasEnHora.length > 0) {
+            if (reservasEnSlot.length > 0) {
                 hourContent.classList.add('has-reservation');
                 
-                // Renderizar cada reserva de esta hora
-                reservasEnHora.forEach(reserva => {
+                // Renderizar cada reserva de este slot, ya ordenadas cronológicamente
+                reservasEnSlot.forEach(reserva => {
                     const reservationElement = createReservationElement(reserva);
                     hourContent.appendChild(reservationElement);
                 });
-            }
-            // No agregar nada si no hay reservas (celda vacía)
+            } 
+            // else {
+            //     // Mostrar "Disponible" para slots vacíos
+            //     const emptyText = document.createElement('div');
+            //     emptyText.className = 'empty-hour';
+            //     emptyText.textContent = 'Disponible';
+            //     hourContent.appendChild(emptyText);
+            // }
             
-            hourContent.appendChild(hourDot);
+            //hourContent.appendChild(hourDot);
             timelineHour.appendChild(hourLabel);
             timelineHour.appendChild(hourContent);
             timelineContainer.appendChild(timelineHour);
@@ -184,16 +211,16 @@ document.addEventListener('DOMContentLoaded', function() {
             mobileTimelineContainer.appendChild(timelineLine);
         }
         
-        const reservasPorHora = groupReservationsByHour();
+        const reservasPorSlot = groupReservationsByHourSlot();
         
-        // Renderizar cada hora del día para móvil
-        horasDelDia.forEach(hora => {
+        // Renderizar cada slot de hora para móvil
+        horasDelDia.forEach(slot => {
             const mobileTimelineHour = document.createElement('div');
             mobileTimelineHour.className = 'mobile-timeline-hour';
             
             const mobileHourLabel = document.createElement('div');
             mobileHourLabel.className = 'mobile-hour-label';
-            mobileHourLabel.textContent = formatHourDisplay(hora);
+            mobileHourLabel.textContent = formatHourDisplay(slot);
             
             const mobileHourContent = document.createElement('div');
             mobileHourContent.className = 'mobile-hour-content';
@@ -201,19 +228,24 @@ document.addEventListener('DOMContentLoaded', function() {
             const mobileHourDot = document.createElement('div');
             mobileHourDot.className = 'mobile-hour-dot';
             
-            // Verificar si hay reservas en esta hora
-            const reservasEnHora = reservasPorHora[hora] || [];
+            // Obtener reservas de este slot
+            const reservasEnSlot = reservasPorSlot[slot] || [];
             
-            if (reservasEnHora.length > 0) {
+            if (reservasEnSlot.length > 0) {
                 mobileHourContent.classList.add('has-reservation');
                 
-                // Renderizar cada reserva de esta hora
-                reservasEnHora.forEach(reserva => {
+                // Renderizar cada reserva de este slot, ya ordenadas cronológicamente
+                reservasEnSlot.forEach(reserva => {
                     const mobileReservationElement = createMobileReservationElement(reserva);
                     mobileHourContent.appendChild(mobileReservationElement);
                 });
+            } else {
+                // Mostrar "Disponible" para slots vacíos
+                const emptyText = document.createElement('div');
+                emptyText.className = 'mobile-empty-hour';
+                emptyText.textContent = 'Disponible';
+                mobileHourContent.appendChild(emptyText);
             }
-            // No agregar nada si no hay reservas (celda vacía)
             
             mobileHourContent.appendChild(mobileHourDot);
             mobileTimelineHour.appendChild(mobileHourLabel);
@@ -242,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         const estadoInfo = getEstadoInfo(reserva.estado);
-        const horaFormateada = reserva.hora.substring(0, 5);
+        const horaFormateada = reserva.hora.substring(0, 5); // Mostrar hora exacta (14:30, 14:55, etc.)
         
         reservationElement.innerHTML = `
             <div class="reservation-header">
@@ -277,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = `/reserva?id=${reserva.id}`;
         });
         
-        const horaFormateada = reserva.hora.substring(0, 5);
+        const horaFormateada = reserva.hora.substring(0, 5); // Mostrar hora exacta
         
         mobileReservationElement.innerHTML = `
             <div class="mobile-reservation-time">${horaFormateada}</div>
@@ -408,12 +440,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Encontrar la primera reserva (ya ordenadas por hora)
         const primeraReserva = reservas[0];
-        const primeraHora = primeraReserva.hora.substring(0, 5);
+        const horaReserva = primeraReserva.hora.substring(0, 2); // Solo la hora
+        const slotCorrespondiente = `${horaReserva}:00`;
         
-        // Buscar el elemento de esa hora en desktop
+        // Buscar el elemento de ese slot en desktop
         const hourLabels = document.querySelectorAll('.hour-label');
         hourLabels.forEach(label => {
-            if (label.textContent === primeraHora) {
+            if (label.textContent === slotCorrespondiente) {
                 const hourContainer = label.parentElement;
                 setTimeout(() => {
                     hourContainer.scrollIntoView({ 
@@ -424,10 +457,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Buscar el elemento de esa hora en móvil
+        // Buscar el elemento de ese slot en móvil
         const mobileHourLabels = document.querySelectorAll('.mobile-hour-label');
         mobileHourLabels.forEach(label => {
-            if (label.textContent === primeraHora) {
+            if (label.textContent === slotCorrespondiente) {
                 const hourContainer = label.parentElement;
                 setTimeout(() => {
                     hourContainer.scrollIntoView({ 
@@ -446,5 +479,5 @@ document.addEventListener('DOMContentLoaded', function() {
     setupVisualEffects();
     
     console.log('Vista de día cargada con', reservas.length, 'reservas');
-    console.log('Timeline generado con', horasDelDia.length, 'horas');
+    console.log('Slots fijos de 1 hora:', horasDelDia.length);
 });
