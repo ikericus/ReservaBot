@@ -1,7 +1,6 @@
 <?php
 // Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
 // Configurar la página actual
 $currentPage = 'reserva-form';
@@ -32,9 +31,19 @@ if (!$isEditMode) {
 $reserva = null;
 if ($isEditMode) {
     try {
-        $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE id = ?');
-        $stmt->execute([$id]);
-        $reserva = $stmt->fetch();
+        $reservaUseCases = getContainer()->getReservaUseCases();
+        $reservaObj = $reservaUseCases->obtenerReserva($id, $usuarioId);
+        
+        // Convertir a array para compatibilidad con el resto del código
+        $reserva = [
+            'id' => $reservaObj->getId(),
+            'nombre' => $reservaObj->getNombre(),
+            'telefono' => $reservaObj->getTelefono()->getValue(),
+            'fecha' => $reservaObj->getFecha()->format('Y-m-d'),
+            'hora' => $reservaObj->getHora(),
+            'mensaje' => $reservaObj->getMensaje(),
+            'estado' => $reservaObj->getEstado()->value
+        ];
         
         if (!$reserva) {
             // Si la reserva no existe, redirigir al calendario
