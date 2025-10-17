@@ -1,6 +1,6 @@
 <?php
 
-require_once 'db-config.php';
+//require_once 'db-config.php';
 
 // function generateJWT($userId, $secret) {
 //     $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
