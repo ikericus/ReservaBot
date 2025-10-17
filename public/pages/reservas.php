@@ -4,9 +4,7 @@
 session_start();
 
 // Cargar dependencias
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
 // Obtener usuario
 $currentUser = getAuthenticatedUser();
