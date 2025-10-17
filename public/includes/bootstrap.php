@@ -133,31 +133,6 @@ function hasContainer(): bool {
 // ========== 6. HELPERS ADICIONALES ==========
 
 /**
- * Obtener usuario actual (ya validado por router middleware)
- * @return array|null
- */
-function getCurrentUser(): ?array {
-    return $GLOBALS['currentUser'] ?? null;
-}
-
-/**
- * Obtener ID del usuario actual
- * @return int|null
- */
-function getCurrentUserId(): ?int {
-    $user = getCurrentUser();
-    return $user ? (int)$user['id'] : null;
-}
-
-/**
- * Obtener token CSRF actual
- * @return string|null
- */
-function getCsrfToken(): ?string {
-    return $GLOBALS['csrfToken'] ?? null;
-}
-
-/**
  * Verificar si la aplicación está en modo debug
  * @return bool
  */
