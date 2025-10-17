@@ -64,23 +64,25 @@ require_once __DIR__ . '/functions.php';
 
 // Opción A: Autoload manual (sin Composer)
 spl_autoload_register(function ($class) {
-    // Convertir namespace a path
-    // ReservaBot\Domain\Reserva\Reserva -> src/Domain/Reserva/Reserva.php
     $prefix = 'ReservaBot\\';
-    $base_dir = __DIR__ . '/../../src/';
+    $base_dir = dirname(__DIR__) . '/src/';
     
     $len = strlen($prefix);
     if (strncmp($prefix, $class, $len) !== 0) {
-        return; // No es una clase de ReservaBot
+        return;
     }
     
     $relative_class = substr($class, $len);
+    
+    // ✨ Convertir a minúsculas para que coincida con tu estructura
+    $relative_class = strtolower($relative_class);
+    
     $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
     
     if (file_exists($file)) {
         require $file;
     } else {
-        error_log("Bootstrap: Clase no encontrada - $file");
+        error_log("Autoload: Clase no encontrada - $file");
     }
 });
 
