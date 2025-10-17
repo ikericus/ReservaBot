@@ -1,5 +1,5 @@
 <?php
-// config/database.php
+// public/config/database.php
 
 // Cargar variables de entorno
 if (file_exists(__DIR__ . '/../.env')) {
