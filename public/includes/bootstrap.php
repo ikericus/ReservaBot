@@ -10,7 +10,7 @@
 
 // $configPath = dirname(__DIR__, 2) . '/config/database.php';
 
-$configPath = dirname(__DIR__, 2) . '/config/database.php';
+$configPath = dirname(__DIR__) . '/config/database.php';
 
 if (!file_exists($configPath)) {
     die("ERROR: config/database.php no encontrado en: $configPath");
