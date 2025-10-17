@@ -10,6 +10,20 @@
 
 $configPath = dirname(__DIR__, 2) . '/config/database.php';
 
+if (!file_exists($configPath)) {
+    die("ERROR: config/database.php no encontrado en: $configPath");
+}
+
+try {
+    $dbConfig = require_once $configPath;
+    
+    if (!is_array($dbConfig)) {
+        die("ERROR: database.php no retorna un array. Retorna: " . gettype($dbConfig));
+    }
+} catch (Exception $e) {
+    die("ERROR cargando database.php: " . $e->getMessage());
+}
+
 // ========== 2. CREAR CONEXIÓN PDO ==========
 
 if (!isset($GLOBALS['pdo'])) {
