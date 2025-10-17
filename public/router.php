@@ -18,7 +18,8 @@ class Router {
      */
     private function defineRoutes() {
                 
-        // Rutas públicas
+        // Rutas públicas// En router.php, añade:
+$this->addRoute('GET', '/test', 'pages/test.php');
         $this->addRoute('GET',      '/',                        'pages/home.php');
         $this->addRoute('GET',      '/landing',                 'pages/landing.php');
         $this->addRoute('GET',      '/login',                   'pages/login.php');
