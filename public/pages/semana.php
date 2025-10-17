@@ -219,16 +219,16 @@ include 'includes/header.php';
 .week-days-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    min-height: 400px;
+    height: 500px; /* Altura fija para que funcione el scroll */
 }
 
 .week-day-cell {
     border-right: 1px solid #f3f4f6;
-    padding: 1rem 0.75rem;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Importante para el scroll interno */
 }
 
 .week-day-cell:last-child {
@@ -243,12 +243,18 @@ include 'includes/header.php';
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
 }
 
+/* Header del día (número) - FIJO */
+.week-day-header-content {
+    padding: 1rem 0.75rem 0.5rem;
+    flex-shrink: 0; /* No se encoge */
+}
+
 .week-day-number {
     font-size: 1.125rem;
     font-weight: 600;
     color: #374151;
     text-align: center;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
 .week-day-cell.today .week-day-number {
@@ -260,15 +266,36 @@ include 'includes/header.php';
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 0.75rem auto;
+    margin: 0 auto 0.5rem auto;
     font-size: 1rem;
 }
 
+/* Contenedor de reservas - CON SCROLL */
 .week-day-reservations {
-    flex: 1;
+    flex: 1; /* Ocupa todo el espacio disponible */
+    overflow-y: auto; /* Scroll vertical */
+    padding: 0 0.75rem;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+}
+
+/* Personalizar scrollbar */
+.week-day-reservations::-webkit-scrollbar {
+    width: 4px;
+}
+
+.week-day-reservations::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.week-day-reservations::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+.week-day-reservations::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .week-reservation-item {
@@ -280,6 +307,7 @@ include 'includes/header.php';
     cursor: pointer;
     transition: all 0.2s ease;
     overflow: hidden;
+    flex-shrink: 0; /* No se encoge */
 }
 
 .week-reservation-item.confirmada {
@@ -311,12 +339,16 @@ include 'includes/header.php';
     white-space: nowrap;
 }
 
+/* Stats al final - FIJAS */
 .week-day-stats {
-    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
     display: flex;
     gap: 0.25rem;
     justify-content: center;
     flex-wrap: wrap;
+    flex-shrink: 0; /* No se encoge */
+    border-top: 1px solid #f3f4f6;
+    background: #fafafa;
 }
 
 .week-stat-badge {
@@ -338,12 +370,27 @@ include 'includes/header.php';
 
 /* ===== ESTILOS MÓVIL ===== */
 @media (max-width: 768px) {
+    /* NUEVO: Evitar scroll en el body/main en móvil */
+    body {
+        overflow: hidden;
+    }
+    
+    .main-content {
+        overflow: hidden;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
     .desktop-view {
         display: none;
     }
     
     .mobile-view {
-        display: block;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
     }
     
     /* Navegación común para todas las vistas */
@@ -357,6 +404,7 @@ include 'includes/header.php';
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-shrink: 0; /* NUEVO: No se encoge */
     }
     
     .mobile-nav-btn {
@@ -385,7 +433,7 @@ include 'includes/header.php';
     }
     
     .mobile-week-title-text {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
         font-weight: 600;
         margin: 0;
         color: white;
@@ -397,24 +445,50 @@ include 'includes/header.php';
         border-radius: 1rem;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        flex: 1; /* NUEVO: Ocupa el espacio restante */
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Header de días (L M X J V S D) */
+    .mobile-week-days-header {
+        background: #f8fafc;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        border-bottom: 1px solid #e5e7eb;
+        flex-shrink: 0;
+    }
+    
+    .mobile-week-day-header {
+        padding: 0.5rem 0.25rem;
+        text-align: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
     
     .mobile-week-days {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
+        flex: 1; /* NUEVO: Ocupa todo el espacio disponible */
+        overflow: hidden;
     }
     
     .mobile-week-day {
-        padding: 1rem 0.5rem;
         border-right: 1px solid #f3f4f6;
-        text-align: center;
         cursor: pointer;
         transition: all 0.2s ease;
-        min-height: 100px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-start;
+        padding: 0.5rem 0.25rem;
+        overflow: hidden;
+    }
+    
+    .mobile-week-day:last-child {
+        border-right: none;
     }
     
     .mobile-week-day:hover {
@@ -429,7 +503,8 @@ include 'includes/header.php';
         font-size: 1rem;
         font-weight: 600;
         color: #374151;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.25rem;
+        flex-shrink: 0;
     }
     
     .mobile-week-day.today .mobile-week-day-number {
@@ -444,13 +519,49 @@ include 'includes/header.php';
         font-size: 0.875rem;
     }
     
-    .mobile-week-day-name {
-        font-size: 0.625rem;
+    .mobile-week-reservations {
+        flex: 1;
+        overflow-y: auto;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+    }
+    
+    .mobile-week-reservation {
+        background: #f8fafc;
+        border-radius: 0.25rem;
+        padding: 0.25rem;
+        border-left: 2px solid;
+        cursor: pointer;
+        font-size: 0.6rem;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    
+    .mobile-week-reservation.confirmada {
+        border-left-color: #10b981;
+        background: rgba(16, 185, 129, 0.05);
+    }
+    
+    .mobile-week-reservation.pendiente {
+        border-left-color: #f59e0b;
+        background: rgba(245, 158, 11, 0.05);
+    }
+    
+    .mobile-week-reservation-time {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.125rem;
+        font-size: 0.5rem;
+    }
+    
+    .mobile-week-reservation-client {
         color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
+        font-size: 0.5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .mobile-week-stats {
@@ -459,6 +570,8 @@ include 'includes/header.php';
         justify-content: center;
         align-items: center;
         flex-wrap: wrap;
+        margin-top: 0.25rem;
+        flex-shrink: 0;
     }
     
     .mobile-week-stat {
@@ -485,6 +598,7 @@ include 'includes/header.php';
         gap: 1rem;
         align-items: stretch;
         margin-bottom: 1rem;
+        flex-shrink: 0; /* NUEVO: No se encoge */
     }
     
     .view-links {
@@ -638,6 +752,17 @@ include 'includes/header.php';
         
         <!-- Grid de la semana móvil -->
         <div class="mobile-week-view">
+            <!-- Header de días móvil -->
+            <div class="mobile-week-days-header">
+                <div class="mobile-week-day-header">L</div>
+                <div class="mobile-week-day-header">M</div>
+                <div class="mobile-week-day-header">X</div>
+                <div class="mobile-week-day-header">J</div>
+                <div class="mobile-week-day-header">V</div>
+                <div class="mobile-week-day-header">S</div>
+                <div class="mobile-week-day-header">D</div>
+            </div>
+            
             <div id="mobileWeekDays" class="mobile-week-days">
                 <!-- Los días de la semana se generarán con JavaScript -->
             </div>

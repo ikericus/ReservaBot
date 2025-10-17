@@ -389,10 +389,10 @@ function getResumenVentanas($ventanas) {
 }
 
 // Función para obtener todas las reservas
-function getReservas() {
-    $stmt = getPDO()->query('SELECT * FROM reservas ORDER BY fecha, hora');
-    return $stmt->fetchAll();
-}
+// function getReservas() {
+//     $stmt = getPDO()->query('SELECT * FROM reservas ORDER BY fecha, hora');
+//     return $stmt->fetchAll();
+// }
 
 // Función para obtener reservas por fecha
 function getReservasByFecha($fecha) {

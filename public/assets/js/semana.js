@@ -19,7 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Referencias a elementos del DOM
     const weekTitle = document.getElementById('weekTitle');
+    const mobileWeekTitle = document.getElementById('mobileWeekTitle');
     const weekDaysGrid = document.getElementById('weekDaysGrid');
+    const mobileWeekDays = document.getElementById('mobileWeekDays');
     
     /**
      * Formatea una fecha como YYYY-MM-DD
@@ -62,8 +64,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Actualizar el título de la semana
         updateWeekTitle();
         
-        // Renderizar el grid de la semana
+        // Renderizar el grid de la semana desktop
         renderWeekGrid();
+        
+        // Renderizar la vista móvil
+        renderMobileWeekGrid();
         
         console.log('Vista de semana inicializada desde:', semanaInfo.inicioSemana, 'hasta:', semanaInfo.finSemana);
     }
@@ -72,19 +77,24 @@ document.addEventListener('DOMContentLoaded', function() {
      * Actualiza el título de la semana
      */
     function updateWeekTitle() {
-        if (!weekTitle) return;
-        
         const inicioSemana = new Date(semanaInfo.inicioSemana + 'T00:00:00');
         const finSemana = new Date(semanaInfo.finSemana + 'T00:00:00');
         
         const inicioFormatted = `${inicioSemana.getDate()} ${monthNames[inicioSemana.getMonth()].substring(0, 3)}`;
         const finFormatted = `${finSemana.getDate()} ${monthNames[finSemana.getMonth()].substring(0, 3)}`;
         
-        weekTitle.textContent = `${inicioFormatted} - ${finFormatted} ${finSemana.getFullYear()}`;
+        const titleText = `${inicioFormatted} - ${finFormatted} ${finSemana.getFullYear()}`;
+        
+        if (weekTitle) {
+            weekTitle.textContent = titleText;
+        }
+        if (mobileWeekTitle) {
+            mobileWeekTitle.textContent = titleText;
+        }
     }
     
     /**
-     * Renderiza el grid de la semana
+     * Renderiza el grid de la semana para desktop
      */
     function renderWeekGrid() {
         if (!weekDaysGrid) return;
@@ -104,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
-     * Renderiza una celda de día en la vista de semana
+     * Renderiza una celda de día en la vista de semana desktop
      */
     function renderWeekDayCell(date) {
         const formattedDate = formatDate(date);
@@ -120,30 +130,31 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = `/dia?date=${formattedDate}`;
         });
         
-        // Crear el número del día
+        // Crear header del día (número)
+        const dayHeaderContent = document.createElement('div');
+        dayHeaderContent.className = 'week-day-header-content';
+        
         const dayNumber = document.createElement('div');
         dayNumber.className = 'week-day-number';
         dayNumber.textContent = date.getDate();
-        dayCell.appendChild(dayNumber);
+        dayHeaderContent.appendChild(dayNumber);
         
-        // Crear contenedor de reservas
+        dayCell.appendChild(dayHeaderContent);
+        
+        // Crear contenedor de reservas con scroll
         const reservationsContainer = document.createElement('div');
         reservationsContainer.className = 'week-day-reservations';
         dayCell.appendChild(reservationsContainer);
         
-        // Mostrar reservas (máximo 3, luego mostrar "+" con el resto)
+        // Mostrar TODAS las reservas (sin límite)
         if (dayReservas.length > 0) {
             // Ordenar reservas por hora
             const reservasOrdenadas = [...dayReservas].sort((a, b) => {
                 return a.hora.localeCompare(b.hora);
             });
             
-            const maxReservasVisibles = 3;
-            const reservasVisibles = reservasOrdenadas.slice(0, maxReservasVisibles);
-            const reservasRestantes = reservasOrdenadas.length - maxReservasVisibles;
-            
-            // Mostrar reservas visibles
-            reservasVisibles.forEach(reserva => {
+            // Mostrar TODAS las reservas
+            reservasOrdenadas.forEach(reserva => {
                 const reservaItem = document.createElement('div');
                 reservaItem.className = `week-reservation-item ${reserva.estado}`;
                 
@@ -160,24 +171,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 reservationsContainer.appendChild(reservaItem);
             });
-            
-            // Mostrar indicador de reservas adicionales si las hay
-            if (reservasRestantes > 0) {
-                const moreItem = document.createElement('div');
-                moreItem.className = 'week-reservation-item';
-                moreItem.style.background = '#e5e7eb';
-                moreItem.style.color = '#6b7280';
-                moreItem.style.textAlign = 'center';
-                moreItem.style.fontSize = '0.7rem';
-                moreItem.textContent = `+${reservasRestantes} más`;
-                
-                moreItem.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    window.location.href = `/dia?date=${formattedDate}`;
-                });
-                
-                reservationsContainer.appendChild(moreItem);
-            }
         }
         
         // Agregar estadísticas al final de la celda
@@ -206,6 +199,109 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         weekDaysGrid.appendChild(dayCell);
+    }
+    
+    /**
+     * Renderiza el grid de la semana para móvil
+     */
+    function renderMobileWeekGrid() {
+        if (!mobileWeekDays) return;
+        
+        // Limpiar contenido anterior
+        mobileWeekDays.innerHTML = '';
+        
+        const inicioSemana = new Date(semanaInfo.inicioSemana + 'T00:00:00');
+        
+        // Generar los 7 días de la semana
+        for (let i = 0; i < 7; i++) {
+            const currentDay = new Date(inicioSemana);
+            currentDay.setDate(currentDay.getDate() + i);
+            
+            renderMobileWeekDayCell(currentDay);
+        }
+    }
+    
+    /**
+     * Renderiza una celda de día en la vista de semana móvil
+     */
+    function renderMobileWeekDayCell(date) {
+        const formattedDate = formatDate(date);
+        const dayReservas = getReservasByFecha(formattedDate);
+        const todayClass = isToday(date);
+        
+        // Crear la celda del día
+        const dayCell = document.createElement('div');
+        dayCell.className = `mobile-week-day ${todayClass ? 'today' : ''}`;
+        
+        // Hacer la celda clickeable para ir a la vista de día
+        dayCell.addEventListener('click', function() {
+            window.location.href = `/dia?date=${formattedDate}`;
+        });
+        
+        // Crear el número del día
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'mobile-week-day-number';
+        dayNumber.textContent = date.getDate();
+        dayCell.appendChild(dayNumber);
+        
+        // Crear contenedor de reservas móviles
+        const reservationsContainer = document.createElement('div');
+        reservationsContainer.className = 'mobile-week-reservations';
+        dayCell.appendChild(reservationsContainer);
+        
+        // Mostrar reservas en móvil (con scroll si hay muchas)
+        if (dayReservas.length > 0) {
+            // Ordenar reservas por hora
+            const reservasOrdenadas = [...dayReservas].sort((a, b) => {
+                return a.hora.localeCompare(b.hora);
+            });
+            
+            // Mostrar todas las reservas en móvil también
+            reservasOrdenadas.forEach(reserva => {
+                const reservaItem = document.createElement('div');
+                reservaItem.className = `mobile-week-reservation ${reserva.estado}`;
+                
+                // Hacer que el item sea clickeable y evitar propagación
+                reservaItem.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    window.location.href = `/reserva?id=${reserva.id}`;
+                });
+                
+                reservaItem.innerHTML = `
+                    <div class="mobile-week-reservation-time">${reserva.hora.substring(0, 5)}</div>
+                    <div class="mobile-week-reservation-client">${reserva.nombre}</div>
+                `;
+                
+                reservationsContainer.appendChild(reservaItem);
+            });
+        }
+        
+        // Agregar estadísticas al final de la celda móvil
+        if (dayReservas.length > 0) {
+            const statsContainer = document.createElement('div');
+            statsContainer.className = 'mobile-week-stats';
+            
+            const confirmadas = dayReservas.filter(r => r.estado === 'confirmada').length;
+            const pendientes = dayReservas.filter(r => r.estado === 'pendiente').length;
+            
+            if (confirmadas > 0) {
+                const confirmadasBadge = document.createElement('div');
+                confirmadasBadge.className = 'mobile-week-stat confirmada';
+                confirmadasBadge.textContent = `${confirmadas}C`;
+                statsContainer.appendChild(confirmadasBadge);
+            }
+            
+            if (pendientes > 0) {
+                const pendientesBadge = document.createElement('div');
+                pendientesBadge.className = 'mobile-week-stat pendiente';
+                pendientesBadge.textContent = `${pendientes}P`;
+                statsContainer.appendChild(pendientesBadge);
+            }
+            
+            dayCell.appendChild(statsContainer);
+        }
+        
+        mobileWeekDays.appendChild(dayCell);
     }
     
     /**
@@ -246,35 +342,57 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function setupTooltips() {
         // Agregar tooltips a los botones de navegación
-        const prevBtn = document.querySelector('a[href*="' + semanaInfo.semanaAnterior + '"]');
-        const nextBtn = document.querySelector('a[href*="' + semanaInfo.semanaSiguiente + '"]');
+        const prevBtns = document.querySelectorAll('a[href*="' + semanaInfo.semanaAnterior + '"]');
+        const nextBtns = document.querySelectorAll('a[href*="' + semanaInfo.semanaSiguiente + '"]');
         
-        if (prevBtn) {
-            prevBtn.title = 'Semana anterior (←)';
-        }
+        prevBtns.forEach(btn => {
+            btn.title = 'Semana anterior (←)';
+        });
         
-        if (nextBtn) {
-            nextBtn.title = 'Semana siguiente (→)';
-        }
+        nextBtns.forEach(btn => {
+            btn.title = 'Semana siguiente (→)';
+        });
         
         // Agregar tooltips a los enlaces de vista
-        const dayLink = document.querySelector('a[href*="/dia"]');
-        const monthLink = document.querySelector('a[href*="/mes"]');
+        const dayLinks = document.querySelectorAll('a[href*="/dia"]');
+        const monthLinks = document.querySelectorAll('a[href*="/mes"]');
         
-        if (dayLink) {
-            dayLink.title = 'Vista día (D)';
-        }
+        dayLinks.forEach(link => {
+            link.title = 'Vista día (D)';
+        });
         
-        if (monthLink) {
-            monthLink.title = 'Vista mes (M)';
-        }
+        monthLinks.forEach(link => {
+            link.title = 'Vista mes (M)';
+        });
+    }
+    
+    /**
+     * Configurar efectos visuales adicionales
+     */
+    function setupVisualEffects() {
+        // Agregar animación suave a los grids cuando se cargan
+        const grids = [weekDaysGrid, mobileWeekDays].filter(Boolean);
+        
+        grids.forEach(grid => {
+            grid.style.opacity = '0';
+            grid.style.transform = 'translateY(20px)';
+            
+            // Animar entrada
+            setTimeout(() => {
+                grid.style.transition = 'all 0.5s ease-out';
+                grid.style.opacity = '1';
+                grid.style.transform = 'translateY(0)';
+            }, 100);
+        });
     }
     
     // Inicializar la vista
     initWeekView();
     setupKeyboardNavigation();
     setupTooltips();
+    setupVisualEffects();
     
     const totalReservas = Object.values(reservasPorFecha).reduce((total, reservas) => total + reservas.length, 0);
     console.log('Vista de semana cargada con', totalReservas, 'reservas');
+    console.log('Reservas por fecha:', reservasPorFecha);
 });

@@ -225,8 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const mobileHourContent = document.createElement('div');
             mobileHourContent.className = 'mobile-hour-content';
             
-            const mobileHourDot = document.createElement('div');
-            mobileHourDot.className = 'mobile-hour-dot';
+            // s
             
             // Obtener reservas de este slot
             const reservasEnSlot = reservasPorSlot[slot] || [];
@@ -239,15 +238,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     const mobileReservationElement = createMobileReservationElement(reserva);
                     mobileHourContent.appendChild(mobileReservationElement);
                 });
-            } else {
-                // Mostrar "Disponible" para slots vacíos
-                const emptyText = document.createElement('div');
-                emptyText.className = 'mobile-empty-hour';
-                emptyText.textContent = 'Disponible';
-                mobileHourContent.appendChild(emptyText);
-            }
+            } 
+            //else {
+            //     // Mostrar "Disponible" para slots vacíos
+            //     const emptyText = document.createElement('div');
+            //     emptyText.className = 'mobile-empty-hour';
+            //     emptyText.textContent = 'Disponible';
+            //     mobileHourContent.appendChild(emptyText);
+            // }
             
-            mobileHourContent.appendChild(mobileHourDot);
+            //mobileHourContent.appendChild(mobileHourDot);
             mobileTimelineHour.appendChild(mobileHourLabel);
             mobileTimelineHour.appendChild(mobileHourContent);
             mobileTimelineContainer.appendChild(mobileTimelineHour);
