@@ -3,12 +3,13 @@
 
 /**
  * Bootstrap de la aplicación ReservaBot
- * Inicializa configuración, base de datos, autoload y contenedor de dependencias
  */
 
-// ========== 1. CARGAR CONFIGURACIÓN DE BASE DE DATOS ==========
+// Mostrar errores en pantalla
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-// $configPath = dirname(__DIR__, 2) . '/config/database.php';
+// ========== 1. CARGAR CONFIGURACIÓN DE BASE DE DATOS ==========
 
 $configPath = dirname(__DIR__) . '/config/database.php';
 
@@ -22,23 +23,27 @@ try {
     if (!is_array($dbConfig)) {
         die("ERROR: database.php no retorna un array. Retorna: " . gettype($dbConfig));
     }
+    
+    echo "<pre>DEBUG Config:\n";
+    print_r([
+        'host' => $dbConfig['host'],
+        'database' => $dbConfig['database'],
+        'username' => $dbConfig['username'],
+        'password_length' => strlen($dbConfig['password'] ?? '')
+    ]);
+    echo "</pre>";
+    
 } catch (Exception $e) {
     die("ERROR cargando database.php: " . $e->getMessage());
 }
 
 // ========== 2. CREAR CONEXIÓN PDO ==========
 
-
 if (!isset($GLOBALS['pdo'])) {
     try {
-        // Debug: Mostrar config
-        error_log("Bootstrap PDO - Host: {$dbConfig['host']}");
-        error_log("Bootstrap PDO - Database: {$dbConfig['database']}");
-        error_log("Bootstrap PDO - Username: {$dbConfig['username']}");
-        error_log("Bootstrap PDO - Password length: " . strlen($dbConfig['password']));
-        
         $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['database']};charset={$dbConfig['charset']}";
-        error_log("Bootstrap PDO - DSN: $dsn");
+        
+        echo "<p>Intentando conectar con DSN: $dsn</p>";
         
         $GLOBALS['pdo'] = new PDO(
             $dsn,
@@ -47,19 +52,18 @@ if (!isset($GLOBALS['pdo'])) {
             $dbConfig['options']
         );
         
-        error_log("Bootstrap: ✅ PDO conectado");
+        echo "<p style='color:green;'>✅ PDO conectado exitosamente</p>";
         
     } catch (PDOException $e) {
-        error_log("Bootstrap: ❌ Error PDO - " . $e->getMessage());
-        error_log("Bootstrap: ❌ Código: " . $e->getCode());
+        echo "<div style='background:red;color:white;padding:20px;'>";
+        echo "<h2>❌ Error PDO</h2>";
+        echo "<p><strong>Mensaje:</strong> " . $e->getMessage() . "</p>";
+        echo "<p><strong>Código:</strong> " . $e->getCode() . "</p>";
+        echo "</div>";
         $GLOBALS['pdo'] = null;
     }
 }
 
-/**
- * Helper para obtener PDO
- * Mantiene compatibilidad con código legacy
- */
 function getPDO(): ?PDO {
     return $GLOBALS['pdo'] ?? null;
 }
@@ -69,6 +73,7 @@ function getPDO(): ?PDO {
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/functions.php';
 
+// ... resto del código igual ...
 // ========== 4. AUTOLOAD DE CLASES DDD ==========
 
 // Opción A: Autoload manual (sin Composer)
