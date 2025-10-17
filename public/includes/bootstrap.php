@@ -28,9 +28,17 @@ try {
 
 // ========== 2. CREAR CONEXIÓN PDO ==========
 
+
 if (!isset($GLOBALS['pdo'])) {
     try {
+        // Debug: Mostrar config
+        error_log("Bootstrap PDO - Host: {$dbConfig['host']}");
+        error_log("Bootstrap PDO - Database: {$dbConfig['database']}");
+        error_log("Bootstrap PDO - Username: {$dbConfig['username']}");
+        error_log("Bootstrap PDO - Password length: " . strlen($dbConfig['password']));
+        
         $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['database']};charset={$dbConfig['charset']}";
+        error_log("Bootstrap PDO - DSN: $dsn");
         
         $GLOBALS['pdo'] = new PDO(
             $dsn,
@@ -39,10 +47,11 @@ if (!isset($GLOBALS['pdo'])) {
             $dbConfig['options']
         );
         
-        error_log("Bootstrap: Conexión PDO establecida correctamente");
+        error_log("Bootstrap: ✅ PDO conectado");
         
     } catch (PDOException $e) {
-        error_log("Bootstrap: Error conectando a BD - " . $e->getMessage());
+        error_log("Bootstrap: ❌ Error PDO - " . $e->getMessage());
+        error_log("Bootstrap: ❌ Código: " . $e->getCode());
         $GLOBALS['pdo'] = null;
     }
 }
