@@ -8,7 +8,7 @@
 
 // ========== 1. CARGAR CONFIGURACIÓN DE BASE DE DATOS ==========
 
-$dbConfig = require __DIR__ . '/../../config/database.php';
+$configPath = dirname(__DIR__, 2) . '/config/database.php';
 
 // ========== 2. CREAR CONEXIÓN PDO ==========
 
