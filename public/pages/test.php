@@ -113,8 +113,8 @@ echo "<h2 class='text-xl font-bold mb-3'>6. Archivos</h2>";
 
 $files = [
     'config/database.php' => $baseDir . '/config/database.php',
-    'src/Domain/Reserva/Reserva.php' => $baseDir . '/src/Domain/Reserva/Reserva.php',
-    'src/Infrastructure/Container.php' => $baseDir . '/src/Infrastructure/Container.php',
+    'src/domain/reserva/Reserva.php' => $baseDir . '/src/domain/reserva/Reserva.php',
+    'src/infrastructure/Container.php' => $baseDir . '/src/infrastructure/Container.php',
 ];
 
 foreach ($files as $name => $path) {
