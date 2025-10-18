@@ -46,7 +46,7 @@ spl_autoload_register(function ($class) {
 });
 
 // ========== 5. CONTENEDOR ==========
-use ReservaBot\Infrastructure\Container;
+use ReservaBot\Config\Container;
 
 if (!isset($GLOBALS['container'])) {
     try {

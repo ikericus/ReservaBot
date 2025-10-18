@@ -55,4 +55,9 @@ interface IReservaRepository {
      * Obtiene estadísticas de reservas
      */
     public function obtenerEstadisticas(int $usuarioId, ?DateTime $desde = null, ?DateTime $hasta = null): array;
+
+    /**
+     * Obtiene reservas por teléfono
+     */
+    public function obtenerPorTelefono(string $telefono, int $usuarioId): array;
 }

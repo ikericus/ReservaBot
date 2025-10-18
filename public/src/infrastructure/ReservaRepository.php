@@ -241,4 +241,20 @@ class ReservaRepository implements IReservaRepository {
         
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function obtenerPorTelefono(string $telefono, int $usuarioId): array {
+        $sql = "SELECT * FROM reservas 
+                WHERE telefono = ? AND usuario_id = ? 
+                ORDER BY fecha DESC, hora DESC";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$telefono, $usuarioId]);
+        
+        $reservas = [];
+        while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $reservas[] = Reserva::fromDatabase($data);
+        }
+        
+        return $reservas;
+    }
 }

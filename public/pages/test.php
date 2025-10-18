@@ -111,7 +111,7 @@ echo "<h2 class='text-xl font-bold mb-3'>6. Archivos</h2>";
 $files = [
     'config/database.php' => PROJECT_ROOT . '/config/database.php',
     'src/domain/reserva/Reserva.php' => PROJECT_ROOT . '/src/domain/reserva/Reserva.php',
-    'src/infrastructure/Container.php' => PROJECT_ROOT . '/src/infrastructure/Container.php',
+    'src/config/Container.php' => PROJECT_ROOT . '/src/config/Container.php',
 ];
 
 foreach ($files as $name => $path) {

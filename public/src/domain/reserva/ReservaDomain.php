@@ -1,21 +1,28 @@
 <?php
-// src/Domain/Reserva/ReservaDomain.php
+// src/domain/reserva/ReservaDomain.php
 
 namespace ReservaBot\Domain\Reserva;
 
-use ReservaBot\Domain\Configuracion\IConfiguracionRepository;
+use ReservaBot\Domain\Disponibilidad\IDisponibilidadRepository;
 use DateTime;
 
 class ReservaDomain {
     private IReservaRepository $reservaRepository;
-    private IConfiguracionRepository $configuracionRepository;
+    private IDisponibilidadRepository $disponibilidadRepository;
     
     public function __construct(
         IReservaRepository $reservaRepository,
-        IConfiguracionRepository $configuracionRepository
+        IDisponibilidadRepository $disponibilidadRepository
     ) {
         $this->reservaRepository = $reservaRepository;
-        $this->configuracionRepository = $configuracionRepository;
+        $this->disponibilidadRepository = $disponibilidadRepository;
+    }
+    
+    /**
+     * Obtiene todas las reservas de un usuario
+     */
+    public function obtenerTodasReservasUsuario(int $usuarioId): array {
+        return $this->reservaRepository->obtenerPorUsuario($usuarioId);
     }
     
     /**
@@ -33,6 +40,20 @@ class ReservaDomain {
     }
     
     /**
+     * Obtiene reservas por fecha
+     */
+    public function obtenerReservasPorFecha(DateTime $fecha, int $usuarioId): array {
+        return $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
+    }
+    
+    /**
+     * Obtiene reservas por rango de fechas
+     */
+    public function obtenerReservasPorRango(DateTime $desde, DateTime $hasta, int $usuarioId): array {
+        return $this->reservaRepository->obtenerPorRangoFechas($desde, $hasta, $usuarioId);
+    }
+    
+    /**
      * Verifica si una fecha y hora están disponibles
      */
     public function verificarDisponibilidad(
@@ -42,7 +63,7 @@ class ReservaDomain {
         ?int $excluirReservaId = null
     ): bool {
         // 1. Verificar si el horario está dentro de las horas de negocio
-        if (!$this->configuracionRepository->estaDisponible($fecha, $hora, $usuarioId)) {
+        if (!$this->disponibilidadRepository->estaDisponible($fecha, $hora, $usuarioId)) {
             return false;
         }
         
@@ -53,6 +74,43 @@ class ReservaDomain {
             $usuarioId,
             $excluirReservaId
         );
+    }
+    
+    /**
+     * Verifica si un horario está dentro de las horas de negocio
+     */
+    public function verificarHorarioDisponible(DateTime $fecha, string $hora, int $usuarioId): bool {
+        return $this->disponibilidadRepository->estaDisponible($fecha, $hora, $usuarioId);
+    }
+    
+    /**
+     * Obtiene horas disponibles para una fecha
+     */
+    public function obtenerHorasDisponibles(DateTime $fecha, int $usuarioId): array {
+        // Obtener todas las horas configuradas para ese día
+        $todasLasHoras = $this->disponibilidadRepository->obtenerHorasDelDia($fecha, $usuarioId);
+        
+        // Obtener reservas existentes para esa fecha
+        $reservasExistentes = $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
+        
+        // Filtrar horas ocupadas
+        $horasOcupadas = array_map(function($reserva) {
+            return $reserva->getHora();
+        }, array_filter($reservasExistentes, function($reserva) {
+            return $reserva->getEstado()->esActiva();
+        }));
+        
+        // Retornar solo horas disponibles
+        return array_values(array_filter($todasLasHoras, function($hora) use ($horasOcupadas) {
+            return !in_array($hora, $horasOcupadas);
+        }));
+    }
+    
+    /**
+     * Obtiene todas las horas del día según configuración
+     */
+    public function obtenerHorasDelDia(DateTime $fecha, int $usuarioId): array {
+        return $this->disponibilidadRepository->obtenerHorasDelDia($fecha, $usuarioId);
     }
     
     /**
@@ -142,43 +200,6 @@ class ReservaDomain {
         }
         
         return $reserva;
-    }
-    
-    /**
-     * Obtiene reservas por fecha
-     */
-    public function obtenerReservasPorFecha(DateTime $fecha, int $usuarioId): array {
-        return $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
-    }
-    
-    /**
-     * Obtiene reservas por rango de fechas
-     */
-    public function obtenerReservasPorRango(DateTime $desde, DateTime $hasta, int $usuarioId): array {
-        return $this->reservaRepository->obtenerPorRangoFechas($desde, $hasta, $usuarioId);
-    }
-    
-    /**
-     * Obtiene horas disponibles para una fecha
-     */
-    public function obtenerHorasDisponibles(DateTime $fecha, int $usuarioId): array {
-        // Obtener todas las horas configuradas para ese día
-        $todasLasHoras = $this->configuracionRepository->obtenerHorasDelDia($fecha, $usuarioId);
-        
-        // Obtener reservas existentes para esa fecha
-        $reservasExistentes = $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
-        
-        // Filtrar horas ocupadas
-        $horasOcupadas = array_map(function($reserva) {
-            return $reserva->getHora();
-        }, array_filter($reservasExistentes, function($reserva) {
-            return $reserva->getEstado()->esActiva();
-        }));
-        
-        // Retornar solo horas disponibles
-        return array_values(array_filter($todasLasHoras, function($hora) use ($horasOcupadas) {
-            return !in_array($hora, $horasOcupadas);
-        }));
     }
     
     /**

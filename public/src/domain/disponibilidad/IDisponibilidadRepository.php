@@ -5,7 +5,7 @@ namespace ReservaBot\Domain\Configuracion;
 
 use DateTime;
 
-interface IConfiguracionRepository {
+interface IDisponibilidadRepository {
     /**
      * Verifica si una fecha y hora están disponibles según configuración de horarios
      */

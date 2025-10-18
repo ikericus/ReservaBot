@@ -1,13 +1,13 @@
 <?php
-// public/src/infrastructure/ConfiguracionRepository.php
+// public/src/infrastructure/DisponibilidadRepository.php
 
 namespace ReservaBot\Infrastructure;
 
-use ReservaBot\Domain\Configuracion\IConfiguracionRepository;
+use ReservaBot\Domain\Configuracion\IDisponibilidadRepository;
 use DateTime;
 use PDO;
 
-class ConfiguracionRepository implements IConfiguracionRepository {
+class DisponibilidadRepository implements IDisponibilidadRepository {
     private PDO $pdo;
     
     public function __construct(PDO $pdo) {
