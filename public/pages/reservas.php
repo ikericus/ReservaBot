@@ -1,10 +1,5 @@
 <?php
-
-/// Iniciar sesión
-session_start();
-
-// Cargar dependencias
-require_once __DIR__ . '/../config/bootstrap.php';
+// public/pages/reservas.php
 
 // Obtener usuario
 $currentUser = getAuthenticatedUser();
