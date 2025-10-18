@@ -97,4 +97,4 @@ hasContainer()        // Bool container disponible
 - Dominio de Cliente/Usuario cuando sea necesario
 
 ## Estilo de Respuesta
-Código directo. Sin explicaciones largas previas.
+Código directo. Sin explicaciones largas previas. Escueto.

@@ -1,5 +1,4 @@
 <?php
-
 // public/config/router.php
 
 /**
@@ -116,6 +115,12 @@ class Router {
     
     private function executeRoute($route) {
         try {
+            // Cargar bootstrap SIEMPRE antes de ejecutar cualquier ruta
+            // Esto asegura que todas las rutas tengan acceso a funciones y configuración
+            if (!function_exists('getPDO')) {
+                require_once PROJECT_ROOT . '/config/bootstrap.php';
+            }
+            
             foreach ($route['middlewares'] as $middleware) {
                 if (!$this->applyMiddleware($middleware)) {
                     return false;
@@ -154,7 +159,7 @@ class Router {
      * Middleware de autenticación
      */
     private function authMiddleware() {
-        require_once PROJECT_ROOT . '/config/bootstrap.php';
+        // Bootstrap ya está cargado por executeRoute
         
         updateLastActivity();
         

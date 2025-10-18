@@ -16,7 +16,7 @@ echo "<!DOCTYPE html>
         <h1 class='text-3xl font-bold mb-6'>🔍 Diagnóstico del Sistema</h1>";
 
 echo "<div class='mb-4 p-3 bg-gray-50 rounded'>";
-echo "<p class='text-sm'><strong>Base Dir:</strong> $PROJECT_ROOT </p>";
+echo "<p class='text-sm'><strong>PROJECT_ROOT:</strong> " . PROJECT_ROOT . "</p>";
 echo "</div>";
 
 // ========== 1. TEST BOOTSTRAP ==========
@@ -24,7 +24,7 @@ echo "<div class='mb-6 p-4 bg-blue-50 rounded'>";
 echo "<h2 class='text-xl font-bold mb-3'>1. Bootstrap</h2>";
 
 try {
-    require_once $PROJECT_ROOT . '/config/bootstrap.php';
+    require_once PROJECT_ROOT . '/config/bootstrap.php';
     echo "<p class='text-green-600'>✅ Bootstrap cargado</p>";
 } catch (Exception $e) {
     echo "<p class='text-red-600'>❌ Error: " . $e->getMessage() . "</p>";
@@ -109,9 +109,9 @@ echo "<div class='mb-6 p-4 bg-pink-50 rounded'>";
 echo "<h2 class='text-xl font-bold mb-3'>6. Archivos</h2>";
 
 $files = [
-    'config/database.php' => $baseDir . '/config/database.php',
-    'src/domain/reserva/Reserva.php' => $baseDir . '/src/domain/reserva/Reserva.php',
-    'src/infrastructure/Container.php' => $baseDir . '/src/infrastructure/Container.php',
+    'config/database.php' => PROJECT_ROOT . '/config/database.php',
+    'src/domain/reserva/Reserva.php' => PROJECT_ROOT . '/src/domain/reserva/Reserva.php',
+    'src/infrastructure/Container.php' => PROJECT_ROOT . '/src/infrastructure/Container.php',
 ];
 
 foreach ($files as $name => $path) {
