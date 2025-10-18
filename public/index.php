@@ -15,7 +15,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 }
 
 // Incluir el router
-require_once __DIR__ . '/config/router.php';
+require_once dirname(__DIR__) . '/config/router.php';
 
 // Crear y ejecutar el router
 $router = new Router();
