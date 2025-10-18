@@ -95,5 +95,5 @@ try {
     jsonResponse(false, ['error' => $e->getMessage()], 400);
 } catch (\Exception $e) {
     error_log('Error general al crear reserva: ' . $e->getMessage());
-    jsonResponse(false, ['error' => 'Error interno del servidor'], 500);
+    jsonResponse(false, ['error' => 'Error interno del servidor: ' . $e->getMessage()], 500);
 }
