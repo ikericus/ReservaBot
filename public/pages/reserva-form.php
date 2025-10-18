@@ -1,6 +1,4 @@
 <?php
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/config/bootstrap.php';
 
 // Configurar la página actual
 $currentPage = 'reserva-form';
