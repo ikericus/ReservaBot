@@ -1,179 +1,99 @@
 <?php
+// api/crear-reserva.php
 
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
+header('Content-Type: application/json');
 
-// Establecer el estado según el rol del usuario
-$estado = isAdmin() ? 'confirmada' : 'pendiente';
+// Obtener usuario autenticado
+$currentUser = getAuthenticatedUser();
+$userId = $currentUser['id'];
 
-// Iniciar sesión para manejar mensajes de error
-session_start();
+// Establecer estado según rol
+$estadoDefault = isAdmin() ? 'confirmada' : 'pendiente';
 
-// Verificar método de solicitud
+// Verificar método
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    $_SESSION['error'] = 'Método no permitido';
-    header('Location: /nueva-reserva');
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Método no permitido']);
     exit;
 }
 
-// Obtener los datos del formulario
+// Obtener datos
 $data = $_POST;
 
-// Función para redirigir con error
-function redirectWithError($message, $data = []) {
-    $_SESSION['error'] = $message;
-    $_SESSION['form_data'] = $data;
-    $fecha = isset($data['fecha']) ? $data['fecha'] : date('Y-m-d');
-    header("Location: /nueva-reserva?date={$fecha}");
+// Función de respuesta
+function jsonResponse($success, $data = [], $code = 200) {
+    http_response_code($code);
+    echo json_encode(array_merge(['success' => $success], $data));
     exit;
 }
 
-// Función para normalizar teléfono al formato WhatsApp
-function normalizePhoneForWhatsApp($phone) {
-    if (!$phone) return '';
-    
-    // Remover todos los caracteres que no sean números o el signo +
-    $normalized = preg_replace('/[^\d+]/', '', $phone);
-    
-    // Si empieza con +, mantenerlo
-    if (strpos($normalized, '+') === 0) {
-        return $normalized;
-    }
-    
-    // Si empieza con 34, agregar +
-    if (strpos($normalized, '34') === 0 && strlen($normalized) >= 11) {
-        return '+' . $normalized;
-    }
-    
-    // Si empieza con 6, 7, 8 o 9 (números españoles), agregar +34
-    if (preg_match('/^[6789]/', $normalized) && strlen($normalized) === 9) {
-        return '+34' . $normalized;
-    }
-    
-    // Si no tiene prefijo y tiene más de 9 dígitos, asumir que tiene código de país
-    if (strlen($normalized) > 9) {
-        return '+' . $normalized;
-    }
-    
-    // Por defecto, asumir España si es un número de 9 dígitos
-    if (strlen($normalized) === 9) {
-        return '+34' . $normalized;
-    }
-    
-    return $normalized;
+// Validar datos requeridos
+if (!isset($data['nombre'], $data['telefono'], $data['fecha'], $data['hora'])) {
+    jsonResponse(false, ['error' => 'Faltan datos requeridos'], 400);
 }
 
-// Verificar que los datos requeridos estén presentes
-if (!isset($data['nombre']) || !isset($data['telefono']) || !isset($data['fecha']) || !isset($data['hora'])) {
-    redirectWithError('Faltan datos requeridos', $data);
-}
-
-// Validar los datos
 if (empty(trim($data['nombre'])) || empty(trim($data['telefono'])) || empty($data['fecha']) || empty($data['hora'])) {
-    redirectWithError('Todos los campos obligatorios deben estar completos', $data);
+    jsonResponse(false, ['error' => 'Todos los campos obligatorios deben estar completos'], 400);
 }
 
-// Validar el formato de la fecha
+// Validar formatos
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data['fecha'])) {
-    redirectWithError('Formato de fecha inválido', $data);
+    jsonResponse(false, ['error' => 'Formato de fecha inválido'], 400);
 }
 
-// Validar el formato de la hora
 if (!preg_match('/^\d{2}:\d{2}$/', $data['hora'])) {
-    redirectWithError('Formato de hora inválido', $data);
+    jsonResponse(false, ['error' => 'Formato de hora inválido'], 400);
 }
 
-// Validar que la fecha no sea anterior a hoy
+// Validar fecha no anterior
 if ($data['fecha'] < date('Y-m-d')) {
-    redirectWithError('La fecha no puede ser anterior a hoy', $data);
+    jsonResponse(false, ['error' => 'La fecha no puede ser anterior a hoy'], 400);
 }
 
 try {
-    // Verificar reservas existentes usando CAST para evitar problemas de collation
-    $stmt = getPDO()->prepare('
-        SELECT COUNT(*) FROM reservas 
-        WHERE CAST(fecha AS CHAR) = CAST(? AS CHAR) 
-        AND TIME_FORMAT(hora, "%H:%i") = CAST(? AS CHAR) 
-        AND estado IN ("pendiente", "confirmada")
-    ');
-    $stmt->execute([$data['fecha'], $data['hora']]);
-    $existeReserva = $stmt->fetchColumn();
+    $reservaDomain = getContainer()->getReservaDomain();
     
-    if ($existeReserva > 0) {
-        redirectWithError('Ya existe una reserva para esa fecha y hora', $data);
-    }
-    
-    // Limpiar y preparar datos
+    // Preparar datos
     $nombre = trim($data['nombre']);
     $telefono = trim($data['telefono']);
     $mensaje = isset($data['mensaje']) ? trim($data['mensaje']) : '';
-    $estado = trim($data['estado']);
+    $estado = isset($data['estado']) ? trim($data['estado']) : $estadoDefault;
+    $notasInternas = isset($data['notas_internas']) ? trim($data['notas_internas']) : null;
     
-    // Normalizar teléfono para WhatsApp
-    $whatsappId = '';
-    if (isset($data['whatsapp_id']) && !empty(trim($data['whatsapp_id']))) {
-        $whatsappId = normalizePhoneForWhatsApp(trim($data['whatsapp_id']));
-    } else {
-        // Si no se proporciona whatsapp_id explícito, usar el teléfono normalizado
-        $whatsappId = normalizePhoneForWhatsApp($telefono);
-    }
+    $fecha = new DateTime($data['fecha']);
+    $hora = $data['hora'];
     
-    // Preparar la consulta de inserción
-    $campos = ['nombre', 'telefono', 'fecha', 'hora', 'mensaje', 'estado', 'usuario_id'];
-    $valores = ['?', '?', '?', '?', '?', '?', '?'];
-    
-    // Siempre incluir whatsapp_id ahora
-    $campos[] = 'whatsapp_id';
-    $valores[] = '?';
-    
-    $sql = 'INSERT INTO reservas (' . implode(', ', $campos) . ') VALUES (' . implode(', ', $valores) . ')';
-    $stmt = getPDO()->prepare($sql);
-        
-    // Convertir la hora al formato de MySQL (HH:MM:SS)
-    $hora = $data['hora'] . ':00';
-    
-    // Obtener el ID del usuario actual (NULL si no está autenticado)
-    $usuarioId = getCurrentUserId();
-
-    // Preparar parámetros para la ejecución
-    $params = [
+    // Crear reserva usando el dominio
+    $reserva = $reservaDomain->crearReserva(
         $nombre,
         $telefono,
-        $data['fecha'],
+        $fecha,
         $hora,
+        $userId,
         $mensaje,
-        $estado,
-        $usuarioId,
-        $whatsappId  // WhatsApp ID normalizado
-    ];
+        $notasInternas
+    );
     
-    // Ejecutar la consulta
-    $result = $stmt->execute($params);
-    
-    if ($result) {
-        $id = getPDO()->lastInsertId();
-        
-        // Log de la creación con información de normalización
-        error_log("Reserva creada - ID: {$id}, Teléfono: {$telefono}, WhatsApp normalizado: {$whatsappId}");
-        
-        // Limpiar datos del formulario y mensaje de error
-        unset($_SESSION['form_data']);
-        unset($_SESSION['error']);
-        
-        // Redirigir al detalle de la reserva
-        header("Location: /reserva?id={$id}");
-        exit;
-    } else {
-        redirectWithError('Error al crear la reserva en la base de datos', $data);
+    // Si el estado no es pendiente, actualizarlo
+    if ($estado === 'confirmada' && isAdmin()) {
+        $reserva = $reservaDomain->confirmarReserva($reserva->getId(), $userId);
     }
     
-} catch (\PDOException $e) {
-    error_log('Error PDO al crear reserva: ' . $e->getMessage());
-    redirectWithError('Error en la base de datos: ' . $e->getMessage(), $data);
+    error_log("Reserva creada - ID: {$reserva->getId()}, Teléfono: {$telefono}");
+    
+    jsonResponse(true, [
+        'reserva' => $reserva->toArray(),
+        'message' => 'Reserva creada correctamente',
+        'redirect' => "/reserva?id={$reserva->getId()}"
+    ]);
+    
+} catch (\DomainException $e) {
+    error_log('Error dominio al crear reserva: ' . $e->getMessage());
+    jsonResponse(false, ['error' => $e->getMessage()], 400);
+} catch (\InvalidArgumentException $e) {
+    error_log('Error validación al crear reserva: ' . $e->getMessage());
+    jsonResponse(false, ['error' => $e->getMessage()], 400);
 } catch (\Exception $e) {
     error_log('Error general al crear reserva: ' . $e->getMessage());
-    redirectWithError('Error interno del servidor: ' . $e->getMessage(), $data);
+    jsonResponse(false, ['error' => 'Error interno del servidor'], 500);
 }
-?>

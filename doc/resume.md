@@ -294,4 +294,4 @@ getFlashMessages()          // Obtener y limpiar mensajes
 - Crear tablas `whatsapp_config` y `whatsapp_conversaciones` en BD
 
 ## Estilo de Respuesta
-Código directo. Sin explicaciones largas previas. Escueto.
+Proponer dirección de los cambios antes de crear código. Código directo. Sin explicaciones largas previas. Escueto.
