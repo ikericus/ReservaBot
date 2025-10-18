@@ -1,6 +1,5 @@
 <?php
-// config/Container.php
-
+// config/container.php
 
 namespace ReservaBot\Config;
 

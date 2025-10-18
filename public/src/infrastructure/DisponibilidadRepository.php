@@ -3,7 +3,7 @@
 
 namespace ReservaBot\Infrastructure;
 
-use ReservaBot\Domain\Configuracion\IDisponibilidadRepository;
+use ReservaBot\Domain\Disponibilidad\IDisponibilidadRepository;
 use DateTime;
 use PDO;
 

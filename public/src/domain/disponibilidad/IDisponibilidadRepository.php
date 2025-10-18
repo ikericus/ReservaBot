@@ -1,7 +1,7 @@
 <?php
-// src/Domain/Configuracion/IConfiguracionRepository.php
+// src/domain/disponibilidad/IDisponibilidadRepository.php
 
-namespace ReservaBot\Domain\Configuracion;
+namespace ReservaBot\Domain\Disponibilidad;
 
 use DateTime;
 
