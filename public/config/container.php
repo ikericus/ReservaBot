@@ -6,10 +6,12 @@ namespace ReservaBot\Config;
 use ReservaBot\Domain\Reserva\ReservaDomain;
 use ReservaBot\Domain\Cliente\ClienteDomain;
 use ReservaBot\Domain\Configuracion\ConfiguracionDomain;
+use ReservaBot\Domain\WhatsApp\WhatsAppDomain;
 use ReservaBot\Infrastructure\ReservaRepository;
 use ReservaBot\Infrastructure\ClienteRepository;
 use ReservaBot\Infrastructure\DisponibilidadRepository;
 use ReservaBot\Infrastructure\ConfiguracionNegocioRepository;
+use ReservaBot\Infrastructure\WhatsAppRepository;
 use PDO;
 
 class Container {
@@ -59,6 +61,15 @@ class Container {
         return $this->services['configuracionDomain'];
     }
     
+    public function getWhatsAppDomain(): WhatsAppDomain {
+        if (!isset($this->services['whatsappDomain'])) {
+            $this->services['whatsappDomain'] = new WhatsAppDomain(
+                $this->getWhatsAppRepository()
+            );
+        }
+        return $this->services['whatsappDomain'];
+    }
+    
     // ==================== REPOSITORIES ====================
     
     private function getReservaRepository(): ReservaRepository {
@@ -88,5 +99,12 @@ class Container {
                 new ConfiguracionNegocioRepository($this->pdo);
         }
         return $this->services['configuracionNegocioRepository'];
+    }
+    
+    private function getWhatsAppRepository(): WhatsAppRepository {
+        if (!isset($this->services['whatsappRepository'])) {
+            $this->services['whatsappRepository'] = new WhatsAppRepository($this->pdo);
+        }
+        return $this->services['whatsappRepository'];
     }
 }

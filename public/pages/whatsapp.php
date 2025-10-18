@@ -9,20 +9,23 @@ $pageScript = 'whatsapp';
 $currentUser = getAuthenticatedUser();
 $userId = $currentUser['id'];
 
-// Obtener configuración WhatsApp actual
+// Obtener configuración WhatsApp
 $whatsappConfig = null;
+$connectionStatus = 'disconnected';
+$phoneNumber = null;
+$lastActivity = null;
+
 try {
-    $stmt = getPDO()->prepare('SELECT * FROM whatsapp_config WHERE usuario_id = ?');
-    $stmt->execute([$userId]);
-    $whatsappConfig = $stmt->fetch();
-} catch (PDOException $e) {
+    $whatsappDomain = getContainer()->getWhatsAppDomain();
+    $config = $whatsappDomain->obtenerConfiguracion($userId);
+    
+    $whatsappConfig = $config->toArray();
+    $connectionStatus = $config->getStatus();
+    $phoneNumber = $config->getPhoneNumber();
+    $lastActivity = $config->getLastActivity();
+} catch (Exception $e) {
     setFlashError('Error al cargar configuración de WhatsApp: ' . $e->getMessage());
 }
-
-// Inicializar variables
-$connectionStatus = $whatsappConfig['status'] ?? 'disconnected';
-$phoneNumber = $whatsappConfig['phone_number'] ?? null;
-$lastActivity = $whatsappConfig['last_activity'] ?? null;
 
 include 'includes/header.php';
 ?>
@@ -152,6 +155,7 @@ include 'includes/header.php';
             <?php 
             $statusLabels = [
                 'connected' => 'Conectado',
+                'ready' => 'Conectado',
                 'waiting_qr' => 'Esperando QR...',
                 'connecting' => 'Conectando...',
                 'disconnected' => 'Desconectado'
@@ -308,7 +312,7 @@ include 'includes/header.php';
             
             <div class="space-y-4">
                 <label class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                    <input type="checkbox" id="autoConfirmation" class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4">
+                    <input type="checkbox" id="autoConfirmation" <?php echo ($whatsappConfig['auto_confirmacion'] ?? false) ? 'checked' : ''; ?> class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4">
                     <div class="flex-1">
                         <h4 class="font-medium text-gray-900">Confirmación de reservas</h4>
                         <p class="text-sm text-gray-600">Enviar confirmación automática cuando se cree una nueva reserva</p>
@@ -317,7 +321,7 @@ include 'includes/header.php';
                 </label>
                 
                 <label class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                    <input type="checkbox" id="autoReminders" class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4">
+                    <input type="checkbox" id="autoReminders" <?php echo ($whatsappConfig['auto_recordatorio'] ?? false) ? 'checked' : ''; ?> class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4">
                     <div class="flex-1">
                         <h4 class="font-medium text-gray-900">Recordatorios automáticos</h4>
                         <p class="text-sm text-gray-600">Enviar recordatorio 24 horas antes de la cita</p>
@@ -326,7 +330,7 @@ include 'includes/header.php';
                 </label>
                 
                 <label class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                    <input type="checkbox" id="autoWelcome" class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4">
+                    <input type="checkbox" id="autoWelcome" <?php echo ($whatsappConfig['auto_bienvenida'] ?? false) ? 'checked' : ''; ?> class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4">
                     <div class="flex-1">
                         <h4 class="font-medium text-gray-900">Mensaje de bienvenida</h4>
                         <p class="text-sm text-gray-600">Responder automáticamente cuando un cliente escriba por primera vez</p>
@@ -850,25 +854,8 @@ include 'includes/header.php';
         }
 
         async loadAutoMessageConfig() {
-            try {
-                const response = await fetch('/api/get-auto-message-config');
-                const data = await response.json();
-                
-                if (data.success) {
-                    const checkboxes = {
-                        autoConfirmation: data.config.confirmacion || false,
-                        autoReminders: data.config.recordatorio || false,
-                        autoWelcome: data.config.bienvenida || false
-                    };
-                    
-                    Object.entries(checkboxes).forEach(([id, checked]) => {
-                        const checkbox = document.getElementById(id);
-                        if (checkbox) checkbox.checked = checked;
-                    });
-                }
-            } catch (error) {
-                console.error('Error cargando configuración:', error);
-            }
+            // La configuración ya viene desde PHP, no necesitamos cargarla desde API
+            // Los checkboxes ya están pre-marcados según el estado de la BD
         }
 
         // =============== MODAL ===============

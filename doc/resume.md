@@ -29,13 +29,19 @@ public_html/ (PROJECT_ROOT)
 │   │   │   └── IConfiguracionNegocioRepository.php  # Interfaz
 │   │   ├── disponibilidad/
 │   │   │   └── IDisponibilidadRepository.php   # Interfaz (horarios)
+│   │   ├── whatsapp/
+│   │   │   ├── WhatsAppConfig.php       # Entidad config
+│   │   │   ├── Conversacion.php         # Entidad conversación
+│   │   │   ├── WhatsAppDomain.php       # Lógica negocio
+│   │   │   └── IWhatsAppRepository.php  # Interfaz
 │   │   └── shared/
 │   │       └── Telefono.php             # Value Object
 │   └── infrastructure/   # Implementaciones (minúsculas)
 │       ├── ReservaRepository.php        # Implementación PDO
 │       ├── ClienteRepository.php        # Implementación PDO
 │       ├── ConfiguracionNegocioRepository.php  # Implementación PDO
-│       └── DisponibilidadRepository.php        # Implementación PDO
+│       ├── DisponibilidadRepository.php        # Implementación PDO
+│       └── WhatsAppRepository.php       # Implementación PDO
 ├── pages/               # Páginas web
 ├── api/                 # Endpoints API
 ├── includes/
@@ -120,25 +126,45 @@ Carpetas en minúsculas, archivos case-sensitive.
 
 **Tabla**: `configuraciones_usuario` (horarios: `horario_lun`, `horario_mar`, etc).
 
+### 5. WhatsAppDomain
+**Responsabilidad**: Gestión de WhatsApp y conversaciones.
+
+**Métodos principales**:
+- `obtenerConfiguracion()` - Config WhatsApp del usuario
+- `iniciarConexion()` - Inicia proceso de conexión con QR
+- `confirmarConexion()` - Marca como conectado
+- `desconectar()` - Desvincula WhatsApp
+- `configurarMensajesAutomaticos()` - Config auto-mensajes
+- `obtenerConversaciones()` - Lista conversaciones recientes
+- `registrarMensaje()` - Guarda mensaje en conversación
+- `marcarComoLeida()` - Marca conversación como leída
+- `contarNoLeidas()` - Contador de no leídas
+- `obtenerEstadisticas()` - Stats de mensajería
+- `puedeEnviarMensajes()` - Verifica si puede enviar
+
+**Entities**: 
+- `WhatsAppConfig` (estado conexión, phone, config auto-mensajes)
+- `Conversacion` (conversaciones con clientes)
+
+**Tabla**: `whatsapp_config`, `whatsapp_conversaciones`
+
 ## Uso en Páginas/APIs (DDD)
 
 ### Ejemplo completo:
 ```php
-// pages/reservas.php
+// pages/whatsapp.php
 
-// Bootstrap ya cargado por router
 $currentUser = getAuthenticatedUser();
 $userId = $currentUser['id'];
 
 try {
-    $reservaDomain = getContainer()->getReservaDomain();
-    $reservasPendientes = $reservaDomain->obtenerReservasPendientes($userId);
+    $whatsappDomain = getContainer()->getWhatsAppDomain();
+    $config = $whatsappDomain->obtenerConfiguracion($userId);
     
-    // Convertir objetos a arrays para la vista
-    $reservasPendientes = array_map(fn($r) => $r->toArray(), $reservasPendientes);
+    $whatsappConfig = $config->toArray();
+    $connectionStatus = $config->getStatus();
 } catch (Exception $e) {
     setFlashError('Error: ' . $e->getMessage());
-    $reservasPendientes = [];
 }
 ```
 
@@ -180,6 +206,14 @@ Configuraciones por usuario (horarios + config negocio).
 - Campos: id, usuario_id, clave, valor, created_at, updated_at
 - Ejemplos claves: `horario_lun`, `nombre_negocio`, `intervalo`
 
+### whatsapp_config
+Configuración WhatsApp por usuario.
+- Campos: id, usuario_id, phone_number, status, qr_code, last_activity, auto_confirmacion, auto_recordatorio, auto_bienvenida, created_at, updated_at
+
+### whatsapp_conversaciones
+Conversaciones de WhatsApp.
+- Campos: id, usuario_id, whatsapp_id, nombre, telefono, ultimo_mensaje, ultima_actividad, no_leido, created_at, updated_at
+
 ## Flash Messages
 ```php
 // Establecer mensajes
@@ -212,6 +246,7 @@ getFlashMessages()          // Obtener y limpiar mensajes
 
 ## Páginas Migradas a DDD ✅
 - `pages/reservas.php` - Lista de reservas
+- `pages/whatsapp.php` - WhatsApp y conversaciones
 
 ## Páginas Legacy (Pendientes) ⚠️
 ### Próximas a migrar:
@@ -225,14 +260,18 @@ getFlashMessages()          // Obtener y limpiar mensajes
 ### Otras pendientes:
 - `pages/semana.php` - Calendario semana
 - `pages/mes.php` - Calendario mes
-- `pages/whatsapp.php` - WhatsApp
-- `pages/conversaciones.php` - Conversaciones WhatsApp
+- `pages/conversaciones.php` - Conversaciones WhatsApp (puede usar WhatsAppDomain)
 
 ### APIs pendientes:
 - `api/crear-reserva.php`
 - `api/actualizar-reserva.php`
 - `api/eliminar-reserva.php`
 - `api/horas-disponibles.php`
+- `api/whatsapp-connect.php` - Usar WhatsAppDomain
+- `api/whatsapp-disconnect.php` - Usar WhatsAppDomain
+- `api/whatsapp-status.php` - Usar WhatsAppDomain
+- `api/whatsapp-conversations.php` - Usar WhatsAppDomain
+- `api/save-auto-message-config.php` - Usar WhatsAppDomain
 
 **Patrón de migración:**
 1. Eliminar `session_start()`, `require_once db-config`, `require_once auth`
@@ -246,13 +285,13 @@ getFlashMessages()          // Obtener y limpiar mensajes
 2. index.php → define PROJECT_ROOT, carga router.php
 3. router.php → carga bootstrap.php, ejecuta middleware ['auth']
 4. bootstrap.php → carga auth.php, functions.php, autoload, Container
-5. Página/API → usa getContainer()->getReservaDomain()
+5. Página/API → usa getContainer()->getReservaDomain() / getWhatsAppDomain()
 ```
 
 ## Pendientes
 - Migrar páginas y APIs legacy a DDD
 - Tests unitarios para Domain
-- WhatsAppDomain cuando sea necesario
+- Crear tablas `whatsapp_config` y `whatsapp_conversaciones` en BD
 
 ## Estilo de Respuesta
 Código directo. Sin explicaciones largas previas. Escueto.
