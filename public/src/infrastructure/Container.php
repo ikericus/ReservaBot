@@ -4,7 +4,7 @@
 namespace ReservaBot\Infrastructure;
 
 use ReservaBot\Domain\Reserva\ReservaDomain;
-use ReservaBot\Application\Reserva\ReservaUseCases;
+use ReservaBot\Application\ReservaUseCases;
 use ReservaBot\Domain\Configuracion\HorarioDomain;
 use PDO;
 

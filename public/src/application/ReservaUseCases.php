@@ -1,7 +1,7 @@
 <?php
 // public/src/application/RreservaUseCases.php
 
-namespace ReservaBot\Application\Reserva;
+namespace ReservaBot\Application;
 
 use ReservaBot\Domain\Reserva\ReservaDomain;
 use ReservaBot\Domain\Reserva\Reserva;
