@@ -27,7 +27,7 @@ echo "<div class='mb-6 p-4 bg-blue-50 rounded'>";
 echo "<h2 class='text-xl font-bold mb-3'>1. Bootstrap</h2>";
 
 try {
-    require_once $baseDir . '/includes/bootstrap.php';
+    require_once $baseDir . '/config/bootstrap.php';
     echo "<p class='text-green-600'>✅ Bootstrap cargado</p>";
 } catch (Exception $e) {
     echo "<p class='text-red-600'>❌ Error: " . $e->getMessage() . "</p>";

@@ -7,7 +7,7 @@
  * - Si el usuario está logueado: redirige a reservas
  */
 
-require_once dirname(__DIR__) . '/includes/bootstrap.php';
+require_once dirname(__DIR__) . '/config/bootstrap.php';
 
 // Verificar autenticación
 if (isAuthenticated() && !isSessionExpired()) {
