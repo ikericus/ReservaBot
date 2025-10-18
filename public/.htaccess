@@ -25,16 +25,16 @@ RewriteRule ^robots\.txt$ - [L]
 RewriteRule ^sitemap\.xml$ - [L]
 RewriteRule ^favicon\.ico$ - [L]
 
-# Proteger archivos PHP directos (excepto router.php)
+# Proteger archivos PHP directos (excepto index.php)
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteCond %{REQUEST_URI} \.php$
-RewriteCond %{REQUEST_URI} !^/router\.php$
-RewriteRule . /router.php [L]
+RewriteCond %{REQUEST_URI} !^/index\.php$
+RewriteRule . /index.php [L]
 
-# Redirigir todo el tráfico al router
+# Redirigir todo el tráfico a index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ router.php [QSA,L]
+RewriteRule ^(.*)$ index.php [QSA,L]
 
 # Proteger archivos sensibles
 <Files "*.log">
