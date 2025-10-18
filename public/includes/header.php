@@ -159,6 +159,22 @@
         .brand-glow {
             filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.3));
         }
+        
+        /* Animación de entrada para flash messages */
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .flash-message {
+            animation: slideInDown 0.5s ease-out;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
@@ -182,12 +198,6 @@
                         <a href="/reserva-form" class="relative p-2 text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
                             <i class="ri-add-line text-lg"></i>
                         </a>
-                                                
-                        <!-- Notificaciones móvil -->
-                        <!-- <a href="/notificaciones" class="relative p-2 text-gray-600 hover:text-purple-600 transition-colors">
-                            <i class="ri-notification-line text-xl"></i>
-                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
-                        </a> -->
                         
                         <!-- Botón de menú móvil -->
                         <button id="menuButton" class="p-2 text-gray-600 hover:text-purple-600 transition-colors focus:outline-none">
@@ -197,7 +207,7 @@
                 </div>
             </div>
 
-            <!-- Menú móvil mejorado -->
+            <!-- Menú móvil -->
             <div id="mobileMenu" class="md:hidden fixed inset-0 z-50 hidden">
                 <div class="mobile-menu-bg absolute inset-0" onclick="closeMobileMenu()"></div>
                 <div class="mobile-menu-content absolute right-0 top-0 h-full w-80 max-w-full shadow-2xl">
@@ -208,6 +218,7 @@
                                     <i class="ri-calendar-line text-white text-lg"></i>
                                 </div>
                                 <div>
+                                    <?php $user = getAuthenticatedUser(); ?>
                                     <div class="font-bold gradient-text"><?php echo htmlspecialchars($user['negocio'] ?? 'Mi Negocio'); ?></div>
                                     <div class="text-xs text-gray-500"><?php echo htmlspecialchars($user['nombre'] ?? 'Usuario'); ?></div>
                                 </div>
@@ -232,23 +243,14 @@
                                 <i class="ri-user-line mr-3 text-lg nav-icon"></i>
                                 Clientes
                             </a>
-                            
                             <a href="/formularios" class="mobile-nav-item <?php echo $currentPage === 'formularios' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
                                 <i class="ri-survey-fill mr-3 text-lg nav-icon"></i>
                                 Formularios
                             </a>
-                            
                             <a href="/whatsapp" class="mobile-nav-item <?php echo $currentPage === 'whatsapp' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
                                 <i class="ri-whatsapp-line mr-3 text-lg nav-icon text-green-500"></i>
                                 WhatsApp
-                                <div class="ml-auto">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1"></span>
-                                        Offline
-                                    </span>
-                                </div>
                             </a>
-                            
                             <a href="/configuracion" class="mobile-nav-item <?php echo $currentPage === 'configuracion' ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-500' : 'text-gray-700'; ?> flex items-center px-3 py-3 rounded-lg font-medium">
                                 <i class="ri-settings-line mr-3 text-lg nav-icon"></i>
                                 Configuración
@@ -259,43 +261,25 @@
                         <div class="mt-8 px-4 pt-4 border-t border-gray-100">
                             <div class="flex items-center p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
                                 <div class="user-avatar h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold mr-3">
-                                    <?php 
-                                    $user = getAuthenticatedUser();
-                                    echo strtoupper(substr($user['nombre'] ?? 'U', 0, 1));
-                                    ?>
+                                    <?php echo strtoupper(substr($user['nombre'] ?? 'U', 0, 1)); ?>
                                 </div>
                                 <div class="flex-1">
                                     <p class="text-sm font-semibold text-gray-900"><?php echo htmlspecialchars($user['negocio'] ?? 'Mi Negocio'); ?></p>
                                     <p class="text-xs text-gray-500"><?php echo htmlspecialchars($user['nombre'] ?? 'Usuario'); ?></p>
                                 </div>
-                                <div class="relative">
-                                    <button id="mobileUserMenuBtn" class="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors">
-                                        <i class="ri-more-2-line text-lg"></i>
-                                    </button>
-                                    
-                                    <!-- Menú desplegable del usuario móvil -->
-                                    <div id="mobileUserDropdown" class="hidden absolute right-0 bottom-full mb-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                                        <a href="/perfil" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors" onclick="closeMobileMenu()">
-                                            <i class="ri-user-line mr-3 text-gray-400"></i>
-                                            Mi Perfil
-                                        </a>
-                                        
-                                        <a href="/configuracion" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors" onclick="closeMobileMenu()">
-                                            <i class="ri-settings-line mr-3 text-gray-400"></i>
-                                            Configuración
-                                        </a>
-                                        
-                                        <div class="border-t border-gray-100 my-1"></div>
-                                        
-                                        <a href="/logout" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors" onclick="closeMobileMenu()">
-                                            <i class="ri-logout-box-line mr-3 text-red-500"></i>
-                                            Cerrar Sesión
-                                        </a>
-                                    </div>
-                                </div>
                             </div>
                             
-                            <!-- Información del plan -->
+                            <div class="mt-3 space-y-2">
+                                <a href="/perfil" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                                    <i class="ri-user-line mr-3 text-gray-400"></i>
+                                    Mi Perfil
+                                </a>
+                                <a href="/logout" class="flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    <i class="ri-logout-box-line mr-3 text-red-500"></i>
+                                    Cerrar Sesión
+                                </a>
+                            </div>
+                            
                             <div class="mt-3 text-center">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800">
                                     <i class="ri-vip-crown-line mr-1"></i>
@@ -307,12 +291,11 @@
                 </div>
             </div>
 
-            <!-- Barra de navegación superior para desktop (opcional) -->
+            <!-- Barra de navegación superior para desktop -->
             <div class="hidden md:block bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
                 <div class="px-6 py-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-4">
-                            <!-- Breadcrumb mejorado -->
                             <nav class="flex items-center space-x-2 text-sm">
                                 <a href="/" class="text-gray-500 hover:text-purple-600 transition-colors">
                                     <i class="ri-home-line"></i>
@@ -326,7 +309,7 @@
                                         'clientes' => 'Clientes',
                                         'whatsapp' => 'WhatsApp',
                                         'formularios' => 'Formularios',
-                                        'configuracion' => 'Configuración',                                        
+                                        'configuracion' => 'Configuración',
                                         'conversaciones' => 'Conversaciones'
                                     ];
                                     echo $pageNames[$currentPage] ?? 'Reservas';
@@ -336,52 +319,36 @@
                         </div>
                         
                         <div class="flex items-center space-x-4">
-                            <!-- Búsqueda rápida -->
-                            <!-- <div class="relative hidden lg:block">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="ri-search-line text-gray-400"></i>
-                                </div>
-                                <input
-                                    type="text"
-                                    placeholder="Buscar reservas, clientes..."
-                                    class="block w-64 pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 text-sm transition-all"
-                                >
-                            </div> -->
-                            
-                            <!-- Botón Nueva Reserva -->
                             <a href="/reserva-form" class="btn-nueva-reserva inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
                                 <i class="ri-add-line mr-2 text-lg"></i>
                                 Nueva Reserva
                             </a>
-
-                            <!-- Notificaciones -->
-                            <!-- <a href="/notificaciones" class="relative p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all">
-                                <i class="ri-notification-line text-xl"></i>
-                                <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
-                            </a> -->
-                            
-                            <!-- Estado de WhatsApp -->
-                            <!-- <div class="flex items-center space-x-2 px-3 py-1 bg-green-50 rounded-lg">
-                                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                                <span class="text-sm font-medium text-green-800">WhatsApp Online</span>
-                            </div> -->
-                            
-                            <!-- Usuario -->
-                            <!-- <div class="user-avatar h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                                <?php 
-                                $user = getAuthenticatedUser();
-                                echo strtoupper(substr($user['nombre'] ?? 'U', 0, 1));
-                                ?>
-                            </div>
-                            <div class="hidden xl:block">
-                                <p class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($user['negocio'] ?? 'Mi Negocio'); ?></p>
-                                <p class="text-xs text-gray-500"><?php echo htmlspecialchars($user['nombre'] ?? 'Usuario'); ?></p>
-                            </div> -->
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Contenido principal con padding mejorado -->
+            <!-- Contenido principal -->
             <main class="flex-1 overflow-auto">
                 <div class="p-4 md:p-6 lg:p-8">
+                    
+                    <?php
+                    // Sistema de Flash Messages
+                    $flashMessages = getFlashMessages();
+                    foreach ($flashMessages as $type => $message):
+                        $colors = [
+                            'error' => ['bg' => 'bg-red-50', 'border' => 'border-red-200', 'text' => 'text-red-800', 'icon' => 'ri-error-warning-line', 'iconColor' => 'text-red-400'],
+                            'success' => ['bg' => 'bg-green-50', 'border' => 'border-green-200', 'text' => 'text-green-800', 'icon' => 'ri-check-line', 'iconColor' => 'text-green-400'],
+                            'info' => ['bg' => 'bg-blue-50', 'border' => 'border-blue-200', 'text' => 'text-blue-800', 'icon' => 'ri-information-line', 'iconColor' => 'text-blue-400']
+                        ];
+                        $style = $colors[$type];
+                    ?>
+                    <div class="flash-message mb-6 <?php echo $style['bg']; ?> border <?php echo $style['border']; ?> rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="<?php echo $style['icon']; ?> <?php echo $style['iconColor']; ?> mr-3 text-xl"></i>
+                            <p class="<?php echo $style['text']; ?>"><?php echo htmlspecialchars($message); ?></p>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                    
+                    <!-- Aquí va el contenido de cada página -->

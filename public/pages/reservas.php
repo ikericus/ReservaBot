@@ -1,14 +1,14 @@
 <?php
 // public/pages/reservas.php
 
-// Obtener usuario
-$currentUser = getAuthenticatedUser();
 
 // Configurar la página actual
 $currentPage = 'reservas';
 $pageTitle = 'ReservaBot - Reservas';
 $pageScript = 'reservas';
 
+// Obtener usuario
+$currentUser = getAuthenticatedUser();
 // Obtener las reservas del usuario autenticado
 $userId =  $currentUser['id'];
 
@@ -22,13 +22,14 @@ try {
     $reservasPendientes = $reservaDomain->obtenerReservasPendientes($userId);
     $reservasConfirmadas = $reservaDomain->obtenerReservasConfirmadas($userId);
     
+    // Convertir objetos Reserva a arrays para la vista
+    $reservasPendientes = array_map(fn($r) => $r->toArray(), $reservasPendientes);
+    $reservasConfirmadas = array_map(fn($r) => $r->toArray(), $reservasConfirmadas);
 } catch (Exception $e) {
-    error_log('Error obteniendo reservas: ' . $e->getMessage());
+    setFlashError('Error obteniendo reservas: ' . $e->getMessage());
+    $reservasPendientes = [];
+    $reservasConfirmadas = [];
 }
-
-// Convertir objetos Reserva a arrays para la vista
-$reservasPendientes = array_map(fn($r) => $r->toArray(), $reservasPendientes);
-$reservasConfirmadas = array_map(fn($r) => $r->toArray(), $reservasConfirmadas);
 
 // Mostrar mensaje de bienvenida si es un nuevo usuario
 $welcomeMessage = $_SESSION['welcome_message'] ?? '';

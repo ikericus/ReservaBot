@@ -1,46 +1,33 @@
 <?php
 
-//require_once 'db-config.php';
+/**
+ * Sistema de mensajes flash
+ */
 
-// function generateJWT($userId, $secret) {
-//     $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
-//     $payload = json_encode([
-//         'userId' => (int)$userId,
-//         'iat' => time(),
-//         'exp' => time() + 3600
-//     ]);
-    
-//     $base64Header = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
-//     $base64Payload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
-    
-//     $signature = hash_hmac('sha256', $base64Header . "." . $base64Payload, $secret, true);
-//     $base64Signature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
-    
-//     return $base64Header . "." . $base64Payload . "." . $base64Signature;
-// }
+function setFlashError(string $mensaje): void {
+    $_SESSION['flash_error'] = $mensaje;
+}
 
-// function makeRequest($url, $method = 'GET', $data = null, $headers = []) {
-//     $context = [
-//         'http' => [
-//             'method' => $method,
-//             'header' => implode("\r\n", $headers) . "\r\n",
-//             'timeout' => 15
-//         ]
-//     ];
+function setFlashSuccess(string $mensaje): void {
+    $_SESSION['flash_success'] = $mensaje;
+}
+
+function setFlashInfo(string $mensaje): void {
+    $_SESSION['flash_info'] = $mensaje;
+}
+
+function getFlashMessages(): array {
+    $messages = [
+        'error' => $_SESSION['flash_error'] ?? null,
+        'success' => $_SESSION['flash_success'] ?? null,
+        'info' => $_SESSION['flash_info'] ?? null,
+    ];
     
-//     if ($data && in_array($method, ['POST', 'PUT'])) {
-//         $context['http']['content'] = json_encode($data);
-//         $context['http']['header'] .= "Content-Type: application/json\r\n";
-//     }
+    // Limpiar después de leer
+    unset($_SESSION['flash_error'], $_SESSION['flash_success'], $_SESSION['flash_info']);
     
-//     $response = @file_get_contents($url, false, stream_context_create($context));
-    
-//     if ($response === false) {
-//         return ['success' => false, 'error' => 'Error de conexión con servidor WhatsApp'];
-//     }
-    
-//     return json_decode($response, true);
-// }
+    return array_filter($messages);
+}
 
 
 // Función para generar JWT (si no existe)
