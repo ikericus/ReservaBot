@@ -19,6 +19,20 @@ class ReservaDomain {
     }
     
     /**
+     * Obtiene reservas pendientes
+     */
+    public function obtenerReservasPendientes(int $usuarioId): array {
+        return $this->reservaRepository->findByUsuarioAndEstado($usuarioId, 'pendiente');
+    }
+    
+    /**
+     * Obtiene reservas confirmadas
+     */
+    public function obtenerReservasConfirmadas(int $usuarioId): array {
+        return $this->reservaRepository->findByUsuarioAndEstado($usuarioId, 'confirmada');
+    }
+    
+    /**
      * Verifica si una fecha y hora están disponibles
      */
     public function verificarDisponibilidad(

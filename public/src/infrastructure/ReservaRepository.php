@@ -99,6 +99,22 @@ class ReservaRepository implements IReservaRepository {
         return $reservas;
     }
     
+    public function obtenerPorUsuarioYEstado(int $usuarioId, string $estado): array {
+        $sql = "SELECT * FROM reservas 
+                WHERE usuario_id = ? AND estado = ? 
+                ORDER BY fecha, hora";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$usuarioId, $estado]);
+        
+        $reservas = [];
+        while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $reservas[] = Reserva::fromDatabase($data);
+        }
+        
+        return $reservas;
+    }
+
     public function obtenerPorFecha(DateTime $fecha, int $usuarioId): array {
         $sql = "SELECT * FROM reservas 
                 WHERE fecha = ? AND usuario_id = ? 

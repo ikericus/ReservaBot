@@ -4,8 +4,6 @@
 namespace ReservaBot\Infrastructure;
 
 use ReservaBot\Domain\Reserva\ReservaDomain;
-use ReservaBot\Application\ReservaUseCases;
-use ReservaBot\Domain\Configuracion\HorarioDomain;
 use PDO;
 
 class Container {
@@ -24,16 +22,8 @@ class Container {
         return self::$instance;
     }
     
-    public function getReservaUseCases(): ReservaUseCases {
-        if (!isset($this->services['reservaUseCases'])) {
-            $this->services['reservaUseCases'] = new ReservaUseCases(
-                $this->getReservaDomain()
-            );
-        }
-        return $this->services['reservaUseCases'];
-    }
-    
-    private function getReservaDomain(): ReservaDomain {
+    // Exponer Domain directamente
+    public function getReservaDomain(): ReservaDomain {
         if (!isset($this->services['reservaDomain'])) {
             $this->services['reservaDomain'] = new ReservaDomain(
                 $this->getReservaRepository(),

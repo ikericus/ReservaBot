@@ -17,18 +17,18 @@ $reservasPendientes = [];
 $reservasConfirmadas = [];
 
 try {
-    $stmt = getPDO()->prepare("SELECT * FROM reservas WHERE usuario_id = ? AND estado = 'pendiente' ORDER BY fecha, hora");
-    $stmt->execute([$userId]);
-    $reservasPendientes = $stmt->fetchAll();
+    $reservaDomain = getContainer()->getReservaDomain();
     
-    $stmt = getPDO()->prepare("SELECT * FROM reservas WHERE usuario_id = ? AND estado = 'confirmada' ORDER BY fecha, hora");
-    $stmt->execute([$userId]);
-    $reservasConfirmadas = $stmt->fetchAll();
-} catch (\PDOException $e) {
+    $reservasPendientes = $reservaDomain->obtenerReservasPendientes($userId);
+    $reservasConfirmadas = $reservaDomain->obtenerReservasConfirmadas($userId);
+    
+} catch (Exception $e) {
     error_log('Error obteniendo reservas: ' . $e->getMessage());
-    $reservasPendientes = [];
-    $reservasConfirmadas = [];
 }
+
+// Convertir objetos Reserva a arrays para la vista
+$reservasPendientes = array_map(fn($r) => $r->toArray(), $reservasPendientes);
+$reservasConfirmadas = array_map(fn($r) => $r->toArray(), $reservasConfirmadas);
 
 // Mostrar mensaje de bienvenida si es un nuevo usuario
 $welcomeMessage = $_SESSION['welcome_message'] ?? '';
