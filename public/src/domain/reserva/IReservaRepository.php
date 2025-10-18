@@ -24,7 +24,8 @@ interface IReservaRepository {
     /**
      * Obtiene todas las reservas de un usuario y estado
      */
-    public function obtenerPorUsuarioYEstado(int $usuarioId, string $estado): array
+    public function obtenerPorUsuarioYEstado(int $usuarioId, string $estado): array;
+    
     /**
      * Obtiene reservas por fecha
      */
