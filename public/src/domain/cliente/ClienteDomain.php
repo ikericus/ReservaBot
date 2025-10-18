@@ -1,3 +1,4 @@
+<?php
 // src/domain/cliente/ClienteDomain.php
 
 namespace ReservaBot\Domain\Cliente;

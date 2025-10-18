@@ -1,3 +1,4 @@
+<?php
 // src/domain/configuracion/IConfiguracionNegocioRepository.php
 
 namespace ReservaBot\Domain\Configuracion;

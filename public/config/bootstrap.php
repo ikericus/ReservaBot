@@ -46,6 +46,8 @@ spl_autoload_register(function ($class) {
 });
 
 // ========== 5. CONTENEDOR ==========
+require_once PROJECT_ROOT . '/config/container.php';
+
 use ReservaBot\Config\Container;
 
 if (!isset($GLOBALS['container'])) {

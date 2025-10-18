@@ -1,3 +1,4 @@
+<?php
 // src/infrastructure/ClienteRepository.php
 
 namespace ReservaBot\Infrastructure;
