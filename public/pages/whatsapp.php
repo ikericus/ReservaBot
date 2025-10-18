@@ -1,9 +1,6 @@
 <?php
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
+// pages/whatsapp.php
 
-// Configurar la página actual
 $currentPage = 'whatsapp';
 $pageTitle = 'ReservaBot - WhatsApp';
 $pageScript = 'whatsapp';
@@ -19,7 +16,7 @@ try {
     $stmt->execute([$userId]);
     $whatsappConfig = $stmt->fetch();
 } catch (PDOException $e) {
-    error_log('Error obteniendo configuración WhatsApp: ' . $e->getMessage());
+    setFlashError('Error al cargar configuración de WhatsApp: ' . $e->getMessage());
 }
 
 // Inicializar variables
@@ -27,7 +24,6 @@ $connectionStatus = $whatsappConfig['status'] ?? 'disconnected';
 $phoneNumber = $whatsappConfig['phone_number'] ?? null;
 $lastActivity = $whatsappConfig['last_activity'] ?? null;
 
-// Incluir la cabecera
 include 'includes/header.php';
 ?>
 
@@ -1005,7 +1001,4 @@ include 'includes/header.php';
     window.saveAutoMessageConfig = saveAutoMessageConfig;
 </script>
 
-<?php 
-// Incluir el pie de página
-include 'includes/footer.php'; 
-?>
+<?php include 'includes/footer.php'; ?>
