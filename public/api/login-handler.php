@@ -1,11 +1,6 @@
+// public/api/login-handler.php
 <?php
-
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
-
-/**
- * Procesamiento del formulario de login
- */
+// Bootstrap ya cargado por el router
 
 // Solo procesar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -35,7 +30,6 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 // Si hay errores, redirigir con errores
 if (!empty($errors)) {
-    session_start();
     $_SESSION['login_errors'] = $errors;
     $_SESSION['login_email'] = $email;
     header('Location: /login');
@@ -59,7 +53,6 @@ if ($authResult['success']) {
     }
     
     // Limpiar errores previos
-    session_start();
     unset($_SESSION['login_errors'], $_SESSION['login_email'], $_SESSION['login_message']);
     
     // Generar datos de demo si es necesario
@@ -74,11 +67,9 @@ if ($authResult['success']) {
     
 } else {
     // Login fallido
-    session_start();
     $_SESSION['login_errors'] = [$authResult['message']];
     $_SESSION['login_email'] = $email;
     
     header('Location: /login');
     exit;
 }
-?>
