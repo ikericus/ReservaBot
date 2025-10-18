@@ -1,9 +1,6 @@
 <?php
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
+// pages/clientes.php
 
-// Configurar la página actual
 $currentPage = 'clientes';
 $pageTitle = 'ReservaBot - Clientes';
 $pageScript = 'clientes';
@@ -12,63 +9,30 @@ $pageScript = 'clientes';
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $perPage = 20;
-$offset = ($page - 1) * $perPage;
 
 // Obtener usuario
 $currentUser = getAuthenticatedUser();
-$userId =  $currentUser['id'];
+$userId = $currentUser['id'];
 
-// Consulta para obtener clientes del negocio
-$whereClause = 'WHERE usuario_id = ?';
-$params = [$userId];
-
-if (!empty($search)) {
-    $whereClause = 'AND (r.nombre LIKE ? OR r.telefono LIKE ?)';
-    array_push($params, "%$search%", "%$search%");
-}
-
-// Obtener clientes con estadísticas
 try {
-    // Contar total de clientes únicos
-    $countQuery = "SELECT COUNT(DISTINCT r.telefono) as total 
-                   FROM reservas r 
-                   $whereClause";
+    $clienteDomain = getContainer()->getClienteDomain();
     
-    $stmt = getPDO()->prepare($countQuery);
-    $stmt->execute($params);
-    $totalClientes = $stmt->fetchColumn();
+    // Obtener clientes con paginación y búsqueda
+    $resultado = $clienteDomain->listarClientes($userId, $search, $page, $perPage);
     
-    // Obtener clientes paginados
-    $query = "SELECT 
-                r.telefono,
-                r.nombre as ultimo_nombre,
-                COUNT(r.id) as total_reservas,
-                SUM(CASE WHEN r.estado = 'confirmada' THEN 1 ELSE 0 END) as reservas_confirmadas,
-                SUM(CASE WHEN r.estado = 'pendiente' THEN 1 ELSE 0 END) as reservas_pendientes,
-                MAX(r.fecha) as ultima_reserva,
-                MIN(r.created_at) as primer_contacto,
-                MAX(r.created_at) as ultimo_contacto
-              FROM reservas r 
-              $whereClause
-              GROUP BY r.telefono 
-              ORDER BY ultimo_contacto DESC 
-              LIMIT ?, ?";
+    $clientes = $resultado['clientes'];
+    $totalClientes = $resultado['total'];
+    $totalPages = $resultado['total_paginas'];
+    $offset = ($page - 1) * $perPage;
     
-    $fullParams = array_merge($params, [$offset, $perPage]);
-    $stmt = getPDO()->prepare($query);
-    $stmt->execute($fullParams);
-    $clientes = $stmt->fetchAll();
-    
-    $totalPages = ceil($totalClientes / $perPage);
-    
-} catch (\PDOException $e) {
+} catch (Exception $e) {
+    setFlashError('Error al cargar clientes: ' . $e->getMessage());
     $clientes = [];
     $totalClientes = 0;
     $totalPages = 1;
-    error_log('Error al obtener clientes: ' . $e->getMessage());
+    $offset = 0;
 }
 
-// Incluir la cabecera
 include 'includes/header.php';
 ?>
 
@@ -225,7 +189,6 @@ include 'includes/header.php';
         text-decoration: none;
     }
     
-    /* Búsqueda móvil optimizada */
     .mobile-search {
         margin-bottom: 1.5rem;
     }
@@ -268,7 +231,6 @@ include 'includes/header.php';
         font-size: 0.875rem;
     }
     
-    /* Paginación móvil */
     .mobile-pagination {
         display: flex;
         justify-content: center;
@@ -313,7 +275,6 @@ include 'includes/header.php';
         margin: 1rem 0;
     }
     
-    /* Animaciones */
     .fade-in-mobile {
         animation: fadeInMobile 0.4s ease-out;
     }
@@ -330,7 +291,6 @@ include 'includes/header.php';
     }
 }
 
-/* Estilos para desktop - mantener diseño original */
 @media (min-width: 769px) {
     .desktop-view {
         display: block;
@@ -341,7 +301,6 @@ include 'includes/header.php';
     }
 }
 
-/* Estilos para móvil - usar diseño de tarjetas */
 @media (max-width: 768px) {
     .desktop-view {
         display: none;
@@ -385,7 +344,7 @@ include 'includes/header.php';
             </button>
             
             <?php if (!empty($search)): ?>
-                <a
+                
                     href="/clientes"
                     class="ml-2 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
@@ -484,7 +443,7 @@ include 'includes/header.php';
                                 <div class="text-sm text-gray-500">
                                     <span class="text-green-600"><?php echo $cliente['reservas_confirmadas']; ?> confirmadas</span>
                                     <?php if ($cliente['reservas_pendientes'] > 0): ?>
-                                        <span class="text-amber-600"><?php echo $cliente['reservas_pendientes']; ?> pendientes</span>
+                                        · <span class="text-amber-600"><?php echo $cliente['reservas_pendientes']; ?> pendientes</span>
                                     <?php endif; ?>
                                 </div>
                             </td>
@@ -628,7 +587,6 @@ include 'includes/header.php';
                     <?php endif; ?>
                     
                     <?php
-                    // Mostrar páginas simplificado para móvil
                     $startPage = max(1, $page - 1);
                     $endPage = min($totalPages, $page + 1);
                     
@@ -667,7 +625,4 @@ include 'includes/header.php';
     <?php endif; ?>
 </div>
 
-<?php 
-// Incluir el pie de página
-include 'includes/footer.php'; 
-?>
+<?php include 'includes/footer.php'; ?>
