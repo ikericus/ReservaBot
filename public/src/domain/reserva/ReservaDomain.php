@@ -22,14 +22,14 @@ class ReservaDomain {
      * Obtiene reservas pendientes
      */
     public function obtenerReservasPendientes(int $usuarioId): array {
-        return $this->reservaRepository->findByUsuarioAndEstado($usuarioId, 'pendiente');
+        return $this->reservaRepository->obtenerPorUsuarioYEstado($usuarioId, 'pendiente');
     }
     
     /**
      * Obtiene reservas confirmadas
      */
     public function obtenerReservasConfirmadas(int $usuarioId): array {
-        return $this->reservaRepository->findByUsuarioAndEstado($usuarioId, 'confirmada');
+        return $this->reservaRepository->obtenerPorUsuarioYEstado($usuarioId, 'confirmada');
     }
     
     /**
