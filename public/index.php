@@ -1,23 +1,23 @@
 <?php
+// public/index.php
+
 /**
  * Punto de entrada principal de ReservaBot
- * Todas las requests pasan por aquí y se enrutan al router
  */
 
-// Configuración básica
-error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
-ini_set('display_errors', 0);
+// ✅ MOSTRAR TODOS LOS ERRORES EN PANTALLA
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 
-// Iniciar sesión de forma temprana
+// Iniciar sesión temprana
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-// Incluir el router
-require_once dirname(__DIR__) . '/config/router.php';
+// Incluir router (está en config/)
+require_once __DIR__ . '/config/router.php';
 
-// Crear y ejecutar el router
+// Ejecutar
 $router = new Router();
 $router->resolve();
-?>

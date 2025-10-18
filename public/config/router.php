@@ -1,4 +1,7 @@
 <?php
+
+// public/config/router.php
+
 /**
  * Router centralizado para ReservaBot
  * Maneja todas las rutas de la aplicación
