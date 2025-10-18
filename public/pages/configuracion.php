@@ -1,19 +1,22 @@
 <?php
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
+// pages/configuracion.php
 
-// Configurar la página actual
 $pageTitle = 'ReservaBot - Configuración';
 $currentPage = 'configuracion';
 $pageScript = 'configuracion';
 
-// Obtener la configuración actual
+// Obtener usuario
+$currentUser = getAuthenticatedUser();
+$userId = $currentUser['id'];
+
 try {
-    $stmt = getPDO()->query('SELECT * FROM configuraciones');
-    $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-} catch (\PDOException $e) {
-    error_log('Error al obtener configuraciones: ' . $e->getMessage());
+    $configuracionDomain = getContainer()->getConfiguracionDomain();
+    
+    // Obtener todas las configuraciones
+    $configuraciones = $configuracionDomain->obtenerConfiguraciones($userId);
+    
+} catch (Exception $e) {
+    setFlashError('Error al cargar configuración: ' . $e->getMessage());
     $configuraciones = [];
 }
 
@@ -21,7 +24,7 @@ try {
 $intervaloReservas = $configuraciones['intervalo_reservas'] ?? '30';
 
 // Horarios con soporte para múltiples ventanas y capacidad
-$diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
+$diasSemana = ['lun', 'mar', 'mie', 'vie', 'sab', 'dom'];
 $horarios = [];
 
 foreach ($diasSemana as $dia) {
@@ -75,7 +78,6 @@ $nombresDias = [
     'dom' => 'Domingo'
 ];
 
-// Incluir la cabecera
 include 'includes/header.php';
 ?>
 
@@ -894,7 +896,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php 
-// Incluir el pie de página
-include 'includes/footer.php'; 
-?>
+<?php include 'includes/footer.php'; ?>
