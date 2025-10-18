@@ -88,15 +88,15 @@ spl_autoload_register(function ($class) {
     
     $relative_class = substr($class, $len);
     
-    // ✨ Convertir a minúsculas para que coincida con tu estructura
-    $relative_class = strtolower($relative_class);
+    // Convertir solo directorios a minúsculas, archivos mantienen mayúsculas
+    $parts = explode('\\', $relative_class);
+    $filename = array_pop($parts); // Último elemento (archivo)
+    $path = strtolower(implode('/', $parts)); // Solo directorios en minúsculas
     
-    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+    $file = $base_dir . ($path ? $path . '/' : '') . $filename . '.php';
     
     if (file_exists($file)) {
         require $file;
-    } else {
-        error_log("Autoload: Clase no encontrada - $file");
     }
 });
 
