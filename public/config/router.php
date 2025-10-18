@@ -18,8 +18,8 @@ class Router {
      */
     private function defineRoutes() {
                 
-        // Rutas públicas// En router.php, añade:
-        $this->addRoute('GET', '/test', 'pages/test.php');
+        // Rutas públicas
+        $this->addRoute('GET',      '/test',                    'pages/test.php');
         $this->addRoute('GET',      '/',                        'pages/home.php');
         $this->addRoute('GET',      '/landing',                 'pages/landing.php');
         $this->addRoute('GET',      '/login',                   'pages/login.php');
@@ -38,50 +38,42 @@ class Router {
         $this->addRoute('POST',     '/api/logout',              'api/logout.php');
 
         // Rutas protegidas            
-        $this->addRoute('GET',      '/dia',              'pages/dia.php',              ['auth']);        
-        $this->addRoute('GET',      '/semana',           'pages/semana.php',           ['auth']);        
-        $this->addRoute('GET',      '/mes',              'pages/mes.php',              ['auth']);
-
-        //$this->addRoute('GET',      '/calendario',       'pages/calendario.php',       ['auth']);
-        $this->addRoute('GET',      '/reservas',         'pages/reservas.php',         ['auth']);
-        $this->addRoute('GET',      '/clientes',         'pages/clientes.php',         ['auth']);
-        $this->addRoute('GET',      '/formularios',      'pages/formularios.php',      ['auth']);
-        $this->addRoute('POST',     '/formularios',      'pages/formularios.php',      ['auth']);
-        $this->addRoute('GET',      '/notificaciones',   'pages/notificaciones.php',   ['auth']);        
-        $this->addRoute('GET',      '/configuracion',    'pages/configuracion.php',    ['auth']);
-        $this->addRoute('GET',      '/perfil',           'pages/perfil.php',           ['auth']);
-        $this->addRoute('GET',      '/estadisticas',     'pages/estadisticas.php',     ['auth']);
-        $this->addRoute('GET',      '/perfil',           'pages/perfil.php',           ['auth']);  
-        $this->addRoute('GET',      '/day',              'pages/day.php',              ['auth']);
-        $this->addRoute('GET',      '/cliente-detail',   'pages/cliente-detail.php',   ['auth']);        
-        $this->addRoute('GET',      '/reserva',          'pages/reserva.php',          ['auth']);        
-        $this->addRoute('GET',      '/reserva-form',     'pages/reserva-form.php',     ['auth']);    
-        //$this->addRoute('GET',      '/reserva-detail',   'pages/reserva-detail.php',   ['auth']);  
-        $this->addRoute('GET',      '/whatsapp',         'pages/whatsapp.php',         ['auth']);          
-        $this->addRoute('GET',      '/conversaciones',   'pages/conversaciones.php',   ['auth']);  
-        
-        $this->addRoute('POST',     '/api/crear-reserva',               'api/crear-reserva.php',            ['auth']);
-        $this->addRoute('POST',     '/api/actualizar-reserva',          'api/actualizar-reserva.php',       ['auth']);        
-        $this->addRoute('POST',     '/api/crear-reserva-publica',       'api/crear-reserva-publica.php',    ['auth']);
-        $this->addRoute('POST',     '/api/eliminar-reserva',            'api/eliminar-reserva.php',         ['auth']);
-        $this->addRoute('POST',     '/api/horas-disponibles',           'api/horas-disponibles.php',        ['auth']);
-        $this->addRoute('POST',     '/api/actualizar-configuracion',    'api/actualizar-configuracion.php', ['auth']);
-        $this->addRoute('POST',     '/api/whatsapp-connect',            'api/whatsapp-connect.php',         ['auth']);
-        $this->addRoute('GET',      '/api/whatsapp-status',             'api/whatsapp-status.php',          ['auth']);
-        $this->addRoute('POST',     '/api/whatsapp-disconnect',         'api/whatsapp-disconnect.php',      ['auth']);
-        $this->addRoute('POST',     '/api/whatsapp-stats',              'api/whatsapp-stats.php',           ['auth']);
-        $this->addRoute('POST',     '/api/send-whatsapp',               'api/whatsapp-send.php',            ['auth']);
-        $this->addRoute('GET',      '/api/whatsapp-conversations',      'api/whatsapp-conversations.php',   ['auth']);
-        $this->addRoute('POST',     '/api/buscar-clientes',             'api/buscar-clientes.php',          ['auth']);
+        $this->addRoute('GET',      '/dia',                             'pages/dia.php',                        ['auth']);        
+        $this->addRoute('GET',      '/semana',                          'pages/semana.php',                     ['auth']);        
+        $this->addRoute('GET',      '/mes',                             'pages/mes.php',                        ['auth']);
+        $this->addRoute('GET',      '/reservas',                        'pages/reservas.php',                   ['auth']);
+        $this->addRoute('GET',      '/clientes',                        'pages/clientes.php',                   ['auth']);
+        $this->addRoute('GET',      '/formularios',                     'pages/formularios.php',                ['auth']);
+        $this->addRoute('POST',     '/formularios',                     'pages/formularios.php',                ['auth']);
+        $this->addRoute('GET',      '/notificaciones',                  'pages/notificaciones.php',             ['auth']);        
+        $this->addRoute('GET',      '/configuracion',                   'pages/configuracion.php',              ['auth']);
+        $this->addRoute('GET',      '/perfil',                          'pages/perfil.php',                     ['auth']);
+        $this->addRoute('GET',      '/estadisticas',                    'pages/estadisticas.php',               ['auth']);
+        $this->addRoute('GET',      '/day',                             'pages/day.php',                        ['auth']);
+        $this->addRoute('GET',      '/cliente-detail',                  'pages/cliente-detail.php',             ['auth']);        
+        $this->addRoute('GET',      '/reserva',                         'pages/reserva.php',                    ['auth']);        
+        $this->addRoute('GET',      '/reserva-form',                    'pages/reserva-form.php',               ['auth']);    
+        $this->addRoute('GET',      '/whatsapp',                        'pages/whatsapp.php',                   ['auth']);          
+        $this->addRoute('GET',      '/conversaciones',                  'pages/conversaciones.php',             ['auth']);  
+        $this->addRoute('POST',     '/api/crear-reserva',               'api/crear-reserva.php',                ['auth']);
+        $this->addRoute('POST',     '/api/actualizar-reserva',          'api/actualizar-reserva.php',           ['auth']);        
+        $this->addRoute('POST',     '/api/crear-reserva-publica',       'api/crear-reserva-publica.php',        ['auth']);
+        $this->addRoute('POST',     '/api/eliminar-reserva',            'api/eliminar-reserva.php',             ['auth']);
+        $this->addRoute('POST',     '/api/horas-disponibles',           'api/horas-disponibles.php',            ['auth']);
+        $this->addRoute('POST',     '/api/actualizar-configuracion',    'api/actualizar-configuracion.php',     ['auth']);
+        $this->addRoute('POST',     '/api/whatsapp-connect',            'api/whatsapp-connect.php',             ['auth']);
+        $this->addRoute('GET',      '/api/whatsapp-status',             'api/whatsapp-status.php',              ['auth']);
+        $this->addRoute('POST',     '/api/whatsapp-disconnect',         'api/whatsapp-disconnect.php',          ['auth']);
+        $this->addRoute('POST',     '/api/whatsapp-stats',              'api/whatsapp-stats.php',               ['auth']);
+        $this->addRoute('POST',     '/api/send-whatsapp',               'api/whatsapp-send.php',                ['auth']);
+        $this->addRoute('GET',      '/api/whatsapp-conversations',      'api/whatsapp-conversations.php',       ['auth']);
+        $this->addRoute('POST',     '/api/buscar-clientes',             'api/buscar-clientes.php',              ['auth']);
         
         // Webhook para WhatsApp
-        $this->addRoute('POST',     '/api/whatsapp-webhook',    'api/whatsapp-webhook.php');
-        $this->addRoute('GET',      '/api/whatsapp-webhook',    'api/whatsapp-webhook.php');        
+        $this->addRoute('POST',     '/api/whatsapp-webhook',            'api/whatsapp-webhook.php');
+        $this->addRoute('GET',      '/api/whatsapp-webhook',            'api/whatsapp-webhook.php');        
     }
     
-    /**
-     * Agregar una ruta
-     */
     private function addRoute($method, $path, $file, $middlewares = []) {
         $this->routes[] = [
             'method' => strtoupper($method),
@@ -92,89 +84,60 @@ class Router {
         ];
     }
     
-    /**
-     * Convertir path con parámetros a patrón regex
-     */
     private function pathToPattern($path) {
         $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $path);
         return '#^' . $pattern . '$#';
     }
     
-    /**
-     * Resolver la ruta actual
-     */
     public function resolve() {
         $method = $_SERVER['REQUEST_METHOD'];
         $path = $this->getCurrentPath();
         
-        // Log de la request
-        //error_log("Router: Procesando {$method} {$path}");
-        
-        // Buscar ruta coincidente
         foreach ($this->routes as $route) {
             if ($route['method'] === $method && preg_match($route['pattern'], $path, $matches)) {
                 $this->currentRoute = $route;
-                
-                // Extraer parámetros de la URL
-                array_shift($matches); // Remover match completo
+                array_shift($matches);
                 $route['params'] = $matches;
                 
                 return $this->executeRoute($route);
             }
         }
         
-        // Ruta no encontrada
         return $this->handleNotFound();
     }
     
-    /**
-     * Obtener path actual limpio
-     */
     private function getCurrentPath() {
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         return rtrim($path, '/') ?: '/';
     }
     
-    /**
-     * Ejecutar la ruta encontrada
-     */
     private function executeRoute($route) {
         try {
-            // Aplicar middlewares
             foreach ($route['middlewares'] as $middleware) {
                 if (!$this->applyMiddleware($middleware)) {
-                    return false; // Middleware bloqueó la ejecución
+                    return false;
                 }
             }
             
-            // Establecer parámetros globales para el archivo
             if (!empty($route['params'])) {
                 $GLOBALS['route_params'] = $route['params'];
             }
             
-            // Verificar que el archivo existe
-            $filePath = __DIR__ . '/' . $route['file'];
+            $filePath = dirname(__DIR__) . '/' . $route['file'];
             if (!file_exists($filePath)) {
                 error_log("Router: Archivo no encontrado - " . $filePath);
                 return $this->handleNotFound();
             }
             
-            // Log de la ruta ejecutada
-            //error_log("Router: Ejecutando {$route['method']} {$route['path']} -> {$route['file']}");
-            
-            // Incluir el archivo
             require_once $filePath;
             return true;
             
         } catch (Exception $e) {
-            error_log("Router: Error ejecutando ruta - " . $e->getMessage());
+            error_log("Router: Error - " . $e->getMessage());
             return $this->handleError($e);
         }
     }
     
-    /**
-     * Aplicar middleware específico
-     */
     private function applyMiddleware($middleware) {
         switch ($middleware) {
             case 'auth':
@@ -188,48 +151,32 @@ class Router {
      * Middleware de autenticación
      */
     private function authMiddleware() {
-        require_once __DIR__ . '/includes/db-config.php';
-        require_once __DIR__ . '/includes/auth.php';
+        require_once __DIR__ . '/bootstrap.php';
         
-        //error_log("Router: Aplicando middleware de autenticación");
-        
-        // Actualizar última actividad
         updateLastActivity();
         
-        // Verificar autenticación
         if (!isAuthenticated()) {
-            error_log("Router: Usuario no autenticado, redirigiendo");
             $this->redirectToLogin();
             return false;
         }
         
-        // Verificar expiración
         if (isSessionExpired()) {
-            //error_log("Router: Sesión expirada, cerrando sesión");
             logout();
             $this->redirectToLogin('Tu sesión ha expirado.');
             return false;
         }
         
-        // Hacer disponible el usuario actual
         $GLOBALS['currentUser'] = getAuthenticatedUser();
         $GLOBALS['csrfToken'] = generateCSRFToken();
         
-        //error_log("Router: Middleware de autenticación exitoso para " . $GLOBALS['currentUser']['email']);
         return true;
     }
     
-    /**
-     * Redirigir al login
-     */
     private function redirectToLogin($message = null) {
         if ($message) {
             $_SESSION['login_message'] = $message;
         }
         
-        //error_log("Router: Redirigiendo al login" . ($message ? " - $message" : ""));
-        
-        // Si es petición AJAX o API, responder JSON
         if ($this->isAjaxRequest() || $this->isApiRequest()) {
             header('Content-Type: application/json');
             echo json_encode([
@@ -241,32 +188,21 @@ class Router {
             exit;
         }
         
-        // Redirección normal
         header('Location: /login');
         exit;
     }
     
-    /**
-     * Verificar si es petición AJAX
-     */
     private function isAjaxRequest() {
         return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     }
     
-    /**
-     * Verificar si es petición API
-     */
     private function isApiRequest() {
         return strpos($this->getCurrentPath(), '/api/') === 0;
     }
     
-    /**
-     * Manejar 404
-     */
     private function handleNotFound() {
         http_response_code(404);
-        error_log("Router: 404 - " . $this->getCurrentPath());
         
         if ($this->isApiRequest()) {
             header('Content-Type: application/json');
@@ -278,21 +214,18 @@ class Router {
             exit;
         }
         
-        // Página 404 personalizada
         echo "<!DOCTYPE html>
         <html lang='es'>
         <head>
             <meta charset='UTF-8'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-            <title>Página no encontrada - ReservaBot</title>
+            <title>404 - ReservaBot</title>
             <script src='https://cdn.tailwindcss.com'></script>
         </head>
         <body class='bg-gray-100 min-h-screen flex items-center justify-center'>
             <div class='text-center'>
                 <h1 class='text-6xl font-bold text-gray-800 mb-4'>404</h1>
                 <h2 class='text-2xl font-semibold text-gray-600 mb-4'>Página no encontrada</h2>
-                <p class='text-gray-500 mb-8'>La página que buscas no existe.</p>
-                <a href='/' class='bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors'>
+                <a href='/' class='bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700'>
                     Volver al inicio
                 </a>
             </div>
@@ -302,9 +235,6 @@ class Router {
         return false;
     }
     
-    /**
-     * Manejar errores
-     */
     private function handleError(Exception $e) {
         http_response_code(500);
         error_log("Router: Error 500 - " . $e->getMessage());
@@ -323,7 +253,6 @@ class Router {
         <html lang='es'>
         <head>
             <meta charset='UTF-8'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
             <title>Error - ReservaBot</title>
             <script src='https://cdn.tailwindcss.com'></script>
         </head>
@@ -331,8 +260,7 @@ class Router {
             <div class='text-center'>
                 <h1 class='text-6xl font-bold text-red-600 mb-4'>Error</h1>
                 <h2 class='text-2xl font-semibold text-gray-600 mb-4'>Algo salió mal</h2>
-                <p class='text-gray-500 mb-8'>Ha ocurrido un error interno. Por favor, intenta nuevamente.</p>
-                <a href='/' class='bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors'>
+                <a href='/' class='bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700'>
                     Volver al inicio
                 </a>
             </div>
@@ -342,29 +270,19 @@ class Router {
         return false;
     }
     
-    /**
-     * Obtener parámetro de ruta
-     */
     public static function getParam($index = 0) {
         return $GLOBALS['route_params'][$index] ?? null;
     }
     
-    /**
-     * Obtener todos los parámetros
-     */
     public static function getParams() {
         return $GLOBALS['route_params'] ?? [];
     }
     
-    /**
-     * Generar URL
-     */
     public static function url($path) {
         return rtrim($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'], '/') . $path;
     }
 }
 
-// Funciones helper globales
 function route_param($index = 0) {
     return Router::getParam($index);
 }
@@ -372,10 +290,3 @@ function route_param($index = 0) {
 function url($path) {
     return Router::url($path);
 }
-
-// Ejecutar el router si se incluye directamente
-if (basename($_SERVER['SCRIPT_NAME']) === 'router.php') {
-    $router = new Router();
-    $router->resolve();
-}
-?>
