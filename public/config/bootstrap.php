@@ -2,7 +2,7 @@
 // public/config/bootstrap.php
 
 // ========== 1. CARGAR CONFIGURACIÓN ==========
-$dbConfig = require __DIR__ . '/database.php';
+$dbConfig = require PROJECT_ROOT . '/config/database.php';
 
 // ========== 2. CREAR CONEXIÓN PDO ==========
 if (!isset($GLOBALS['pdo'])) {
@@ -20,13 +20,13 @@ function getPDO(): ?PDO {
 }
 
 // ========== 3. INCLUIR AUTH Y FUNCIONES ==========
-require_once __DIR__ . '/auth.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
+require_once PROJECT_ROOT . '/config/auth.php';
+require_once PROJECT_ROOT . '/includes/functions.php';
 
 // ========== 4. AUTOLOAD ==========
 spl_autoload_register(function ($class) {
     $prefix = 'ReservaBot\\';
-    $base_dir = dirname(__DIR__) . '/src/';
+    $base_dir = PROJECT_ROOT . '/src/';
     
     $len = strlen($prefix);
     if (strncmp($prefix, $class, $len) !== 0) {

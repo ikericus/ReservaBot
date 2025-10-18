@@ -126,7 +126,7 @@ class Router {
                 $GLOBALS['route_params'] = $route['params'];
             }
             
-            $filePath = dirname(__DIR__) . '/' . $route['file'];
+            $filePath = PROJECT_ROOT . '/' . $route['file'];
             if (!file_exists($filePath)) {
                 error_log("Router: Archivo no encontrado - " . $filePath);
                 return $this->handleNotFound();
@@ -154,7 +154,7 @@ class Router {
      * Middleware de autenticación
      */
     private function authMiddleware() {
-        require_once __DIR__ . '/bootstrap.php';
+        require_once PROJECT_ROOT . '/config/bootstrap.php';
         
         updateLastActivity();
         

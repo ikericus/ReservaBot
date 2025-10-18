@@ -15,11 +15,8 @@ echo "<!DOCTYPE html>
     <div class='max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6'>
         <h1 class='text-3xl font-bold mb-6'>🔍 Diagnóstico del Sistema</h1>";
 
-// Calcular ruta base correcta
-$baseDir = dirname(__DIR__); // /public_html
-
 echo "<div class='mb-4 p-3 bg-gray-50 rounded'>";
-echo "<p class='text-sm'><strong>Base Dir:</strong> $baseDir</p>";
+echo "<p class='text-sm'><strong>Base Dir:</strong> $PROJECT_ROOT </p>";
 echo "</div>";
 
 // ========== 1. TEST BOOTSTRAP ==========
@@ -27,7 +24,7 @@ echo "<div class='mb-6 p-4 bg-blue-50 rounded'>";
 echo "<h2 class='text-xl font-bold mb-3'>1. Bootstrap</h2>";
 
 try {
-    require_once $baseDir . '/config/bootstrap.php';
+    require_once $PROJECT_ROOT . '/config/bootstrap.php';
     echo "<p class='text-green-600'>✅ Bootstrap cargado</p>";
 } catch (Exception $e) {
     echo "<p class='text-red-600'>❌ Error: " . $e->getMessage() . "</p>";

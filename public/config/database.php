@@ -2,7 +2,7 @@
 // public/config/database.php
 
 // Cargar variables de entorno desde la raíz del servidor
-$envPath = dirname(__DIR__, 2) . '/.env';
+$envPath = dirname(PROJECT_ROOT) . '/.env';
 
 if (file_exists($envPath)) {
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
