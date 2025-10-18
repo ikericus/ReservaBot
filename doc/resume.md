@@ -8,6 +8,7 @@ DDD ligero y pragmático (Domain + Repository). Sin capa de UseCases para evitar
 public_html/ (PROJECT_ROOT)
 ├── config/
 │   ├── bootstrap.php      # Inicialización (PDO, auth, autoload, container)
+│   ├── container.php      # DI Container (Singleton)
 │   ├── database.php       # Config BD (lee .env)
 │   ├── auth.php          # Sistema de autenticación
 │   └── router.php        # Rutas y middleware
@@ -18,14 +19,23 @@ public_html/ (PROJECT_ROOT)
 │   │   │   ├── ReservaDomain.php        # Lógica negocio
 │   │   │   ├── IReservaRepository.php   # Interfaz
 │   │   │   └── EstadoReserva.php        # Enum
+│   │   ├── cliente/
+│   │   │   ├── Cliente.php              # Entidad (datos agregados)
+│   │   │   ├── ClienteDomain.php        # Lógica negocio
+│   │   │   └── IClienteRepository.php   # Interfaz
 │   │   ├── configuracion/
-│   │   │   └── IConfiguracionRepository.php
+│   │   │   ├── ConfiguracionNegocio.php        # Entidad
+│   │   │   ├── ConfiguracionDomain.php         # Lógica negocio
+│   │   │   └── IConfiguracionNegocioRepository.php  # Interfaz
+│   │   ├── disponibilidad/
+│   │   │   └── IDisponibilidadRepository.php   # Interfaz (horarios)
 │   │   └── shared/
 │   │       └── Telefono.php             # Value Object
 │   └── infrastructure/   # Implementaciones (minúsculas)
-│       ├── Container.php                # DI Container (Singleton)
 │       ├── ReservaRepository.php        # Implementación PDO
-│       └── ConfiguracionRepository.php
+│       ├── ClienteRepository.php        # Implementación PDO
+│       ├── ConfiguracionNegocioRepository.php  # Implementación PDO
+│       └── DisponibilidadRepository.php        # Implementación PDO
 ├── pages/               # Páginas web
 ├── api/                 # Endpoints API
 ├── includes/
@@ -62,9 +72,57 @@ ReservaBot\Domain\Reserva\Reserva
 ```
 Carpetas en minúsculas, archivos case-sensitive.
 
+## Dominios del Sistema
+
+### 1. ReservaDomain
+**Responsabilidad**: Gestión de reservas y disponibilidad de horarios.
+
+**Métodos principales**:
+- `obtenerTodasReservasUsuario()` - Todas las reservas
+- `obtenerReservasPendientes()` - Solo pendientes
+- `obtenerReservasConfirmadas()` - Solo confirmadas
+- `obtenerReservasPorFecha()` - Reservas de un día
+- `obtenerReservasPorRango()` - Reservas entre fechas
+- `crearReserva()` - Nueva reserva con validación
+- `confirmarReserva()` - Cambiar estado a confirmada
+- `cancelarReserva()` - Cambiar estado a cancelada
+- `modificarReserva()` - Editar fecha/hora
+- `eliminarReserva()` - Eliminar reserva
+- `verificarDisponibilidad()` - Valida horario + negocio
+- `obtenerHorasDisponibles()` - Horas libres del día
+
+### 2. ClienteDomain
+**Responsabilidad**: Estadísticas y listados de clientes (agregación de reservas).
+
+**Métodos principales**:
+- `obtenerDetalleCliente()` - Estadísticas + reservas de un cliente
+- `listarClientes()` - Lista paginada con búsqueda
+
+**Entity Cliente**: Datos agregados (total reservas, confirmadas, pendientes, fechas).
+
+### 3. ConfiguracionDomain
+**Responsabilidad**: Configuración general del negocio (nombre, datos contacto, etc).
+
+**Métodos principales**:
+- `obtenerConfiguraciones()` - Todas las configs
+- `actualizarConfiguracion()` - Una config
+- `actualizarMultiples()` - Varias configs
+
+**Tabla**: `configuraciones_usuario` (por usuario).
+
+### 4. DisponibilidadRepository
+**Responsabilidad**: Horarios de apertura y disponibilidad (sin domain, solo repo).
+
+**Métodos principales**:
+- `estaDisponible()` - Verifica si hora está en horario
+- `obtenerHorasDelDia()` - Todas las horas configuradas
+- `obtenerHorarioDia()` - Config de un día específico
+
+**Tabla**: `configuraciones_usuario` (horarios: `horario_lun`, `horario_mar`, etc).
+
 ## Uso en Páginas/APIs (DDD)
 
-### Páginas migradas a DDD
+### Ejemplo completo:
 ```php
 // pages/reservas.php
 
@@ -111,6 +169,17 @@ $stmt = $pdo->prepare("SELECT * FROM ...");
 - PDO disponible via `getPDO()`
 - Container inyecta PDO a repositorios
 
+## Tablas Principales
+
+### reservas
+Reservas del sistema.
+- Campos: id, usuario_id, nombre, telefono, whatsapp_id, fecha, hora, mensaje, estado, notas_internas, created_at, updated_at
+
+### configuraciones_usuario
+Configuraciones por usuario (horarios + config negocio).
+- Campos: id, usuario_id, clave, valor, created_at, updated_at
+- Ejemplos claves: `horario_lun`, `nombre_negocio`, `intervalo`
+
 ## Flash Messages
 ```php
 // Establecer mensajes
@@ -145,21 +214,21 @@ getFlashMessages()          // Obtener y limpiar mensajes
 - `pages/reservas.php` - Lista de reservas
 
 ## Páginas Legacy (Pendientes) ⚠️
-Estas páginas tienen código antiguo y deben migrarse:
+### Próximas a migrar:
+- `pages/calendario.php` - Vista calendario → ReservaDomain
+- `pages/dia.php` - Vista día → ReservaDomain
+- `pages/day.php` - Vista día (legacy) → ReservaDomain
+- `pages/cliente-detail.php` - Detalle cliente → ClienteDomain
+- `pages/clientes.php` - Lista clientes → ClienteDomain
+- `pages/configuracion.php` - Configuración → ConfiguracionDomain
 
-### Autenticación
-- `pages/login.php` - ✅ Parcialmente (eliminar requires legacy)
-- `api/login-handler.php` - ✅ Parcialmente (eliminar requires legacy)
-
-### Páginas principales
-- `pages/dia.php` - Calendario día
+### Otras pendientes:
 - `pages/semana.php` - Calendario semana
 - `pages/mes.php` - Calendario mes
-- `pages/clientes.php` - Lista clientes
-- `pages/configuracion.php` - Configuración
 - `pages/whatsapp.php` - WhatsApp
+- `pages/conversaciones.php` - Conversaciones WhatsApp
 
-### APIs
+### APIs pendientes:
 - `api/crear-reserva.php`
 - `api/actualizar-reserva.php`
 - `api/eliminar-reserva.php`
@@ -176,15 +245,14 @@ Estas páginas tienen código antiguo y deben migrarse:
 1. .htaccess → index.php
 2. index.php → define PROJECT_ROOT, carga router.php
 3. router.php → carga bootstrap.php, ejecuta middleware ['auth']
-4. bootstrap.php → carga auth.php, functions.php, autoload, container
+4. bootstrap.php → carga auth.php, functions.php, autoload, Container
 5. Página/API → usa getContainer()->getReservaDomain()
 ```
 
 ## Pendientes
 - Migrar páginas y APIs legacy a DDD
-- Dominio de Cliente cuando sea necesario
-- Dominio de Configuración cuando sea necesario
 - Tests unitarios para Domain
+- WhatsAppDomain cuando sea necesario
 
 ## Estilo de Respuesta
 Código directo. Sin explicaciones largas previas. Escueto.
