@@ -1,3 +1,4 @@
+<!-- public/pages/landing.php -->
 <!DOCTYPE html>
 <html lang="es">
 <head>

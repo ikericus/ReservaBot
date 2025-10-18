@@ -13,7 +13,7 @@ require_once PROJECT_ROOT . '/config/bootstrap.php';
 if (isAuthenticated() && !isSessionExpired()) {
     // Usuario autenticado válido
     //updateLastActivity();
-    header('Location: /mes');
+    header('Location: /reservas');
     exit;
 }
 
