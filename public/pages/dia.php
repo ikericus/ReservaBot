@@ -1,12 +1,9 @@
 <?php
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
+// pages/doa.php
 
 // Configurar la página actual
 $currentPage = 'calendario';
-$pageTitle = 'ReservaBot - Vista Día';
+$pageTitle = 'ReservaBot - Vista día';
 $pageScript = 'dia'; // Esto carga dia.js
 
 // Obtener usuario
@@ -33,11 +30,11 @@ $fechaSiguiente->modify('+1 day');
 
 // Obtener reservas para la fecha específica
 try {
-    $stmt = getPDO()->prepare("SELECT * FROM reservas WHERE usuario_id = ? AND fecha = ? ORDER BY hora ASC");
-    $stmt->execute([$userId, $fecha]);
-    $reservas = $stmt->fetchAll();
-} catch (\PDOException $e) {
-    error_log('Error al obtener reservas: ' . $e->getMessage());
+    $reservaDomain = getContainer()->getReservaDomain();
+    $reservasEntities = $reservaDomain->obtenerReservasPorFecha($fechaObj, $userId);
+    $reservas = array_map(fn($r) => $r->toArray(), $reservasEntities);
+} catch (Exception $e) {
+    setFlashError('Error al obtener reservas: ' . $e->getMessage());
     $reservas = [];
 }
 
