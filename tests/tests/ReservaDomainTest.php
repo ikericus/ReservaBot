@@ -1,7 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
 
-require_once __DIR__ . '/../public/src/domain/reserva/ReservaDomain.php';
+require_once __DIR__ . '/../../public/src/domain/reserva/ReservaDomain.php';
 
 final class ReservaDomainTest extends TestCase
 {
