@@ -1,83 +1,83 @@
 <?php
-// Cabeceras para JSON
+// api/actualizar-reserva.php
+
 header('Content-Type: application/json');
 
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
+$user = getAuthenticatedUser();
+if (!$user) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'No autenticado']);
+    exit;
+}
 
-// Obtener los datos enviados
+$userId = $user['id'];
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+    exit;
+}
+
 $data = json_decode(file_get_contents('php://input'), true);
 
-// Al inicio, después de obtener $data, agregar:
-if (isset($data['estado']) && !isset($data['nombre'])) {
-    // Es una actualización simple de solo estado
-    // Obtener datos actuales de la reserva para mantener el resto
-    $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE id = ?');
-    $stmt->execute([$data['id']]);
-    $reservaActual = $stmt->fetch();
-    
-    if ($reservaActual) {
-        $data['nombre'] = $reservaActual['nombre'];
-        $data['telefono'] = $reservaActual['telefono'];
-        $data['fecha'] = $reservaActual['fecha'];
-        $data['hora'] = substr($reservaActual['hora'], 0, 5); // HH:MM sin segundos
-        $data['mensaje'] = $reservaActual['mensaje'] ?? '';
-    }
-}
-
-// Verificar que los datos requeridos estén presentes
-if (!isset($data['id']) || !isset($data['nombre']) || !isset($data['telefono']) || !isset($data['fecha']) || !isset($data['hora'])) {
-    echo json_encode(['success' => false, 'message' => 'Faltan datos requeridos']);
-    exit;
-}
-
-// Validar los datos
-if (empty($data['nombre']) || empty($data['telefono']) || empty($data['fecha']) || empty($data['hora'])) {
-    echo json_encode(['success' => false, 'message' => 'Todos los campos obligatorios deben estar completos']);
-    exit;
-}
-
-// Validar el formato de la fecha
-if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data['fecha'])) {
-    echo json_encode(['success' => false, 'message' => 'Formato de fecha inválido']);
-    exit;
-}
-
-// Validar el formato de la hora
-if (!preg_match('/^\d{2}:\d{2}$/', $data['hora'])) {
-    echo json_encode(['success' => false, 'message' => 'Formato de hora inválido']);
+if (!isset($data['id'])) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'ID de reserva requerido']);
     exit;
 }
 
 try {
-    // Preparar la consulta
-    $sql = 'UPDATE reservas SET nombre = ?, telefono = ?, fecha = ?, hora = ?, mensaje = ?, estado = ? WHERE id = ?';
-    $stmt = getPDO()->prepare($sql);
+    $reservaDomain = getContainer()->getReservaDomain();
     
-    // Establecer el estado predeterminado si no se proporciona
-    $estado = isset($data['estado']) ? $data['estado'] : 'pendiente';
+    // Si solo cambia estado
+    if (isset($data['estado']) && !isset($data['fecha'])) {
+        $reservaId = (int)$data['id'];
+        
+        if ($data['estado'] === 'confirmada') {
+            $reserva = $reservaDomain->confirmarReserva($reservaId, $userId);
+        } elseif ($data['estado'] === 'cancelada') {
+            $reserva = $reservaDomain->cancelarReserva($reservaId, $userId);
+        } else {
+            throw new \InvalidArgumentException('Estado no válido');
+        }
+    } else {
+        // Modificación completa
+        if (!isset($data['fecha'], $data['hora'])) {
+            throw new \InvalidArgumentException('Fecha y hora requeridas');
+        }
+        
+        $reserva = $reservaDomain->modificarReserva(
+            (int)$data['id'],
+            $userId,
+            new DateTime($data['fecha']),
+            $data['hora'],
+            $data['mensaje'] ?? null
+        );
+        
+        // Si además cambia el estado
+        if (isset($data['estado'])) {
+            if ($data['estado'] === 'confirmada') {
+                $reserva = $reservaDomain->confirmarReserva($reserva->getId(), $userId);
+            } elseif ($data['estado'] === 'cancelada') {
+                $reserva = $reservaDomain->cancelarReserva($reserva->getId(), $userId);
+            }
+        }
+    }
     
-    // Convertir la hora al formato de MySQL (HH:MM:SS)
-    $hora = $data['hora'] . ':00';
-    
-    // Ejecutar la consulta
-    $result = $stmt->execute([
-        $data['nombre'],
-        $data['telefono'],
-        $data['fecha'],
-        $hora,
-        $data['mensaje'] ?? '',
-        $estado,
-        $data['id']
+    echo json_encode([
+        'success' => true,
+        'id' => $reserva->getId(),
+        'reserva' => $reserva->toArray()
     ]);
     
-    if ($result) {
-        echo json_encode(['success' => true, 'id' => $data['id']]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Error al actualizar la reserva']);
-    }
-} catch (\PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Error en la base de datos: ' . $e->getMessage()]);
+} catch (\DomainException $e) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+} catch (\InvalidArgumentException $e) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+} catch (\Exception $e) {
+    error_log('Error actualizando reserva: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
 }
-?>

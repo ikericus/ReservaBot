@@ -257,4 +257,24 @@ class ReservaRepository implements IReservaRepository {
         
         return $reservas;
     }
+    
+    public function obtenerPorIdYToken(int $id, string $token): ?Reserva {
+        $sql = "SELECT * FROM reservas 
+                WHERE id = ? 
+                AND access_token = ? 
+                AND token_expires > NOW()
+                AND estado IN (?, ?)";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            $id, 
+            $token,
+            EstadoReserva::PENDIENTE->value,
+            EstadoReserva::CONFIRMADA->value
+        ]);
+        
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $data ? Reserva::fromDatabase($data) : null;
+    }
 }

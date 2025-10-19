@@ -60,4 +60,9 @@ interface IReservaRepository {
      * Obtiene reservas por teléfono
      */
     public function obtenerPorTelefono(string $telefono, int $usuarioId): array;
+    
+    /**
+     * Obtiene una reserva por ID y token de acceso (para modificación pública)
+     */
+    public function obtenerPorIdYToken(int $id, string $token): ?Reserva;
 }

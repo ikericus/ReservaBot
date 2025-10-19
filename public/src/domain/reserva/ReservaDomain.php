@@ -211,4 +211,82 @@ class ReservaDomain {
         
         $this->reservaRepository->eliminar($id, $usuarioId);
     }
+
+    /**
+     * Modifica una reserva pública mediante token de acceso
+     */
+    public function modificarReservaPublica(
+        int $reservaId,
+        string $token,
+        DateTime $nuevaFecha,
+        string $nuevaHora
+    ): Reserva {
+        // Obtener reserva por ID y validar token
+        $reserva = $this->reservaRepository->obtenerPorIdYToken($reservaId, $token);
+        
+        if (!$reserva) {
+            throw new \DomainException('Reserva no encontrada o token inválido');
+        }
+        
+        // Validar que no está cancelada
+        if ($reserva->estaCancelada()) {
+            throw new \DomainException('No se puede modificar una reserva cancelada');
+        }
+        
+        // Validar plazo de 24h
+        $fechaHoraReserva = clone $reserva->getFecha();
+        $fechaHoraReserva->setTime(
+            (int)substr($reserva->getHora(), 0, 2),
+            (int)substr($reserva->getHora(), 3, 2)
+        );
+        
+        $fechaLimite = clone $fechaHoraReserva;
+        $fechaLimite->modify('-24 hours');
+        
+        if (new DateTime() >= $fechaLimite) {
+            throw new \DomainException('No se puede modificar la reserva. El plazo límite ha expirado (24h antes de la cita)');
+        }
+        
+        // Verificar disponibilidad del nuevo horario
+        if (!$this->verificarDisponibilidad($nuevaFecha, $nuevaHora, $reserva->getUsuarioId(), $reservaId)) {
+            throw new \DomainException('El nuevo horario no está disponible');
+        }
+        
+        $reserva->modificar($nuevaFecha, $nuevaHora);
+        
+        return $this->reservaRepository->guardar($reserva);
+    }
+
+    /**
+     * Cancela una reserva pública mediante token de acceso
+     */
+    public function cancelarReservaPublica(int $reservaId, string $token): Reserva {
+        $reserva = $this->reservaRepository->obtenerPorIdYToken($reservaId, $token);
+        
+        if (!$reserva) {
+            throw new \DomainException('Reserva no encontrada o token inválido');
+        }
+        
+        if ($reserva->estaCancelada()) {
+            throw new \DomainException('La reserva ya está cancelada');
+        }
+        
+        // Validar plazo de 24h
+        $fechaHoraReserva = clone $reserva->getFecha();
+        $fechaHoraReserva->setTime(
+            (int)substr($reserva->getHora(), 0, 2),
+            (int)substr($reserva->getHora(), 3, 2)
+        );
+        
+        $fechaLimite = clone $fechaHoraReserva;
+        $fechaLimite->modify('-24 hours');
+        
+        if (new DateTime() >= $fechaLimite) {
+            throw new \DomainException('No se puede cancelar la reserva. El plazo límite ha expirado (24h antes de la cita)');
+        }
+        
+        $reserva->cancelar();
+        
+        return $this->reservaRepository->guardar($reserva);
+    }
 }

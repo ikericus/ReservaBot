@@ -1,33 +1,42 @@
 <?php
-// Cabeceras para JSON
+// api/eliminar-reserva.php
+
 header('Content-Type: application/json');
 
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
+$user = getAuthenticatedUser();
+if (!$user) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'No autenticado']);
+    exit;
+}
 
-// Obtener los datos enviados
+$userId = $user['id'];
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+    exit;
+}
+
 $data = json_decode(file_get_contents('php://input'), true);
 
-// Verificar que el ID esté presente
 if (!isset($data['id'])) {
-    echo json_encode(['success' => false, 'message' => 'ID no proporcionado']);
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'ID de reserva requerido']);
     exit;
 }
 
 try {
-    // Preparar la consulta
-    $stmt = getPDO()->prepare('DELETE FROM reservas WHERE id = ?');
+    $reservaDomain = getContainer()->getReservaDomain();
+    $reservaDomain->eliminarReserva((int)$data['id'], $userId);
     
-    // Ejecutar la consulta
-    $result = $stmt->execute([$data['id']]);
+    echo json_encode(['success' => true]);
     
-    if ($result) {
-        echo json_encode(['success' => true]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'No se pudo eliminar la reserva']);
-    }
-} catch (\PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Error en la base de datos: ' . $e->getMessage()]);
+} catch (\DomainException $e) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+} catch (\Exception $e) {
+    error_log('Error eliminando reserva: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
 }
-?>
