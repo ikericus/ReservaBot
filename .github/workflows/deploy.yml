@@ -1,4 +1,4 @@
-name: Deploy to FTP and VPS on push to ddd branch
+name: Test and deploy to FTP and VPS on push to ddd branch
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
       - name: Run tests
         run: php phpunit --testdox
   deploy:
-    name: Deploy to FTP #and VPS
+    name: Deploy to FTP and VPS
     runs-on: ubuntu-latest
 
     steps:
@@ -53,18 +53,18 @@ jobs:
           server-dir: /
           dangerous-clean-slate: false
 
-      # # 🔐 SSH + scp + pm2
-      # - name: Deploy server.js to VPS
-      #   if: steps.check.outputs.server == 'true'
-      #   run: |
-      #     echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
-      #     chmod 600 private_key
+       # 🔐 SSH + scp + pm2
+       - name: Deploy server.js to VPS
+         if: steps.check.outputs.server == 'true'
+         run: |
+           echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
+           chmod 600 private_key
 
-      #     # Subir el archivo al VPS
-      #     scp -i private_key -o StrictHostKeyChecking=no server/server.js ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/debian/whatsapp-server/server.js
+           # Subir el archivo al VPS
+           scp -i private_key -o StrictHostKeyChecking=no server/server.js ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/debian/whatsapp-server/server.js
 
-      #     # Reiniciar con pm2 usando ruta absoluta
-      #     ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-      #     cd /home/debian/whatsapp-server
-      #     /home/debian/.nvm/versions/node/v20.19.2/bin/pm2 restart whatsapp-server || /home/debian/.nvm/versions/node/v20.19.2/bin/pm2 start server.js --name whatsapp-server
-      #     EOF
+           # Reiniciar con pm2 usando ruta absoluta
+           ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+           cd /home/debian/whatsapp-server
+           /home/debian/.nvm/versions/node/v20.19.2/bin/pm2 restart whatsapp-server || /home/debian/.nvm/versions/node/v20.19.2/bin/pm2 start server.js --name whatsapp-server
+           EOF

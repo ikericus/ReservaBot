@@ -128,8 +128,7 @@ class WhatsAppDomain {
             'conversaciones_activas' => $stats['conversaciones_activas'] ?? 0,
             'no_leidas' => $this->contarNoLeidas($usuarioId)
         ];
-    }
-    
+    }    
     
     // ========== MÉTODOS QUE USAN SERVIDOR EXTERNO ==========
     

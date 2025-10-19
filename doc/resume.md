@@ -5,7 +5,7 @@ DDD ligero y pragmático (Domain + Repository + Infrastructure). Sin capa de Use
 
 ## Estructura de Carpetas
 ```
-public_html/ (PROJECT_ROOT)
+public/ (PROJECT_ROOT)
 ├── config/
 │   ├── bootstrap.php      # Inicialización (PDO, auth, autoload, container)
 │   ├── container.php      # DI Container (Singleton)
