@@ -263,4 +263,4 @@ setFlashSuccess($msg)       // Mensaje de éxito
 ```
 
 ## Estilo de Respuesta
-Proponer dirección de los cambios antes de crear código. Código directo. Sin explicaciones largas previas. Escueto.
+Proponer dirección de los cambios antes de crear código. Solicita ficheros si es necesario antes de crear código. Respuestas sin explicaciones largas previas. Escueto.
