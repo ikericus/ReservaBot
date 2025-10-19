@@ -3,6 +3,8 @@ use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../../public/src/domain/reserva/ReservaDomain.php';
 
+use ReservaBot\Domain\Reserva;
+
 final class ReservaDomainTest extends TestCase
 {
     public function testCrearReservaGeneraId()
