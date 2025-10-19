@@ -5,10 +5,16 @@ namespace ReservaBot\Domain\WhatsApp;
 
 class WhatsAppDomain {
     private IWhatsAppRepository $whatsappRepository;
+    private IWhatsAppServerManager $serverManager;
     
-    public function __construct(IWhatsAppRepository $whatsappRepository) {
+    public function __construct(
+        IWhatsAppRepository $whatsappRepository,
+        IWhatsAppServerManager $serverManager
+    ) {
         $this->whatsappRepository = $whatsappRepository;
+        $this->serverManager = $serverManager;
     }
+
     
     /**
      * Obtiene configuración de WhatsApp
@@ -149,5 +155,121 @@ class WhatsAppDomain {
     public function puedeEnviarMensajes(int $usuarioId): bool {
         $config = $this->obtenerConfiguracion($usuarioId);
         return $config->estaConectado();
+    }
+
+
+    /**
+     * Conecta WhatsApp
+     */
+    public function conectarWhatsApp(int $usuarioId): array {
+        try {
+            $serverResponse = $this->serverManager->conectar($usuarioId);
+            
+            $config = $this->obtenerConfiguracion($usuarioId);
+            
+            // Actualizar estado según respuesta del servidor
+            if ($serverResponse['status'] === 'ready' && isset($serverResponse['phoneNumber'])) {
+                $config->conectar($serverResponse['phoneNumber']);
+            } elseif ($serverResponse['status'] === 'waiting_qr' && isset($serverResponse['qr'])) {
+                $config->esperarQR($serverResponse['qr']);
+            } else {
+                $config->esperarQR('');
+            }
+            
+            $this->whatsappRepository->guardarConfiguracion($config);
+            
+            return $serverResponse;
+            
+        } catch (\RuntimeException $e) {
+            throw new \DomainException('Error conectando WhatsApp: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Desconecta WhatsApp
+     */
+    public function desconectarWhatsApp(int $usuarioId): array {
+        try {
+            $serverResponse = $this->serverManager->desconectar($usuarioId);
+            
+            $config = $this->obtenerConfiguracion($usuarioId);
+            $config->desconectar();
+            $this->whatsappRepository->guardarConfiguracion($config);
+            
+            return $serverResponse;
+            
+        } catch (\Exception $e) {
+            throw new \DomainException('Error desconectando: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Obtiene estado de WhatsApp
+     */
+    public function obtenerEstadoWhatsApp(int $usuarioId): array {
+        try {
+            $serverResponse = $this->serverManager->obtenerEstado($usuarioId);
+            
+            // Sincronizar con BD local
+            $config = $this->obtenerConfiguracion($usuarioId);
+            
+            if ($serverResponse['status'] === 'connected' && isset($serverResponse['phoneNumber'])) {
+                $config->conectar($serverResponse['phoneNumber']);
+            } elseif ($serverResponse['status'] === 'waiting_qr' && isset($serverResponse['qr'])) {
+                $config->esperarQR($serverResponse['qr']);
+            }
+            
+            $this->whatsappRepository->guardarConfiguracion($config);
+            
+            // Agregar mensaje descriptivo
+            $serverResponse['message'] = match($serverResponse['status']) {
+                'connected' => 'WhatsApp conectado y listo',
+                'connecting' => 'Conectando a WhatsApp...',
+                'waiting_qr' => 'Escanea el código QR con tu WhatsApp',
+                'disconnected' => 'WhatsApp desconectado',
+                default => 'Estado desconocido'
+            };
+            
+            return $serverResponse;
+            
+        } catch (\RuntimeException $e) {
+            // Si falla servidor, usar datos locales
+            $config = $this->obtenerConfiguracion($usuarioId);
+            
+            return [
+                'success' => true,
+                'status' => $config->getStatus(),
+                'phoneNumber' => $config->getPhoneNumber(),
+                'lastActivity' => $config->getLastActivity()?->format('Y-m-d H:i:s'),
+                'message' => 'Mostrando último estado conocido',
+                'serverConnected' => false
+            ];
+        }
+    }
+
+    /**
+     * Envía mensaje WhatsApp
+     */
+    public function enviarMensajeWhatsApp(
+        int $usuarioId,
+        string $telefono,
+        string $mensaje,
+        ?array $media = null
+    ): array {
+        if (!$this->puedeEnviarMensajes($usuarioId)) {
+            throw new \DomainException('WhatsApp no está conectado');
+        }
+        
+        try {
+            $result = $this->serverManager->enviarMensaje($usuarioId, $telefono, $mensaje, $media);
+            
+            // Actualizar actividad
+            $this->actualizarActividad($usuarioId);
+            
+            return $result;
+            
+        } catch (\RuntimeException $e) {
+            throw new \DomainException('Error enviando mensaje: ' . $e->getMessage());
+        }
     }
 }

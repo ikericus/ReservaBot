@@ -64,14 +64,15 @@ class Container {
     }
     
     public function getWhatsAppDomain(): WhatsAppDomain {
-        if (!isset($this->services['whatsappDomain'])) {
-            $this->services['whatsappDomain'] = new WhatsAppDomain(
-                $this->getWhatsAppRepository()
+        if (!isset($this->instances['whatsappDomain'])) {
+            $this->instances['whatsappDomain'] = new WhatsAppDomain(
+                $this->getWhatsAppRepository(),
+                $this->getWhatsAppServerManager()
             );
         }
-        return $this->services['whatsappDomain'];
+        return $this->instances['whatsappDomain'];
     }
-    
+        
     /**
      * Obtener instancia de FormularioDomain
      * 
@@ -129,5 +130,32 @@ class Container {
             $this->services['formularioRepository'] = new FormularioRepository($this->pdo);
         }
         return $this->services['formularioRepository'];
+    }
+    
+    // ==================== SERVICIOS EXTERNOS ====================
+
+    public function getWhatsAppServerManager(): IWhatsAppServerManager {
+        if (!isset($this->instances['whatsappServerManager'])) {
+            $serverUrl = $_ENV['WHATSAPP_SERVER_URL'] ?? 'http://server.reservabot.es:3001';
+            $jwtSecret = $_ENV['JWT_SECRET'] ?? 'da3c7b9e13a38a0ea3dcbaaed1ec9ec1f0005f974adad7141b71a36e9f13e187';
+            
+            $this->instances['whatsappServerManager'] = new WhatsAppServerManager(
+                $serverUrl,
+                $jwtSecret
+            );
+        }
+        return $this->instances['whatsappServerManager'];
+    }
+
+    public function getWhatsAppWebhookHandler(): WhatsAppWebhookHandler {
+        if (!isset($this->instances['whatsappWebhookHandler'])) {
+            $webhookSecret = $_ENV['WEBHOOK_SECRET'] ?? 'c4f20ece15858d35db6d02e55269de628df3ea8c66246d75a07ce77c9c3c4810';
+            
+            $this->instances['whatsappWebhookHandler'] = new WhatsAppWebhookHandler(
+                $this->getWhatsAppDomain(),
+                $webhookSecret
+            );
+        }
+        return $this->instances['whatsappWebhookHandler'];
     }
 }
