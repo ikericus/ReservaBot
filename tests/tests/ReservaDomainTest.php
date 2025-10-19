@@ -3,7 +3,7 @@ use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../../public/src/domain/reserva/ReservaDomain.php';
 
-use ReservaBot\Domain\Reserva;
+use ReservaBot\Domain\Reserva\ReservaDomain;
 
 final class ReservaDomainTest extends TestCase
 {
