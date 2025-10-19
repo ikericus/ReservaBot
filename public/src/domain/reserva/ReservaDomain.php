@@ -289,4 +289,172 @@ class ReservaDomain {
         
         return $this->reservaRepository->guardar($reserva);
     }
+
+    /**
+     * Obtiene horas disponibles con información detallada de capacidad
+     */
+    public function obtenerHorasDisponiblesConCapacidad(DateTime $fecha, int $usuarioId): array {
+        $diaSemana = $this->obtenerDiaSemana($fecha);
+        $horarioConfig = $this->disponibilidadRepository->obtenerHorarioDia($diaSemana, $usuarioId);
+        
+        // Asegurar que todas las ventanas tengan capacidad
+        foreach ($horarioConfig['ventanas'] as &$ventana) {
+            if (!isset($ventana['capacidad'])) {
+                $ventana['capacidad'] = 1;
+            }
+        }
+        
+        if (!$horarioConfig['activo']) {
+            throw new \DomainException('El día seleccionado no está disponible');
+        }
+        
+        $ventanas = $horarioConfig['ventanas'];
+        
+        if (empty($ventanas)) {
+            throw new \DomainException('No hay horarios configurados para este día');
+        }
+        
+        // Obtener intervalo de reservas
+        $intervalo = $this->disponibilidadRepository->obtenerIntervalo($usuarioId);
+        
+        // Obtener todas las horas posibles del día
+        $todasLasHoras = $this->generarHorasPorVentanas($ventanas, $intervalo);
+        
+        // Obtener reservas existentes para la fecha
+        $reservasExistentes = $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
+        
+        // Contar reservas activas por hora
+        $reservasPorHora = $this->contarReservasPorHora($reservasExistentes);
+        
+        // Calcular disponibilidad por hora
+        $horasConCapacidad = [];
+        $horasDisponibles = [];
+        
+        foreach ($todasLasHoras as $hora) {
+            $capacidadTotal = $this->obtenerCapacidadParaHora($hora, $ventanas);
+            $reservasActuales = $reservasPorHora[$hora] ?? 0;
+            $disponibles = $capacidadTotal - $reservasActuales;
+            
+            if ($disponibles > 0) {
+                $horasDisponibles[] = $hora;
+            }
+            
+            $horasConCapacidad[$hora] = [
+                'total' => $capacidadTotal,
+                'ocupadas' => $reservasActuales,
+                'libres' => $disponibles
+            ];
+        }
+        
+        // Si es hoy, filtrar horas pasadas
+        if ($fecha->format('Y-m-d') === date('Y-m-d')) {
+            $horaActual = date('H:i');
+            $horasDisponibles = array_filter($horasDisponibles, fn($h) => $h > $horaActual);
+            $horasDisponibles = array_values($horasDisponibles);
+        }
+        
+        // Calcular rangos globales
+        $horaInicioGlobal = null;
+        $horaFinGlobal = null;
+        $ventanasInfo = [];
+        
+        foreach ($ventanas as $ventana) {
+            $ventanasInfo[] = $ventana['inicio'] . ' - ' . $ventana['fin'] . 
+                            ' (máx. ' . $ventana['capacidad'] . ' reservas)';
+            
+            if ($horaInicioGlobal === null || $ventana['inicio'] < $horaInicioGlobal) {
+                $horaInicioGlobal = $ventana['inicio'];
+            }
+            if ($horaFinGlobal === null || $ventana['fin'] > $horaFinGlobal) {
+                $horaFinGlobal = $ventana['fin'];
+            }
+        }
+        
+        // Detectar si hay capacidad múltiple
+        $tieneCapacidadMultiple = false;
+        foreach ($ventanas as $ventana) {
+            if ($ventana['capacidad'] > 1) {
+                $tieneCapacidadMultiple = true;
+                break;
+            }
+        }
+        
+        return [
+            'horas' => $horasDisponibles,
+            'dia_semana' => $diaSemana,
+            'horario_inicio' => $horaInicioGlobal,
+            'horario_fin' => $horaFinGlobal,
+            'ventanas' => $ventanasInfo,
+            'intervalo' => $intervalo,
+            'total_ventanas' => count($ventanas),
+            'capacidad_info' => $horasConCapacidad,
+            'tiene_capacidad_multiple' => $tieneCapacidadMultiple
+        ];
+    }
+
+    /**
+     * Genera todas las horas posibles según ventanas e intervalo
+     */
+    private function generarHorasPorVentanas(array $ventanas, int $intervalo): array {
+        $horas = [];
+        
+        foreach ($ventanas as $ventana) {
+            $inicio = strtotime($ventana['inicio']);
+            $fin = strtotime($ventana['fin']);
+            
+            $current = $inicio;
+            while ($current < $fin) {
+                $hora = date('H:i', $current);
+                if (!in_array($hora, $horas)) {
+                    $horas[] = $hora;
+                }
+                $current += $intervalo * 60;
+            }
+        }
+        
+        sort($horas);
+        return $horas;
+    }
+
+    /**
+     * Cuenta reservas activas agrupadas por hora
+     */
+    private function contarReservasPorHora(array $reservas): array {
+        $contador = [];
+        
+        foreach ($reservas as $reserva) {
+            if ($reserva->getEstado()->esActiva()) {
+                $hora = $reserva->getHora();
+                $contador[$hora] = ($contador[$hora] ?? 0) + 1;
+            }
+        }
+        
+        return $contador;
+    }
+
+    /**
+     * Obtiene la capacidad total para una hora específica
+     */
+    private function obtenerCapacidadParaHora(string $hora, array $ventanas): int {
+        $capacidadMaxima = 0;
+        
+        foreach ($ventanas as $ventana) {
+            if ($hora >= $ventana['inicio'] && $hora < $ventana['fin']) {
+                $capacidadMaxima = max($capacidadMaxima, $ventana['capacidad']);
+            }
+        }
+        
+        return max($capacidadMaxima, 1); // Mínimo 1
+    }
+
+    /**
+     * Obtiene el día de la semana en formato corto
+     */
+    private function obtenerDiaSemana(DateTime $fecha): string {
+        $diasMap = [
+            1 => 'lun', 2 => 'mar', 3 => 'mie', 4 => 'jue',
+            5 => 'vie', 6 => 'sab', 0 => 'dom'
+        ];
+        return $diasMap[(int)$fecha->format('w')];
+    }
 }
