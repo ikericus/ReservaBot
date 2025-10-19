@@ -130,6 +130,7 @@ class WhatsAppDomain {
         ];
     }
     
+    
     // ========== MÉTODOS QUE USAN SERVIDOR EXTERNO ==========
     
     /**
