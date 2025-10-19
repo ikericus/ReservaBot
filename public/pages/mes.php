@@ -1,8 +1,5 @@
 <?php
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
+// pages/mes.php
 
 // Configurar la página actual
 $currentPage = 'calendario';
@@ -37,20 +34,15 @@ $mesSiguiente->modify('+1 month');
 
 // Obtener reservas para todo el mes
 try {
-    $stmt = getPDO()->prepare("
-        SELECT * FROM reservas 
-        WHERE usuario_id = ? 
-        AND fecha BETWEEN ? AND ? 
-        ORDER BY fecha ASC, hora ASC
-    ");
-    $stmt->execute([
-        $userId, 
-        $primerDiaMes->format('Y-m-d'), 
-        $ultimoDiaMes->format('Y-m-d')
-    ]);
-    $reservas = $stmt->fetchAll();
-} catch (\PDOException $e) {
-    error_log('Error al obtener reservas: ' . $e->getMessage());
+    $reservaDomain = getContainer()->getReservaDomain();
+    $reservasEntities = $reservaDomain->obtenerReservasPorRango(
+        $primerDiaMes, 
+        $ultimoDiaMes, 
+        $userId
+    );
+    $reservas = array_map(fn($r) => $r->toArray(), $reservasEntities);
+} catch (Exception $e) {
+    setFlashError('Error al obtener reservas: ' . $e->getMessage());
     $reservas = [];
 }
 

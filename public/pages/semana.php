@@ -1,8 +1,5 @@
 <?php
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
+// pages/semana.php
 
 // Configurar la página actual
 $currentPage = 'calendario';
@@ -43,20 +40,15 @@ $semanaSiguiente->modify('+7 days');
 
 // Obtener reservas para toda la semana
 try {
-    $stmt = getPDO()->prepare("
-        SELECT * FROM reservas 
-        WHERE usuario_id = ? 
-        AND fecha BETWEEN ? AND ? 
-        ORDER BY fecha ASC, hora ASC
-    ");
-    $stmt->execute([
-        $userId, 
-        $inicioSemana->format('Y-m-d'), 
-        $finSemana->format('Y-m-d')
-    ]);
-    $reservas = $stmt->fetchAll();
-} catch (\PDOException $e) {
-    error_log('Error al obtener reservas: ' . $e->getMessage());
+    $reservaDomain = getContainer()->getReservaDomain();
+    $reservasEntities = $reservaDomain->obtenerReservasPorRango(
+        $inicioSemana, 
+        $finSemana, 
+        $userId
+    );
+    $reservas = array_map(fn($r) => $r->toArray(), $reservasEntities);
+} catch (Exception $e) {
+    setFlashError('Error al obtener reservas: ' . $e->getMessage());
     $reservas = [];
 }
 

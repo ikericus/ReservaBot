@@ -1,5 +1,5 @@
 <?php
-// public/pages/reservas.php
+// pages/reservas.php
 
 // Configurar la página actual
 $currentPage = 'reservas';
