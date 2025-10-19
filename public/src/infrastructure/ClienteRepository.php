@@ -125,4 +125,104 @@ class ClienteRepository implements IClienteRepository {
         
         return $clientes;
     }
+    
+    public function buscarPorTelefonoConEstadisticas(
+        string $telefono, 
+        int $usuarioId, 
+        int $limite = 10
+    ): array {
+        // Normalizar teléfono para búsqueda
+        $telefonoNormalizado = preg_replace('/[^\d]/', '', $telefono);
+        
+        $sql = "SELECT DISTINCT
+                    nombre,
+                    telefono,
+                    whatsapp_id,
+                    COUNT(r.id) as total_reservas,
+                    MAX(r.fecha) as last_reserva_fecha,
+                    MAX(r.created_at) as last_created
+                FROM reservas r
+                WHERE r.usuario_id = ?
+                AND (
+                    REPLACE(REPLACE(REPLACE(REPLACE(r.telefono, '+', ''), ' ', ''), '-', ''), '(', '') LIKE ?
+                    OR REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(r.whatsapp_id, ''), '+', ''), ' ', ''), '-', ''), '(', '') LIKE ?
+                    OR REPLACE(REPLACE(REPLACE(REPLACE(r.telefono, '+34', ''), ' ', ''), '-', ''), '(', '') LIKE ?
+                    OR REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(r.whatsapp_id, ''), '+34', ''), ' ', ''), '-', ''), '(', '') LIKE ?
+                )
+                GROUP BY nombre, telefono, whatsapp_id
+                ORDER BY last_created DESC, total_reservas DESC
+                LIMIT ?";
+        
+        $patron = '%' . $telefonoNormalizado . '%';
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            $usuarioId,
+            $patron,
+            $patron,
+            $patron,
+            $patron,
+            $limite
+        ]);
+        
+        return $this->procesarResultadosBusqueda($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+    
+    public function buscarPorNombreConEstadisticas(
+        string $nombre, 
+        int $usuarioId, 
+        int $limite = 5
+    ): array {
+        $sql = "SELECT DISTINCT
+                    nombre,
+                    telefono,
+                    whatsapp_id,
+                    COUNT(r.id) as total_reservas,
+                    MAX(r.fecha) as last_reserva_fecha,
+                    MAX(r.created_at) as last_created
+                FROM reservas r
+                WHERE r.usuario_id = ?
+                AND LOWER(r.nombre) LIKE LOWER(?)
+                GROUP BY nombre, telefono, whatsapp_id
+                ORDER BY last_created DESC, total_reservas DESC
+                LIMIT ?";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$usuarioId, '%' . $nombre . '%', $limite]);
+        
+        return $this->procesarResultadosBusqueda($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+    
+    /**
+     * Procesa resultados de búsqueda evitando duplicados
+     */
+    private function procesarResultadosBusqueda(array $resultados): array {
+        $clientes = [];
+        $telefonosVistos = [];
+        
+        foreach ($resultados as $resultado) {
+            // Normalizar teléfono para evitar duplicados
+            $telefonoKey = preg_replace('/[^\d]/', '', $resultado['telefono']);
+            
+            if (in_array($telefonoKey, $telefonosVistos)) {
+                continue;
+            }
+            
+            $telefonosVistos[] = $telefonoKey;
+            
+            $clientes[] = new Cliente(
+                $resultado['telefono'],
+                $resultado['nombre'],
+                (int)$resultado['total_reservas'],
+                0, // No se calcula en búsqueda
+                0, // No se calcula en búsqueda
+                0, // No se calcula en búsqueda
+                $resultado['last_reserva_fecha'] ? new \DateTime($resultado['last_reserva_fecha']) : null,
+                new \DateTime($resultado['last_created']),
+                new \DateTime($resultado['last_created'])
+            );
+        }
+        
+        return $clientes;
+    }
 }

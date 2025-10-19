@@ -61,4 +61,41 @@ class ClienteDomain {
             'total_paginas' => ceil($total / $perPage)
         ];
     }
+    
+    /**
+     * Busca clientes por teléfono (autocompletado)
+     * Si no encuentra por teléfono, busca por nombre
+     */
+    public function buscarPorTelefono(string $telefono, int $usuarioId, int $limite = 10): array {
+        if (strlen($telefono) < 3) {
+            throw new \InvalidArgumentException('Teléfono demasiado corto');
+        }
+        
+        // Buscar por teléfono primero
+        $clientes = $this->clienteRepository->buscarPorTelefonoConEstadisticas(
+            $telefono, 
+            $usuarioId, 
+            $limite
+        );
+        
+        // Si no hay resultados, buscar por nombre
+        if (empty($clientes)) {
+            $clientes = $this->clienteRepository->buscarPorNombreConEstadisticas(
+                $telefono, 
+                $usuarioId, 
+                min(5, $limite)
+            );
+        }
+        
+        return array_map(function($cliente) {
+            $arr = $cliente->toArray();
+            // Formatear última reserva para API
+            if ($arr['ultima_reserva']) {
+                $arr['last_reserva'] = date('d/m/Y', strtotime($arr['ultima_reserva']));
+            } else {
+                $arr['last_reserva'] = null;
+            }
+            return $arr;
+        }, $clientes);
+    }
 }

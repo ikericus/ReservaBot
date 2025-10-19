@@ -1,10 +1,6 @@
 <?php
+// pages/cliente-detail.php
 
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
-
-// Configurar la página actual
 $currentPage = 'clientes';
 $pageTitle = 'ReservaBot - Detalle de Cliente';
 $pageScript = 'cliente-detail';
@@ -17,84 +13,68 @@ if (empty($telefono)) {
     exit;
 }
 
-// Obtener usuario actual para verificar conexión WhatsApp
+// Obtener usuario actual
 $currentUser = getAuthenticatedUser();
 $userId = $currentUser['id'];
 
-// Verificar estado de WhatsApp
-$whatsappConfig = null;
-try {
-    $stmt = getPDO()->prepare('SELECT status, phone_number FROM whatsapp_config WHERE usuario_id = ?');
-    $stmt->execute([$userId]);
-    $whatsappConfig = $stmt->fetch();
-} catch (PDOException $e) {
-    error_log('Error obteniendo configuración WhatsApp: ' . $e->getMessage());
-}
+// Obtener datos del cliente usando domain
+$cliente = null;
+$reservas = [];
+$mensajes = [];
 
-$whatsappConnected = $whatsappConfig && in_array($whatsappConfig['status'], ['connected', 'ready']);
-
-// Obtener información del cliente
 try {
-    // Datos generales del cliente
-    $stmt = getPDO()->prepare("SELECT 
-        telefono,
-        nombre as ultimo_nombre,
-        COUNT(id) as total_reservas,
-        SUM(CASE WHEN estado = 'confirmada' THEN 1 ELSE 0 END) as reservas_confirmadas,
-        SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as reservas_pendientes,
-        SUM(CASE WHEN estado = 'cancelada' THEN 1 ELSE 0 END) as reservas_canceladas,
-        MAX(fecha) as ultima_reserva,
-        MIN(created_at) as primer_contacto,
-        MAX(created_at) as ultimo_contacto
-        FROM reservas 
-        WHERE telefono = ?
-        GROUP BY telefono");
+    $clienteDomain = getContainer()->getClienteDomain();
+    $resultado = $clienteDomain->obtenerDetalleCliente($telefono, $userId);
     
-    $stmt->execute([$telefono]);
-    $cliente = $stmt->fetch();
+    $cliente = $resultado['cliente']->toArray();
+    $reservas = $resultado['reservas'];
     
-    if (!$cliente) {
-        header('Location: /clientes');
-        exit;
-    }
-    
-    // Obtener historial de reservas
-    $stmt = getPDO()->prepare("SELECT * FROM reservas WHERE telefono = ? ORDER BY fecha DESC, hora DESC");
-    $stmt->execute([$telefono]);
-    $reservas = $stmt->fetchAll();
-    
-    // Obtener mensajes de WhatsApp si existen
-    $mensajes = [];
-    try {
-        // Formatear número para búsqueda
-        $telefonoFormateado = preg_replace('/[^\d]/', '', $telefono);
-        if (strlen($telefonoFormateado) === 9 && (substr($telefonoFormateado, 0, 1) === '6' || substr($telefonoFormateado, 0, 1) === '7' || substr($telefonoFormateado, 0, 1) === '9')) {
-            $telefonoFormateado = '34' . $telefonoFormateado;
-        }
-        
-        $stmt = getPDO()->prepare("SELECT * FROM whatsapp_messages 
-                               WHERE usuario_id = ? AND phone_number = ?
-                               ORDER BY timestamp_sent DESC 
-                               LIMIT 50");
-        $stmt->execute([$userId, $telefonoFormateado]);
-        $mensajes = $stmt->fetchAll();
-        
-    } catch (\PDOException $e) {
-        // Si las tablas de WhatsApp no existen, continuar sin mensajes
-        $mensajes = [];
-    }
-    
-} catch (\PDOException $e) {
-    error_log('Error al obtener datos del cliente: ' . $e->getMessage());
+} catch (\DomainException $e) {
+    setFlashError($e->getMessage());
     header('Location: /clientes');
     exit;
+} catch (\Exception $e) {
+    error_log('Error al obtener detalle cliente: ' . $e->getMessage());
+    setFlashError('Error al cargar datos del cliente');
+    header('Location: /clientes');
+    exit;
+}
+
+// Verificar estado de WhatsApp
+$whatsappConnected = false;
+try {
+    $whatsappDomain = getContainer()->getWhatsAppDomain();
+    $config = $whatsappDomain->obtenerConfiguracion($userId);
+    $whatsappConnected = in_array($config['status'], ['connected', 'ready']);
+} catch (\Exception $e) {
+    // WhatsApp no configurado
+}
+
+// Obtener mensajes de WhatsApp si existen
+try {
+    $conversaciones = $whatsappDomain->obtenerConversaciones($userId);
+    
+    // Formatear número para búsqueda
+    $telefonoFormateado = preg_replace('/[^\d]/', '', $telefono);
+    if (strlen($telefonoFormateado) === 9 && in_array(substr($telefonoFormateado, 0, 1), ['6', '7', '9'])) {
+        $telefonoFormateado = '34' . $telefonoFormateado;
+    }
+    
+    // Buscar conversación del cliente
+    foreach ($conversaciones as $conv) {
+        if ($conv['phone_number'] === $telefonoFormateado) {
+            $mensajes = $conv['mensajes'] ?? [];
+            break;
+        }
+    }
+} catch (\Exception $e) {
+    // Si no hay WhatsApp, continuar sin mensajes
 }
 
 // Definir variables para el componente de conversación
 $clientPhone = $cliente['telefono'];
 $clientName = $cliente['ultimo_nombre'];
 
-// Incluir la cabecera
 include 'includes/header.php';
 ?>
 
@@ -303,7 +283,7 @@ include 'includes/header.php';
     <?php endif; ?>
 </div>
 
-<!-- Contenido de mensajes WhatsApp (versión simplificada para el tab) -->
+<!-- Contenido de mensajes WhatsApp -->
 <div id="mensajesContent" class="hidden">
     <div class="bg-white rounded-lg shadow-sm p-6">
         <?php if (empty($mensajes)): ?>
@@ -385,7 +365,6 @@ include 'components/conversacion.php';
 <script>
 // JavaScript para los tabs
 document.addEventListener('DOMContentLoaded', function() {
-    // Gestión de tabs
     const reservasTab = document.getElementById('reservasTab');
     const mensajesTab = document.getElementById('mensajesTab');
     const reservasContent = document.getElementById('reservasContent');
@@ -393,29 +372,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (reservasTab && mensajesTab) {
         reservasTab.addEventListener('click', function() {
-            // Activar tab de reservas
             reservasTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
             reservasTab.classList.add('border-blue-500', 'text-blue-600');
             
-            // Desactivar tab de mensajes
             mensajesTab.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
             mensajesTab.classList.remove('border-blue-500', 'text-blue-600');
             
-            // Mostrar contenido de reservas
             reservasContent.classList.remove('hidden');
             if (mensajesContent) mensajesContent.classList.add('hidden');
         });
         
         mensajesTab.addEventListener('click', function() {
-            // Activar tab de mensajes
             mensajesTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
             mensajesTab.classList.add('border-blue-500', 'text-blue-600');
             
-            // Desactivar tab de reservas
             reservasTab.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
             reservasTab.classList.remove('border-blue-500', 'text-blue-600');
             
-            // Mostrar contenido de mensajes
             if (mensajesContent) mensajesContent.classList.remove('hidden');
             reservasContent.classList.add('hidden');
         });
@@ -423,7 +396,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php 
-// Incluir el pie de página
-include 'includes/footer.php'; 
-?>
+<?php include 'includes/footer.php'; ?>

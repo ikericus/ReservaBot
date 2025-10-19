@@ -23,4 +23,22 @@ interface IClienteRepository {
         int $page, 
         int $perPage
     ): array;
+    
+    /**
+     * Busca clientes por teléfono con estadísticas
+     */
+    public function buscarPorTelefonoConEstadisticas(
+        string $telefono, 
+        int $usuarioId, 
+        int $limite = 10
+    ): array;
+    
+    /**
+     * Busca clientes por nombre con estadísticas
+     */
+    public function buscarPorNombreConEstadisticas(
+        string $nombre, 
+        int $usuarioId, 
+        int $limite = 5
+    ): array;
 }
