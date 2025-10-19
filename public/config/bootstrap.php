@@ -2,7 +2,7 @@
 // public/config/bootstrap.php
 
 // Definir raíz del proyecto (public/)
-define('PROJECT_ROOT', __DIR__);
+define('PROJECT_ROOT', dirname(__DIR__));
 
 // ========== 1. CARGAR CONFIGURACIÓN ==========
 $dbConfig = require PROJECT_ROOT . '/config/database.php';
