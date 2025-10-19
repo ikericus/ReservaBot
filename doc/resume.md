@@ -1,7 +1,7 @@
 # ReservaBot - Estructura del Proyecto
 
 ## Arquitectura
-DDD ligero y pragmático (Domain + Repository). Sin capa de UseCases para evitar pass-through innecesario.
+DDD ligero y pragmático (Domain + Repository). Sin capa de UseCases.
 
 ## Estructura de Carpetas
 ```
@@ -10,164 +10,74 @@ public_html/ (PROJECT_ROOT)
 │   ├── bootstrap.php      # Inicialización (PDO, auth, autoload, container)
 │   ├── container.php      # DI Container (Singleton)
 │   ├── database.php       # Config BD (lee .env)
-│   ├── auth.php          # Sistema de autenticación
-│   └── router.php        # Rutas y middleware
+│   ├── auth.php           # Sistema de autenticación
+│   └── router.php         # Rutas y middleware
 ├── src/
-│   ├── domain/           # Lógica de negocio (minúsculas)
-│   │   ├── reserva/
-│   │   │   ├── Reserva.php              # Entidad
-│   │   │   ├── ReservaDomain.php        # Lógica negocio
-│   │   │   ├── IReservaRepository.php   # Interfaz
-│   │   │   └── EstadoReserva.php        # Enum
-│   │   ├── cliente/
-│   │   │   ├── Cliente.php              # Entidad (datos agregados)
-│   │   │   ├── ClienteDomain.php        # Lógica negocio
-│   │   │   └── IClienteRepository.php   # Interfaz
-│   │   ├── configuracion/
-│   │   │   ├── ConfiguracionNegocio.php        # Entidad
-│   │   │   ├── ConfiguracionDomain.php         # Lógica negocio
-│   │   │   └── IConfiguracionNegocioRepository.php  # Interfaz
-│   │   ├── disponibilidad/
-│   │   │   └── IDisponibilidadRepository.php   # Interfaz (horarios)
-│   │   ├── whatsapp/
-│   │   │   ├── WhatsAppConfig.php       # Entidad config
-│   │   │   ├── Conversacion.php         # Entidad conversación
-│   │   │   ├── WhatsAppDomain.php       # Lógica negocio
-│   │   │   └── IWhatsAppRepository.php  # Interfaz
+│   ├── domain/
+│   │   ├── reserva/         # ReservaDomain
+│   │   ├── cliente/         # ClienteDomain  
+│   │   ├── configuracion/   # ConfiguracionDomain
+│   │   ├── disponibilidad/  # IDisponibilidadRepository
+│   │   ├── whatsapp/        # WhatsAppDomain
+│   │   ├── formulario/      # FormularioDomain (NUEVO)
 │   │   └── shared/
-│   │       └── Telefono.php             # Value Object
-│   └── infrastructure/   # Implementaciones (minúsculas)
-│       ├── ReservaRepository.php        # Implementación PDO
-│       ├── ClienteRepository.php        # Implementación PDO
-│       ├── ConfiguracionNegocioRepository.php  # Implementación PDO
-│       ├── DisponibilidadRepository.php        # Implementación PDO
-│       └── WhatsAppRepository.php       # Implementación PDO
-├── pages/               # Páginas web
-├── api/                 # Endpoints API
+│   └── infrastructure/
+│       ├── ReservaRepository.php, ClienteRepository.php
+│       ├── ConfiguracionNegocioRepository.php, DisponibilidadRepository.php
+│       ├── WhatsAppRepository.php
+│       └── FormularioRepository.php (NUEVO)
+├── pages/                  # Páginas web
+├── api/                    # Endpoints API
 ├── includes/
-│   ├── functions.php    # Helpers globales + flash messages
-│   ├── header.php       # Header con flash messages
+│   ├── functions.php       # Helpers globales + flash messages
+│   ├── header.php          # Header con flash messages
 │   ├── footer.php
 │   └── sidebar.php
-└── index.php           # Entry point (define PROJECT_ROOT)
-
-/.env                   # Credenciales (NO en Git, fuera de public_html)
-```
-
-## Constantes
-```php
-PROJECT_ROOT  // = /public_html (definida en index.php)
+└── index.php               # Entry point (define PROJECT_ROOT)
 ```
 
 ## Convenciones
-
-### Rutas
-- **Carpetas**: minúsculas (`src/domain/reserva/`)
-- **Archivos**: PascalCase (`Reserva.php`, `Container.php`)
-- **Siempre usar**: `PROJECT_ROOT . '/ruta'`
-
-### Nomenclatura
-- **Domain**: `ReservaDomain` (no Service)
-- **Infrastructure**: `ReservaRepository` (no PDOReservaRepository)
+- **Carpetas**: minúsculas (`src/domain/formulario/`)
+- **Archivos**: PascalCase (`Formulario.php`)
 - **Métodos Repo**: `obtenerPor...` (no `findBy...`)
-
-### Autoload
-```php
-ReservaBot\Domain\Reserva\Reserva 
-→ src/domain/reserva/Reserva.php
-```
-Carpetas en minúsculas, archivos case-sensitive.
 
 ## Dominios del Sistema
 
 ### 1. ReservaDomain
-**Responsabilidad**: Gestión de reservas y disponibilidad de horarios.
-
-**Métodos principales**:
-- `obtenerTodasReservasUsuario()` - Todas las reservas
-- `obtenerReservasPendientes()` - Solo pendientes
-- `obtenerReservasConfirmadas()` - Solo confirmadas
-- `obtenerReservasPorFecha()` - Reservas de un día
-- `obtenerReservasPorRango()` - Reservas entre fechas
-- `crearReserva()` - Nueva reserva con validación
-- `confirmarReserva()` - Cambiar estado a confirmada
-- `cancelarReserva()` - Cambiar estado a cancelada
-- `modificarReserva()` - Editar fecha/hora
-- `eliminarReserva()` - Eliminar reserva
-- `verificarDisponibilidad()` - Valida horario + negocio
-- `obtenerHorasDisponibles()` - Horas libres del día
+Gestión de reservas y disponibilidad.
+- `obtenerReservasPorFecha()`, `obtenerReservasPorRango()`
+- `crearReserva()`, `confirmarReserva()`, `cancelarReserva()`
+- `verificarDisponibilidad()`, `obtenerHorasDisponibles()`
 
 ### 2. ClienteDomain
-**Responsabilidad**: Estadísticas y listados de clientes (agregación de reservas).
-
-**Métodos principales**:
-- `obtenerDetalleCliente()` - Estadísticas + reservas de un cliente
-- `listarClientes()` - Lista paginada con búsqueda
-
-**Entity Cliente**: Datos agregados (total reservas, confirmadas, pendientes, fechas).
+Estadísticas y listados de clientes.
+- `obtenerDetalleCliente()`, `listarClientes()`
 
 ### 3. ConfiguracionDomain
-**Responsabilidad**: Configuración general del negocio (nombre, datos contacto, horarios, etc).
-
-**Métodos principales**:
-- `obtenerConfiguraciones()` - Todas las configs
-- `actualizarConfiguracion()` - Una config
-- `actualizarMultiples()` - Varias configs
-
-**Tabla**: `configuraciones_usuario` (por usuario).
+Configuración del negocio.
+- `obtenerConfiguraciones()`, `actualizarConfiguracion()`
 
 ### 4. DisponibilidadRepository
-**Responsabilidad**: Horarios de apertura y disponibilidad (sin domain, solo repo).
-
-**Métodos principales**:
-- `estaDisponible()` - Verifica si hora está en horario
-- `obtenerHorasDelDia()` - Todas las horas configuradas
-- `obtenerHorarioDia()` - Config de un día específico
-- `obtenerIntervalo()` - Intervalo entre citas (minutos)
-
-**Tabla**: `configuraciones_usuario` (horarios: `horario_lun`, `horario_mar`, etc + `intervalo`).
+Horarios de apertura (sin domain, solo repo).
+- `estaDisponible()`, `obtenerHorasDelDia()`, `obtenerIntervalo()`
 
 ### 5. WhatsAppDomain
-**Responsabilidad**: Gestión de WhatsApp y conversaciones.
+Gestión de WhatsApp y conversaciones.
+- `obtenerConfiguracion()`, `iniciarConexion()`, `desconectar()`
+- `obtenerConversaciones()`, `registrarMensaje()`, `contarNoLeidas()`
 
-**Métodos principales**:
-- `obtenerConfiguracion()` - Config WhatsApp del usuario
-- `iniciarConexion()` - Inicia proceso de conexión con QR
-- `confirmarConexion()` - Marca como conectado
-- `desconectar()` - Desvincula WhatsApp
-- `configurarMensajesAutomaticos()` - Config auto-mensajes
-- `obtenerConversaciones()` - Lista conversaciones recientes
-- `registrarMensaje()` - Guarda mensaje en conversación
-- `marcarComoLeida()` - Marca conversación como leída
-- `contarNoLeidas()` - Contador de no leídas
-- `obtenerEstadisticas()` - Stats de mensajería
-- `puedeEnviarMensajes()` - Verifica si puede enviar
+### 6. FormularioDomain ✅ NUEVO
+Gestión de formularios públicos de reservas.
+- `crearFormulario()` - Slug único generado automáticamente
+- `obtenerFormularioPorSlug()` - Acceso público por slug
+- `obtenerFormulariosUsuario()` - Lista con/sin estadísticas
+- `actualizarFormulario()`, `eliminarFormulario()`
+- `activarFormulario()`, `desactivarFormulario()`
 
-**Entities**: 
-- `WhatsAppConfig` (estado conexión, phone, config auto-mensajes)
-- `Conversacion` (conversaciones con clientes)
+**Entity**: `Formulario` (personalización visual, info empresa, confirmación automática)
+**Tabla**: `formularios_publicos`
 
-**Tabla**: `whatsapp_config`, `whatsapp_conversaciones`
-
-## Uso en Páginas/APIs (DDD)
-
-### Ejemplo completo:
-```php
-// pages/whatsapp.php
-
-$currentUser = getAuthenticatedUser();
-$userId = $currentUser['id'];
-
-try {
-    $whatsappDomain = getContainer()->getWhatsAppDomain();
-    $config = $whatsappDomain->obtenerConfiguracion($userId);
-    
-    $whatsappConfig = $config->toArray();
-    $connectionStatus = $config->getStatus();
-} catch (Exception $e) {
-    setFlashError('Error: ' . $e->getMessage());
-}
-```
+## Uso en Páginas/APIs
 
 ### Páginas legacy (pendientes de migrar)
 ```php
@@ -175,124 +85,73 @@ try {
 session_start();
 require_once '../includes/db-config.php';
 require_once '../includes/auth.php';
-
 // Consultas SQL directas
 $stmt = $pdo->prepare("SELECT * FROM ...");
 
-// ✅ Debe migrar a:
-// - Eliminar requires (bootstrap ya cargado)
-// - Usar Domain/Repository
-// - Usar flash messages en vez de error_log
-```
-
-## Router
-- Middleware `['auth']` valida automáticamente
-- Bootstrap se carga antes de ejecutar cualquier ruta
-- No hace falta `session_start()` ni `require_once` en páginas
-- Usuario disponible via `getAuthenticatedUser()`
-
-## Base de Datos
-- Credenciales en `.env` (fuera de public_html)
-- PDO disponible via `getPDO()`
-- Container inyecta PDO a repositorios
-
-## Tablas Principales
-
-### reservas
-Reservas del sistema.
-- Campos: id, usuario_id, nombre, telefono, whatsapp_id, fecha, hora, mensaje, estado, notas_internas, created_at, updated_at
-
-### configuraciones_usuario
-Configuraciones por usuario (horarios + config negocio).
-- Campos: id, usuario_id, clave, valor, created_at, updated_at
-- Ejemplos claves: `horario_lun`, `horario_mar`, ..., `horario_dom`, `nombre_negocio`, `intervalo`
-
-### whatsapp_config
-Configuración WhatsApp por usuario.
-- Campos: id, usuario_id, phone_number, status, qr_code, last_activity, auto_confirmacion, auto_recordatorio, auto_bienvenida, created_at, updated_at
-
-### whatsapp_conversaciones
-Conversaciones de WhatsApp.
-- Campos: id, usuario_id, whatsapp_id, nombre, telefono, ultimo_mensaje, ultima_actividad, no_leido, created_at, updated_at
-
-## Flash Messages
 ```php
-// Establecer mensajes
-setFlashError('Error al guardar');
-setFlashSuccess('Reserva confirmada');
-setFlashInfo('Recuerda configurar tu horario');
+// Obtener dominio desde container
+$formularioDomain = getContainer()->getFormularioDomain();
+$reservaDomain = getContainer()->getReservaDomain();
 
-// Se muestran automáticamente en header.php
-// Los mensajes se limpian después de mostrarse
+// Usar métodos del dominio
+$formularios = $formularioDomain->obtenerFormulariosUsuario($userId);
+$reservas = $reservaDomain->obtenerReservasPorFecha($fechaObj, $userId);
+
+// Convertir a array para vistas
+$data = array_map(fn($f) => $f->toArray(), $formularios);
 ```
+
 
 ## Helpers Globales
 ```php
-// BD y Container
 getPDO()                    // Conexión BD
 getContainer()              // DI Container
-hasContainer()              // Bool container disponible
-
-// Auth
-isAuthenticated()           // Bool auth
 getAuthenticatedUser()      // Array con datos usuario
-getCurrentUserId()          // ID usuario autenticado
-
-// Flash Messages
 setFlashError($msg)         // Mensaje de error
 setFlashSuccess($msg)       // Mensaje de éxito
-setFlashInfo($msg)          // Mensaje informativo
-getFlashMessages()          // Obtener y limpiar mensajes
 ```
 
 ## Páginas Migradas a DDD ✅
-- `pages/reservas.php` - Lista de reservas
-- `pages/whatsapp.php` - WhatsApp y conversaciones
+- `pages/reservas.php` - ReservaDomain
+- `pages/whatsapp.php` - WhatsAppDomain
+- `pages/dia.php` - ReservaDomain
+- `pages/semana.php` - ReservaDomain
+- `pages/mes.php` - ReservaDomain
+- `pages/formularios.php` - FormularioDomain
 
-## Páginas Legacy (Pendientes) ⚠️
-### Próximas a migrar:
+## Páginas Pendientes ⚠️
 - `pages/calendario.php` - Vista calendario → ReservaDomain
-- `pages/dia.php` - Vista día → ReservaDomain
-- `pages/day.php` - Vista día (legacy) → ReservaDomain
-- `pages/cliente-detail.php` - Detalle cliente → ClienteDomain
-- `pages/clientes.php` - Lista clientes → ClienteDomain
-- `pages/configuracion.php` - Configuración → ConfiguracionDomain
+- `pages/cliente-detail.php` - ClienteDomain
+- `pages/clientes.php` - ClienteDomain  
+- `pages/configuracion.php` - ConfiguracionDomain
+- `pages/reservar.php` - FormularioDomain (actualizar consulta slug)
 
-### Otras pendientes:
-- `pages/semana.php` - Calendario semana
-- `pages/mes.php` - Calendario mes
-- `pages/conversaciones.php` - Conversaciones WhatsApp (puede usar WhatsAppDomain)
-
-### APIs pendientes:
-- `api/crear-reserva.php`
-- `api/actualizar-reserva.php`
-- `api/eliminar-reserva.php`
+## APIs Pendientes
+- `api/crear-reserva.php`, `api/actualizar-reserva.php`, `api/eliminar-reserva.php`
 - `api/horas-disponibles.php`
-- `api/whatsapp-connect.php` - Usar WhatsAppDomain
-- `api/whatsapp-disconnect.php` - Usar WhatsAppDomain
-- `api/whatsapp-status.php` - Usar WhatsAppDomain
-- `api/whatsapp-conversations.php` - Usar WhatsAppDomain
-- `api/save-auto-message-config.php` - Usar WhatsAppDomain
+- `api/whatsapp-*.php` - Usar WhatsAppDomain
+- `api/crear-reserva-publica.php` - Usar FormularioDomain
 
-**Patrón de migración:**
-1. Eliminar `session_start()`, `require_once db-config`, `require_once auth`
-2. Reemplazar consultas SQL directas por Domain/Repository
-3. Usar `setFlashError()` en vez de `error_log()`
-4. Convertir objetos Domain a arrays con `->toArray()` para vistas
+## Patrón de Migración
+1. Eliminar `require_once` de db-config, functions, auth
+2. Eliminar consultas SQL directas. Usar `getContainer()->getDomain()`
+3. Convertir entities a arrays: `array_map(fn($e) => $e->toArray(), $entities)`
+4. Usar `setFlashError()` / `setFlashSuccess()`
+
+## Tablas Principales
+- `reservas` - Reservas del sistema
+- `configuraciones_usuario` - Config por usuario + horarios
+- `whatsapp_config`, `whatsapp_conversaciones` - WhatsApp
+- `formularios_publicos` - Formularios públicos (NUEVO)
 
 ## Flujo de Petición
 ```
 1. .htaccess → index.php
-2. index.php → define PROJECT_ROOT, carga router.php
-3. router.php → carga bootstrap.php, ejecuta middleware ['auth']
-4. bootstrap.php → carga auth.php, functions.php, autoload, Container
-5. Página/API → usa getContainer()->getReservaDomain() / getWhatsAppDomain()
+2. index.php → router.php
+3. router.php → bootstrap.php → middleware ['auth']
+4. bootstrap.php → auth.php, functions.php, autoload, Container
+5. Página → getContainer()->getDomain()
 ```
-
-## Pendientes
-- Migrar páginas y APIs legacy a DDD
-- Tests unitarios para Domain
-- Crear tablas `whatsapp_config` y `whatsapp_conversaciones` en BD
 
 ## Estilo de Respuesta
 Proponer dirección de los cambios antes de crear código. Código directo. Sin explicaciones largas previas. Escueto.
