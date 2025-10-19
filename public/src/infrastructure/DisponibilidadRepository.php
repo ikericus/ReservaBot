@@ -1,5 +1,5 @@
 <?php
-// public/src/infrastructure/DisponibilidadRepository.php
+// src/infrastructure/DisponibilidadRepository.php
 
 namespace ReservaBot\Infrastructure;
 

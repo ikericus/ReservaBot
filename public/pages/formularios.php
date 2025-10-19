@@ -1,116 +1,80 @@
 <?php
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
+// pages/formularios.php
 
 // Configurar la página actual
 $pageTitle = 'ReservaBot - Enlaces de Reserva';
 $currentPage = 'formularios';
 $pageScript = 'formularios';
 
-// Mensaje de estado
-$mensaje = '';
-$tipoMensaje = '';
-
 // Obtener usuario
 $currentUser = getAuthenticatedUser();
-$usuario_id =  $currentUser['id'];
+$usuario_id = $currentUser['id'];
+
+$formularioDomain = getContainer()->getFormularioDomain();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Procesar eliminación de enlace
     if(isset($_POST['eliminar_enlace'])) {
-
         $id = intval($_POST['id'] ?? 0);
-    
-        if ($id > 0) {
-            try {
-                // Eliminar el formulario (simplificado - ya no hay tablas relacionadas complejas)
-                getPDO()->beginTransaction();
-                
-                // Eliminar referencias en origen_reservas (opcional)
-                $stmt = getPDO()->prepare("DELETE FROM origen_reservas WHERE formulario_id = ?");
-                $stmt->execute([$id]);
-                
-                // Eliminar el formulario
-                $stmt = getPDO()->prepare("DELETE FROM formularios_publicos WHERE id = ?");
-                $stmt->execute([$id]);
-                
-                getPDO()->commit();
-                
-                $mensaje = 'Enlace eliminado correctamente';
-                $tipoMensaje = 'success';
-            } catch (Exception $e) {
-                getPDO()->rollBack();
-                $mensaje = 'Error al eliminar el enlace: ' . $e->getMessage();
-                $tipoMensaje = 'error';
+        
+        try {
+            $eliminado = $formularioDomain->eliminarFormulario($id, $usuario_id);
+            
+            if ($eliminado) {
+                setFlashSuccess('Enlace eliminado correctamente');
+            } else {
+                setFlashError('Formulario no encontrado o no tienes permisos');
             }
-        } else {
-            $mensaje = 'ID de enlace no válido';
-            $tipoMensaje = 'error';
+        } catch (Exception $e) {
+            setFlashError('Error al eliminar el enlace');
+            error_log("Error eliminando formulario: " . $e->getMessage());
         }
     }
     // Procesar creación de enlace
     if (isset($_POST['crear_enlace'])) {
-
-        $nombre = trim($_POST['nombre'] ?? '');
-        $descripcion = ''; // Ya no usamos descripción
-        $confirmacionAutomatica = isset($_POST['confirmacion_auto']) ? 1 : 0;
-        
-        if (!empty($nombre)) {
-            try {
-                // Generar slug único
-                $slug = bin2hex(random_bytes(2));
-                
-                // Verificar que el slug sea único
-                $stmt = getPDO()->prepare("SELECT id FROM formularios_publicos WHERE slug = ?");
-                $stmt->execute([$slug]);
-                if ($stmt->fetch()) {
-                    $slug .= '-' . time();
-                }
-                
-                // Insertar en base de datos 
-                $sql = 'INSERT INTO formularios_publicos (usuario_id, nombre, descripcion, empresa_nombre, empresa_logo, color_primario, color_secundario, mensaje_bienvenida, direccion, telefono_contacto, email_contacto, slug, activo, confirmacion_automatica, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NOW())';
-
-                $stmt = getPDO()->prepare($sql);
-                $result = $stmt->execute([
-                    $usuario_id,
-                    $nombre,
-                    '', // descripción vacía
-                    $_POST['empresa_nombre'] ?? $currentUser['negocio'] ?? '',
-                    $_POST['empresa_logo'] ?? '',
-                    $_POST['color_primario'] ?? '#667eea',
-                    $_POST['color_secundario'] ?? '#764ba2',
-                    $_POST['mensaje_bienvenida'] ?? '',
-                    $_POST['direccion'] ?? '',
-                    $_POST['telefono_contacto'] ?? '',
-                    $_POST['email_contacto'] ?? '',
-                    $slug,
-                    $confirmacionAutomatica
-                ]);
-                
-                $mensaje = 'Enlace de reserva creado correctamente';
-                $tipoMensaje = 'success';
-            } catch (Exception $e) {
-                error_log('Error al crear formulario: ' . $e->getMessage());
-                $mensaje = 'Error al crear formulario: ' . $e->getMessage();
-                $tipoMensaje = 'error';
-            }
-        } else {
-            $mensaje = 'El nombre es obligatorio';
-            $tipoMensaje = 'error';
+        try {
+            $formularioDomain->crearFormulario([
+                'nombre' => trim($_POST['nombre'] ?? ''),
+                'activo' => true,
+                'confirmacion_automatica' => isset($_POST['confirmacion_auto']),
+                'empresa_nombre' => $_POST['empresa_nombre'] ?? $currentUser['negocio'] ?? null,
+                'empresa_logo' => !empty($_POST['empresa_logo']) ? $_POST['empresa_logo'] : null,
+                'direccion' => !empty($_POST['direccion']) ? $_POST['direccion'] : null,
+                'telefono_contacto' => !empty($_POST['telefono_contacto']) ? $_POST['telefono_contacto'] : null,
+                'email_contacto' => !empty($_POST['email_contacto']) ? $_POST['email_contacto'] : null,
+                'color_primario' => $_POST['color_primario'] ?? '#667eea',
+                'color_secundario' => $_POST['color_secundario'] ?? '#764ba2',
+                'mensaje_bienvenida' => !empty($_POST['mensaje_bienvenida']) ? $_POST['mensaje_bienvenida'] : null,
+            ], $usuario_id);
+            
+            setFlashSuccess('Enlace de reserva creado correctamente');
+            
+        } catch (InvalidArgumentException $e) {
+            setFlashError('Error de validación: ' . $e->getMessage());
+        } catch (Exception $e) {
+            setFlashError('Error al crear el formulario');
+            error_log("Error creando formulario: " . $e->getMessage());
         }
     }
 }
 
 // Obtener enlaces existentes
 try {
-    $stmt = getPDO()->prepare("SELECT * FROM formularios_publicos WHERE usuario_id = ? ORDER BY created_at DESC");
-    $stmt->execute([$usuario_id]);
-    $enlaces = $stmt->fetchAll();
+    $formulariosEntities = $formularioDomain->obtenerFormulariosUsuario($usuario_id);
+    $enlaces = array_map(fn($f) => $f->toArray(), $formulariosEntities);
 } catch (Exception $e) {
+    setFlashError('Error al obtener formularios: ' . $e->getMessage());
     $enlaces = [];
+}
+
+try {
+    $reservaDomain = getContainer()->getReservaDomain();
+    $reservasEntities = $reservaDomain->obtenerReservasPorFecha($fechaObj, $userId);
+    $reservas = array_map(fn($r) => $r->toArray(), $reservasEntities);
+} catch (Exception $e) {
+    setFlashError('Error al obtener reservas: ' . $e->getMessage());
+    $reservas = [];
 }
 
 // Incluir cabecera

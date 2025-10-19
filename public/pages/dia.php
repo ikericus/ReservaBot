@@ -1,5 +1,5 @@
 <?php
-// pages/doa.php
+// pages/dia.php
 
 // Configurar la página actual
 $currentPage = 'calendario';

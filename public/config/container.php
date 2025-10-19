@@ -7,11 +7,13 @@ use ReservaBot\Domain\Reserva\ReservaDomain;
 use ReservaBot\Domain\Cliente\ClienteDomain;
 use ReservaBot\Domain\Configuracion\ConfiguracionDomain;
 use ReservaBot\Domain\WhatsApp\WhatsAppDomain;
+use ReservaBot\Domain\Formulario\FormularioDomain;
 use ReservaBot\Infrastructure\ReservaRepository;
 use ReservaBot\Infrastructure\ClienteRepository;
 use ReservaBot\Infrastructure\DisponibilidadRepository;
 use ReservaBot\Infrastructure\ConfiguracionNegocioRepository;
 use ReservaBot\Infrastructure\WhatsAppRepository;
+use ReservaBot\Infrastructure\FormularioRepository;
 use PDO;
 
 class Container {
@@ -70,6 +72,20 @@ class Container {
         return $this->services['whatsappDomain'];
     }
     
+    /**
+     * Obtener instancia de FormularioDomain
+     * 
+     * @return FormularioDomain
+     */
+    public function getFormularioDomain(): FormularioDomain {
+        if (!isset($this->services['formularioDomain'])) {
+            $this->services['formularioDomain'] = new FormularioDomain(
+                $this->getFormularioRepository()
+            );
+        }
+        return $this->services['formularioDomain'];
+    }
+    
     // ==================== REPOSITORIES ====================
     
     private function getReservaRepository(): ReservaRepository {
@@ -106,5 +122,12 @@ class Container {
             $this->services['whatsappRepository'] = new WhatsAppRepository($this->pdo);
         }
         return $this->services['whatsappRepository'];
+    }
+    
+    private function getFormularioRepository(): FormularioRepository {
+        if (!isset($this->services['formularioRepository'])) {
+            $this->services['formularioRepository'] = new FormularioRepository($this->pdo);
+        }
+        return $this->services['formularioRepository'];
     }
 }
