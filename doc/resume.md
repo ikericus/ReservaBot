@@ -107,7 +107,7 @@ Carpetas en minúsculas, archivos case-sensitive.
 **Entity Cliente**: Datos agregados (total reservas, confirmadas, pendientes, fechas).
 
 ### 3. ConfiguracionDomain
-**Responsabilidad**: Configuración general del negocio (nombre, datos contacto, etc).
+**Responsabilidad**: Configuración general del negocio (nombre, datos contacto, horarios, etc).
 
 **Métodos principales**:
 - `obtenerConfiguraciones()` - Todas las configs
@@ -123,8 +123,9 @@ Carpetas en minúsculas, archivos case-sensitive.
 - `estaDisponible()` - Verifica si hora está en horario
 - `obtenerHorasDelDia()` - Todas las horas configuradas
 - `obtenerHorarioDia()` - Config de un día específico
+- `obtenerIntervalo()` - Intervalo entre citas (minutos)
 
-**Tabla**: `configuraciones_usuario` (horarios: `horario_lun`, `horario_mar`, etc).
+**Tabla**: `configuraciones_usuario` (horarios: `horario_lun`, `horario_mar`, etc + `intervalo`).
 
 ### 5. WhatsAppDomain
 **Responsabilidad**: Gestión de WhatsApp y conversaciones.
@@ -204,7 +205,7 @@ Reservas del sistema.
 ### configuraciones_usuario
 Configuraciones por usuario (horarios + config negocio).
 - Campos: id, usuario_id, clave, valor, created_at, updated_at
-- Ejemplos claves: `horario_lun`, `nombre_negocio`, `intervalo`
+- Ejemplos claves: `horario_lun`, `horario_mar`, ..., `horario_dom`, `nombre_negocio`, `intervalo`
 
 ### whatsapp_config
 Configuración WhatsApp por usuario.

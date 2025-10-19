@@ -24,11 +24,6 @@ interface IDisponibilidadRepository {
     public function obtenerHorarioDia(string $dia, int $usuarioId): array;
     
     /**
-     * Obtiene información general del negocio para contexto de IA
-     */
-    public function obtenerInformacionNegocio(int $usuarioId): array;
-    
-    /**
      * Obtiene el intervalo de tiempo entre citas (en minutos)
      */
     public function obtenerIntervalo(int $usuarioId): int;

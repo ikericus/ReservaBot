@@ -40,7 +40,7 @@ class DisponibilidadRepository implements IDisponibilidadRepository {
         $clave = "horario_{$dia}";
         
         $stmt = $this->pdo->prepare(
-            "SELECT valor FROM configuraciones WHERE clave = ? AND usuario_id = ?"
+            "SELECT valor FROM configuraciones_usuario WHERE clave = ? AND usuario_id = ?"
         );
         $stmt->execute([$clave, $usuarioId]);
         $valor = $stmt->fetchColumn();
@@ -55,25 +55,9 @@ class DisponibilidadRepository implements IDisponibilidadRepository {
         return $this->parseHorarioConfig($valor);
     }
     
-    public function obtenerInformacionNegocio(int $usuarioId): array {
-        $sql = "SELECT clave, valor FROM configuraciones 
-                WHERE usuario_id = ? 
-                AND clave IN ('nombre_negocio', 'tipo_negocio', 'direccion', 'telefono', 'email')";
-        
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$usuarioId]);
-        
-        $info = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $info[$row['clave']] = $row['valor'];
-        }
-        
-        return $info;
-    }
-    
     public function obtenerIntervalo(int $usuarioId): int {
         $stmt = $this->pdo->prepare(
-            "SELECT valor FROM configuraciones WHERE clave = 'intervalo' AND usuario_id = ?"
+            "SELECT valor FROM configuraciones_usuario WHERE clave = 'intervalo' AND usuario_id = ?"
         );
         $stmt->execute([$usuarioId]);
         $valor = $stmt->fetchColumn();
