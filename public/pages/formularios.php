@@ -68,15 +68,6 @@ try {
     $enlaces = [];
 }
 
-try {
-    $reservaDomain = getContainer()->getReservaDomain();
-    $reservasEntities = $reservaDomain->obtenerReservasPorFecha($fechaObj, $userId);
-    $reservas = array_map(fn($r) => $r->toArray(), $reservasEntities);
-} catch (Exception $e) {
-    setFlashError('Error al obtener reservas: ' . $e->getMessage());
-    $reservas = [];
-}
-
 // Incluir cabecera
 include 'includes/header.php';
 ?>
