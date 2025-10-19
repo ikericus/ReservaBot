@@ -9,6 +9,20 @@ on:
       - 'server/server.js'
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - name: Download PHPUnit
+        run: |
+          wget https://phar.phpunit.de/phpunit-10.phar -O phpunit
+          chmod +x phpunit
+      - name: Run tests
+        run: php phpunit --testdox
   deploy:
     name: Deploy to FTP #and VPS
     runs-on: ubuntu-latest
