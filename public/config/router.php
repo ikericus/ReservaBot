@@ -1,6 +1,9 @@
 <?php
 // public/config/router.php
 
+// Definir raíz del proyecto (public/)
+define('PROJECT_ROOT', dirname(__DIR__));
+
 /**
  * Router centralizado para ReservaBot
  * Maneja todas las rutas de la aplicación
