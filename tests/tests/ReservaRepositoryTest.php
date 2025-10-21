@@ -55,11 +55,10 @@ class ReservaRepositoryTest extends TestCase
         // 3. Insertar usuario test
         $this->db->exec("INSERT INTO usuarios (id, nombre, email, plan) VALUES (1, 'Test', 'test@test.com', 'premium')");
         
-        // 4. Configurar horario (lunes y sábado 9-18)
+        // 4. Configurar horario (lunes 9-18)
         $this->db->exec("
             INSERT INTO configuraciones_usuario (usuario_id, clave, valor) VALUES 
             (1, 'horario_lunes', '{\"activo\":true,\"ventanas\":[{\"inicio\":\"09:00\",\"fin\":\"18:00\",\"capacidad\":4}]}'),
-            (1, 'horario_sabado', '{\"activo\":true,\"ventanas\":[{\"inicio\":\"09:00\",\"fin\":\"18:00\",\"capacidad\":4}]}'),
             (1, 'intervalo_minutos', '60')
         ");
         
@@ -73,11 +72,11 @@ class ReservaRepositoryTest extends TestCase
     
     public function testCrearReservaBasico()
     {
-        // Crear una reserva (fecha futura)
+        // Crear una reserva (fecha futura - lunes)
         $reserva = $this->reservaDomain->crearReserva(
             'Juan Pérez',
             '612345678',
-            new DateTime('2025-10-25'),
+            new DateTime('2025-10-27'),
             '10:00',
             1  // usuario_id
         );
@@ -90,18 +89,18 @@ class ReservaRepositoryTest extends TestCase
     
     public function testObtenerReservasPorFecha()
     {
-        // Crear una reserva (fecha futura)
+        // Crear una reserva (fecha futura - lunes)
         $this->reservaDomain->crearReserva(
             'Juan Pérez',
             '612345678',
-            new DateTime('2025-10-25'),
+            new DateTime('2025-10-27'),
             '10:00',
             1
         );
         
         // Obtenerlas por fecha
         $reservas = $this->reservaDomain->obtenerReservasPorFecha(
-            new DateTime('2025-10-25'),
+            new DateTime('2025-10-27'),
             1
         );
         
@@ -112,9 +111,9 @@ class ReservaRepositoryTest extends TestCase
     
     public function testVerificarDisponibilidad()
     {
-        // Comprobar que sábado 10:00 está disponible (fecha futura)
+        // Comprobar que lunes 10:00 está disponible
         $disponible = $this->reservaDomain->verificarDisponibilidad(
-            new DateTime('2025-10-25'),
+            new DateTime('2025-10-27'),
             '10:00',
             1
         );
