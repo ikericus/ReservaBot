@@ -1,5 +1,5 @@
 <?php
-// tests/bootstrap.php
+// tests/bootstrap.php 
 
 // Definir raíz del proyecto
 define('PROJECT_ROOT', dirname(__DIR__) . '/public');
