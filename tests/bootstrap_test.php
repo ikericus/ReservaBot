@@ -1,6 +1,9 @@
 <?php
 // tests/bootstrap.php 
 
+// Cargar el wrapper de SQLite
+require_once __DIR__ . '/SQLitePDOWrapper.php';
+
 // Definir raíz del proyecto
 define('PROJECT_ROOT', dirname(__DIR__) . '/public');
 
@@ -10,8 +13,11 @@ $GLOBALS['test_mode'] = true;
 // ========== PDO MOCK PARA TESTS ==========
 // Crear PDO en memoria para tests
 try {
-    $GLOBALS['pdo'] = new PDO('sqlite::memory:');
-    $GLOBALS['pdo']->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = new PDO('sqlite::memory:');
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Envolver con nuestro adapter
+    $GLOBALS['pdo'] = new SQLitePDOWrapper($pdo);
     
     // Crear estructura de tablas mínima para tests
     $GLOBALS['pdo']->exec("
@@ -27,6 +33,7 @@ try {
             estado VARCHAR(20) DEFAULT 'pendiente',
             whatsapp_id VARCHAR(50),
             access_token VARCHAR(64),
+            notas_internas TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
@@ -62,7 +69,7 @@ try {
     die("Error creando BD test: " . $e->getMessage());
 }
 
-function getPDO(): ?PDO {
+function getPDO() {
     return $GLOBALS['pdo'] ?? null;
 }
 
