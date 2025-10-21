@@ -255,12 +255,19 @@ setFlashSuccess($msg)       // Mensaje de éxito
 ```
 1. .htaccess → index.php
 2. index.php → router.php
-3. router.php → bootstrap.php → middleware ['auth']
-4. bootstrap.php → auth.php, functions.php, autoload, Container
-5. Página/API → getContainer()->getDomain()
-6. Domain → Repository → BD
-7. Domain → ServerManager → Servidor externo (si aplica)
+3. router.php → bootstrap.php
+4. bootstrap.php → middleware ['auth']
+5. bootstrap.php → auth.php, functions.php, autoload, Container
+6. Página/API → getContainer()->getDomain()
+7. Domain → Repository → BD
+8. Domain → ServerManager → Servidor externo (si aplica)
 ```
 
+## Tests
+Tests de integración con SQLite en memoria. Sin mocks complejos.
+- `tests/bootstrap_test.php` - Setup mínimo (20 líneas)
+- `tests/tests/ReservaRepositoryTest.php` - 3 tests básicos
+- Ejecutar: `phpunit`
+
 ## Estilo de Respuesta
-Proponer dirección de los cambios antes de crear código. Solicita ficheros si es necesario antes de crear código. Respuestas sin explicaciones largas previas. Escueto.
+Proponer dirección antes de crear código. Solicitar ficheros si es necesario. Respuestas escuetas.
