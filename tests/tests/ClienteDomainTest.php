@@ -23,33 +23,39 @@ final class ClienteDomainTest extends TestCase
             INSERT INTO configuraciones_usuario (usuario_id, clave, valor)
             VALUES 
                 (1, 'horario_lunes', '{\"activo\":true,\"ventanas\":[{\"inicio\":\"09:00\",\"fin\":\"18:00\",\"capacidad\":4}]}'),
+                (1, 'horario_martes', '{\"activo\":true,\"ventanas\":[{\"inicio\":\"09:00\",\"fin\":\"18:00\",\"capacidad\":4}]}'),
+                (1, 'horario_miercoles', '{\"activo\":true,\"ventanas\":[{\"inicio\":\"09:00\",\"fin\":\"18:00\",\"capacidad\":4}]}'),
                 (1, 'intervalo_minutos', '60')
         ");
         
         // Crear reservas de prueba para varios clientes
-        $this->reservaDomain->crearReserva([
-            'fecha' => '2025-10-20',
-            'hora' => '10:00',
-            'nombre' => 'Juan Pérez',
-            'telefono' => '612345678',
-            'estado' => 'confirmada'
-        ], $this->usuarioId);
+        $reserva1 = $this->reservaDomain->crearReserva(
+            'Juan Pérez',
+            '612345678',
+            new \DateTime('2025-10-20'),
+            '10:00',
+            $this->usuarioId
+        );
+        // Confirmar la primera reserva
+        $this->reservaDomain->confirmarReserva($reserva1->getId(), $this->usuarioId);
         
-        $this->reservaDomain->crearReserva([
-            'fecha' => '2025-10-21',
-            'hora' => '11:00',
-            'nombre' => 'Juan Pérez',
-            'telefono' => '612345678',
-            'estado' => 'pendiente'
-        ], $this->usuarioId);
+        $this->reservaDomain->crearReserva(
+            'Juan Pérez',
+            '612345678',
+            new \DateTime('2025-10-21'),
+            '11:00',
+            $this->usuarioId
+        );
         
-        $this->reservaDomain->crearReserva([
-            'fecha' => '2025-10-22',
-            'hora' => '12:00',
-            'nombre' => 'María García',
-            'telefono' => '623456789',
-            'estado' => 'confirmada'
-        ], $this->usuarioId);
+        $reserva3 = $this->reservaDomain->crearReserva(
+            'María García',
+            '623456789',
+            new \DateTime('2025-10-22'),
+            '12:00',
+            $this->usuarioId
+        );
+        // Confirmar la tercera reserva
+        $this->reservaDomain->confirmarReserva($reserva3->getId(), $this->usuarioId);
     }
     
     public function testListarClientes(): void
