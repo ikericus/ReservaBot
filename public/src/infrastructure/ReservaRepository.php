@@ -160,7 +160,7 @@ class ReservaRepository implements IReservaRepository {
     ): bool {
         $sql = "SELECT COUNT(*) FROM reservas 
                 WHERE fecha = ? 
-                AND TIME_FORMAT(hora, '%H:%i') = ? 
+                AND SUBSTR(hora, 1, 5) = ?
                 AND usuario_id = ?
                 AND estado IN (?, ?)";
         
