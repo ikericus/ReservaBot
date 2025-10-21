@@ -1,16 +1,13 @@
 <?php
+
 use PHPUnit\Framework\TestCase;
-
-require_once __DIR__ . '/../../public/src/domain/reserva/ReservaDomain.php';
-
-use ReservaBot\Domain\Reserva\ReservaDomain;
 
 final class ReservaDomainTest extends TestCase
 {
     public function testCrearReservaGeneraId()
     {
-        $domain = new ReservaDomain();
-        $id = $domain->crearReserva(['fecha' => '2025-10-20']);
+        $reservaDomain = getContainer()->getReservaDomain();
+        $id = $reservaDomain->crearReserva(['fecha' => '2025-10-20']);
         $this->assertNotEmpty($id);
     }
 }
