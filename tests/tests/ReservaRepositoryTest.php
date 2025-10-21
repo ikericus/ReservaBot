@@ -1,5 +1,5 @@
 <?php
-// tests/SimpleReservaTest.php
+// tests/ReservaRepositoryTest.php
 
 use PHPUnit\Framework\TestCase;
 use ReservaBot\Domain\Reserva\ReservaDomain;
@@ -8,7 +8,7 @@ use ReservaBot\Infrastructure\DisponibilidadRepository;
 use DateTime;
 use PDO;
 
-class SimpleReservaTest extends TestCase
+class ReservaRepositoryTest extends TestCase
 {
     private $db;
     private $reservaDomain;
