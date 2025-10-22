@@ -1,6 +1,20 @@
 <?php
 // public/config/bootstrap.php
 
+
+// ========== 0. CARGAR .ENV ==========
+$envPath = PROJECT_ROOT . '../.env';
+if (file_exists($envPath)) {
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || str_starts_with($line, '#')) continue;
+        if (!str_contains($line, '=')) continue;
+        list($name, $value) = explode('=', $line, 2);
+        $_ENV[$name] = trim($value);
+    }
+}
+
 // ========== 1. CARGAR CONFIGURACIÓN ==========
 $dbConfig = require PROJECT_ROOT . '/config/database.php';
 
