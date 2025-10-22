@@ -44,7 +44,7 @@ class Container {
                 $this->getAdminRepository()
             );
         }
-        return $this->instances['adminDomain'];
+        return $this->services['adminDomain'];
     }
 
     public function getReservaDomain(): ReservaDomain {
@@ -77,13 +77,13 @@ class Container {
     }
     
     public function getWhatsAppDomain(): WhatsAppDomain {
-        if (!isset($this->instances['whatsappDomain'])) {
-            $this->instances['whatsappDomain'] = new WhatsAppDomain(
+        if (!isset($this->services['whatsappDomain'])) {
+            $this->services['whatsappDomain'] = new WhatsAppDomain(
                 $this->getWhatsAppRepository(),
                 $this->getWhatsAppServerManager()
             );
         }
-        return $this->instances['whatsappDomain'];
+        return $this->services['whatsappDomain'];
     }
         
     /**
@@ -155,27 +155,27 @@ class Container {
     // ==================== SERVICIOS EXTERNOS ====================
 
     public function getWhatsAppServerManager(): IWhatsAppServerManager {
-        if (!isset($this->instances['whatsappServerManager'])) {
+        if (!isset($this->services['whatsappServerManager'])) {
             $serverUrl = $_ENV['WHATSAPP_SERVER_URL'];
             $jwtSecret = $_ENV['JWT_SECRET'];
             
-            $this->instances['whatsappServerManager'] = new WhatsAppServerManager(
+            $this->services['whatsappServerManager'] = new WhatsAppServerManager(
                 $serverUrl,
                 $jwtSecret
             );
         }
-        return $this->instances['whatsappServerManager'];
+        return $this->services['whatsappServerManager'];
     }
 
     public function getWhatsAppWebhookHandler(): WhatsAppWebhookHandler {
-        if (!isset($this->instances['whatsappWebhookHandler'])) {
+        if (!isset($this->services['whatsappWebhookHandler'])) {
             $webhookSecret = $_ENV['WEBHOOK_SECRET'];
             
-            $this->instances['whatsappWebhookHandler'] = new WhatsAppWebhookHandler(
+            $this->services['whatsappWebhookHandler'] = new WhatsAppWebhookHandler(
                 $this->getWhatsAppDomain(),
                 $webhookSecret
             );
         }
-        return $this->instances['whatsappWebhookHandler'];
+        return $this->services['whatsappWebhookHandler'];
     }
 }
