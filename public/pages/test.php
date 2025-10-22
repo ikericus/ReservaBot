@@ -91,7 +91,7 @@ echo "<h2 class='text-xl font-bold mb-3'>5. Clases</h2>";
 
 $classes = [
     'ReservaBot\\Domain\\Reserva\\Reserva',
-    'ReservaBot\\Infrastructure\\Container',
+    'ReservaBot\\Config\\Container',
     'ReservaBot\\Infrastructure\\ReservaRepository',
 ];
 
@@ -111,7 +111,7 @@ echo "<h2 class='text-xl font-bold mb-3'>6. Archivos</h2>";
 $files = [
     'config/database.php' => PROJECT_ROOT . '/config/database.php',
     'src/domain/reserva/Reserva.php' => PROJECT_ROOT . '/src/domain/reserva/Reserva.php',
-    'src/config/Container.php' => PROJECT_ROOT . '/src/config/Container.php',
+    'config/Container.php' => PROJECT_ROOT . '/config/Container.php',
 ];
 
 foreach ($files as $name => $path) {
