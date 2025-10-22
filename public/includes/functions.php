@@ -30,22 +30,9 @@ function getFlashMessages(): array {
 }
 
 
-// Función para generar JWT (si no existe)
-function generateJWT($userId, $secret) {
-    $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
-    $payload = json_encode([
-        'userId' => $userId,
-        'iat' => time(),
-        'exp' => time() + 3600 // 1 hora
-    ]);
-    
-    $headerEncoded = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
-    $payloadEncoded = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
-    
-    $signature = hash_hmac('sha256', $headerEncoded . '.' . $payloadEncoded, $secret, true);
-    $signatureEncoded = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
-    
-    return $headerEncoded . '.' . $payloadEncoded . '.' . $signatureEncoded;
+function logMessage($msg) {
+    $path = PROJECT_ROOT . '/../../debug.log';
+    error_log(date('[Y-m-d H:i:s] ') . $msg . PHP_EOL, 3, $path);
 }
 
 // Función mejorada para hacer requests HTTP con debug detallado
@@ -145,35 +132,6 @@ function makeRequest($url, $method = 'GET', $data = null, $headers = []) {
     }
     
     return $decoded;
-}
-
-// Función para verificar conectividad básica
-function checkServerConnectivity($url) {
-    error_log("Verificando conectividad básica a: " . $url);
-    
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 5,
-        CURLOPT_CONNECTTIMEOUT => 3,
-        CURLOPT_NOBODY => true, // Solo HEAD request
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_SSL_VERIFYHOST => false
-    ]);
-    
-    $result = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
-    
-    error_log("Conectividad - HTTP Code: " . $httpCode . ", Error: " . ($error ?: 'ninguno'));
-    
-    return [
-        'success' => $result !== false && empty($error),
-        'httpCode' => $httpCode,
-        'error' => $error
-    ];
 }
 
 
@@ -286,28 +244,28 @@ function generarHorasDisponibles($ventanas, $intervalo = 30) {
  * @param PDO getPDO() Conexión a la base de datos
  * @return array Array con información del horario del día
  */
-function getHorarioDia($dia) {
-    try {
-        $stmt = getPDO()->prepare("SELECT valor FROM configuraciones WHERE clave = ?");
-        $stmt->execute(["horario_{$dia}"]);
-        $horarioConfig = $stmt->fetchColumn();
+// function getHorarioDia($dia) {
+//     try {
+//         $stmt = getPDO()->prepare("SELECT valor FROM configuraciones WHERE clave = ?");
+//         $stmt->execute(["horario_{$dia}"]);
+//         $horarioConfig = $stmt->fetchColumn();
         
-        if (!$horarioConfig) {
-            // Valores por defecto
-            $horarioConfig = in_array($dia, ['lun', 'mar', 'mie', 'jue', 'vie']) 
-                ? 'true|[{"inicio":"09:00","fin":"18:00"}]' 
-                : 'false|[]';
-        }
+//         if (!$horarioConfig) {
+//             // Valores por defecto
+//             $horarioConfig = in_array($dia, ['lun', 'mar', 'mie', 'jue', 'vie']) 
+//                 ? 'true|[{"inicio":"09:00","fin":"18:00"}]' 
+//                 : 'false|[]';
+//         }
         
-        return parseHorarioConfig($horarioConfig);
-    } catch (\PDOException $e) {
-        error_log('Error al obtener horario del día: ' . $e->getMessage());
-        return [
-            'activo' => false,
-            'ventanas' => []
-        ];
-    }
-}
+//         return parseHorarioConfig($horarioConfig);
+//     } catch (\PDOException $e) {
+//         error_log('Error al obtener horario del día: ' . $e->getMessage());
+//         return [
+//             'activo' => false,
+//             'ventanas' => []
+//         ];
+//     }
+// }
 
 /**
  * Verifica si un día y hora específicos están disponibles para reservas
@@ -317,40 +275,40 @@ function getHorarioDia($dia) {
  * @param PDO getPDO() Conexión a la base de datos
  * @return bool True si está disponible
  */
-function horaDisponible($fecha, $hora) {
-    // Obtener día de la semana
-    $diasMap = [
-        1 => 'lun', 2 => 'mar', 3 => 'mie', 4 => 'jue', 
-        5 => 'vie', 6 => 'sab', 0 => 'dom'
-    ];
-    $diaSemana = date('w', strtotime($fecha));
-    $dia = $diasMap[$diaSemana];
+// function horaDisponible($fecha, $hora) {
+//     // Obtener día de la semana
+//     $diasMap = [
+//         1 => 'lun', 2 => 'mar', 3 => 'mie', 4 => 'jue', 
+//         5 => 'vie', 6 => 'sab', 0 => 'dom'
+//     ];
+//     $diaSemana = date('w', strtotime($fecha));
+//     $dia = $diasMap[$diaSemana];
     
-    // Obtener configuración del día
-    $horarioDia = getHorarioDia($dia);
+//     // Obtener configuración del día
+//     $horarioDia = getHorarioDia($dia);
     
-    // Verificar si el día está activo
-    if (!$horarioDia['activo']) {
-        return false;
-    }
+//     // Verificar si el día está activo
+//     if (!$horarioDia['activo']) {
+//         return false;
+//     }
     
-    // Verificar si la hora está en alguna ventana
-    if (!horaEnVentanas($hora, $horarioDia['ventanas'])) {
-        return false;
-    }
+//     // Verificar si la hora está en alguna ventana
+//     if (!horaEnVentanas($hora, $horarioDia['ventanas'])) {
+//         return false;
+//     }
     
-    // Verificar si ya hay una reserva para esa fecha y hora
-    try {
-        $stmt = getPDO()->prepare('SELECT COUNT(*) FROM reservas WHERE fecha = ? AND TIME_FORMAT(hora, "%H:%i") = ? AND estado IN ("pendiente", "confirmada")');
-        $stmt->execute([$fecha, $hora]);
-        $existeReserva = $stmt->fetchColumn();
+//     // Verificar si ya hay una reserva para esa fecha y hora
+//     try {
+//         $stmt = getPDO()->prepare('SELECT COUNT(*) FROM reservas WHERE fecha = ? AND TIME_FORMAT(hora, "%H:%i") = ? AND estado IN ("pendiente", "confirmada")');
+//         $stmt->execute([$fecha, $hora]);
+//         $existeReserva = $stmt->fetchColumn();
         
-        return $existeReserva == 0;
-    } catch (\PDOException $e) {
-        error_log('Error al verificar disponibilidad: ' . $e->getMessage());
-        return false;
-    }
-}
+//         return $existeReserva == 0;
+//     } catch (\PDOException $e) {
+//         error_log('Error al verificar disponibilidad: ' . $e->getMessage());
+//         return false;
+//     }
+// }
 
 /**
  * Obtiene un resumen legible de las ventanas horarias
@@ -382,63 +340,63 @@ function getResumenVentanas($ventanas) {
 // }
 
 // Función para obtener reservas por fecha
-function getReservasByFecha($fecha) {
-    $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE fecha = ? ORDER BY hora');
-    $stmt->execute([$fecha]);
-    return $stmt->fetchAll();
-}
+// function getReservasByFecha($fecha) {
+//     $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE fecha = ? ORDER BY hora');
+//     $stmt->execute([$fecha]);
+//     return $stmt->fetchAll();
+// }
 
 // Función para obtener una reserva por ID
-function getReservaById($id) {
-    $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE id = ?');
-    $stmt->execute([$id]);
-    return $stmt->fetch();
-}
+// function getReservaById($id) {
+//     $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE id = ?');
+//     $stmt->execute([$id]);
+//     return $stmt->fetch();
+// }
 
 // Función para crear una nueva reserva
-function createReserva($data) {
-    $sql = 'INSERT INTO reservas (nombre, telefono, fecha, hora, mensaje, estado) 
-            VALUES (?, ?, ?, ?, ?, ?)';
-    $stmt = getPDO()->prepare($sql);
-    $stmt->execute([
-        $data['nombre'],
-        $data['telefono'],
-        $data['fecha'],
-        $data['hora'],
-        $data['mensaje'],
-        $data['estado'] ?? 'pendiente'
-    ]);
-    return getPDO()->lastInsertId();
-}
+// function createReserva($data) {
+//     $sql = 'INSERT INTO reservas (nombre, telefono, fecha, hora, mensaje, estado) 
+//             VALUES (?, ?, ?, ?, ?, ?)';
+//     $stmt = getPDO()->prepare($sql);
+//     $stmt->execute([
+//         $data['nombre'],
+//         $data['telefono'],
+//         $data['fecha'],
+//         $data['hora'],
+//         $data['mensaje'],
+//         $data['estado'] ?? 'pendiente'
+//     ]);
+//     return getPDO()->lastInsertId();
+// }
 
 // Función para actualizar una reserva
-function updateReserva($id, $data) {
-    $sql = 'UPDATE reservas SET 
-            nombre = ?, 
-            telefono = ?, 
-            fecha = ?, 
-            hora = ?, 
-            mensaje = ?, 
-            estado = ? 
-            WHERE id = ?';
-    $stmt = getPDO()->prepare($sql);
-    $result = $stmt->execute([
-        $data['nombre'],
-        $data['telefono'],
-        $data['fecha'],
-        $data['hora'],
-        $data['mensaje'],
-        $data['estado'],
-        $id
-    ]);
-    return $result;
-}
+// function updateReserva($id, $data) {
+//     $sql = 'UPDATE reservas SET 
+//             nombre = ?, 
+//             telefono = ?, 
+//             fecha = ?, 
+//             hora = ?, 
+//             mensaje = ?, 
+//             estado = ? 
+//             WHERE id = ?';
+//     $stmt = getPDO()->prepare($sql);
+//     $result = $stmt->execute([
+//         $data['nombre'],
+//         $data['telefono'],
+//         $data['fecha'],
+//         $data['hora'],
+//         $data['mensaje'],
+//         $data['estado'],
+//         $id
+//     ]);
+//     return $result;
+// }
 
 // Función para eliminar una reserva
-function deleteReserva($id) {
-    $stmt = getPDO()->prepare('DELETE FROM reservas WHERE id = ?');
-    return $stmt->execute([$id]);
-}
+// function deleteReserva($id) {
+//     $stmt = getPDO()->prepare('DELETE FROM reservas WHERE id = ?');
+//     return $stmt->execute([$id]);
+// }
 
 // Función para formatear la fecha en formato legible
 function formatearFecha($fecha) {

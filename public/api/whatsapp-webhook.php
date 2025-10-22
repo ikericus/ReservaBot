@@ -22,6 +22,8 @@ if (strpos($contentType, 'application/json') === false) {
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
+logMessage("Webhook recibido: " . $input);
+
 if (json_last_error() !== JSON_ERROR_NONE) {
     http_response_code(400);
     echo json_encode(['error' => 'JSON inválido']);
