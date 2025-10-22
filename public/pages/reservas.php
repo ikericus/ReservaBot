@@ -6,14 +6,21 @@ $currentPage = 'reservas';
 $pageTitle = 'ReservaBot - Reservas';
 $pageScript = 'reservas';
 
-// Obtener usuario
-$currentUser = getAuthenticatedUser();
-// Obtener las reservas del usuario autenticado
-$userId =  $currentUser['id'];
+try {
+    // Obtener usuario
+    $currentUser = getAuthenticatedUser();
+    // Obtener las reservas del usuario autenticado
+    $userId =  $currentUser['id'];
 
-// Obtener reservas
-$reservasPendientes = [];
-$reservasConfirmadas = [];
+    // Obtener reservas
+    $reservasPendientes = [];
+    $reservasConfirmadas = [];
+} 
+catch (Exception $e) {    
+    echo "Error en la configuración: " . $e->getMessage();
+    exit;
+}
+
 
 try {
     $reservaDomain = getContainer()->getReservaDomain();

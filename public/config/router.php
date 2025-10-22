@@ -106,6 +106,8 @@ class Router {
     public function resolve() {
         $method = $_SERVER['REQUEST_METHOD'];
         $path = $this->getCurrentPath();
+
+        logMessage("Router: Resolviendo ruta - Method: {$method}, Path: {$path}");
         
         foreach ($this->routes as $route) {
             if ($route['method'] === $method && preg_match($route['pattern'], $path, $matches)) {
@@ -148,7 +150,7 @@ class Router {
                 error_log("Router: Archivo no encontrado - " . $filePath);
                 return $this->handleNotFound();
             }
-            
+
             logMessage("Router: Cargando fichero - " . $filePath);
             require_once $filePath;
             return true;
