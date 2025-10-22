@@ -74,8 +74,8 @@ try {
     if (hasContainer()) {
         echo "<p class='text-green-600'>✅ Container disponible</p>";
         $container = getContainer();
-        $reservaUseCases = $container->getReservaUseCases();
-        echo "<p class='text-green-600'>✅ ReservaUseCases OK</p>";
+        $reservaUseCases = $container->getReservaDomain();
+        echo "<p class='text-green-600'>✅ ReservaDomain OK</p>";
     } else {
         echo "<p class='text-red-600'>❌ Container NO disponible</p>";
     }
