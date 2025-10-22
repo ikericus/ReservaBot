@@ -24,24 +24,32 @@ class Router {
     private function defineRoutes() {
                 
         // Rutas públicas
-        $this->addRoute('GET', '/test-simple', 'pages/test-simple.php');
-        $this->addRoute('GET',      '/test',                    'pages/test.php');
-        $this->addRoute('GET',      '/',                        'pages/home.php');
-        $this->addRoute('GET',      '/landing',                 'pages/landing.php');
-        $this->addRoute('GET',      '/login',                   'pages/login.php');
-        $this->addRoute('GET',      '/signup',                  'pages/signup.php');
-        $this->addRoute('GET',      '/logout',                  'pages/logout.php');
-        $this->addRoute('GET',      '/password-reset',          'pages/password-reset.php');
-        $this->addRoute('POST',     '/password-reset',          'pages/password-reset.php');
-        $this->addRoute('GET',      '/reservar',                'pages/reservar.php');
-        $this->addRoute('POST',     '/reservar',                'pages/reservar.php');
-        $this->addRoute('GET',      '/mi-reserva',              'pages/mi-reserva.php');
-        $this->addRoute('POST',     '/api/contacto-handler',    'api/contacto-handler.php');                    
-        $this->addRoute('POST',     '/api/login-handler',       'api/login-handler.php');        
-        $this->addRoute('POST',     '/api/register-handler',    'api/register-handler.php');
-        $this->addRoute('POST',     '/api/login',               'api/login.php');
-        $this->addRoute('POST',     '/api/register',            'api/register.php');
-        $this->addRoute('POST',     '/api/logout',              'api/logout.php');
+        $this->addRoute('GET',      '/test',                        'pages/test.php');
+        $this->addRoute('GET',      '/',                            'pages/home.php');
+        $this->addRoute('GET',      '/landing',                     'pages/landing.php');
+        $this->addRoute('GET',      '/login',                       'pages/login.php');
+        $this->addRoute('GET',      '/signup',                      'pages/signup.php');
+        $this->addRoute('GET',      '/logout',                      'pages/logout.php');
+        $this->addRoute('GET',      '/password-reset',              'pages/password-reset.php');
+        $this->addRoute('POST',     '/password-reset',              'pages/password-reset.php');
+        $this->addRoute('GET',      '/reservar',                    'pages/reservar.php');
+        $this->addRoute('POST',     '/reservar',                    'pages/reservar.php');
+        $this->addRoute('GET',      '/mi-reserva',                  'pages/mi-reserva.php');
+        $this->addRoute('POST',     '/api/contacto-handler',        'api/contacto-handler.php');                    
+        $this->addRoute('POST',     '/api/login-handler',           'api/login-handler.php');        
+        $this->addRoute('POST',     '/api/register-handler',        'api/register-handler.php');
+        $this->addRoute('POST',     '/api/login',                   'api/login.php');
+        $this->addRoute('POST',     '/api/register',                'api/register.php');
+        $this->addRoute('POST',     '/api/logout',                  'api/logout.php');
+
+        // Admin
+        $this->addRoute('GET',      '/admin',                       'pages/admin/dashboard.php',        ['auth', 'admin']);
+        $this->addRoute('GET',      '/admin/dashboard',             'pages/admin/dashboard.php',        ['auth', 'admin']);
+        $this->addRoute('GET',      '/admin/actividad',             'pages/admin/actividad.php',        ['auth', 'admin']);
+        $this->addRoute('GET',      '/admin/usuarios',              'pages/admin/usuarios.php',         ['auth', 'admin']);
+        $this->addRoute('GET',      '/admin/reservas',              'pages/admin/reservas.php',         ['auth', 'admin']);
+        $this->addRoute('GET',      '/admin/whatsapp',              'pages/admin/whatsapp.php',         ['auth', 'admin']);
+        $this->addRoute('GET',      '/admin/logs',                  'pages/admin/logs.php',             ['auth', 'admin']);
 
         // Rutas protegidas            
         $this->addRoute('GET',      '/dia',                             'pages/dia.php',                        ['auth']);        
@@ -154,6 +162,8 @@ class Router {
         switch ($middleware) {
             case 'auth':
                 return $this->authMiddleware();
+            case 'admin':
+                return $this->adminMiddleware();
             default:
                 return true;
         }
@@ -181,6 +191,15 @@ class Router {
         $GLOBALS['currentUser'] = getAuthenticatedUser();
         $GLOBALS['csrfToken'] = generateCSRFToken();
         
+        return true;
+    }
+
+    private function adminMiddleware() {
+        if (!function_exists('requireAdminAuth')) {
+            require_once PROJECT_ROOT . '/config/admin-auth.php';
+        }
+        
+        requireAdminAuth();
         return true;
     }
     

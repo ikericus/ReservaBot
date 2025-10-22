@@ -21,6 +21,7 @@ function getPDO(): ?PDO {
 
 // ========== 3. INCLUIR AUTH Y FUNCIONES ==========
 require_once PROJECT_ROOT . '/config/auth.php';
+require_once PROJECT_ROOT . '/config/admin-auth.php';
 require_once PROJECT_ROOT . '/includes/functions.php';
 
 // ========== 4. AUTOLOAD ==========

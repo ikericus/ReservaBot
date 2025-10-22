@@ -16,11 +16,11 @@ if (file_exists($envPath)) {
 }
 
 return [
-    'host' => $_ENV['DB_HOST'] ?? 'localhost',
-    'database' => $_ENV['DB_NAME'] ?? 'u329673490_reservabot',
-    'username' => $_ENV['DB_USER'] ?? 'u329673490_reservabot',
-    'password' => $_ENV['DB_PASS'] ?? 'QFk[aas3f@',
-    'charset' => $_ENV['DB_CHARSET'] ?? 'utf8mb4',
+    'host' => $_ENV['DB_HOST'],
+    'database' => $_ENV['DB_NAME'],
+    'username' => $_ENV['DB_USER'],
+    'password' => $_ENV['DB_PASS'],
+    'charset' => $_ENV['DB_CHARSET'],
     'options' => [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

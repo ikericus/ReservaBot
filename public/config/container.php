@@ -3,6 +3,7 @@
 
 namespace ReservaBot\Config;
 
+use ReservaBot\Domain\Admin\AdminDomain;
 use ReservaBot\Domain\Reserva\ReservaDomain;
 use ReservaBot\Domain\Cliente\ClienteDomain;
 use ReservaBot\Domain\Configuracion\ConfiguracionDomain;
@@ -14,6 +15,7 @@ use ReservaBot\Infrastructure\DisponibilidadRepository;
 use ReservaBot\Infrastructure\ConfiguracionNegocioRepository;
 use ReservaBot\Infrastructure\WhatsAppRepository;
 use ReservaBot\Infrastructure\FormularioRepository;
+use ReservaBot\Infrastructure\AdminRepository;
 use PDO;
 
 class Container {
@@ -34,6 +36,15 @@ class Container {
     
     // ==================== DOMAINS ====================
     
+    public function getAdminDomain(): AdminDomain {
+        if (!isset($this->services['adminDomain'])) {
+            $this->services['adminDomain'] = new AdminDomain(
+                $this->getAdminRepository()
+            );
+        }
+        return $this->instances['adminDomain'];
+    }
+
     public function getReservaDomain(): ReservaDomain {
         if (!isset($this->services['reservaDomain'])) {
             $this->services['reservaDomain'] = new ReservaDomain(
@@ -131,13 +142,20 @@ class Container {
         }
         return $this->services['formularioRepository'];
     }
+
+    private function getAdminRepository(): AdminRepository {
+        if (!isset($this->services['adminRepository'])) {
+            $this->services['adminRepository'] = new AdminRepository($this->pdo);
+        }
+        return $this->services['adminRepository'];
+    }
     
     // ==================== SERVICIOS EXTERNOS ====================
 
     public function getWhatsAppServerManager(): IWhatsAppServerManager {
         if (!isset($this->instances['whatsappServerManager'])) {
-            $serverUrl = $_ENV['WHATSAPP_SERVER_URL'] ?? 'http://server.reservabot.es:3001';
-            $jwtSecret = $_ENV['JWT_SECRET'] ?? 'da3c7b9e13a38a0ea3dcbaaed1ec9ec1f0005f974adad7141b71a36e9f13e187';
+            $serverUrl = $_ENV['WHATSAPP_SERVER_URL'];
+            $jwtSecret = $_ENV['JWT_SECRET'];
             
             $this->instances['whatsappServerManager'] = new WhatsAppServerManager(
                 $serverUrl,
@@ -149,7 +167,7 @@ class Container {
 
     public function getWhatsAppWebhookHandler(): WhatsAppWebhookHandler {
         if (!isset($this->instances['whatsappWebhookHandler'])) {
-            $webhookSecret = $_ENV['WEBHOOK_SECRET'] ?? 'c4f20ece15858d35db6d02e55269de628df3ea8c66246d75a07ce77c9c3c4810';
+            $webhookSecret = $_ENV['WEBHOOK_SECRET'];
             
             $this->instances['whatsappWebhookHandler'] = new WhatsAppWebhookHandler(
                 $this->getWhatsAppDomain(),

@@ -72,7 +72,8 @@ function getAuthenticatedUser(): ?array {
         'negocio' => $_SESSION['user_negocio'] ?? '',
         'plan' => $_SESSION['user_plan'] ?? 'gratis',
         'login_time' => $_SESSION['login_time'] ?? '',
-        'last_activity' => $_SESSION['last_activity'] ?? ''
+        'last_activity' => $_SESSION['last_activity'] ?? '',
+        'is_admin' => isAdminUser()
     ];
 }
 
