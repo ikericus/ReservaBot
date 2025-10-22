@@ -154,7 +154,7 @@ class Container {
     
     // ==================== SERVICIOS EXTERNOS ====================
 
-    public function getWhatsAppServerManager(): IWhatsAppServerManager {
+    public function getWhatsAppServerManager(): WhatsAppServerManager {
         if (!isset($this->services['whatsappServerManager'])) {
             $serverUrl = $_ENV['WHATSAPP_SERVER_URL'];
             $jwtSecret = $_ENV['JWT_SECRET'];
