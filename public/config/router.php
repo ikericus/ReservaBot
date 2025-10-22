@@ -133,7 +133,7 @@ class Router {
                 require_once PROJECT_ROOT . '/config/bootstrap.php';
             }
 
-            logMessage("Router: Resolviendo ruta - {$route}");
+            logMessage("Router: Resolviendo ruta - {$route['path']}");
             
             foreach ($route['middlewares'] as $middleware) {
                 if (!$this->applyMiddleware($middleware)) {
