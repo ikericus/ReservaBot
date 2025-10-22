@@ -15,6 +15,7 @@ use ReservaBot\Infrastructure\DisponibilidadRepository;
 use ReservaBot\Infrastructure\ConfiguracionNegocioRepository;
 use ReservaBot\Infrastructure\WhatsAppRepository;
 use ReservaBot\Infrastructure\WhatsAppWebhookHandler;
+use ReservaBot\Infrastructure\WhatsAppServerManager;
 use ReservaBot\Infrastructure\FormularioRepository;
 use ReservaBot\Infrastructure\AdminRepository;
 use PDO;
