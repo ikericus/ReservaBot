@@ -149,6 +149,7 @@ class Router {
                 return $this->handleNotFound();
             }
             
+            logMessage("Router: Cargando fichero - " . $filePath);
             require_once $filePath;
             return true;
             
