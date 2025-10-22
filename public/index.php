@@ -13,8 +13,6 @@ ini_set('log_errors', 1);
 // Incluir router
 require_once  __DIR__ . '/config/router.php';
 
-logMessage("Pasando por Index.php...");
-
 // Ejecutar
 $router = new Router();
 $router->resolve();
