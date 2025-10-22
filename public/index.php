@@ -14,5 +14,13 @@ ini_set('log_errors', 1);
 require_once  __DIR__ . '/config/router.php';
 
 // Ejecutar
-$router = new Router();
-$router->resolve();
+try
+{
+    $router = new Router();
+    $router->resolve();
+}
+catch (Exception $e)
+{
+    http_response_code(500);
+    echo "Error interno del servidor: " . $e->getMessage();
+}

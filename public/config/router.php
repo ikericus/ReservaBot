@@ -137,6 +137,7 @@ class Router {
             
             foreach ($route['middlewares'] as $middleware) {
                 if (!$this->applyMiddleware($middleware)) {
+                    logMessage("Router: Middleware {$middleware} bloqueó la ruta - {$route['path']}");
                     return false;
                 }
             }
