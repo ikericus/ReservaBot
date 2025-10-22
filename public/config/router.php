@@ -106,8 +106,6 @@ class Router {
     public function resolve() {
         $method = $_SERVER['REQUEST_METHOD'];
         $path = $this->getCurrentPath();
-
-        logMessage("Router: Resolviendo ruta - Method: {$method}, Path: {$path}");
         
         foreach ($this->routes as $route) {
             if ($route['method'] === $method && preg_match($route['pattern'], $path, $matches)) {
@@ -134,6 +132,8 @@ class Router {
             if (!function_exists('getPDO')) {
                 require_once PROJECT_ROOT . '/config/bootstrap.php';
             }
+
+            logMessage("Router: Resolviendo ruta - {$route}");
             
             foreach ($route['middlewares'] as $middleware) {
                 if (!$this->applyMiddleware($middleware)) {
