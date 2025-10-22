@@ -14,6 +14,10 @@ if (file_exists($envPath)) {
         $_ENV[$name] = trim($value);
     }
 }
+else
+{
+    echo "Warning: .env file not found at $envPath";
+}
 
 // ========== 1. CARGAR CONFIGURACIÓN ==========
 $dbConfig = require PROJECT_ROOT . '/config/database.php';
