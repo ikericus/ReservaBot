@@ -135,7 +135,7 @@ try {
         <nav class="flex-1 px-4 space-y-2">
             <!-- Sección principal -->
             <div class="space-y-1">
-                <?php if (isAdminUser()): ?>
+                <?php if (isAdminUser(getAuthenticatedUser()['email'])): ?>
                     <a href="/admin" class="nav-item <?php echo str_starts_with($currentPage, 'admin-') ? 'active text-purple-700 font-semibold' : 'text-gray-700 hover:text-purple-600'; ?> group flex items-center px-4 py-3 text-sm font-medium rounded-xl">
                         <i class="ri-admin-line mr-2"></i>
                         Dashboard Admin
