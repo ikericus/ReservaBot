@@ -38,7 +38,7 @@ class Router {
         $this->addRoute('POST',     '/api/contacto-handler',        'api/contacto-handler.php');                    
         $this->addRoute('POST',     '/api/login-handler',           'api/login-handler.php');        
         $this->addRoute('POST',     '/api/register-handler',        'api/register-handler.php');
-        $this->addRoute('POST',     '/api/login',                   'api/login.php');
+        //$this->addRoute('POST',     '/api/login',                   'api/login.php');
         $this->addRoute('POST',     '/api/register',                'api/register.php');
         $this->addRoute('POST',     '/api/logout',                  'api/logout.php');
 
@@ -141,6 +141,8 @@ class Router {
                     return false;
                 }
             }
+
+            logMessage("Router: Cargando ruta - {$route['path']}");
             
             if (!empty($route['params'])) {
                 $GLOBALS['route_params'] = $route['params'];
@@ -163,6 +165,7 @@ class Router {
     }
     
     private function applyMiddleware($middleware) {
+        logMessage("Router: Aplicando middleware - {$middleware}");
         switch ($middleware) {
             case 'auth':
                 return $this->authMiddleware();
@@ -202,7 +205,7 @@ class Router {
         if (!function_exists('requireAdminAuth')) {
             require_once PROJECT_ROOT . '/config/admin-auth.php';
         }
-        
+        logMessage("Router: Verificando acceso de administrador");
         requireAdminAuth();
         return true;
     }

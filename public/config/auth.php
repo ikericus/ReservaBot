@@ -73,8 +73,7 @@ function getAuthenticatedUser(): ?array {
         'plan' => $_SESSION['user_plan'] ?? 'gratis',
         'login_time' => $_SESSION['login_time'] ?? '',
         'last_activity' => $_SESSION['last_activity'] ?? '',
-        'is_admin' => isAdminUser()  // ← AGREGAR
-    ];
+        'is_admin' => isAdminUser() 
 }
 
 function getCurrentUserId(): ?int {
@@ -89,78 +88,78 @@ function updateLastActivity(): void {
 
 // ========== AUTENTICACIÓN ==========
 
-function authenticateUser(string $email, string $password): array {
-    $email = trim(strtolower($email));
-    $pdo = getPDO();
+// function authenticateUser(string $email, string $password): array {
+//     $email = trim(strtolower($email));
+//     $pdo = getPDO();
     
-    // Intentar BD
-    if ($pdo) {
-        try {
-            $stmt = $pdo->prepare("
-                SELECT id, nombre, email, password_hash, plan, negocio, activo 
-                FROM usuarios 
-                WHERE email = ? AND activo = 1
-            ");
-            $stmt->execute([$email]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+//     // Intentar BD
+//     if ($pdo) {
+//         try {
+//             $stmt = $pdo->prepare("
+//                 SELECT id, nombre, email, password_hash, plan, negocio, activo 
+//                 FROM usuarios 
+//                 WHERE email = ? AND activo = 1
+//             ");
+//             $stmt->execute([$email]);
+//             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($user && password_verify($password, $user['password_hash'])) {
-                return createUserSession($user, 'database');
-            }
-        } catch (Exception $e) {
-            error_log("Error autenticación BD: " . $e->getMessage());
-        }
-    }
+//             if ($user && password_verify($password, $user['password_hash'])) {
+//                 return createUserSession($user, 'database');
+//             }
+//         } catch (Exception $e) {
+//             error_log("Error autenticación BD: " . $e->getMessage());
+//         }
+//     }
     
-    // Fallback usuario demo
-    $fallbackUsers = [
-        'admin@reservabot.com' => [
-            'password' => 'demo123',
-            'name' => 'Administrador',
-            'role' => 'admin',
-            'negocio' => 'ReservaBot Admin',
-            'plan' => 'premium'
-        ]
-    ];
+//     // Fallback usuario demo
+//     $fallbackUsers = [
+//         'admin@reservabot.com' => [
+//             'password' => 'demo123',
+//             'name' => 'Administrador',
+//             'role' => 'admin',
+//             'negocio' => 'ReservaBot Admin',
+//             'plan' => 'premium'
+//         ]
+//     ];
     
-    if (isset($fallbackUsers[$email]) && $password === $fallbackUsers[$email]['password']) {
-        $userData = [
-            'id' => 0,
-            'email' => $email,
-            'nombre' => $fallbackUsers[$email]['name'],
-            'negocio' => $fallbackUsers[$email]['negocio'],
-            'plan' => $fallbackUsers[$email]['plan']
-        ];
-        return createUserSession($userData, 'fallback', $fallbackUsers[$email]['role']);
-    }
+//     if (isset($fallbackUsers[$email]) && $password === $fallbackUsers[$email]['password']) {
+//         $userData = [
+//             'id' => 0,
+//             'email' => $email,
+//             'nombre' => $fallbackUsers[$email]['name'],
+//             'negocio' => $fallbackUsers[$email]['negocio'],
+//             'plan' => $fallbackUsers[$email]['plan']
+//         ];
+//         return createUserSession($userData, 'fallback', $fallbackUsers[$email]['role']);
+//     }
     
-    return [
-        'success' => false,
-        'message' => 'Credenciales incorrectas'
-    ];
-}
+//     return [
+//         'success' => false,
+//         'message' => 'Credenciales incorrectas'
+//     ];
+// }
 
-function createUserSession(array $user, string $source = 'database', string $role = 'user'): array {
-    session_regenerate_id(true);
+// function createUserSession(array $user, string $source = 'database', string $role = 'user'): array {
+//     session_regenerate_id(true);
     
-    $_SESSION['user_authenticated'] = true;
-    $_SESSION['user_id'] = $user['id'];
-    $_SESSION['user_email'] = $user['email'];
-    $_SESSION['user_name'] = $user['nombre'];
-    $_SESSION['user_role'] = $role;
-    $_SESSION['user_negocio'] = $user['negocio'];
-    $_SESSION['user_plan'] = $user['plan'];
-    $_SESSION['login_time'] = time();
-    $_SESSION['last_activity'] = time();
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
-    $_SESSION['auth_source'] = $source;
+//     $_SESSION['user_authenticated'] = true;
+//     $_SESSION['user_id'] = $user['id'];
+//     $_SESSION['user_email'] = $user['email'];
+//     $_SESSION['user_name'] = $user['nombre'];
+//     $_SESSION['user_role'] = $role;
+//     $_SESSION['user_negocio'] = $user['negocio'];
+//     $_SESSION['user_plan'] = $user['plan'];
+//     $_SESSION['login_time'] = time();
+//     $_SESSION['last_activity'] = time();
+//     $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+//     $_SESSION['auth_source'] = $source;
     
-    return [
-        'success' => true,
-        'message' => 'Login exitoso',
-        'user' => getAuthenticatedUser()
-    ];
-}
+//     return [
+//         'success' => true,
+//         'message' => 'Login exitoso',
+//         'user' => getAuthenticatedUser()
+//     ];
+// }
 
 function logout(): void {
     $_SESSION = [];
@@ -190,32 +189,7 @@ function generateCSRFToken(): string {
     return $_SESSION['csrf_token'];
 }
 
-function verifyCSRFToken(string $token): bool {
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
-}
-
-// ========== UTILIDADES ==========
-
-function hashPassword(string $password): string {
-    return password_hash($password, PASSWORD_DEFAULT);
-}
-
 // ========== LEGACY (Mantener por compatibilidad) ==========
-
-function requireAuth(string $redirectTo = '/login'): void {
-    updateLastActivity();
-    
-    if (!isAuthenticated()) {
-        redirectToLogin($redirectTo);
-        exit;
-    }
-    
-    if (isSessionExpired()) {
-        logout();
-        redirectToLogin($redirectTo, 'Tu sesión ha expirado.');
-        exit;
-    }
-}
 
 function redirectToLogin(string $loginUrl = '/login', ?string $message = null): void {
     if ($message) {

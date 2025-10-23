@@ -1,5 +1,6 @@
 <?php
 // pages/reservas.php
+logMessage("reservas.php: Inicio de carga de la página de reservas");
 
 // Configurar la página actual
 $currentPage = 'reservas';

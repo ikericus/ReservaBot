@@ -1,5 +1,5 @@
 <?php
-
+/*
 require_once dirname(__DIR__) . '/includes/db-config.php';
 require_once dirname(__DIR__) . '/includes/auth.php';
 
@@ -65,3 +65,4 @@ if ($authResult['success']) {
         'message' => $authResult['message']
     ]);
 }
+*/
