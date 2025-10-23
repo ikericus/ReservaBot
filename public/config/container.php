@@ -9,6 +9,7 @@ use ReservaBot\Domain\Cliente\ClienteDomain;
 use ReservaBot\Domain\Configuracion\ConfiguracionDomain;
 use ReservaBot\Domain\WhatsApp\WhatsAppDomain;
 use ReservaBot\Domain\Formulario\FormularioDomain;
+use ReservaBot\Domain\Usuario\UsuarioDomain;
 use ReservaBot\Infrastructure\ReservaRepository;
 use ReservaBot\Infrastructure\ClienteRepository;
 use ReservaBot\Infrastructure\DisponibilidadRepository;
@@ -18,6 +19,7 @@ use ReservaBot\Infrastructure\WhatsAppWebhookHandler;
 use ReservaBot\Infrastructure\WhatsAppServerManager;
 use ReservaBot\Infrastructure\FormularioRepository;
 use ReservaBot\Infrastructure\AdminRepository;
+use ReservaBot\Infrastructure\UsuarioRepository;
 use PDO;
 
 class Container {
@@ -35,6 +37,9 @@ class Container {
         }
         return self::$instance;
     }
+
+
+
     
     // ==================== DOMAINS ====================
     
@@ -86,11 +91,6 @@ class Container {
         return $this->services['whatsappDomain'];
     }
         
-    /**
-     * Obtener instancia de FormularioDomain
-     * 
-     * @return FormularioDomain
-     */
     public function getFormularioDomain(): FormularioDomain {
         if (!isset($this->services['formularioDomain'])) {
             $this->services['formularioDomain'] = new FormularioDomain(
@@ -99,6 +99,20 @@ class Container {
         }
         return $this->services['formularioDomain'];
     }
+
+    public function getUsuarioDomain(): UsuarioDomain {
+        if (!isset($this->services['usuarioDomain'])) {
+            $this->services['usuarioDomain'] = new UsuarioDomain(
+                $this->getUsuarioRepository(),
+                $this->getConfiguracionDomain()
+            );
+        }
+        return $this->services['usuarioDomain'];
+    }
+
+
+
+
     
     // ==================== REPOSITORIES ====================
     
@@ -152,6 +166,16 @@ class Container {
         return $this->services['adminRepository'];
     }
     
+    private function getUsuarioRepository(): UsuarioRepository {
+        if (!isset($this->services['usuarioRepository'])) {
+            $this->services['usuarioRepository'] = new UsuarioRepository($this->pdo);
+        }
+        return $this->services['usuarioRepository'];
+    }
+
+
+
+
     // ==================== SERVICIOS EXTERNOS ====================
 
     public function getWhatsAppServerManager(): WhatsAppServerManager {

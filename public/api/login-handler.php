@@ -1,5 +1,5 @@
 <?php
-// public/api/login-handler.php
+// api/login-handler.php
 
 // Solo procesar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -39,13 +39,19 @@ if (!empty($errors)) {
 
 logMessage("login-handler.php: Validaciones completadas");
 
-// Intentar autenticar
-$authResult = authenticateUser($email, $password);
 
-logMessage("login-handler.php: Resultado de autenticación - " . ($authResult['success'] ? 'éxito' : 'fallo'));
+try {
+    $usuarioDomain = getContainer()->getUsuarioDomain();
+    $usuario = $usuarioDomain->autenticar($email, $password);
+    
+    if (!$usuario) {
+        $_SESSION['login_errors'] = [$authResult['message']];
+        $_SESSION['login_email'] = $email;
+        
+        header('Location: /login');
+        exit;
+    }
 
-if ($authResult['success']) {
-    // Login exitoso
     
     // Si marcó "recordar sesión", extender duración de cookie
     if ($remember) {
@@ -62,19 +68,34 @@ if ($authResult['success']) {
     
     // Generar datos de demo si es necesario
     handleDemoDataGeneration($email);
+        
+    // Crear sesión
+    session_start();
+    session_regenerate_id(true);
     
-    $redirectTo = $_SESSION['intended_url'] ?? '/';
-    unset($_SESSION['intended_url']);
+    $_SESSION['user_authenticated'] = true;
+    $_SESSION['user_id'] = $usuario->getId();
+    $_SESSION['user_email'] = $usuario->getEmail();
+    $_SESSION['user_name'] = $usuario->getNombre();
+    $_SESSION['user_role'] = 'user';
+    $_SESSION['user_negocio'] = $usuario->getNegocio();
+    $_SESSION['user_plan'] = $usuario->getPlan();
+    $_SESSION['login_time'] = time();
+    $_SESSION['last_activity'] = time();
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
     
-    // Redirigir
-    header("Location: $redirectTo");
+    header('Location: /reservas');
     exit;
     
-} else {
-    // Login fallido
-    $_SESSION['login_errors'] = [$authResult['message']];
-    $_SESSION['login_email'] = $email;
-    
+} catch (\DomainException $e) {
+    session_start();
+    $_SESSION['login_error'] = $e->getMessage();
+    header('Location: /login');
+    exit;
+} catch (\Exception $e) {
+    error_log('Error en login: ' . $e->getMessage());
+    session_start();
+    $_SESSION['login_error'] = 'Error interno del servidor';
     header('Location: /login');
     exit;
 }

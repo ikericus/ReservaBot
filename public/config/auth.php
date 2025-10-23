@@ -73,7 +73,7 @@ function getAuthenticatedUser(): ?array {
         'plan' => $_SESSION['user_plan'] ?? 'gratis',
         'login_time' => $_SESSION['login_time'] ?? '',
         'last_activity' => $_SESSION['last_activity'] ?? '',
-        'is_admin' => isAdminUser()
+        'is_admin' => isAdminUser()  // ← AGREGAR
     ];
 }
 
@@ -235,33 +235,4 @@ function redirectToLogin(string $loginUrl = '/login', ?string $message = null): 
     
     header("Location: $loginUrl");
     exit;
-}
-
-function isDemoUser(string $email): bool {
-    return strtolower(trim($email)) === 'demo@reservabot.es';
-}
-
-function handleDemoDataGeneration(string $email): bool {
-    if (!isDemoUser($email)) {
-        return false;
-    }
-    
-    $pdo = getPDO();
-    if (!$pdo) {
-        $_SESSION['demo_message'] = 'Error: No se pudo conectar a la base de datos.';
-        return false;
-    }
-    
-    try {
-        $stmt = $pdo->prepare("CALL GenerateDemoData(CURDATE())");
-        $stmt->execute();
-        $stmt->closeCursor();
-        
-        $_SESSION['demo_message'] = "✅ Datos de demo generados correctamente.";
-        return true;
-    } catch (Exception $e) {
-        error_log("Error generando datos demo: " . $e->getMessage());
-        $_SESSION['demo_message'] = '⚠️ Error al generar datos de demo.';
-        return false;
-    }
 }
