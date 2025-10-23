@@ -64,6 +64,8 @@ function getAuthenticatedUser(): ?array {
         return null;
     }
     
+    logMessage("auth.php: Obteniendo usuario autenticado - ID: " . ($_SESSION['user_id'] ?? 'N/A'));
+
     return [
         'id' => $_SESSION['user_id'] ?? null,
         'email' => $_SESSION['user_email'] ?? '',
@@ -187,6 +189,7 @@ function generateCSRFToken(): string {
     if (!isset($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
     }
+    logMessage("auth.php: CSRF token generado: " . $_SESSION['csrf_token']);
     return $_SESSION['csrf_token'];
 }
 
