@@ -310,7 +310,8 @@
                                         'whatsapp' => 'WhatsApp',
                                         'formularios' => 'Formularios',
                                         'configuracion' => 'Configuración',
-                                        'conversaciones' => 'Conversaciones'
+                                        'conversaciones' => 'Conversaciones',
+                                        'admin-dashboard' => 'Panel de Administración'
                                     ];
                                     echo $pageNames[$currentPage] ?? 'Reservas';
                                     ?>
