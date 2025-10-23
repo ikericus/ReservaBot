@@ -5,8 +5,6 @@
  * Página de estadísticas de reservas
  */
 
-requireAdminAuth();
-
 $adminDomain = getContainer()->getAdminDomain();
 
 $currentPage = 'admin-reservas';

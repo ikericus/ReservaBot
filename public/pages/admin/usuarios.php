@@ -5,8 +5,6 @@
  * Página de gestión y estadísticas de usuarios
  */
 
-requireAdminAuth();
-
 $adminDomain = getContainer()->getAdminDomain();
 
 $currentPage = 'admin-usuarios';

@@ -5,8 +5,6 @@
  * Dashboard principal de administración
  */
 
-requireAdminAuth();
-
 $adminDomain = getContainer()->getAdminDomain();
 $resumen = $adminDomain->obtenerResumenGeneral();
 $saludWhatsApp = $adminDomain->obtenerSaludWhatsApp();

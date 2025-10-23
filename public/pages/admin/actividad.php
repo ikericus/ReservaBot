@@ -5,8 +5,6 @@
  * Página de monitoreo de actividad del sistema
  */
 
-requireAdminAuth();
-
 $adminDomain = getContainer()->getAdminDomain();
 
 $currentPage = 'admin-actividad';

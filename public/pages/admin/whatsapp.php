@@ -5,8 +5,6 @@
  * Página de monitoreo de WhatsApp
  */
 
-requireAdminAuth();
-
 $adminDomain = getContainer()->getAdminDomain();
 
 $currentPage = 'admin-whatsapp';
