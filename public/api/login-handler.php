@@ -1,12 +1,13 @@
-// public/api/login-handler.php
 <?php
-// Bootstrap ya cargado por el router
+// public/api/login-handler.php
 
 // Solo procesar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: /login');
     exit;
 }
+
+logMessage("login-handler.php: Inicio de procesamiento de login");
 
 // Obtener datos del formulario
 $email = trim($_POST['email'] ?? '');
@@ -36,8 +37,12 @@ if (!empty($errors)) {
     exit;
 }
 
+logMessage("login-handler.php: Validaciones completadas");
+
 // Intentar autenticar
 $authResult = authenticateUser($email, $password);
+
+logMessage("login-handler.php: Resultado de autenticación - " . ($authResult['success'] ? 'éxito' : 'fallo'));
 
 if ($authResult['success']) {
     // Login exitoso
