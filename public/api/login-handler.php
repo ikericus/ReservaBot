@@ -43,6 +43,8 @@ try {
     $usuarioDomain = getContainer()->getUsuarioDomain();
     $usuario = $usuarioDomain->autenticar($email, $password);
     
+    logMessage("login-handler.php: Usuario autenticado: " . $usuario->getEmail());
+
     // Si marcó "recordar sesión", extender duración de cookie
     if ($remember) {
         $cookieLifetime = 30 * 24 * 60 * 60; // 30 días

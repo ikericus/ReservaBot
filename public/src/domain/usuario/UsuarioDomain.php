@@ -23,20 +23,25 @@ class UsuarioDomain {
     public function autenticar(string $email, string $password): ?Usuario {
         $email = trim(strtolower($email));
         
+        logMessage("UsuarioDomain.php: Autenticando usuario con email: " . $email);
+
         $usuario = $this->repository->obtenerPorEmail($email);
         
         if (!$usuario) {
+            logMessage("UsuarioDomain.php: Usuario no encontrado con email: " . $email);
             throw new \DomainException('Usuario no encontrado');
         }
         
         if (!$usuario->isActivo()) {
+            logMessage("UsuarioDomain.php: Intento de login de usuario inactivo: " . $usuario->getEmail());
             throw new \DomainException('Usuario inactivo');
         }
         
         if (!$usuario->verificarPassword($password)) {
+            logMessage("UsuarioDomain.php: Fallo de autenticación para el usuario: " . $usuario->getEmail());
             throw new \DomainException('Contraseña incorrecta');
         }
-        
+        logMessage("UsuarioDomain.php: Autenticación exitosa para el usuario: " . $usuario->getEmail());
         return $usuario;
     }
     
