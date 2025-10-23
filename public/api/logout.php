@@ -1,5 +1,5 @@
 <?php
-
+/*
 header('Content-Type: application/json');
 
 require_once dirname(__DIR__) . '/includes/auth.php';
@@ -12,3 +12,4 @@ echo json_encode([
     'message' => 'Sesión cerrada correctamente',
     'redirect' => '/login'
 ]);
+*/

@@ -40,7 +40,7 @@ class Router {
         $this->addRoute('POST',     '/api/register-handler',        'api/register-handler.php');
         //$this->addRoute('POST',     '/api/login',                   'api/login.php');
         $this->addRoute('POST',     '/api/register',                'api/register.php');
-        $this->addRoute('POST',     '/api/logout',                  'api/logout.php');
+        //$this->addRoute('POST',     '/api/logout',                  'api/logout.php');
 
         // Admin
         $this->addRoute('GET',      '/admin',                       'pages/admin/dashboard.php',        ['auth', 'admin']);

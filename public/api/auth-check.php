@@ -1,9 +1,5 @@
 <?php
-// ===== ARCHIVO: public/api/auth-check.php =====
-<?php
-/**
- * API para verificar estado de autenticación (para AJAX)
- */
+/*
 
 require_once dirname(__DIR__) . '/includes/db-config.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
@@ -48,3 +44,5 @@ echo json_encode([
     'session_info' => getSessionInfo(),
     'csrf_token' => generateCSRFToken()
 ]);
+
+*/
