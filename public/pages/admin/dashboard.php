@@ -13,7 +13,7 @@ $currentPage = 'admin-dashboard';
 $pageTitle = 'ReservaBot - Admin Dashboard';
 $pageScript = 'admin/dashboard';
 
-include PROJECT_ROOT . '/includes/header.php';
+// include PROJECT_ROOT . '/includes/header.php';
 ?>
 
 <style>
