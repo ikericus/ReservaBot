@@ -181,23 +181,23 @@ class Router {
      */
     private function authMiddleware() {
         // Bootstrap ya está cargado por executeRoute
-        
+        logMessage("Router: Verificando autenticación de usuario");
         updateLastActivity();
         
         if (!isAuthenticated()) {
             $this->redirectToLogin();
             return false;
         }
-        
+        logMessage("Router: Usuario autenticado");
         if (isSessionExpired()) {
             logout();
             $this->redirectToLogin('Tu sesión ha expirado.');
             return false;
         }
-        
+        logmessage("Router: Sesión válida");
         $GLOBALS['currentUser'] = getAuthenticatedUser();
         $GLOBALS['csrfToken'] = generateCSRFToken();
-        
+        logMessage("Router: CSRF token generado");
         return true;
     }
 
