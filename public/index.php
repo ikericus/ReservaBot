@@ -38,13 +38,5 @@ register_shutdown_function(function () {
 require_once  __DIR__ . '/config/router.php';
 
 // Ejecutar
-try
-{
-    $router = new Router();
-    $router->resolve();
-}
-catch (Exception $e)
-{
-    http_response_code(500);
-    echo "Error interno del servidor: " . $e->getMessage();
-}
+$router = new Router();
+$router->resolve();
