@@ -26,7 +26,7 @@ class UsuarioDomain {
         $usuario = $this->repository->obtenerPorEmail($email);
         
         if (!$usuario) {
-            return null;
+            throw new \DomainException('Usuario no encontrado');
         }
         
         if (!$usuario->isActivo()) {
@@ -34,7 +34,7 @@ class UsuarioDomain {
         }
         
         if (!$usuario->verificarPassword($password)) {
-            return null;
+            throw new \DomainException('Contraseña incorrecta');
         }
         
         return $usuario;

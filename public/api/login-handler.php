@@ -39,19 +39,9 @@ if (!empty($errors)) {
 
 logMessage("login-handler.php: Validaciones completadas");
 
-
 try {
     $usuarioDomain = getContainer()->getUsuarioDomain();
     $usuario = $usuarioDomain->autenticar($email, $password);
-    
-    if (!$usuario) {
-        $_SESSION['login_errors'] = 'Credenciales incorrectas';
-        $_SESSION['login_email'] = $email;
-        
-        header('Location: /login');
-        exit;
-    }
-
     
     // Si marcó "recordar sesión", extender duración de cookie
     if ($remember) {
@@ -88,13 +78,12 @@ try {
     exit;
     
 } catch (\DomainException $e) {
-    session_start();
     $_SESSION['login_error'] = $e->getMessage();
+    $_SESSION['login_email'] = $email;
     header('Location: /login');
     exit;
 } catch (\Exception $e) {
     error_log('Error en login: ' . $e->getMessage());
-    session_start();
     $_SESSION['login_error'] = 'Error interno del servidor';
     header('Location: /login');
     exit;
