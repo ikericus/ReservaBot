@@ -201,13 +201,10 @@ class Router {
         return true;
     }
 
-    private function adminMiddleware() {
-        if (!function_exists('requireAdminAuth')) {
-            require_once PROJECT_ROOT . '/config/admin-auth.php';
-        }
+    private function adminMiddleware() {       
         logMessage("Router: Verificando acceso de administrador");
-        requireAdminAuth();
-        return true;
+
+        return isAdminUser(getAuthenticatedUser()['email']);
     }
     
     private function redirectToLogin($message = null) {

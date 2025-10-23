@@ -75,7 +75,7 @@ function getAuthenticatedUser(): ?array {
         'plan' => $_SESSION['user_plan'] ?? 'gratis',
         'login_time' => $_SESSION['login_time'] ?? '',
         'last_activity' => $_SESSION['last_activity'] ?? '',
-        'is_admin' => isAdminUser()
+        'is_admin' => isAdminUser($_SESSION['user_email'])
     ];
 }
 
@@ -213,4 +213,18 @@ function redirectToLogin(string $loginUrl = '/login', ?string $message = null): 
     
     header("Location: $loginUrl");
     exit;
+}
+
+// ========== VARIABLES DE ADMINISTRADOR ==========
+
+// Email del propietario del sistema (configurable desde .env)
+define('ADMIN_EMAIL', $_ENV['ADMIN_EMAIL']);
+
+// ========== FUNCIONES DE VERIFICACIÓN ==========
+
+/**
+ * Verifica si el usuario actual es administrador
+ */
+function isAdminUser($email): bool {
+    return strtolower(trim($email)) === strtolower(ADMIN_EMAIL);
 }
