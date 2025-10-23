@@ -45,7 +45,7 @@ try {
     $usuario = $usuarioDomain->autenticar($email, $password);
     
     if (!$usuario) {
-        $_SESSION['login_errors'] = [$authResult['message']];
+        $_SESSION['login_errors'] = 'Credenciales incorrectas';
         $_SESSION['login_email'] = $email;
         
         header('Location: /login');
