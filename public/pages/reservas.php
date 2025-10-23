@@ -17,6 +17,7 @@ try {
     $reservasConfirmadas = [];
 } 
 catch (Exception $e) {    
+    logMessage("Error en reservas.php: " . $e->getMessage());
     echo "Error en la configuración: " . $e->getMessage();
     exit;
 }
@@ -32,10 +33,13 @@ try {
     $reservasPendientes = array_map(fn($r) => $r->toArray(), $reservasPendientes);
     $reservasConfirmadas = array_map(fn($r) => $r->toArray(), $reservasConfirmadas);
 } catch (Exception $e) {
+    logMessage("Error obteniendo reservas en reservas.php: " . $e->getMessage());
     setFlashError('Error obteniendo reservas: ' . $e->getMessage());
     $reservasPendientes = [];
     $reservasConfirmadas = [];
 }
+
+logMessage("reservas.php: Cargando página de reservas para el usuario ID " . $userId);
 
 // Mostrar mensaje de bienvenida si es un nuevo usuario
 $welcomeMessage = $_SESSION['welcome_message'] ?? '';

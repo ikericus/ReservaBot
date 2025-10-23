@@ -62,7 +62,6 @@ try {
     handleDemoDataGeneration($email);
         
     // Crear sesión
-    session_start();
     session_regenerate_id(true);
     
     $_SESSION['user_authenticated'] = true;
