@@ -13,13 +13,14 @@ $currentPage = 'admin-dashboard';
 $pageTitle = 'ReservaBot - Admin Dashboard';
 $pageScript = 'admin/dashboard';
 
-include PROJECT_ROOT . '/includes/header.php';
+include PROJECT_ROOT . '/includes/headerAdmin.php';
 ?>
 
 <style>
 .admin-container {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
     min-height: 100vh;
+    padding: 2rem;
 }
 
 .stat-card {
@@ -151,14 +152,6 @@ include PROJECT_ROOT . '/includes/header.php';
         <a href="/admin/logs" class="ml-auto">
             <i class="ri-bug-line mr-2"></i>Logs
         </a>
-    </div>
-
-    <!-- Título -->
-    <div class="mb-8">
-        <h1 class="text-4xl font-bold text-white mb-2">
-            <i class="ri-admin-line mr-3"></i>Panel de Administración
-        </h1>
-        <p class="text-indigo-100">Monitoriza el estado del sistema en tiempo real</p>
     </div>
 
     <!-- Resumen General -->
