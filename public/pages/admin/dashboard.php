@@ -235,33 +235,7 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
     color: #f56565;
 }
 
-.admin-nav {
-    background: white;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
 
-.admin-nav a {
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    text-decoration: none;
-    color: #4a5568;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-}
-
-.admin-nav a:hover,
-.admin-nav a.active {
-    background: #667eea;
-    color: white;
-    border-color: #667eea;
-}
 
 .health-status {
     display: inline-flex;
