@@ -1,5 +1,5 @@
 <?php
-// public/pages/admin/dashboard.php
+// pages/admin/dashboard.php
 
 /**
  * Dashboard principal de administración
@@ -184,7 +184,6 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
         </div>
     </div>
 </div>
-
 
 <style>
 .admin-container {
