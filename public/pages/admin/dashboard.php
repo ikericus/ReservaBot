@@ -276,80 +276,83 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
 <!-- Chart.js para gráficos -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
-    // Gráfico de Planes
-    const planCtx = document.getElementById('planChart')?.getContext('2d');
-    if (planCtx) {
-        new Chart(planCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Premium', 'Básico', 'Gratis'],
-                datasets: [{
-                    data: [45, 35, 20],
-                    backgroundColor: [
-                        '#667eea',
-                        '#764ba2',
-                        '#f093fb'
-                    ],
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
+    document.addEventListener('DOMContentLoaded', function() {
+         // Gráfico de Planes
+        const planCtx = document.getElementById('planChart')?.getContext('2d');
+        if (planCtx) {
+            new Chart(planCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Premium', 'Básico', 'Gratis'],
+                    datasets: [{
+                        data: [45, 35, 20],
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb'
+                        ],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
                     }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    // Gráfico de Estado de Reservas
-    const estadoCtx = document.getElementById('estadoChart')?.getContext('2d');
-    if (estadoCtx) {
-        new Chart(estadoCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Confirmadas', 'Pendientes', 'Canceladas'],
-                datasets: [{
-                    label: 'Reservas',
-                    data: [450, 120, 80],
-                    backgroundColor: [
-                        '#48bb78',
-                        '#ed8936',
-                        '#f56565'
-                    ],
-                    borderRadius: 6,
-                    borderSkipped: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+        // Gráfico de Estado de Reservas
+        const estadoCtx = document.getElementById('estadoChart')?.getContext('2d');
+        if (estadoCtx) {
+            new Chart(estadoCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Confirmadas', 'Pendientes', 'Canceladas'],
+                    datasets: [{
+                        label: 'Reservas',
+                        data: [450, 120, 80],
+                        backgroundColor: [
+                            '#48bb78',
+                            '#ed8936',
+                            '#f56565'
+                        ],
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
                 },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    },
-                    y: {
-                        grid: {
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
                             display: false
                         }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
                     }
                 }
-            }
-        });
-    }
+            });
+        }
+    });
+   
 </script>
 
 <?php include PROJECT_ROOT . '/includes/footer.php'; ?>
