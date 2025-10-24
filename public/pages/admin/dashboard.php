@@ -11,7 +11,6 @@ $saludWhatsApp = $adminDomain->obtenerSaludWhatsApp();
 
 $currentPage = 'admin-dashboard';
 $pageTitle = 'ReservaBot - Admin Dashboard';
-$pageScript = 'admin/dashboard';
 
 include PROJECT_ROOT . '/includes/headerAdmin.php';
 ?>

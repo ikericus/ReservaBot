@@ -7,7 +7,7 @@
 
 $adminDomain = getContainer()->getAdminDomain();
 
-$currentPage = 'admin-usuarios';
+//$currentPage = 'admin-usuarios';
 $pageTitle = 'ReservaBot Admin - Usuarios';
 
 // Obtener datos
