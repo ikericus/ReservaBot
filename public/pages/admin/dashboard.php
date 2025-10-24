@@ -152,6 +152,9 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
         <a href="/admin/logs" class="ml-auto">
             <i class="ri-bug-line mr-2"></i>Logs
         </a>
+        <a href="/logout" class="ml-auto flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+            <i class="ri-logout-box-line mr-3"></i>Cerrar Sesión
+        </a>
     </div>
 
     <!-- Resumen General -->
