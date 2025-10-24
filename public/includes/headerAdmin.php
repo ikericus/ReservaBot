@@ -179,6 +179,6 @@
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
     <div class="flex h-screen">
-        <div class="md:ml-64 flex flex-col flex-1">
+        <div class="flex flex-col flex-1">
             <main class="flex-1 overflow-auto">
         
