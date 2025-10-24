@@ -1,5 +1,5 @@
 <?php
-// public/pages/admin/usuarios.php
+// pages/admin/usuarios.php
 
 /**
  * Página de gestión y estadísticas de usuarios
@@ -18,185 +18,13 @@ $usuarios_planes = $adminDomain->contarUsuariosPorPlan();
 $tasa_retencion = $adminDomain->obtenerTasaRetencion();
 $nuevos_hoy = $adminDomain->obtenerUltimosUsuarios(1);
 
-include PROJECT_ROOT . '/includes/header.php';
+include PROJECT_ROOT . '/includes/headerAdmin.php';
 ?>
 
-<style>
-.admin-container {
-    background: #f7fafc;
-    min-height: 100vh;
-    padding: 2rem;
-}
 
-.admin-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 2rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-}
+<div class="admin-container">   
 
-.metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.metric-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.metric-label {
-    color: #718096;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
-}
-
-.metric-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #2d3748;
-}
-
-.metric-subtitle {
-    font-size: 0.85rem;
-    color: #a0aec0;
-    margin-top: 0.5rem;
-}
-
-.card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.card-title {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #2d3748;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-}
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.table th {
-    background: #f7fafc;
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    color: #2d3748;
-    border-bottom: 2px solid #e2e8f0;
-}
-
-.table td {
-    padding: 1rem;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.table tbody tr:hover {
-    background: #f7fafc;
-}
-
-.badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.badge.premium { background: #fed7d7; color: #742a2a; }
-.badge.basico { background: #bee3f8; color: #2c5282; }
-.badge.gratis { background: #c6f6d5; color: #22543d; }
-
-.stat-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #edf2f7;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    color: #2d3748;
-}
-
-.plan-breakdown {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.plan-item {
-    padding: 1rem;
-    background: #f7fafc;
-    border-radius: 6px;
-    text-align: center;
-}
-
-.plan-item-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #2d3748;
-    line-height: 1;
-    margin-bottom: 0.5rem;
-}
-
-.plan-item-label {
-    font-size: 0.85rem;
-    color: #718096;
-    font-weight: 600;
-}
-
-.chart-container {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.grid-2 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-}
-</style>
-
-<div class="admin-container">
-    <!-- Navegación -->
-    <div class="mb-8 flex gap-2 flex-wrap">
-        <a href="/admin/dashboard" class="px-4 py-2 rounded-lg text-gray-600 hover:bg-white hover:shadow">
-            <i class="ri-arrow-left-line mr-2"></i>Volver
-        </a>
-        <a href="/admin/usuarios" class="px-4 py-2 rounded-lg bg-indigo-600 text-white">
-            <i class="ri-user-line mr-2"></i>Usuarios
-        </a>
-    </div>
-
-    <!-- Header -->
-    <div class="admin-header">
-        <h1 class="text-3xl font-bold mb-2">
-            <i class="ri-user-line mr-2"></i>Gestión de Usuarios
-        </h1>
-        <p>Estadísticas y análisis de la comunidad de usuarios</p>
-    </div>
+    <?php include PROJECT_ROOT . '/pages/admin/menu.php'; ?>
 
     <!-- Métricas Principales -->
     <div class="metrics-grid">
@@ -370,4 +198,160 @@ include PROJECT_ROOT . '/includes/header.php';
     }
 </script>
 
-<?php include PROJECT_ROOT . '/includes/footer.php'; ?>
+<style>
+.admin-container {
+    background: #f7fafc;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.admin-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.metric-label {
+    color: #718096;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.metric-subtitle {
+    font-size: 0.85rem;
+    color: #a0aec0;
+    margin-top: 0.5rem;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    background: #f7fafc;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #2d3748;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.table tbody tr:hover {
+    background: #f7fafc;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge.premium { background: #fed7d7; color: #742a2a; }
+.badge.basico { background: #bee3f8; color: #2c5282; }
+.badge.gratis { background: #c6f6d5; color: #22543d; }
+
+.stat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #edf2f7;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #2d3748;
+}
+
+.plan-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.plan-item {
+    padding: 1rem;
+    background: #f7fafc;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.plan-item-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.plan-item-label {
+    font-size: 0.85rem;
+    color: #718096;
+    font-weight: 600;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+</style>

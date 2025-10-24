@@ -17,226 +17,12 @@ $ultimos_usuarios = $adminDomain->obtenerUltimosUsuariosWhatsApp(10);
 $numeros_activos = $adminDomain->obtenerNumerosMasActivos(10);
 $volumen_7 = $adminDomain->obtenerVolumenMensajesPor7Dias();
 
-include PROJECT_ROOT . '/includes/header.php';
+include PROJECT_ROOT . '/includes/headerAdmin.php';
 ?>
 
-<style>
-.admin-container {
-    background: #f7fafc;
-    min-height: 100vh;
-    padding: 2rem;
-}
-
-.admin-header {
-    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
-    color: white;
-    padding: 2rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-}
-
-.metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.metric-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.metric-label {
-    color: #718096;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
-}
-
-.metric-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #2d3748;
-}
-
-.metric-subtitle {
-    font-size: 0.85rem;
-    color: #a0aec0;
-    margin-top: 0.5rem;
-}
-
-.health-card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 2rem;
-    margin-bottom: 2rem;
-}
-
-.health-status {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: #f0fff4;
-    border-left: 4px solid #48bb78;
-    border-radius: 6px;
-    margin-bottom: 1rem;
-}
-
-.health-status.warning {
-    background: #fffff0;
-    border-left-color: #ed8936;
-}
-
-.health-status.danger {
-    background: #fff5f5;
-    border-left-color: #f56565;
-}
-
-.status-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #48bb78;
-    animation: pulse 2s infinite;
-}
-
-.health-status.warning .status-dot {
-    background: #ed8936;
-}
-
-.health-status.danger .status-dot {
-    background: #f56565;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-}
-
-.card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.card-title {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #2d3748;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-}
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.table th {
-    background: #f7fafc;
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    color: #2d3748;
-    border-bottom: 2px solid #e2e8f0;
-}
-
-.table td {
-    padding: 1rem;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.table tbody tr:hover {
-    background: #f7fafc;
-}
-
-.badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.badge.connected { background: #c6f6d5; color: #22543d; }
-.badge.connecting { background: #feebc8; color: #7c2d12; }
-.badge.disconnected { background: #fed7d7; color: #742a2a; }
-.badge.waiting_qr { background: #bee3f8; color: #2c5282; }
-.badge.error { background: #fed7d7; color: #742a2a; }
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.stat-row:last-child {
-    border-bottom: none;
-}
-
-.stat-label {
-    color: #718096;
-    font-size: 0.95rem;
-}
-
-.stat-value {
-    font-weight: 600;
-    color: #2d3748;
-}
-
-.progress-bar {
-    width: 100%;
-    height: 8px;
-    background: #e2e8f0;
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 0.5rem 0;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #25d366, #128c7e);
-    transition: width 0.3s ease;
-}
-
-.grid-2 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-}
-</style>
-
 <div class="admin-container">
-    <!-- Navegación -->
-    <div class="mb-8 flex gap-2 flex-wrap">
-        <a href="/admin/dashboard" class="px-4 py-2 rounded-lg text-gray-600 hover:bg-white hover:shadow">
-            <i class="ri-arrow-left-line mr-2"></i>Volver
-        </a>
-        <a href="/admin/whatsapp" class="px-4 py-2 rounded-lg bg-green-600 text-white">
-            <i class="ri-whatsapp-line mr-2"></i>WhatsApp
-        </a>
-    </div>
-
-    <!-- Header -->
-    <div class="admin-header">
-        <h1 class="text-3xl font-bold mb-2">
-            <i class="ri-whatsapp-line mr-2"></i>Monitor de WhatsApp
-        </h1>
-        <p>Estado y estadísticas del sistema de mensajería</p>
-    </div>
+   
+    <?php include PROJECT_ROOT . '/pages/admin/menu.php'; ?>
 
     <!-- Salud del Sistema -->
     <div class="health-card">
@@ -469,4 +255,202 @@ include PROJECT_ROOT . '/includes/header.php';
     }
 </script>
 
-<?php include PROJECT_ROOT . '/includes/footer.php'; ?>
+
+<style>
+.admin-container {
+    background: #f7fafc;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.admin-header {
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.metric-label {
+    color: #718096;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.metric-subtitle {
+    font-size: 0.85rem;
+    color: #a0aec0;
+    margin-top: 0.5rem;
+}
+
+.health-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.health-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f0fff4;
+    border-left: 4px solid #48bb78;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.health-status.warning {
+    background: #fffff0;
+    border-left-color: #ed8936;
+}
+
+.health-status.danger {
+    background: #fff5f5;
+    border-left-color: #f56565;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #48bb78;
+    animation: pulse 2s infinite;
+}
+
+.health-status.warning .status-dot {
+    background: #ed8936;
+}
+
+.health-status.danger .status-dot {
+    background: #f56565;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    background: #f7fafc;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #2d3748;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.table tbody tr:hover {
+    background: #f7fafc;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge.connected { background: #c6f6d5; color: #22543d; }
+.badge.connecting { background: #feebc8; color: #7c2d12; }
+.badge.disconnected { background: #fed7d7; color: #742a2a; }
+.badge.waiting_qr { background: #bee3f8; color: #2c5282; }
+.badge.error { background: #fed7d7; color: #742a2a; }
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: #718096;
+    font-size: 0.95rem;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #25d366, #128c7e);
+    transition: width 0.3s ease;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+</style>

@@ -3,7 +3,7 @@
 ?>
 
 <div class="admin-nav">
-    <a href="/admin/dashboard" class="<?= str_ends_with($current, '/admin/dashboard') ? 'active' : '' ?>">
+    <a href="/admin" class="<?= str_ends_with($current, '/admin') ? 'active' : '' ?>">
         <i class="ri-dashboard-line mr-2"></i>Dashboard
     </a>
     <a href="/admin/actividad" class="<?= str_ends_with($current, '/admin/actividad') ? 'active' : '' ?>">
