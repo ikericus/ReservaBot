@@ -16,19 +16,18 @@ class AdminRepository implements IAdminRepository {
     // =============== ACTIVIDAD ===============
     
     public function obtenerUltimosAccesos(int $limit): array {
-        // En lugar de activity_log, usamos sesiones_usuario y last_activity de usuarios
         $sql = "SELECT 
                     u.id,
                     u.email,
                     u.nombre,
                     u.plan,
                     u.last_activity,
-                    COUNT(r.id) as total_reservas,
+                    COUNT(DISTINCT r.id) as total_reservas,
                     COUNT(DISTINCT DATE(r.created_at)) as dias_activo
                 FROM usuarios u
                 LEFT JOIN reservas r ON u.id = r.usuario_id
                 WHERE u.last_activity IS NOT NULL AND u.activo = 1
-                GROUP BY u.id
+                GROUP BY u.id, u.email, u.nombre, u.plan, u.last_activity
                 ORDER BY u.last_activity DESC
                 LIMIT ?";
         
@@ -38,7 +37,6 @@ class AdminRepository implements IAdminRepository {
     }
     
     public function contarLoginsHoy(): int {
-        // Contar sesiones creadas hoy
         $sql = "SELECT COUNT(DISTINCT usuario_id) 
                 FROM sesiones_usuario 
                 WHERE DATE(created_at) = CURDATE()";
@@ -49,7 +47,6 @@ class AdminRepository implements IAdminRepository {
     }
     
     public function contarUsuariosActivosUltimaHora(): int {
-        // Usuarios con last_activity en la última hora
         $sql = "SELECT COUNT(*) 
                 FROM usuarios 
                 WHERE last_activity >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
@@ -61,15 +58,15 @@ class AdminRepository implements IAdminRepository {
     }
     
     public function obtenerEstadisticasRecursos(): array {
-        // En lugar de activity_log, usamos formularios_publicos como "recursos"
+        // Usar formularios públicos y sus reservas como métrica de recursos
         $sql = "SELECT 
-                    CONCAT('Formulario: ', nombre) as resource,
+                    CONCAT('Formulario: ', f.nombre) as resource,
                     COUNT(DISTINCT r.id) as total_accesos,
                     COUNT(DISTINCT DATE(r.created_at)) as dias_accedidos
                 FROM formularios_publicos f
                 LEFT JOIN reservas r ON f.id = r.formulario_id
                 WHERE f.activo = 1 AND r.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-                GROUP BY f.id
+                GROUP BY f.id, f.nombre
                 ORDER BY total_accesos DESC
                 LIMIT 20";
         
@@ -77,11 +74,10 @@ class AdminRepository implements IAdminRepository {
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Si no hay datos, devolver datos de ejemplo
         if (empty($result)) {
             return [
-                ['resource' => 'Formulario: Citas', 'total_accesos' => 0, 'dias_accedidos' => 0],
-                ['resource' => 'Dashboard', 'total_accesos' => 0, 'dias_accedidos' => 0]
+                ['resource' => 'Dashboard', 'total_accesos' => 0, 'dias_accedidos' => 0],
+                ['resource' => 'Reservas', 'total_accesos' => 0, 'dias_accedidos' => 0]
             ];
         }
         
@@ -89,33 +85,8 @@ class AdminRepository implements IAdminRepository {
     }
     
     public function obtenerErroresRecientes(int $limit): array {
-        // Si no existe tabla system_logs, devolver array vacío
-        $sql = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES 
-                WHERE TABLE_SCHEMA = DATABASE() 
-                AND TABLE_NAME = 'system_logs' LIMIT 1";
-        
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute();
-        
-        if (!$stmt->fetch()) {
-            return []; // La tabla no existe
-        }
-        
-        $sql = "SELECT 
-                    id,
-                    nivel,
-                    mensaje,
-                    archivo,
-                    linea,
-                    created_at
-                FROM system_logs 
-                WHERE nivel IN ('ERROR', 'CRITICAL')
-                ORDER BY created_at DESC
-                LIMIT ?";
-        
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$limit]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // La tabla system_logs no existe en el esquema, retornamos vacío
+        return [];
     }
     
     // =============== USUARIOS ===============
@@ -128,10 +99,13 @@ class AdminRepository implements IAdminRepository {
                     u.plan,
                     u.created_at,
                     u.last_activity,
-                    (SELECT COUNT(*) FROM reservas WHERE usuario_id = u.id) as total_reservas,
-                    0 as whatsapp_conectado
+                    COUNT(DISTINCT r.id) as total_reservas,
+                    CASE WHEN wc.status = 'connected' THEN 1 ELSE 0 END as whatsapp_conectado
                 FROM usuarios u
+                LEFT JOIN reservas r ON u.id = r.usuario_id
+                LEFT JOIN whatsapp_config wc ON u.id = wc.usuario_id
                 WHERE u.activo = 1
+                GROUP BY u.id, u.email, u.nombre, u.plan, u.created_at, u.last_activity, wc.status
                 ORDER BY u.created_at DESC
                 LIMIT ?";
         
@@ -154,7 +128,12 @@ class AdminRepository implements IAdminRepository {
                 FROM usuarios
                 WHERE activo = 1
                 GROUP BY plan
-                ORDER BY total DESC";
+                ORDER BY 
+                    CASE plan
+                        WHEN 'premium' THEN 1
+                        WHEN 'estandar' THEN 2
+                        WHEN 'gratis' THEN 3
+                    END";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
@@ -167,14 +146,13 @@ class AdminRepository implements IAdminRepository {
                     u.email,
                     u.nombre,
                     u.plan,
-                    COUNT(r.id) as total_reservas,
+                    COUNT(DISTINCT r.id) as total_reservas,
                     COUNT(DISTINCT DATE(r.created_at)) as dias_con_reservas,
                     MAX(r.created_at) as ultima_reserva
                 FROM usuarios u
-                LEFT JOIN reservas r ON u.id = r.usuario_id
+                INNER JOIN reservas r ON u.id = r.usuario_id
                 WHERE u.activo = 1
-                GROUP BY u.id
-                HAVING total_reservas > 0
+                GROUP BY u.id, u.email, u.nombre, u.plan
                 ORDER BY total_reservas DESC
                 LIMIT ?";
         
@@ -210,11 +188,12 @@ class AdminRepository implements IAdminRepository {
                     u.email as usuario_email,
                     r.nombre as cliente_nombre,
                     r.telefono as cliente_telefono,
-                    r.fecha as fecha_inicio,
+                    CONCAT(r.fecha, ' ', r.hora) as fecha_inicio,
+                    r.fecha,
                     r.hora,
                     r.estado,
                     r.created_at,
-                    'Reserva' as servicio
+                    COALESCE(r.mensaje, 'Sin servicio especificado') as servicio
                 FROM reservas r
                 LEFT JOIN usuarios u ON r.usuario_id = u.id
                 ORDER BY r.created_at DESC
@@ -287,7 +266,12 @@ class AdminRepository implements IAdminRepository {
                     COUNT(*) as total
                 FROM reservas 
                 GROUP BY estado
-                ORDER BY total DESC";
+                ORDER BY 
+                    CASE estado
+                        WHEN 'confirmada' THEN 1
+                        WHEN 'pendiente' THEN 2
+                        WHEN 'cancelada' THEN 3
+                    END";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
@@ -295,22 +279,22 @@ class AdminRepository implements IAdminRepository {
     }
     
     // =============== WHATSAPP ===============
-    // Nota: Adaptado a la estructura actual sin tabla whatsapp_config
     
     public function contarUsuariosWhatsAppConectados(): int {
-        // Contar usuarios_whatsapp registrados
-        $sql = "SELECT COUNT(DISTINCT usuario_id) 
-                FROM usuarios_whatsapp 
-                WHERE usuario_id IS NOT NULL";
+        $sql = "SELECT COUNT(*) 
+                FROM whatsapp_config 
+                WHERE status = 'connected'";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
-        $count = (int)$stmt->fetchColumn();
-        return $count > 0 ? $count : 0;
+        return (int)$stmt->fetchColumn();
     }
     
     public function contarUsuariosWhatsAppRegistrados(): int {
-        $sql = "SELECT COUNT(DISTINCT usuario_id) FROM usuarios_whatsapp";
+        $sql = "SELECT COUNT(*) 
+                FROM whatsapp_config 
+                WHERE phone_number IS NOT NULL";
+        
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
@@ -318,17 +302,19 @@ class AdminRepository implements IAdminRepository {
     
     public function obtenerUltimosUsuariosWhatsApp(int $limit): array {
         $sql = "SELECT 
-                    uw.usuario_id,
+                    wc.usuario_id,
                     u.email,
                     u.nombre,
-                    uw.telefono as phone_number,
-                    'connected' as status,
-                    uw.last_active,
-                    (SELECT COUNT(*) FROM autorespuestas_whatsapp WHERE usuario_id = uw.usuario_id) as total_conversaciones
-                FROM usuarios_whatsapp uw
-                LEFT JOIN usuarios u ON uw.usuario_id = u.id
-                WHERE uw.usuario_id IS NOT NULL
-                ORDER BY uw.last_active DESC
+                    wc.phone_number,
+                    wc.status,
+                    wc.last_activity,
+                    COUNT(DISTINCT c.id) as total_conversaciones
+                FROM whatsapp_config wc
+                INNER JOIN usuarios u ON wc.usuario_id = u.id
+                LEFT JOIN conversaciones c ON wc.usuario_id = c.usuario_id
+                WHERE wc.phone_number IS NOT NULL
+                GROUP BY wc.usuario_id, u.email, u.nombre, wc.phone_number, wc.status, wc.last_activity
+                ORDER BY wc.last_activity DESC
                 LIMIT ?";
         
         $stmt = $this->pdo->prepare($sql);
@@ -337,10 +323,9 @@ class AdminRepository implements IAdminRepository {
     }
     
     public function contarMensajesEnviados(): int {
-        // Contar mensajes_whatsapp donde from_me = 1
         $sql = "SELECT COUNT(*) 
-                FROM mensajes_whatsapp 
-                WHERE from_me = 1";
+                FROM whatsapp_messages 
+                WHERE direction = 'outgoing'";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
@@ -348,10 +333,9 @@ class AdminRepository implements IAdminRepository {
     }
     
     public function contarMensajesRecibidos(): int {
-        // Contar mensajes_whatsapp donde from_me = 0
         $sql = "SELECT COUNT(*) 
-                FROM mensajes_whatsapp 
-                WHERE from_me = 0";
+                FROM whatsapp_messages 
+                WHERE direction = 'incoming'";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
@@ -360,9 +344,9 @@ class AdminRepository implements IAdminRepository {
     
     public function contarMensajesEnviadosHoy(): int {
         $sql = "SELECT COUNT(*) 
-                FROM mensajes_whatsapp 
-                WHERE from_me = 1 
-                AND DATE(FROM_UNIXTIME(timestamp)) = CURDATE()";
+                FROM whatsapp_messages 
+                WHERE direction = 'outgoing' 
+                AND DATE(created_at) = CURDATE()";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
@@ -371,9 +355,9 @@ class AdminRepository implements IAdminRepository {
     
     public function contarMensajesRecibidosHoy(): int {
         $sql = "SELECT COUNT(*) 
-                FROM mensajes_whatsapp 
-                WHERE from_me = 0 
-                AND DATE(FROM_UNIXTIME(timestamp)) = CURDATE()";
+                FROM whatsapp_messages 
+                WHERE direction = 'incoming' 
+                AND DATE(created_at) = CURDATE()";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
@@ -381,18 +365,23 @@ class AdminRepository implements IAdminRepository {
     }
     
     public function contarMensajesHoy(): int {
-        // Total de mensajes hoy (enviados + recibidos)
-        return $this->contarMensajesEnviadosHoy() + $this->contarMensajesRecibidosHoy();
+        $sql = "SELECT COUNT(*) 
+                FROM whatsapp_messages 
+                WHERE DATE(created_at) = CURDATE()";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
     }
     
     public function obtenerVolumenMensajesPor7Dias(): array {
         $sql = "SELECT 
-                    DATE(FROM_UNIXTIME(timestamp)) as fecha,
-                    SUM(CASE WHEN from_me = 1 THEN 1 ELSE 0 END) as enviados,
-                    SUM(CASE WHEN from_me = 0 THEN 1 ELSE 0 END) as recibidos
-                FROM mensajes_whatsapp 
-                WHERE timestamp >= UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 7 DAY))
-                GROUP BY DATE(FROM_UNIXTIME(timestamp))
+                    DATE(created_at) as fecha,
+                    SUM(CASE WHEN direction = 'outgoing' THEN 1 ELSE 0 END) as enviados,
+                    SUM(CASE WHEN direction = 'incoming' THEN 1 ELSE 0 END) as recibidos
+                FROM whatsapp_messages 
+                WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                GROUP BY DATE(created_at)
                 ORDER BY fecha ASC";
         
         $stmt = $this->pdo->prepare($sql);
@@ -401,21 +390,17 @@ class AdminRepository implements IAdminRepository {
     }
     
     public function obtenerNumerosMasActivos(int $limit): array {
-        // Obtener números más activos de mensajes_whatsapp
         $sql = "SELECT 
-                    chat_id as telefono,
-                    COUNT(*) as total_conversaciones,
-                    COUNT(DISTINCT usuario_id) as total_usuarios
-                FROM mensajes_whatsapp
-                GROUP BY chat_id
+                    wm.phone_number as telefono,
+                    COUNT(DISTINCT wm.id) as total_conversaciones,
+                    COUNT(DISTINCT wm.usuario_id) as total_usuarios
+                FROM whatsapp_messages wm
+                GROUP BY wm.phone_number
                 ORDER BY total_conversaciones DESC
                 LIMIT ?";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$limit]);
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Si no hay datos, devolver array vacío
-        return $result ?: [];
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

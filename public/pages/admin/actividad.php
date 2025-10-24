@@ -1,5 +1,5 @@
 <?php
-// public/pages/admin/actividad.php
+// pages/admin/actividad.php
 
 /**
  * Página de monitoreo de actividad del sistema
@@ -15,7 +15,6 @@ $ultimos_accesos = $adminDomain->obtenerUltimosAccesos(20);
 $logins_hoy = $adminDomain->obtenerLoginsHoy();
 $usuarios_activos_hora = $adminDomain->obtenerUsuariosActivosUltimaHora();
 $recursos = $adminDomain->obtenerEstadisticasRecursos();
-$errores = $adminDomain->obtenerErroresRecientes(10);
 
 include PROJECT_ROOT . '/includes/header.php';
 ?>
@@ -41,18 +40,6 @@ include PROJECT_ROOT . '/includes/header.php';
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 1rem;
-}
-
-.stat-box.warning {
-    border-left: 4px solid #ed8936;
-}
-
-.stat-box.danger {
-    border-left: 4px solid #f56565;
-}
-
-.stat-box.success {
-    border-left: 4px solid #48bb78;
 }
 
 .table-container {
@@ -102,46 +89,9 @@ include PROJECT_ROOT . '/includes/header.php';
     text-transform: uppercase;
 }
 
-.badge.error { background: #fed7d7; color: #c53030; }
-.badge.warning { background: #feebc8; color: #c05621; }
-.badge.success { background: #c6f6d5; color: #22543d; }
-.badge.info { background: #bee3f8; color: #2c5282; }
-
-.timeline {
-    position: relative;
-}
-
-.timeline-item {
-    padding-left: 3rem;
-    padding-bottom: 1.5rem;
-    position: relative;
-}
-
-.timeline-item::before {
-    content: '';
-    position: absolute;
-    left: 0.5rem;
-    top: 0;
-    bottom: -1.5rem;
-    width: 2px;
-    background: #e2e8f0;
-}
-
-.timeline-item:last-child::before {
-    display: none;
-}
-
-.timeline-item::after {
-    content: '';
-    position: absolute;
-    left: -0.25rem;
-    top: 0.5rem;
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 50%;
-    background: #667eea;
-    border: 3px solid white;
-}
+.badge.premium { background: #fed7d7; color: #742a2a; }
+.badge.estandar { background: #bee3f8; color: #2c5282; }
+.badge.gratis { background: #c6f6d5; color: #22543d; }
 
 .metrics-grid {
     display: grid;
@@ -219,10 +169,10 @@ include PROJECT_ROOT . '/includes/header.php';
 
         <div class="metric-card info">
             <div class="metric-label">
-                <i class="ri-server-line mr-2"></i>Total Accesos (7d)
+                <i class="ri-server-line mr-2"></i>Usuarios Registrados
             </div>
             <div class="metric-value"><?php echo count($ultimos_accesos); ?></div>
-            <div class="metric-change">Datos agregados</div>
+            <div class="metric-change">Con actividad reciente</div>
         </div>
     </div>
 
@@ -240,28 +190,36 @@ include PROJECT_ROOT . '/includes/header.php';
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($ultimos_accesos as $acceso): ?>
-                <tr>
-                    <td class="font-medium"><?php echo htmlspecialchars($acceso['nombre']); ?></td>
-                    <td class="text-gray-600"><?php echo htmlspecialchars($acceso['email']); ?></td>
-                    <td>
-                        <span class="badge <?php echo strtolower($acceso['plan']); ?>">
-                            <?php echo ucfirst($acceso['plan']); ?>
-                        </span>
-                    </td>
-                    <td><?php echo $acceso['total_reservas']; ?></td>
-                    <td><?php echo $acceso['dias_activo']; ?></td>
-                    <td class="text-sm">
-                        <?php 
-                        if ($acceso['last_activity']) {
-                            echo date('d/m/Y H:i', strtotime($acceso['last_activity']));
-                        } else {
-                            echo 'N/A';
-                        }
-                        ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
+                <?php if (empty($ultimos_accesos)): ?>
+                    <tr>
+                        <td colspan="6" class="text-center py-8 text-gray-500">
+                            No hay datos de actividad reciente
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($ultimos_accesos as $acceso): ?>
+                    <tr>
+                        <td class="font-medium"><?php echo htmlspecialchars($acceso['nombre']); ?></td>
+                        <td class="text-gray-600"><?php echo htmlspecialchars($acceso['email']); ?></td>
+                        <td>
+                            <span class="badge <?php echo strtolower($acceso['plan']); ?>">
+                                <?php echo ucfirst($acceso['plan']); ?>
+                            </span>
+                        </td>
+                        <td><?php echo $acceso['total_reservas']; ?></td>
+                        <td><?php echo $acceso['dias_activo']; ?></td>
+                        <td class="text-sm">
+                            <?php 
+                            if ($acceso['last_activity']) {
+                                echo date('d/m/Y H:i', strtotime($acceso['last_activity']));
+                            } else {
+                                echo 'N/A';
+                            }
+                            ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
@@ -282,48 +240,34 @@ include PROJECT_ROOT . '/includes/header.php';
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($recursos as $recurso): ?>
-                <tr>
-                    <td class="font-medium"><?php echo htmlspecialchars($recurso['resource']); ?></td>
-                    <td><?php echo number_format($recurso['total_accesos']); ?></td>
-                    <td><?php echo $recurso['dias_accedidos']; ?></td>
-                    <td>
-                        <div class="w-32 bg-gray-200 rounded-full h-2">
-                            <div class="bg-indigo-600 h-2 rounded-full" 
-                                 style="width: <?php echo min(100, ($recurso['total_accesos'] / 100) * 100); ?>%"></div>
-                        </div>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
+                <?php if (empty($recursos)): ?>
+                    <tr>
+                        <td colspan="4" class="text-center py-8 text-gray-500">
+                            No hay datos de recursos disponibles
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($recursos as $recurso): ?>
+                    <tr>
+                        <td class="font-medium"><?php echo htmlspecialchars($recurso['resource']); ?></td>
+                        <td><?php echo number_format($recurso['total_accesos']); ?></td>
+                        <td><?php echo $recurso['dias_accedidos']; ?></td>
+                        <td>
+                            <div class="w-32 bg-gray-200 rounded-full h-2">
+                                <?php 
+                                $maxAccesos = max(array_column($recursos, 'total_accesos'));
+                                $porcentaje = $maxAccesos > 0 ? ($recurso['total_accesos'] / $maxAccesos) * 100 : 0;
+                                ?>
+                                <div class="bg-indigo-600 h-2 rounded-full" 
+                                     style="width: <?php echo $porcentaje; ?>%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
-
-    <!-- Errores Recientes -->
-    <?php if (!empty($errores)): ?>
-    <h2 class="text-2xl font-bold text-gray-900 mb-4 mt-8">
-        <i class="ri-error-warning-line mr-2"></i>Errores Recientes
-    </h2>
-    
-    <div class="timeline">
-        <?php foreach ($errores as $error): ?>
-        <div class="stat-box danger">
-            <div class="flex justify-between items-start mb-2">
-                <div>
-                    <span class="badge error"><?php echo $error['nivel']; ?></span>
-                    <span class="text-gray-600 text-sm ml-3">
-                        <?php echo date('d/m/Y H:i:s', strtotime($error['created_at'])); ?>
-                    </span>
-                </div>
-            </div>
-            <p class="font-medium text-gray-900 mb-2"><?php echo htmlspecialchars($error['mensaje']); ?></p>
-            <p class="text-xs text-gray-600">
-                <code><?php echo htmlspecialchars($error['archivo']); ?></code>:<?php echo $error['linea']; ?>
-            </p>
-        </div>
-        <?php endforeach; ?>
-    </div>
-    <?php endif; ?>
 </div>
 
 <?php include PROJECT_ROOT . '/includes/footer.php'; ?>

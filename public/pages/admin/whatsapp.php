@@ -1,5 +1,5 @@
 <?php
-// public/pages/admin/whatsapp.php
+// pages/admin/whatsapp.php
 
 /**
  * Página de monitoreo de WhatsApp
@@ -173,6 +173,8 @@ include PROJECT_ROOT . '/includes/header.php';
 .badge.connected { background: #c6f6d5; color: #22543d; }
 .badge.connecting { background: #feebc8; color: #7c2d12; }
 .badge.disconnected { background: #fed7d7; color: #742a2a; }
+.badge.waiting_qr { background: #bee3f8; color: #2c5282; }
+.badge.error { background: #fed7d7; color: #742a2a; }
 
 .stat-row {
     display: flex;
@@ -245,7 +247,7 @@ include PROJECT_ROOT . '/includes/header.php';
         <div class="health-status <?php echo $salud['estado_servidor'] === 'online' ? '' : 'danger'; ?>">
             <span class="status-dot"></span>
             <div>
-                <div class="font-semibold">Servidor Node.js</div>
+                <div class="font-semibold">Servidor WhatsApp</div>
                 <div class="text-sm"><?php echo ucfirst($salud['estado_servidor']); ?></div>
             </div>
         </div>
@@ -315,21 +317,29 @@ include PROJECT_ROOT . '/includes/header.php';
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($ultimos_usuarios as $usuario): ?>
-                    <tr>
-                        <td>
-                            <div class="font-medium text-sm"><?php echo htmlspecialchars($usuario['nombre'] ?? 'N/A'); ?></div>
-                            <div class="text-xs text-gray-600"><?php echo htmlspecialchars($usuario['email'] ?? 'N/A'); ?></div>
-                        </td>
-                        <td class="text-sm font-mono"><?php echo htmlspecialchars($usuario['phone_number']); ?></td>
-                        <td>
-                            <span class="badge <?php echo $usuario['status']; ?>">
-                                <?php echo ucfirst($usuario['status']); ?>
-                            </span>
-                        </td>
-                        <td class="text-center font-semibold"><?php echo $usuario['total_conversaciones']; ?></td>
-                    </tr>
-                    <?php endforeach; ?>
+                    <?php if (empty($ultimos_usuarios)): ?>
+                        <tr>
+                            <td colspan="4" class="text-center py-8 text-gray-500">
+                                No hay usuarios conectados
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($ultimos_usuarios as $usuario): ?>
+                        <tr>
+                            <td>
+                                <div class="font-medium text-sm"><?php echo htmlspecialchars($usuario['nombre'] ?? 'N/A'); ?></div>
+                                <div class="text-xs text-gray-600"><?php echo htmlspecialchars($usuario['email'] ?? 'N/A'); ?></div>
+                            </td>
+                            <td class="text-sm font-mono"><?php echo htmlspecialchars($usuario['phone_number'] ?? 'N/A'); ?></td>
+                            <td>
+                                <span class="badge <?php echo $usuario['status']; ?>">
+                                    <?php echo ucfirst(str_replace('_', ' ', $usuario['status'])); ?>
+                                </span>
+                            </td>
+                            <td class="text-center font-semibold"><?php echo $usuario['total_conversaciones']; ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -344,18 +354,26 @@ include PROJECT_ROOT . '/includes/header.php';
                 <thead>
                     <tr>
                         <th>Teléfono</th>
-                        <th>Conversaciones</th>
+                        <th>Mensajes</th>
                         <th>Usuarios</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($numeros_activos as $numero): ?>
-                    <tr>
-                        <td class="text-sm font-mono"><?php echo htmlspecialchars($numero['telefono']); ?></td>
-                        <td class="text-center font-semibold"><?php echo $numero['total_conversaciones']; ?></td>
-                        <td class="text-center"><?php echo $numero['total_usuarios']; ?></td>
-                    </tr>
-                    <?php endforeach; ?>
+                    <?php if (empty($numeros_activos)): ?>
+                        <tr>
+                            <td colspan="3" class="text-center py-8 text-gray-500">
+                                No hay datos de números activos
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($numeros_activos as $numero): ?>
+                        <tr>
+                            <td class="text-sm font-mono"><?php echo htmlspecialchars($numero['telefono']); ?></td>
+                            <td class="text-center font-semibold"><?php echo $numero['total_conversaciones']; ?></td>
+                            <td class="text-center"><?php echo $numero['total_usuarios']; ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
