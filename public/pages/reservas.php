@@ -10,6 +10,13 @@ $pageScript = 'reservas';
 try {
     // Obtener usuario
     $currentUser = getAuthenticatedUser();
+    
+    // Redirigir a admin si el usuario es administrador
+    if (isAdminUser(getAuthenticatedUser()['email']))
+    {
+        header("Location: /admin");
+    }                 
+    
     // Obtener las reservas del usuario autenticado
     $userId =  $currentUser['id'];
 
