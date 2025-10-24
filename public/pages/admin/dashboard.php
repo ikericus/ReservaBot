@@ -16,146 +16,9 @@ $pageScript = 'admin/dashboard';
 include PROJECT_ROOT . '/includes/headerAdmin.php';
 ?>
 
-<style>
-.admin-container {
-    /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
-    min-height: 100vh;
-    padding: 2rem;
-}
-
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
-}
-
-.stat-card h3 {
-    color: #667eea;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 0.5rem;
-}
-
-.stat-card .value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #1a202c;
-    line-height: 1;
-    margin-bottom: 0.5rem;
-}
-
-.stat-card .change {
-    font-size: 0.85rem;
-    color: #48bb78;
-}
-
-.stat-card.warning .value {
-    color: #ed8936;
-}
-
-.stat-card.danger .value {
-    color: #f56565;
-}
-
-.admin-nav {
-    background: white;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.admin-nav a {
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    text-decoration: none;
-    color: #4a5568;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-}
-
-.admin-nav a:hover,
-.admin-nav a.active {
-    background: #667eea;
-    color: white;
-    border-color: #667eea;
-}
-
-.health-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: #f0fff4;
-    border-left: 4px solid #48bb78;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
-
-.health-status.warning {
-    background: #fffff0;
-    border-color: #ed8936;
-}
-
-.health-status.danger {
-    background: #fff5f5;
-    border-color: #f56565;
-}
-
-.chart-container {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 2rem;
-}
-
-.chart-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #1a202c;
-    margin-bottom: 1rem;
-}
-</style>
-
 <div class="admin-container">
-    <!-- Navegación -->
-    <div class="admin-nav">
-        <a href="/admin/dashboard" class="active">
-            <i class="ri-dashboard-line mr-2"></i>Dashboard
-        </a>
-        <a href="/admin/actividad">
-            <i class="ri-history-line mr-2"></i>Actividad
-        </a>
-        <a href="/admin/usuarios">
-            <i class="ri-user-line mr-2"></i>Usuarios
-        </a>
-        <a href="/admin/reservas">
-            <i class="ri-calendar-line mr-2"></i>Reservas
-        </a>
-        <a href="/admin/whatsapp">
-            <i class="ri-whatsapp-line mr-2"></i>WhatsApp
-        </a>
-        <a href="/admin/logs" class="ml-auto">
-            <i class="ri-bug-line mr-2"></i>Logs
-        </a>
-        <a href="/logout" class="ml-auto flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-            <i class="ri-logout-box-line mr-3"></i>Cerrar Sesión
-        </a>
-    </div>
+
+    <?php include PROJECT_ROOT . '/pages/admin/menu.php'; ?>
 
     <!-- Resumen General -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -321,6 +184,122 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
         </div>
     </div>
 </div>
+
+
+<style>
+.admin-container {
+    /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card h3 {
+    color: #667eea;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a202c;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .change {
+    font-size: 0.85rem;
+    color: #48bb78;
+}
+
+.stat-card.warning .value {
+    color: #ed8936;
+}
+
+.stat-card.danger .value {
+    color: #f56565;
+}
+
+.admin-nav {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.admin-nav a {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #4a5568;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.admin-nav a:hover,
+.admin-nav a.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.health-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #f0fff4;
+    border-left: 4px solid #48bb78;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.health-status.warning {
+    background: #fffff0;
+    border-color: #ed8936;
+}
+
+.health-status.danger {
+    background: #fff5f5;
+    border-color: #f56565;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.chart-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 1rem;
+}
+</style>
 
 <!-- Chart.js para gráficos -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
