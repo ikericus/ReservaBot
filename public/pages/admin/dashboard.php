@@ -1,5 +1,5 @@
 <?php
-// pages/admin/dashboard.php
+// public/pages/admin/dashboard.php
 
 /**
  * Dashboard principal de administración
@@ -9,16 +9,136 @@ $adminDomain = getContainer()->getAdminDomain();
 $resumen = $adminDomain->obtenerResumenGeneral();
 $saludWhatsApp = $adminDomain->obtenerSaludWhatsApp();
 
+// Datos para gráficos
+$usuarios_planes = $adminDomain->contarUsuariosPorPlan();
+$distribucion_reservas = $adminDomain->obtenerEstadisticasReservas()['estado_distribucion'];
+
 $currentPage = 'admin-dashboard';
 $pageTitle = 'ReservaBot - Admin Dashboard';
 
 include PROJECT_ROOT . '/includes/headerAdmin.php';
 ?>
 
+<style>
+.admin-container {
+    /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card h3 {
+    color: #667eea;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a202c;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .change {
+    font-size: 0.85rem;
+    color: #48bb78;
+}
+
+.stat-card.warning .value {
+    color: #ed8936;
+}
+
+.stat-card.danger .value {
+    color: #f56565;
+}
+
+.admin-nav {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.admin-nav a {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #4a5568;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.admin-nav a:hover,
+.admin-nav a.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.health-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #f0fff4;
+    border-left: 4px solid #48bb78;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.health-status.warning {
+    background: #fffff0;
+    border-color: #ed8936;
+}
+
+.health-status.danger {
+    background: #fff5f5;
+    border-color: #f56565;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.chart-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 1rem;
+}
+</style>
+
+
 <div class="admin-container">
 
     <?php include PROJECT_ROOT . '/pages/admin/menu.php'; ?>
-
+    
     <!-- Resumen General -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Usuarios -->
@@ -101,13 +221,17 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
         <!-- Distribución de Planes -->
         <div class="chart-container">
             <div class="chart-title">Usuarios por Plan</div>
-            <div id="planChart" style="height: 300px;"></div>
+            <div style="height: 300px;">
+                <canvas id="planChart"></canvas>
+            </div>
         </div>
 
         <!-- Estado de Reservas -->
         <div class="chart-container">
             <div class="chart-title">Estado de Reservas</div>
-            <div id="estadoChart" style="height: 300px;"></div>
+            <div style="height: 300px;">
+                <canvas id="estadoChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -184,175 +308,123 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
     </div>
 </div>
 
-<style>
-.admin-container {
-    /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
-    min-height: 100vh;
-    padding: 2rem;
-}
-
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
-}
-
-.stat-card h3 {
-    color: #667eea;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 0.5rem;
-}
-
-.stat-card .value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #1a202c;
-    line-height: 1;
-    margin-bottom: 0.5rem;
-}
-
-.stat-card .change {
-    font-size: 0.85rem;
-    color: #48bb78;
-}
-
-.stat-card.warning .value {
-    color: #ed8936;
-}
-
-.stat-card.danger .value {
-    color: #f56565;
-}
-
-
-
-.health-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: #f0fff4;
-    border-left: 4px solid #48bb78;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
-
-.health-status.warning {
-    background: #fffff0;
-    border-color: #ed8936;
-}
-
-.health-status.danger {
-    background: #fff5f5;
-    border-color: #f56565;
-}
-
-.chart-container {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 2rem;
-}
-
-.chart-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #1a202c;
-    margin-bottom: 1rem;
-}
-</style>
-
 <!-- Chart.js para gráficos -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-         // Gráfico de Planes
-        const planCtx = document.getElementById('planChart')?.getContext('2d');
-        if (planCtx) {
-            new Chart(planCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Premium', 'Básico', 'Gratis'],
-                    datasets: [{
-                        data: [45, 35, 20],
-                        backgroundColor: [
-                            '#667eea',
-                            '#764ba2',
-                            '#f093fb'
-                        ],
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de Planes - DATOS DINÁMICOS DESDE PHP
+    const planCanvas = document.getElementById('planChart');
+    if (planCanvas && typeof planCanvas.getContext === 'function') {
+        const planCtx = planCanvas.getContext('2d');
+        
+        const planLabels = [
+            <?php foreach ($usuarios_planes as $plan): ?>
+                '<?php echo ucfirst($plan['plan']); ?>',
+            <?php endforeach; ?>
+        ];
+        
+        const planData = [
+            <?php foreach ($usuarios_planes as $plan): ?>
+                <?php echo $plan['total']; ?>,
+            <?php endforeach; ?>
+        ];
+        
+        // Colores dinámicos según el plan
+        const planColors = planLabels.map(label => {
+            switch(label.toLowerCase()) {
+                case 'premium': return '#667eea';
+                case 'estandar': return '#764ba2';
+                case 'gratis': return '#f093fb';
+                default: return '#a0aec0';
+            }
+        });
+        
+        new Chart(planCtx, {
+            type: 'doughnut',
+            data: {
+                labels: planLabels,
+                datasets: [{
+                    data: planData,
+                    backgroundColor: planColors,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
                     }
                 }
-            });
-        }
+            }
+        });
+    }
 
-        // Gráfico de Estado de Reservas
-        const estadoCtx = document.getElementById('estadoChart')?.getContext('2d');
-        if (estadoCtx) {
-            new Chart(estadoCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Confirmadas', 'Pendientes', 'Canceladas'],
-                    datasets: [{
-                        label: 'Reservas',
-                        data: [450, 120, 80],
-                        backgroundColor: [
-                            '#48bb78',
-                            '#ed8936',
-                            '#f56565'
-                        ],
-                        borderRadius: 6,
-                        borderSkipped: false
-                    }]
+    // Gráfico de Estado de Reservas - DATOS DINÁMICOS DESDE PHP
+    const estadoCanvas = document.getElementById('estadoChart');
+    if (estadoCanvas && typeof estadoCanvas.getContext === 'function') {
+        const estadoCtx = estadoCanvas.getContext('2d');
+        
+        const estadoLabels = [
+            <?php foreach ($distribucion_reservas as $estado): ?>
+                '<?php echo ucfirst($estado['estado']); ?>',
+            <?php endforeach; ?>
+        ];
+        
+        const estadoData = [
+            <?php foreach ($distribucion_reservas as $estado): ?>
+                <?php echo $estado['total']; ?>,
+            <?php endforeach; ?>
+        ];
+        
+        // Colores según el estado
+        const estadoColors = estadoLabels.map(label => {
+            switch(label.toLowerCase()) {
+                case 'confirmada': return '#48bb78';
+                case 'pendiente': return '#ed8936';
+                case 'cancelada': return '#f56565';
+                default: return '#a0aec0';
+            }
+        });
+        
+        new Chart(estadoCtx, {
+            type: 'bar',
+            data: {
+                labels: estadoLabels,
+                datasets: [{
+                    label: 'Reservas',
+                    data: estadoData,
+                    backgroundColor: estadoColors,
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    plugins: {
-                        legend: {
-                            display: false
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
                         }
                     },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
-                        },
-                        y: {
-                            grid: {
-                                display: false
-                            }
+                    y: {
+                        grid: {
+                            display: false
                         }
                     }
                 }
-            });
-        }
-    });
-   
+            }
+        });
+    }
+});
 </script>
-
-<?php include PROJECT_ROOT . '/includes/footer.php'; ?>
