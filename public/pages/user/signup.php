@@ -1,9 +1,5 @@
 <?php
-// Iniciar sesión para manejar mensajes
-session_start();
-
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
+// pages/user/signup.php
 
 // Si ya está autenticado, redirigir al inicio
 if (isAuthenticated()) {

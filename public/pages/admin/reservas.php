@@ -1,5 +1,5 @@
 <?php
-// public/pages/admin/reservas.php
+// pages/admin/reservas.php
 
 /**
  * Página de estadísticas de reservas
