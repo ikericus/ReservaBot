@@ -1,55 +1,69 @@
 <?php
-// Página pública para reservas de clientes
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
+// pages/reservar.php
 
-// Obtener el formulario por slug
 $slug = $_GET['f'] ?? '';
 $formulario = null;
+$formularioEntity = null;
 $error = '';
 
 if (empty($slug)) {
     $error = 'Enlace no válido';
 } else {
     try {
-        $stmt = getPDO()->prepare("SELECT * FROM formularios_publicos WHERE slug = ? AND activo = 1");
-        $stmt->execute([$slug]);
-        $formulario = $stmt->fetch();
+        // Usar FormularioDomain para obtener el formulario
+        $formularioDomain = getContainer()->getFormularioDomain();
+        $formularioEntity = $formularioDomain->obtenerFormularioPorSlug($slug);
         
-        if (!$formulario) {
+        if (!$formularioEntity) {
             $error = 'Formulario no encontrado o no disponible';
+        } else {
+            // Verificar que está activo
+            if (!$formularioEntity->isActivo()) {
+                $error = 'Este formulario no está disponible actualmente';
+            } else {
+                // Convertir a array para compatibilidad con el código existente
+                $formulario = $formularioEntity->toArray();
+            }
         }
     } catch (Exception $e) {
+        error_log("Error al cargar formulario: " . $e->getMessage());
         $error = 'Error al cargar el formulario';
     }
 }
 
-// Obtener configuración de horarios
+// Obtener configuración de horarios usando DisponibilidadRepository
 $horarios = [];
-$diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
+$intervaloReservas = 30;
+$modoAceptacion = 'manual';
 
 if ($formulario) {
     try {
-        $stmt = getPDO()->prepare("SELECT clave, valor FROM configuraciones WHERE clave LIKE 'horario_%' OR clave = 'intervalo_reservas' OR clave = 'modo_aceptacion'");
-        $stmt->execute();
-        $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+        $disponibilidadRepository = getContainer()->getDisponibilidadRepository();
+        $usuarioId = $formulario['usuario_id'];
+        
+        // Obtener configuración de horarios
+        $diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
         
         foreach ($diasSemana as $dia) {
-            $horarioConfig = $configuraciones["horario_{$dia}"] ?? 'true|09:00|18:00';
-            list($activo, $horaInicio, $horaFin) = explode('|', $horarioConfig);
-            
+            $horarioConfig = $disponibilidadRepository->obtenerHorarioDia($dia, $usuarioId);
             $horarios[$dia] = [
-                'activo' => $activo === 'true',
-                'inicio' => $horaInicio,
-                'fin' => $horaFin
+                'activo' => $horarioConfig['activo'],
+                'inicio' => $horarioConfig['ventanas'][0]['inicio'] ?? '09:00',
+                'fin' => $horarioConfig['ventanas'][0]['fin'] ?? '18:00'
             ];
         }
         
-        // Obtener intervalo de reservas y modo de aceptación
-        $intervaloReservas = intval($configuraciones['intervalo_reservas'] ?? 30);
-        $modoAceptacion = $configuraciones['modo_aceptacion'] ?? 'manual';
+        // Obtener intervalo de reservas
+        $intervaloReservas = $disponibilidadRepository->obtenerIntervalo($usuarioId);
+        
+        // Obtener modo de aceptación desde configuraciones
+        $stmt = getPDO()->prepare("SELECT valor FROM configuraciones WHERE clave = 'modo_aceptacion' AND usuario_id = ?");
+        $stmt->execute([$usuarioId]);
+        $modoAceptacion = $stmt->fetchColumn() ?: 'manual';
         
     } catch (Exception $e) {
+        error_log("Error obteniendo configuración de horarios: " . $e->getMessage());
+        
         // Si hay error, usar horarios por defecto
         foreach ($diasSemana as $dia) {
             $horarios[$dia] = [
@@ -642,13 +656,16 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                     return;
                 }
                 
-                // Hacer petición para obtener horas disponibles
+                // Hacer petición para obtener horas disponibles (usando la nueva API con DDD)
                 fetch('api/horas-disponibles', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ fecha: fecha })
+                    body: JSON.stringify({ 
+                        fecha: fecha,
+                        usuario_id: config.usuarioId 
+                    })
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -723,7 +740,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                     1: 'lun', 2: 'mar', 3: 'mie', 4: 'jue', 
                     5: 'vie', 6: 'sab', 0: 'dom'
                 };
-                const diaSemana = new Date(fecha).getDay();
+                const diaSemana = new Date(fecha + 'T00:00:00').getDay();
                 return diasMap[diaSemana];
             }
             
@@ -781,7 +798,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                         return;
                     }
                     
-                    // Enviar vía AJAX a la nueva API
+                    // Enviar vía AJAX a la API (que ahora usa ReservaDomain)
                     fetch('api/crear-reserva-publica', {
                         method: 'POST',
                         headers: {
