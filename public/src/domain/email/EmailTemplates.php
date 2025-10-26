@@ -91,7 +91,7 @@ class EmailTemplates {
     /**
      * Template: Reset de contraseña
      */
-    public function resetPassword(string $nombre, string $token): array {
+    public function restablecimientoContrasena(string $nombre, string $token): array {
         $url = $this->baseUrl . "/reset-password?token=" . $token;
         
         $contenidoHtml = "

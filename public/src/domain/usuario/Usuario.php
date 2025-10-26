@@ -71,11 +71,13 @@ class Usuario {
         return password_verify($password, $this->passwordHash);
     }
     
-    public function tokenResetValido(): bool {
-        if (!$this->resetToken || !$this->resetTokenExpiry) {
+    public function tokenRestablecimientoValido(): bool {
+        if (!$this->resetTokenExpiry) {
             return false;
         }
-        return $this->resetTokenExpiry > new \DateTime();
+        
+        $now = new \DateTime();
+        return $this->resetTokenExpiry > $now;
     }
     
     public function tokenVerificacionValido(): bool {
