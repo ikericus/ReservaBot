@@ -66,15 +66,15 @@ try {
         $plan
     );
 
-    // ⭐ ENVIAR EMAIL DE VERIFICACIÓN
     $enviado = $usuarioDomain->iniciarVerificacionCorreo($usuario->getId());
     
     if (!$enviado) {
+        $_SESSION['login_errors'] = "No se pudo enviar email de verificación a {$email}. Por favor, contacta al soporte.";
         error_log("Advertencia: No se pudo enviar email de verificación a {$email}");
         // No bloqueamos el registro si falla el email
     }
 
-    $_SESSION['success_message'] = "¡Cuenta creada exitosamente! Revisa tu correo para verificar tu cuenta.";
+    $_SESSION['login_message'] = "¡Cuenta creada exitosamente! Revisa tu correo para verificar tu cuenta.";
     
     header('Location: /login');
 
