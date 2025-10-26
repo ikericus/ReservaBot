@@ -77,13 +77,13 @@ try {
     exit;
     
 } catch (\DomainException $e) {
-    $_SESSION['login_error'] = $e->getMessage();
+    $_SESSION['login_errors'] = $e->getMessage();
     $_SESSION['login_email'] = $email;
     header('Location: /login');
     exit;
 } catch (\Exception $e) {
     error_log('Error en login: ' . $e->getMessage());
-    $_SESSION['login_error'] = 'Error interno del servidor';
+    $_SESSION['login_errors'] = 'Error interno del servidor';
     header('Location: /login');
     exit;
 }
