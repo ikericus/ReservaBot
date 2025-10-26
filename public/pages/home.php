@@ -8,14 +8,14 @@
  */
 
 // Verificar autenticación
-if (isAuthenticated() && !isSessionExpired()) {
+if (isAuthenticatedUser() && !isSessionExpired()) {
     // Usuario autenticado válido
     header('Location: /reservas');
     exit;
 }
 
 // Si sesión expirada, hacer logout
-if (isAuthenticated() && isSessionExpired()) {
+if (isAuthenticatedUser() && isSessionExpired()) {
     logout();
 }
 

@@ -1,7 +1,7 @@
 <?php
 
 // Si ya está autenticado, redirigir al inicio
-if (isAuthenticated()) {
+if (isAuthenticatedUser()) {
     header('Location: /');
     exit;
 }
@@ -205,7 +205,7 @@ if (!empty($urlUser)) {
                         </div>
                         
                         <div class="text-sm">
-                            <a href="/password-reset.php" class="text-purple-600 hover:text-purple-500 font-medium">
+                            <a href="/password-reset" class="text-purple-600 hover:text-purple-500 font-medium">
                                 ¿Olvidaste tu contraseña?
                             </a>
                         </div>

@@ -181,9 +181,9 @@ class Router {
     private function authMiddleware() {
         // Bootstrap ya está cargado por executeRoute
         debug_log("Router: Verificando autenticación de usuario");
-        updateLastActivity();
+        updateUserLastActivity();
         
-        if (!isAuthenticated()) {
+        if (!isAuthenticatedUser()) {
             $this->redirectToLogin();
             return false;
         }
@@ -203,7 +203,7 @@ class Router {
     private function adminMiddleware() {       
         debug_log("Router: Verificando acceso de administrador");
 
-        return isAdmin();
+        return isAdminUser();
     }
     
     private function redirectToLogin($message = null) {

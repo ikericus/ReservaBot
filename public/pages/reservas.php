@@ -11,7 +11,7 @@ try {
     $currentUser = getAuthenticatedUser();
     
     // Redirigir a admin si el usuario es administrador
-    if (isAdmin())
+    if (isAdminUser())
     {
         header("Location: /admin");
     }                 

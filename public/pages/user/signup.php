@@ -2,7 +2,7 @@
 // pages/user/signup.php
 
 // Si ya está autenticado, redirigir al inicio
-if (isAuthenticated()) {
+if (isAuthenticatedUser()) {
     header('Location: /');
     exit;
 }

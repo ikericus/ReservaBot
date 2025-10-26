@@ -33,18 +33,18 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
 // ========== FUNCIONES DE SESIÓN ==========
 
-function isAuthenticated(): bool {
+function isAuthenticatedUser(): bool {
     return isset($_SESSION['user_authenticated']) && $_SESSION['user_authenticated'] === true;
 }
 
-function isAdmin(): bool {
+function isAdminUser(): bool {
     // Lee de la sesión, NO decide
-    return isAuthenticated() 
+    return isAuthenticatedUser() 
         && ($_SESSION['is_admin'] ?? false) === true;
 }
 
 function isSessionExpired(): bool {
-    if (!isAuthenticated()) {
+    if (!isAuthenticatedUser()) {
         return true;
     }
     
@@ -85,7 +85,7 @@ function setAuthenticatedUser(array $userData): void {
 }
 
 function getAuthenticatedUser(): ?array {
-    if (!isAuthenticated()) {
+    if (!isAuthenticatedUser()) {
         return null;
     }
     
@@ -102,8 +102,8 @@ function getAuthenticatedUser(): ?array {
     ];
 }
 
-function updateLastActivity(): void {
-    if (isAuthenticated()) {
+function updateUserLastActivity(): void {
+    if (isAuthenticatedUser()) {
         $_SESSION['last_activity'] = time();
     }
 }

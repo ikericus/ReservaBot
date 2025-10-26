@@ -8,7 +8,7 @@ $currentUser = getAuthenticatedUser();
 $userId = $currentUser['id'];
 
 // Establecer estado según rol
-$estadoDefault = isAdmin() ? 'confirmada' : 'pendiente';
+$estadoDefault = isAdminUser() ? 'confirmada' : 'pendiente';
 
 // Verificar método
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -75,7 +75,7 @@ try {
     );
     
     // Si el estado no es pendiente, actualizarlo
-    if ($estado === 'confirmada' && isAdmin()) {
+    if ($estado === 'confirmada' && isAdminUser()) {
         $reserva = $reservaDomain->confirmarReserva($reserva->getId(), $userId);
     }
     
