@@ -372,8 +372,7 @@ class Formulario
      */
     public function toArray(): array
     {
-        return [
-            'id' => $this->id,
+        $array = [
             'usuario_id' => $this->usuarioId,
             'nombre' => $this->nombre,
             'slug' => $this->slug,
@@ -390,6 +389,13 @@ class Formulario
             'created_at' => $this->createdAt->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt->format('Y-m-d H:i:s'),
         ];
+        
+        // Solo incluir id si está inicializado (después de guardar en BD)
+        if (isset($this->id)) {
+            $array['id'] = $this->id;
+        }
+        
+        return $array;
     }
 
     /**
