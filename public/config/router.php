@@ -35,7 +35,7 @@ class Router {
         $this->addRoute('GET',      '/logout',                      'pages/user/logout.php');
         $this->addRoute('GET',      '/password-reset',              'pages/user/password-reset.php');
         $this->addRoute('POST',     '/password-reset',              'pages/user/password-reset.php');    
-        $this->addRoute('POST',     '/verificar-email',             'pages/user/verificar-email.php');               
+        $this->addRoute('GET',      '/verificar-email',             'pages/user/verificar-email.php');               
         $this->addRoute('POST',     '/api/login-handler',           'api/user/login-handler.php');        
         $this->addRoute('POST',     '/api/register-handler',        'api/user/register-handler.php');
         $this->addRoute('POST',     '/api/register',                'api/user/register.php');
