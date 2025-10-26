@@ -8,8 +8,8 @@ class EmailTemplates {
     private string $appName;
     
     public function __construct() {
-        $this->baseUrl = $_ENV['APP_URL'] ?? 'http://localhost';
-        $this->appName = $_ENV['APP_NAME'] ?? 'ReservaBot';
+        $this->baseUrl = $_ENV['APP_URL'];
+        $this->appName = $_ENV['APP_NAME'];
     }
     
     /**
