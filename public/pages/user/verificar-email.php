@@ -5,15 +5,13 @@
  * Página de verificación de email
  */
 
-require_once __DIR__ . '/includes/bootstrap.php';
-
 $token = $_GET['token'] ?? '';
-$error = null;
 $success = false;
 
 if (empty($token)) {
     $error = 'Token de verificación inválido';
-} else {
+} 
+else {
     try {
         $usuarioDomain = getContainer()->getUsuarioDomain();
         
@@ -23,10 +21,9 @@ if (empty($token)) {
         $success = true;
         
     } catch (\DomainException $e) {
-        $error = $e->getMessage();
+        error_log("Error en verificación de email: " . $e->getMessage());
     } catch (\Exception $e) {
         error_log('Error en verificación de email: ' . $e->getMessage());
-        $error = 'Error al verificar tu correo. Por favor, inténtalo nuevamente.';
     }
 }
 
@@ -34,7 +31,7 @@ if ($success) {
     $_SESSION['login_message'] = '¡Tu correo ha sido verificado exitosamente!';
 }
 else {    
-    $_SESSION['login_message'] = $error;
+    $_SESSION['login_errors'] = 'Error al verificar tu correo. Por favor, inténtalo nuevamente.';
 }
 header('Location: /login');
 exit;
