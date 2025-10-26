@@ -81,13 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($token)) {
     if (empty($errors)) {
         try {
             $usuarioDomain = getContainer()->getUsuarioDomain();
-            $enviado = $usuarioDomain->solicitarRestablecimientoContrasena($email);
+            $enviado = $usuarioDomain->solicitarResetPassword($email);
             
             // Por seguridad, siempre mostramos el mismo mensaje
             $success = 'Si existe una cuenta con este email, recibirás un enlace de restablecimiento en breve.';
             
             if ($enviado) {
-                error_log("Email de restablecimiento enviado a: $email");
+                debug_log("Email de restablecimiento enviado a: $email");
             }
             
         } catch (\Exception $e) {

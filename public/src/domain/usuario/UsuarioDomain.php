@@ -170,7 +170,7 @@ class UsuarioDomain {
     /**
      * Solicita reset de contraseña
      */
-    public function solicitarResetPassword(string $email): ?Usuario {
+    public function solicitarResetPassword(string $email): bool {
         $email = trim(strtolower($email));
         
         $usuario = $this->repository->obtenerPorEmail($email);
@@ -188,14 +188,12 @@ class UsuarioDomain {
         $emailData = $this->emailTemplates->resetPassword($usuario->getNombre(), $token);
         
         // Enviar
-        $this->emailRepository->enviar(
+        return $this->emailRepository->enviar(
             $usuario->getEmail(),
             $emailData['asunto'],
             $emailData['cuerpo_texto'],
             $emailData['cuerpo_html']
         );
-        
-        return $this->repository->obtenerPorId($usuario->getId());
     }
     
     /**
