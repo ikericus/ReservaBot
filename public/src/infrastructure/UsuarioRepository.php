@@ -177,7 +177,6 @@ class UsuarioRepository implements IUsuarioRepository {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             $token,
-            $expiry->format('Y-m-d H:i:s'),
             $id
         ]);
     }
