@@ -4,6 +4,8 @@
 namespace ReservaBot\Domain\Usuario;
 
 use ReservaBot\Domain\Configuracion\ConfiguracionDomain;
+use ReservaBot\Domain\Email\IEmailRepository;
+use ReservaBot\Domain\Email\EmailTemplates;
 
 class UsuarioDomain {
     private IUsuarioRepository $repository;
