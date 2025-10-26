@@ -1,4 +1,5 @@
 <?php
+// src/domain/formulario/IFormularioRespository.php
 
 namespace ReservaBot\Domain\Formulario;
 
