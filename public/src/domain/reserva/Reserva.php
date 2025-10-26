@@ -18,6 +18,10 @@ class Reserva {
     private EstadoReserva $estado;
     private int $usuarioId;
     private DateTime $creadaEn;
+    private ?string $email;
+    private ?string $accessToken;
+    private ?DateTime $tokenExpires;
+    private ?int $formularioId;
     
     private function __construct(
         ?int $id,
@@ -30,7 +34,11 @@ class Reserva {
         ?string $notasInternas,
         EstadoReserva $estado,
         int $usuarioId,
-        ?DateTime $creadaEn = null
+        ?DateTime $creadaEn = null,
+        ?string $email = null,
+        ?string $accessToken = null,
+        ?DateTime $tokenExpires = null,
+        ?int $formularioId = null
     ) {
         $this->id = $id;
         $this->nombre = $nombre;
@@ -43,6 +51,10 @@ class Reserva {
         $this->estado = $estado;
         $this->usuarioId = $usuarioId;
         $this->creadaEn = $creadaEn ?? new DateTime();
+        $this->email = $email;
+        $this->accessToken = $accessToken;
+        $this->tokenExpires = $tokenExpires;
+        $this->formularioId = $formularioId;
     }
     
     // Factory para crear nueva reserva
@@ -76,6 +88,51 @@ class Reserva {
         );
     }
     
+    // Factory para crear reserva pública con email
+    public static function crearPublica(
+        string $nombre,
+        string $telefono,
+        string $email,
+        DateTime $fecha,
+        string $hora,
+        int $usuarioId,
+        string $mensaje = '',
+        ?int $formularioId = null
+    ): self {
+        // Validaciones
+        self::validarNombre($nombre);
+        self::validarHora($hora);
+        self::validarFecha($fecha);
+        
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('Email no válido');
+        }
+        
+        $telefonoVO = new Telefono($telefono);
+        
+        // Generar token de acceso
+        $accessToken = bin2hex(random_bytes(32));
+        $tokenExpires = new DateTime('+30 days');
+        
+        return new self(
+            null,
+            trim($nombre),
+            $telefonoVO,
+            $telefonoVO->normalizarParaWhatsApp(),
+            $fecha,
+            $hora,
+            trim($mensaje),
+            null, // notas internas
+            EstadoReserva::PENDIENTE,
+            $usuarioId,
+            null, // creadaEn
+            $email,
+            $accessToken,
+            $tokenExpires,
+            $formularioId
+        );
+    }
+    
     // Factory para reconstruir desde BD
     public static function fromDatabase(array $data): self {
         return new self(
@@ -89,7 +146,11 @@ class Reserva {
             $data['notas_internas'] ?? null,
             EstadoReserva::from($data['estado']),
             (int)$data['usuario_id'],
-            isset($data['created_at']) ? new DateTime($data['created_at']) : null
+            isset($data['created_at']) ? new DateTime($data['created_at']) : null,
+            $data['email'] ?? null,
+            $data['access_token'] ?? null,
+            isset($data['token_expires']) ? new DateTime($data['token_expires']) : null,
+            isset($data['formulario_id']) ? (int)$data['formulario_id'] : null
         );
     }
     
@@ -136,6 +197,10 @@ class Reserva {
     public function getEstado(): EstadoReserva { return $this->estado; }
     public function getUsuarioId(): int { return $this->usuarioId; }
     public function getCreadaEn(): DateTime { return $this->creadaEn; }
+    public function getEmail(): ?string { return $this->email; }
+    public function getAccessToken(): ?string { return $this->accessToken; }
+    public function getTokenExpires(): ?DateTime { return $this->tokenExpires; }
+    public function getFormularioId(): ?int { return $this->formularioId; }
     
     public function estaConfirmada(): bool {
         return $this->estado === EstadoReserva::CONFIRMADA;
@@ -181,7 +246,11 @@ class Reserva {
             'mensaje' => $this->mensaje,
             'notas_internas' => $this->notasInternas,
             'estado' => $this->estado->value,
-            'usuario_id' => $this->usuarioId
+            'usuario_id' => $this->usuarioId,
+            'email' => $this->email,
+            'access_token' => $this->accessToken,
+            'token_expires' => $this->tokenExpires?->format('Y-m-d H:i:s'),
+            'formulario_id' => $this->formularioId
         ];
     }
 }

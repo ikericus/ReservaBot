@@ -26,8 +26,8 @@ class ReservaRepository implements IReservaRepository {
     
     private function insertar(Reserva $reserva): Reserva {
         $sql = "INSERT INTO reservas 
-                (nombre, telefono, whatsapp_id, fecha, hora, mensaje, notas_internas, estado, usuario_id) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                (nombre, telefono, whatsapp_id, fecha, hora, mensaje, notas_internas, estado, usuario_id, email, access_token, token_expires, formulario_id) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
@@ -39,7 +39,11 @@ class ReservaRepository implements IReservaRepository {
             $reserva->getMensaje(),
             $reserva->getNotasInternas(),
             $reserva->getEstado()->value,
-            $reserva->getUsuarioId()
+            $reserva->getUsuarioId(),
+            $reserva->getEmail(),
+            $reserva->getAccessToken(),
+            $reserva->getTokenExpires()?->format('Y-m-d H:i:s'),
+            $reserva->getFormularioId()
         ]);
         
         $id = (int)$this->pdo->lastInsertId();
@@ -56,7 +60,11 @@ class ReservaRepository implements IReservaRepository {
                     hora = ?, 
                     mensaje = ?, 
                     notas_internas = ?,
-                    estado = ?
+                    estado = ?,
+                    email = ?,
+                    access_token = ?,
+                    token_expires = ?,
+                    formulario_id = ?
                 WHERE id = ? AND usuario_id = ?";
         
         $stmt = $this->pdo->prepare($sql);
@@ -69,6 +77,10 @@ class ReservaRepository implements IReservaRepository {
             $reserva->getMensaje(),
             $reserva->getNotasInternas(),
             $reserva->getEstado()->value,
+            $reserva->getEmail(),
+            $reserva->getAccessToken(),
+            $reserva->getTokenExpires()?->format('Y-m-d H:i:s'),
+            $reserva->getFormularioId(),
             $reserva->getId(),
             $reserva->getUsuarioId()
         ]);
@@ -276,5 +288,31 @@ class ReservaRepository implements IReservaRepository {
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
         
         return $data ? Reserva::fromDatabase($data) : null;
+    }
+    
+    public function registrarOrigenReserva(
+        int $reservaId,
+        ?int $formularioId,
+        string $origen,
+        ?string $ipAddress,
+        ?string $userAgent
+    ): void {
+        try {
+            $sql = "INSERT INTO origen_reservas (
+                        reserva_id, formulario_id, origen, ip_address, user_agent, created_at
+                    ) VALUES (?, ?, ?, ?, ?, NOW())";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                $reservaId,
+                $formularioId,
+                $origen,
+                $ipAddress,
+                $userAgent
+            ]);
+        } catch (\PDOException $e) {
+            // No es crítico si falla el registro del origen
+            error_log("Error al registrar origen de reserva: " . $e->getMessage());
+        }
     }
 }

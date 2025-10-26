@@ -32,7 +32,7 @@ foreach ($required as $field) {
     }
 }
 
-// Validaciones de formato
+// Validaciones básicas de formato
 if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Email no válido']);
@@ -76,8 +76,7 @@ try {
     // Convertir fecha string a DateTime
     $fecha = new DateTime($fechaStr);
     
-    // Validar formulario si se proporcionó
-    $formulario = null;
+    // Validar formulario si se proporcionó y determinar confirmación automática
     $confirmacionAutomatica = false;
     
     if ($formularioId) {
@@ -101,8 +100,13 @@ try {
         }
     }
     
-    // Crear la reserva usando el método específico para reservas públicas
-    // Este método incluye todas las validaciones necesarias
+    // Crear la reserva usando el dominio
+    // El dominio se encarga de:
+    // - Validar disponibilidad
+    // - Crear el token de acceso
+    // - Guardar todo en la BD en una sola operación
+    // - Registrar el origen
+    // - Enviar el email de confirmación
     $reserva = $reservaDomain->crearReservaPublica(
         $nombre,
         $telefono,
@@ -111,54 +115,9 @@ try {
         $hora,
         $usuarioId,
         $mensaje,
-        $formularioId
-    );
-    
-    // Si es confirmación automática, confirmar la reserva
-    if ($confirmacionAutomatica) {
-        $reserva = $reservaDomain->confirmarReserva($reserva->getId(), $usuarioId);
-    }
-    
-    // Generar token de acceso para gestión pública
-    $accessToken = bin2hex(random_bytes(32));
-    $tokenExpiry = date('Y-m-d H:i:s', strtotime('+30 days'));
-    
-    // Actualizar reserva con token y email
-    // TODO: Mover esto al dominio creando un método actualizarDatosPublicos()
-    $pdo = getPDO();
-    $stmt = $pdo->prepare("
-        UPDATE reservas 
-        SET email = ?, access_token = ?, token_expires = ?, formulario_id = ?
-        WHERE id = ? AND usuario_id = ?
-    ");
-    $stmt->execute([
-        $email, 
-        $accessToken, 
-        $tokenExpiry,
         $formularioId,
-        $reserva->getId(), 
-        $usuarioId
-    ]);
-    
-    // Registrar origen de la reserva
-    if ($formularioId) {
-        try {
-            $stmt = $pdo->prepare("
-                INSERT INTO origen_reservas (
-                    reserva_id, formulario_id, origen, ip_address, user_agent, created_at
-                ) VALUES (?, ?, 'formulario_publico', ?, ?, NOW())
-            ");
-            $stmt->execute([
-                $reserva->getId(), 
-                $formularioId,
-                $_SERVER['REMOTE_ADDR'] ?? null,
-                $_SERVER['HTTP_USER_AGENT'] ?? null
-            ]);
-        } catch (Exception $e) {
-            error_log("Error al registrar origen de reserva: " . $e->getMessage());
-            // No es crítico, continuar
-        }
-    }
+        $confirmacionAutomatica
+    );
     
     // Obtener información de capacidad para la hora seleccionada
     try {
@@ -177,10 +136,6 @@ try {
         ];
     }
     
-    // TODO: Enviar email de confirmación
-    // $emailEnviado = $reservaDomain->enviarConfirmacion($reserva->getId());
-    $emailEnviado = true; // Simulado por ahora
-    
     // Preparar respuesta exitosa
     $reservaArray = $reserva->toArray();
     
@@ -192,8 +147,8 @@ try {
             ? 'Reserva confirmada automáticamente' 
             : 'Reserva creada. Te contactaremos pronto para confirmarla',
         'confirmacion_automatica' => $confirmacionAutomatica,
-        'token' => $accessToken,
-        'email_enviado' => $emailEnviado,
+        'token' => $reserva->getAccessToken(),
+        'email_enviado' => true, // El dominio ya envió el email
         'capacidad_info' => $capacidadInfo,
         'datos' => [
             'nombre' => $reservaArray['nombre'],

@@ -4,20 +4,24 @@
 namespace ReservaBot\Domain\Reserva;
 
 use ReservaBot\Domain\Disponibilidad\IDisponibilidadRepository;
+use ReservaBot\Domain\Email\IEmailRepository;
 use ReservaBot\Domain\Email\EmailTemplates;
 use DateTime;
 
 class ReservaDomain {
     private IReservaRepository $reservaRepository;
     private IDisponibilidadRepository $disponibilidadRepository;
+    private ?IEmailRepository $emailRepository;
     private EmailTemplates $emailTemplates;
     
     public function __construct(
         IReservaRepository $reservaRepository,
-        IDisponibilidadRepository $disponibilidadRepository
+        IDisponibilidadRepository $disponibilidadRepository,
+        ?IEmailRepository $emailRepository = null
     ) {
         $this->reservaRepository = $reservaRepository;
         $this->disponibilidadRepository = $disponibilidadRepository;
+        $this->emailRepository = $emailRepository;
         $this->emailTemplates = new EmailTemplates();
     }
     
@@ -179,15 +183,12 @@ class ReservaDomain {
             }
         }
         
-        // Verificar por email (requiere método adicional en el repositorio)
-        // Por ahora retornamos false si no coincide el teléfono
-        // TODO: Agregar método al repositorio para verificar por email
         return false;
     }
 
     /**
      * Crea una reserva desde formulario público con validaciones completas
-     * Incluye verificación de duplicados por email/teléfono
+     * Incluye verificación de duplicados, generación de token y envío de email
      */
     public function crearReservaPublica(
         string $nombre,
@@ -197,7 +198,8 @@ class ReservaDomain {
         string $hora,
         int $usuarioId,
         string $mensaje = '',
-        ?int $formularioId = null
+        ?int $formularioId = null,
+        bool $confirmacionAutomatica = false
     ): Reserva {
         // Validar email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -219,19 +221,91 @@ class ReservaDomain {
             throw new \DomainException('Ya existe una reserva para esta fecha y hora con el mismo email o teléfono');
         }
         
-        // Crear la reserva
-        $reserva = Reserva::crear(
+        // Crear la reserva usando el factory específico para reservas públicas
+        $reserva = Reserva::crearPublica(
             $nombre,
             $telefono,
+            $email,
             $fecha,
             $hora,
             $usuarioId,
             $mensaje,
-            null // notas internas
+            $formularioId
         );
         
-        // Persistir
-        return $this->reservaRepository->guardar($reserva);
+        // Si es confirmación automática, confirmar antes de guardar
+        if ($confirmacionAutomatica) {
+            $reserva->confirmar();
+        }
+        
+        // Persistir la reserva con todos sus datos (incluyendo token)
+        $reserva = $this->reservaRepository->guardar($reserva);
+        
+        // Registrar el origen de la reserva
+        if ($formularioId) {
+            $this->reservaRepository->registrarOrigenReserva(
+                $reserva->getId(),
+                $formularioId,
+                'formulario_publico',
+                $_SERVER['REMOTE_ADDR'] ?? null,
+                $_SERVER['HTTP_USER_AGENT'] ?? null
+            );
+        }
+        
+        // Enviar email de confirmación
+        $this->enviarEmailConfirmacion($reserva);
+        
+        return $reserva;
+    }
+    
+    /**
+     * Envía email de confirmación de reserva
+     */
+    private function enviarEmailConfirmacion(Reserva $reserva): bool {
+        // Si no hay repositorio de email configurado, log y retornar
+        if (!$this->emailRepository) {
+            error_log("EmailRepository no configurado. No se puede enviar email de confirmación para reserva #{$reserva->getId()}");
+            return false;
+        }
+        
+        // Verificar que la reserva tiene email
+        if (!$reserva->getEmail()) {
+            error_log("Reserva #{$reserva->getId()} no tiene email. No se puede enviar confirmación.");
+            return false;
+        }
+        
+        try {
+            // Generar URL de gestión usando el token
+            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $gestionUrl = $protocol . $host . '/mi-reserva?token=' . $reserva->getAccessToken();
+            
+            // Generar contenido del email usando templates
+            $emailData = $this->emailTemplates->confirmacionReserva(
+                $reserva->toArray(),
+                $gestionUrl
+            );
+            
+            // Enviar email
+            $enviado = $this->emailRepository->enviar(
+                $reserva->getEmail(),
+                $emailData['asunto'],
+                $emailData['cuerpo_texto'],
+                $emailData['cuerpo_html']
+            );
+            
+            if ($enviado) {
+                error_log("Email de confirmación enviado exitosamente para reserva #{$reserva->getId()}");
+            } else {
+                error_log("Error al enviar email de confirmación para reserva #{$reserva->getId()}");
+            }
+            
+            return $enviado;
+            
+        } catch (\Exception $e) {
+            error_log("Excepción al enviar email de confirmación: " . $e->getMessage());
+            return false;
+        }
     }
     
     /**
@@ -377,33 +451,6 @@ class ReservaDomain {
         $reserva->cancelar();
         
         return $this->reservaRepository->guardar($reserva);
-    }
-
-     /**
-     * Envía email de confirmación de reserva
-     */
-    public function enviarConfirmacion(int $reservaId): bool {
-        $reserva = $this->repository->obtenerPorId($reservaId);
-        
-        if (!$reserva) {
-            throw new \DomainException('Reserva no encontrada');
-        }
-        
-        // Generar URL de gestión
-        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
-        $host = $_SERVER['HTTP_HOST'];
-        $gestionUrl = $protocol . $host . '/mi-reserva?token=' . $reserva['access_token'];
-        
-        // Generar contenido del email
-        $email = $this->emailTemplates->confirmacionReserva($reserva, $gestionUrl);
-        
-        // Enviar
-        return $this->emailRepository->enviar(
-            $reserva['email'],
-            $email['asunto'],
-            $email['cuerpo_texto'],
-            $email['cuerpo_html']
-        );
     }
 
     /**

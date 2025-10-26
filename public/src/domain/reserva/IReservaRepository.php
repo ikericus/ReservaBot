@@ -65,4 +65,15 @@ interface IReservaRepository {
      * Obtiene una reserva por ID y token de acceso (para modificación pública)
      */
     public function obtenerPorIdYToken(int $id, string $token): ?Reserva;
+    
+    /**
+     * Registra el origen de una reserva (formulario público, API, WhatsApp, etc.)
+     */
+    public function registrarOrigenReserva(
+        int $reservaId,
+        ?int $formularioId,
+        string $origen,
+        ?string $ipAddress,
+        ?string $userAgent
+    ): void;
 }
