@@ -78,6 +78,16 @@ class Usuario {
         return $this->resetTokenExpiry > new \DateTime();
     }
     
+    public function tokenVerificacionValido(): bool {
+        if (!$this->verificacionToken) {
+            return false;
+        }
+        
+        // Token válido si fue actualizado hace menos de 24 horas
+        $hace24Horas = new \DateTime('-24 hours');
+        return $this->updatedAt > $hace24Horas;
+    }
+
     public function toArray(): array {
         return [
             'id' => $this->id,

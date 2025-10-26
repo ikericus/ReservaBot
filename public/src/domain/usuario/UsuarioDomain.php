@@ -266,10 +266,9 @@ class UsuarioDomain {
         
         // Generar token
         $token = bin2hex(random_bytes(32));
-        $expiry = new \DateTime('+24 hours');
-        
+                
         // Guardar en BD
-        $this->repository->establecerVerificacionToken($usuarioId, $token, $expiry);
+        $this->repository->establecerVerificacionToken($usuarioId, $token);
         
         // Generar contenido del email
         $email = $this->emailTemplates->verificacionEmail($usuario->getNombre(), $token);

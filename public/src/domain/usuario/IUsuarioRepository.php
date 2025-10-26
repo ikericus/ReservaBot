@@ -52,7 +52,7 @@ interface IUsuarioRepository {
     /**
      * Establece token de verificación
      */
-    public function establecerVerificacionToken(int $id, string $token, \DateTime $expiry): void;
+    public function establecerVerificacionToken(int $id, string $token): void;
     
     /**
      * Marca email como verificado

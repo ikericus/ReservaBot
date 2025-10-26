@@ -155,7 +155,11 @@ class UsuarioRepository implements IUsuarioRepository {
     }
 
     public function obtenerPorVerificacionToken(string $token): ?Usuario {
-        $sql = "SELECT * FROM usuarios WHERE verificacion_token = ?";
+        // Validar que el token fue generado hace menos de 24 horas
+        $sql = "SELECT * 
+                FROM usuarios 
+                WHERE verificacion_token = ? AND 
+                      updated_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$token]);
         
@@ -164,10 +168,9 @@ class UsuarioRepository implements IUsuarioRepository {
         return $row ? $this->mapearDesdeArray($row) : null;
     }
     
-    public function establecerVerificacionToken(int $id, string $token, \DateTime $expiry): void {
+    public function establecerVerificacionToken(int $id, string $token): void {
         $sql = "UPDATE usuarios 
                 SET verificacion_token = ?, 
-                    verificacion_token_expiry = ?, 
                     updated_at = NOW() 
                 WHERE id = ?";
         
@@ -183,7 +186,6 @@ class UsuarioRepository implements IUsuarioRepository {
         $sql = "UPDATE usuarios 
                 SET email_verificado = 1, 
                     verificacion_token = NULL, 
-                    verificacion_token_expiry = NULL,
                     updated_at = NOW() 
                 WHERE id = ?";
         

@@ -82,7 +82,6 @@ try {
     
 } catch (Exception $e) {
     error_log("Error en registro: " . $e->getMessage());
-    session_start();
     $_SESSION['register_errors'] = ['Error interno del servidor. Por favor, intenta nuevamente.'];
     $_SESSION['register_data'] = $_POST;
     header('Location: /signup');
