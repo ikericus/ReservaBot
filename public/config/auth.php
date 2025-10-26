@@ -109,25 +109,3 @@ function generateCSRFToken(): string {
     logMessage("auth.php: CSRF token generado: " . $_SESSION['csrf_token']);
     return $_SESSION['csrf_token'];
 }
-
-// ========== LEGACY (Mantener por compatibilidad) ==========
-
-function redirectToLogin(string $loginUrl = '/login', ?string $message = null): void {
-    if ($message) {
-        $_SESSION['login_message'] = $message;
-    }
-    
-    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
-        strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => false,
-            'error' => 'AUTHENTICATION_REQUIRED',
-            'redirect' => $loginUrl
-        ]);
-        exit;
-    }
-    
-    header("Location: $loginUrl");
-    exit;
-}
