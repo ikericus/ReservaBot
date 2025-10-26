@@ -45,7 +45,7 @@ if (!$terminos) {
 
 // Si hay errores, redirigir con errores
 if (!empty($errors)) {
-    session_start();
+    error_log("Errores de registro: " . implode('; ', $errors));
     $_SESSION['register_errors'] = $errors;
     $_SESSION['register_data'] = $_POST;
     header('Location: /signup');
