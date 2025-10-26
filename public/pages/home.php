@@ -10,7 +10,6 @@
 // Verificar autenticación
 if (isAuthenticated() && !isSessionExpired()) {
     // Usuario autenticado válido
-    //updateLastActivity();
     header('Location: /reservas');
     exit;
 }

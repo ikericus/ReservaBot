@@ -56,7 +56,7 @@ echo "</div>";
 echo "<div class='mb-6 p-4 bg-yellow-50 rounded'>";
 echo "<h2 class='text-xl font-bold mb-3'>3. Funciones</h2>";
 
-$functions = ['isAuthenticated', 'getCurrentUserId', 'getContainer', 'hasContainer'];
+$functions = ['isAuthenticated', 'getContainer', 'hasContainer'];
 foreach ($functions as $func) {
     if (function_exists($func)) {
         echo "<p class='text-green-600'>✅ $func()</p>";

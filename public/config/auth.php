@@ -31,7 +31,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-// ========== FUNCIONES DE VERIFICACIÓN ==========
+// ========== FUNCIONES DE SESIÓN ==========
 
 function isAuthenticated(): bool {
     return isset($_SESSION['user_authenticated']) && $_SESSION['user_authenticated'] === true;
@@ -58,13 +58,6 @@ function isSessionExpired(): bool {
     return (time() - $lastActivity) > $timeout;
 }
 
-function isAdmin(): bool {
-    $user = getAuthenticatedUser();
-    return $user && $user['role'] === 'admin';
-}
-
-// ========== FUNCIONES DE DATOS ==========
-
 function getAuthenticatedUser(): ?array {
     if (!isAuthenticated()) {
         return null;
@@ -83,91 +76,11 @@ function getAuthenticatedUser(): ?array {
     ];
 }
 
-function getCurrentUserId(): ?int {
-    return $_SESSION['user_id'] ?? null;
-}
-
 function updateLastActivity(): void {
     if (isAuthenticated()) {
         $_SESSION['last_activity'] = time();
     }
 }
-
-// ========== AUTENTICACIÓN ==========
-
-// function authenticateUser(string $email, string $password): array {
-//     $email = trim(strtolower($email));
-//     $pdo = getPDO();
-    
-//     // Intentar BD
-//     if ($pdo) {
-//         try {
-//             $stmt = $pdo->prepare("
-//                 SELECT id, nombre, email, password_hash, plan, negocio, activo 
-//                 FROM usuarios 
-//                 WHERE email = ? AND activo = 1
-//             ");
-//             $stmt->execute([$email]);
-//             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-//             if ($user && password_verify($password, $user['password_hash'])) {
-//                 return createUserSession($user, 'database');
-//             }
-//         } catch (Exception $e) {
-//             error_log("Error autenticación BD: " . $e->getMessage());
-//         }
-//     }
-    
-//     // Fallback usuario demo
-//     $fallbackUsers = [
-//         'admin@reservabot.com' => [
-//             'password' => 'demo123',
-//             'name' => 'Administrador',
-//             'role' => 'admin',
-//             'negocio' => 'ReservaBot Admin',
-//             'plan' => 'premium'
-//         ]
-//     ];
-    
-//     if (isset($fallbackUsers[$email]) && $password === $fallbackUsers[$email]['password']) {
-//         $userData = [
-//             'id' => 0,
-//             'email' => $email,
-//             'nombre' => $fallbackUsers[$email]['name'],
-//             'negocio' => $fallbackUsers[$email]['negocio'],
-//             'plan' => $fallbackUsers[$email]['plan']
-//         ];
-//         return createUserSession($userData, 'fallback', $fallbackUsers[$email]['role']);
-//     }
-    
-//     return [
-//         'success' => false,
-//         'message' => 'Credenciales incorrectas'
-//     ];
-// }
-
-// function createUserSession(array $user, string $source = 'database', string $role = 'user'): array {
-//     session_regenerate_id(true);
-    
-//     $_SESSION['user_authenticated'] = true;
-//     $_SESSION['user_id'] = $user['id'];
-//     $_SESSION['user_email'] = $user['email'];
-//     $_SESSION['user_name'] = $user['nombre'];
-//     $_SESSION['user_role'] = $role;
-//     $_SESSION['user_negocio'] = $user['negocio'];
-//     $_SESSION['user_plan'] = $user['plan'];
-//     $_SESSION['login_time'] = time();
-//     $_SESSION['last_activity'] = time();
-//     $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
-//     $_SESSION['auth_source'] = $source;
-    
-//     return [
-//         'success' => true,
-//         'message' => 'Login exitoso',
-//         'user' => getAuthenticatedUser()
-//     ];
-// }
-
 function logout(): void {
     $_SESSION = [];
     
