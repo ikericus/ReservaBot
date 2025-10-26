@@ -154,6 +154,42 @@ class UsuarioRepository implements IUsuarioRepository {
         return $esAdmin;
     }
 
+    public function obtenerPorVerificacionToken(string $token): ?Usuario {
+        $sql = "SELECT * FROM usuarios WHERE verificacion_token = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$token]);
+        
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $row ? $this->mapearDesdeArray($row) : null;
+    }
+    
+    public function establecerVerificacionToken(int $id, string $token, \DateTime $expiry): void {
+        $sql = "UPDATE usuarios 
+                SET verificacion_token = ?, 
+                    verificacion_token_expiry = ?, 
+                    updated_at = NOW() 
+                WHERE id = ?";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            $token,
+            $expiry->format('Y-m-d H:i:s'),
+            $id
+        ]);
+    }
+    
+    public function marcarEmailVerificado(int $id): void {
+        $sql = "UPDATE usuarios 
+                SET email_verificado = 1, 
+                    verificacion_token = NULL, 
+                    verificacion_token_expiry = NULL,
+                    updated_at = NOW() 
+                WHERE id = ?";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$id]);
+    }
     
     private function mapearDesdeArray(array $row): Usuario {
         return new Usuario(

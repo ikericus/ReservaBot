@@ -18,18 +18,16 @@ interface IUsuarioRepository {
      * Busca usuario por token de reset
      */
     public function obtenerPorResetToken(string $token): ?Usuario;
+
+     /**
+     * Busca usuario por token de verificación
+     */
+    public function obtenerPorVerificacionToken(string $token): ?Usuario;
     
     /**
      * Crea nuevo usuario
      */
-    public function crear(
-        string $nombre,
-        string $email,
-        string $telefono,
-        string $negocio,
-        string $passwordHash,
-        string $plan = 'gratis'
-    ): Usuario;
+    public function crear(string $nombre, string $email, string $telefono, string $negocio, string $passwordHash, string $plan = 'gratis'): Usuario;
     
     /**
      * Actualiza datos del usuario
@@ -51,6 +49,16 @@ interface IUsuarioRepository {
      */
     public function limpiarResetToken(int $id): void;
     
+    /**
+     * Establece token de verificación
+     */
+    public function establecerVerificacionToken(int $id, string $token, \DateTime $expiry): void;
+    
+    /**
+     * Marca email como verificado
+     */
+    public function marcarEmailVerificado(int $id): void;
+
     /**
      * Verifica si email existe
      */
