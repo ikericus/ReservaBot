@@ -8,8 +8,13 @@ if (isAuthenticatedUser()) {
 }
 
 // Obtener mensajes y datos de la sesión
-$errors = $_SESSION['register_errors'] ?? [];
+$errorsRaw = $_SESSION['register_errors'] ?? [];
 $formData = $_SESSION['register_data'] ?? [];
+
+// Normalizar errores a array si viene como string
+$errors = is_array($errorsRaw) ? $errorsRaw : [$errorsRaw];
+// Filtrar errores vacíos
+$errors = array_filter($errors);
 
 // Limpiar mensajes de la sesión
 unset($_SESSION['register_errors'], $_SESSION['register_data']);
@@ -136,7 +141,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                     <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
                         <div class="flex items-start">
                             <i class="ri-error-warning-line text-red-400 mr-2 mt-0.5"></i>
-                            <div>
+                            <div class="flex-1">
                                 <?php foreach ($errors as $error): ?>
                                     <p class="text-red-800 text-sm"><?php echo htmlspecialchars($error); ?></p>
                                 <?php endforeach; ?>
@@ -190,6 +195,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                                     value="<?php echo htmlspecialchars($formData['email'] ?? ''); ?>"
                                 >
                             </div>
+                            <p id="emailError" class="text-xs text-red-500 mt-1 hidden">El formato del email no es válido</p>
                         </div>
                         
                     </div>
@@ -266,7 +272,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                                     id="togglePassword"
                                     class="absolute inset-y-0 right-0 pr-3 flex items-center"
                                 >
-                                    <i class="ri-eye-off-line text-gray-400 hover:text-gray-600" id="eyeIcon"></i>
+                                    <i class="ri-eye-off-line text-gray-400 hover:text-gray-600 transition-colors" id="eyeIcon"></i>
                                 </button>
                             </div>
                             <!-- Indicador de fortaleza -->
@@ -292,13 +298,14 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                                     id="confirm_password"
                                     name="confirm_password"
                                     required
-                                    class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                                    class="input-focus block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                                     placeholder="Repite tu contraseña"
                                 >
                                 <div id="passwordMatch" class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                    <i class="ri-check-line text-green-500 hidden" id="matchIcon"></i>
+                                    <i class="hidden" id="matchIcon"></i>
                                 </div>
                             </div>
+                            <p id="passwordMatchText" class="text-xs mt-1 hidden"></p>
                         </div>
                         
                     </div>
@@ -379,9 +386,9 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                         <div class="ml-3 text-sm">
                             <label for="terminos" class="text-gray-700">
                                 Acepto los 
-                                <a href="#" class="text-purple-600 hover:text-purple-500 font-medium">términos y condiciones</a>
+                                <a href="#" class="text-purple-600 hover:text-purple-500 font-medium transition-colors">términos y condiciones</a>
                                 y la 
-                                <a href="#" class="text-purple-600 hover:text-purple-500 font-medium">política de privacidad</a>
+                                <a href="#" class="text-purple-600 hover:text-purple-500 font-medium transition-colors">política de privacidad</a>
                                 *
                             </label>
                         </div>
@@ -403,41 +410,13 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                 <div class="mt-6 text-center space-y-2">
                     <p class="text-gray-600 text-sm">
                         ¿Ya tienes cuenta?
-                        <a href="/login" class="text-purple-600 hover:text-purple-500 font-medium">
+                        <a href="/login" class="text-purple-600 hover:text-purple-500 font-medium transition-colors">
                             Inicia sesión aquí
                         </a>
                     </p>
                 </div>
                 
             </div>
-            
-            <!-- Features destacadas -->
-            <!-- <div class="mt-8 grid grid-cols-4 gap-4 text-center">
-                <div class="text-white">
-                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <i class="ri-shield-check-line"></i>
-                    </div>
-                    <p class="text-xs text-blue-100">100% Seguro</p>
-                </div>
-                <div class="text-white">
-                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <i class="ri-time-line"></i>
-                    </div>
-                    <p class="text-xs text-blue-100">Setup 5 min</p>
-                </div>
-                <div class="text-white">
-                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <i class="ri-whatsapp-line"></i>
-                    </div>
-                    <p class="text-xs text-blue-100">WhatsApp</p>
-                </div>
-                <div class="text-white">
-                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <i class="ri-support-line"></i>
-                    </div>
-                    <p class="text-xs text-blue-100">Soporte 24/7</p>
-                </div>
-            </div> -->
             
         </div>
     </div>
@@ -456,6 +435,25 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                 passwordInput.type = 'password';
                 eyeIcon.classList.remove('ri-eye-line');
                 eyeIcon.classList.add('ri-eye-off-line');
+            }
+        });
+        
+        // Validación de email en tiempo real
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('emailError');
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        emailInput.addEventListener('input', function() {
+            const email = this.value.trim();
+            
+            if (email.length > 0 && !emailRegex.test(email)) {
+                this.classList.add('border-red-300', 'focus:ring-red-500');
+                this.classList.remove('border-gray-300', 'focus:ring-purple-500');
+                emailError.classList.remove('hidden');
+            } else {
+                this.classList.remove('border-red-300', 'focus:ring-red-500');
+                this.classList.add('border-gray-300', 'focus:ring-purple-500');
+                emailError.classList.add('hidden');
             }
         });
         
@@ -501,11 +499,12 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
             }
         });
         
-        // Password confirmation
+        // Password confirmation - Mejorado
         document.getElementById('confirm_password').addEventListener('input', function() {
             const password = document.getElementById('password').value;
             const confirmPassword = this.value;
             const matchIcon = document.getElementById('matchIcon');
+            const matchText = document.getElementById('passwordMatchText');
             
             if (confirmPassword.length > 0) {
                 if (password === confirmPassword) {
@@ -513,15 +512,22 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                     matchIcon.classList.add('ri-check-line', 'text-green-500');
                     this.classList.remove('border-red-300');
                     this.classList.add('border-green-300');
+                    matchText.textContent = 'Las contraseñas coinciden';
+                    matchText.className = 'text-xs text-green-600 mt-1';
+                    matchText.classList.remove('hidden');
                 } else {
                     matchIcon.classList.remove('hidden', 'ri-check-line', 'text-green-500');
                     matchIcon.classList.add('ri-close-line', 'text-red-500');
                     this.classList.remove('border-green-300');
                     this.classList.add('border-red-300');
+                    matchText.textContent = 'Las contraseñas no coinciden';
+                    matchText.className = 'text-xs text-red-500 mt-1';
+                    matchText.classList.remove('hidden');
                 }
             } else {
                 matchIcon.classList.add('hidden');
                 this.classList.remove('border-red-300', 'border-green-300');
+                matchText.classList.add('hidden');
             }
         });
         
@@ -544,6 +550,36 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
         document.getElementById('registroForm').addEventListener('submit', function(e) {
             const submitBtn = document.getElementById('submitBtn');
             const originalText = submitBtn.innerHTML;
+            
+            // Validar que los términos estén aceptados
+            const terminos = document.getElementById('terminos');
+            if (!terminos.checked) {
+                e.preventDefault();
+                alert('Debes aceptar los términos y condiciones');
+                terminos.focus();
+                return;
+            }
+            
+            // Validar email
+            const email = emailInput.value.trim();
+            if (!emailRegex.test(email)) {
+                e.preventDefault();
+                emailInput.classList.add('border-red-300', 'focus:ring-red-500');
+                emailError.classList.remove('hidden');
+                emailInput.focus();
+                return;
+            }
+            
+            // Validar que las contraseñas coincidan
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Las contraseñas no coinciden');
+                document.getElementById('confirm_password').focus();
+                return;
+            }
             
             submitBtn.innerHTML = '<i class="ri-loader-line animate-spin mr-2"></i>Creando cuenta...';
             submitBtn.disabled = true;

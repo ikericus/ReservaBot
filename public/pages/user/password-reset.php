@@ -22,7 +22,6 @@ if (!empty($token)) {
         }
     } catch (\DomainException $e) {
         $errors[] = $e->getMessage();
-        error_log('Error al verificar token: ' . $e->getMessage());
     } catch (\Exception $e) {
         error_log('Error al verificar token: ' . $e->getMessage());
         $errors[] = 'Error al verificar el token.';
@@ -81,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($token)) {
     if (empty($errors)) {
         try {
             $usuarioDomain = getContainer()->getUsuarioDomain();
-            $enviado = $usuarioDomain->solicitarResetPassword($email);
+            $enviado = $usuarioDomain->solicitarRestablecimientoContrasena($email);
             
             // Por seguridad, siempre mostramos el mismo mensaje
             $success = 'Si existe una cuenta con este email, recibirás un enlace de restablecimiento en breve.';

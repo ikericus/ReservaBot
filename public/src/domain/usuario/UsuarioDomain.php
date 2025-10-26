@@ -168,24 +168,26 @@ class UsuarioDomain {
     }
     
     /**
-     * Solicita reset de contraseña
+     * Solicita restablecimiento de contraseña (envía email con token)
      */
-    public function solicitarResetPassword(string $email): bool {
+    public function solicitarRestablecimientoContrasena(string $email): bool {
         $email = trim(strtolower($email));
         
         $usuario = $this->repository->obtenerPorEmail($email);
         
+        // Por seguridad, no revelamos si el usuario existe
         if (!$usuario || !$usuario->isActivo()) {
-            return null;
+            // Retornamos true para no revelar si el email existe
+            return true;
         }
         
         $token = bin2hex(random_bytes(32));
         $expiry = new \DateTime('+1 hour');
         
-        $this->repository->establecerResetToken($usuario->getId(), $token, $expiry);
+        $this->repository->establecerTokenRestablecimiento($usuario->getId(), $token, $expiry);
         
         // Generar email
-        $emailData = $this->emailTemplates->resetPassword($usuario->getNombre(), $token);
+        $emailData = $this->emailTemplates->restablecimientoContrasena($usuario->getNombre(), $token);
         
         // Enviar
         return $this->emailRepository->enviar(
@@ -197,60 +199,66 @@ class UsuarioDomain {
     }
     
     /**
-     * Verifica token de reset
+     * Valida token de restablecimiento y retorna datos del usuario
      */
-    public function verificarResetToken(string $token
-    ): ?Usuario {
-        $usuario = $this->repository->obtenerPorResetToken($token);
+    public function validarTokenRestablecimiento(string $token): ?array {
+        $usuario = $this->repository->obtenerPorTokenRestablecimiento($token);
         
         if (!$usuario) {
             return null;
         }
         
-        if (!$usuario->tokenResetValido()) {
+        if (!$usuario->tokenRestablecimientoValido()) {
             return null;
         }
         
-        return $usuario;
+        return [
+            'id' => $usuario->getId(),
+            'nombre' => $usuario->getNombre(),
+            'email' => $usuario->getEmail()
+        ];
     }
     
     /**
-     * Resetea contraseña con token
+     * Restablece contraseña con token
      */
-    public function resetearPassword(
-        string $token, 
-        string $passwordNueva
-    ): void {
+    public function restablecerContrasena(string $token, string $passwordNueva): void {
         if (strlen($passwordNueva) < 6) {
             throw new \InvalidArgumentException('La contraseña debe tener al menos 6 caracteres');
         }
         
-        $usuario = $this->verificarResetToken($token);
+        $datosUsuario = $this->validarTokenRestablecimiento($token);
         
-        if (!$usuario) {
+        if (!$datosUsuario) {
             throw new \DomainException('Token inválido o expirado');
         }
         
         $passwordHash = password_hash($passwordNueva, PASSWORD_DEFAULT);
-        $this->repository->actualizarPassword($usuario->getId(), $passwordHash);
-        $this->repository->limpiarResetToken($usuario->getId());
+        $this->repository->actualizarPassword($datosUsuario['id'], $passwordHash);
+        $this->repository->limpiarTokenRestablecimiento($datosUsuario['id']);
     }
+    
+    // ========================================================================
+    // MÉTODOS DE GESTIÓN DE USUARIOS
+    // ========================================================================
     
     /**
      * Obtiene usuario por ID
      */
-    public function obtenerPorId(int $id
-    ): ?Usuario {
+    public function obtenerPorId(int $id): ?Usuario {
         return $this->repository->obtenerPorId($id);
     }
     
     /**
      * Verifica si un usuario tiene permisos de administrador
      */
-    public function esAdministrador(int $usuarioId
-    ): bool {
+    public function esAdministrador(int $usuarioId): bool {
         return $this->repository->esAdmin($usuarioId);
     }
+
+    // ========================================================================
+    // VERIFICACIÓN DE EMAIL
+    // ========================================================================
 
     /**
      * Inicia proceso de verificación de correo
@@ -280,7 +288,7 @@ class UsuarioDomain {
         );
     }
 
-     /**
+    /**
      * Verifica el token y envía bienvenida
      */
     public function verificarCorreo(string $token): bool {
@@ -310,6 +318,10 @@ class UsuarioDomain {
         
         return true;
     }
+
+    // ========================================================================
+    // MÉTODOS PRIVADOS
+    // ========================================================================
 
     /**
      * Crea configuraciones iniciales para un nuevo usuario

@@ -34,7 +34,7 @@ class UsuarioRepository implements IUsuarioRepository {
         return $row ? $this->mapearDesdeArray($row) : null;
     }
     
-    public function obtenerPorResetToken(string $token): ?Usuario {
+    public function obtenerPorTokenRestablecimiento(string $token): ?Usuario {
         $sql = "SELECT * FROM usuarios WHERE reset_token = ?";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$token]);
@@ -97,7 +97,7 @@ class UsuarioRepository implements IUsuarioRepository {
         $stmt->execute([$passwordHash, $id]);
     }
     
-    public function establecerResetToken(int $id, string $token, \DateTime $expiry): void {
+    public function establecerTokenRestablecimiento(int $id, string $token, \DateTime $expiry): void {
         $sql = "UPDATE usuarios 
                 SET reset_token = ?, reset_token_expiry = ?, updated_at = NOW() 
                 WHERE id = ?";
@@ -110,7 +110,7 @@ class UsuarioRepository implements IUsuarioRepository {
         ]);
     }
     
-    public function limpiarResetToken(int $id): void {
+    public function limpiarTokenRestablecimiento(int $id): void {
         $sql = "UPDATE usuarios 
                 SET reset_token = NULL, reset_token_expiry = NULL, updated_at = NOW() 
                 WHERE id = ?";

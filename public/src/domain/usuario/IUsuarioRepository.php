@@ -17,7 +17,7 @@ interface IUsuarioRepository {
     /**
      * Busca usuario por token de reset
      */
-    public function obtenerPorResetToken(string $token): ?Usuario;
+    public function obtenerPorTokenRestablecimiento(string $token): ?Usuario;
 
      /**
      * Busca usuario por token de verificación
@@ -42,12 +42,12 @@ interface IUsuarioRepository {
     /**
      * Establece token de reset
      */
-    public function establecerResetToken(int $id, string $token, \DateTime $expiry): void;
+    public function establecerTokenRestablecimiento(int $id, string $token, \DateTime $expiry): void;
     
     /**
      * Limpia token de reset
      */
-    public function limpiarResetToken(int $id): void;
+    public function limpiarTokenRestablecimiento(int $id): void;
     
     /**
      * Establece token de verificación

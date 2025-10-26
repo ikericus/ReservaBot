@@ -7,9 +7,14 @@ if (isAuthenticatedUser()) {
 }
 
 // Obtener mensajes de la sesión
-$errors = $_SESSION['login_errors'] ?? [];
+$errorsRaw = $_SESSION['login_errors'] ?? [];
 $message = $_SESSION['login_message'] ?? '';
 $email = $_SESSION['login_email'] ?? '';
+
+// Normalizar errores a array si viene como string
+$errors = is_array($errorsRaw) ? $errorsRaw : [$errorsRaw];
+// Filtrar errores vacíos
+$errors = array_filter($errors);
 
 // Limpiar mensajes de la sesión
 unset($_SESSION['login_errors'], $_SESSION['login_message'], $_SESSION['login_email']);
@@ -106,8 +111,8 @@ if (!empty($urlUser)) {
             <!-- Logo y título -->
             <div class="text-center mb-8">
                 <div class="flex items-center justify-center mb-6">
-                    <div class="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                        <i class="ri-calendar-line text-purple-600 text-xl"></i>
+                    <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+                        <i class="ri-calendar-line text-purple-600 text-2xl"></i>
                     </div>
                 </div>
                 <h1 class="text-3xl font-bold text-white mb-2">Bienvenido a ReservaBot</h1>
@@ -121,7 +126,7 @@ if (!empty($urlUser)) {
                     <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
                         <div class="flex items-start">
                             <i class="ri-error-warning-line text-red-400 mr-2 mt-0.5"></i>
-                            <div>
+                            <div class="flex-1">
                                 <?php foreach ($errors as $error): ?>
                                     <p class="text-red-800 text-sm"><?php echo htmlspecialchars($error); ?></p>
                                 <?php endforeach; ?>
@@ -131,10 +136,12 @@ if (!empty($urlUser)) {
                 <?php endif; ?>
                 
                 <?php if (!empty($message)): ?>
-                    <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <i class="ri-information-line text-blue-400 mr-2"></i>
-                            <span class="text-blue-800 text-sm"><?php echo htmlspecialchars($message); ?></span>
+                    <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <i class="ri-check-line text-green-400 mr-2 mt-0.5"></i>
+                            <div class="flex-1">
+                                <p class="text-green-800 text-sm font-medium"><?php echo htmlspecialchars($message); ?></p>
+                            </div>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -160,6 +167,7 @@ if (!empty($urlUser)) {
                                 value="<?php echo htmlspecialchars($email); ?>"
                             >
                         </div>
+                        <p id="emailError" class="text-xs text-red-500 mt-1 hidden">El formato del email no es válido</p>
                     </div>
                     
                     <!-- Contraseña -->
@@ -185,7 +193,7 @@ if (!empty($urlUser)) {
                                 id="togglePassword"
                                 class="absolute inset-y-0 right-0 pr-3 flex items-center"
                             >
-                                <i class="ri-eye-off-line text-gray-400 hover:text-gray-600" id="eyeIcon"></i>
+                                <i class="ri-eye-off-line text-gray-400 hover:text-gray-600 transition-colors" id="eyeIcon"></i>
                             </button>
                         </div>
                     </div>
@@ -205,7 +213,7 @@ if (!empty($urlUser)) {
                         </div>
                         
                         <div class="text-sm">
-                            <a href="/password-reset" class="text-purple-600 hover:text-purple-500 font-medium">
+                            <a href="/password-reset" class="text-purple-600 hover:text-purple-500 font-medium transition-colors">
                                 ¿Olvidaste tu contraseña?
                             </a>
                         </div>
@@ -237,7 +245,7 @@ if (!empty($urlUser)) {
                 <div class="mt-6 text-center space-y-2">
                     <p class="text-gray-600 text-sm">
                         ¿No tienes cuenta?
-                        <a href="/signup" class="text-purple-600 hover:text-purple-500 font-medium">
+                        <a href="/signup" class="text-purple-600 hover:text-purple-500 font-medium transition-colors">
                             Regístrate aquí
                         </a>
                     </p>
@@ -268,11 +276,59 @@ if (!empty($urlUser)) {
         // Auto-focus en el primer campo
         document.getElementById('email').focus();
         
-        // Efecto de loading en el botón al enviar
-        document.getElementById('loginForm').addEventListener('submit', function() {
-            const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.innerHTML;
+        // Validación en tiempo real del email
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('emailError');
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        emailInput.addEventListener('input', function() {
+            const email = this.value.trim();
             
+            if (email.length > 0 && !emailRegex.test(email)) {
+                this.classList.add('border-red-300', 'focus:ring-red-500');
+                this.classList.remove('border-gray-300', 'focus:ring-purple-500');
+                emailError.classList.remove('hidden');
+            } else {
+                this.classList.remove('border-red-300', 'focus:ring-red-500');
+                this.classList.add('border-gray-300', 'focus:ring-purple-500');
+                emailError.classList.add('hidden');
+            }
+        });
+        
+        emailInput.addEventListener('blur', function() {
+            const email = this.value.trim();
+            
+            if (email && !emailRegex.test(email)) {
+                this.classList.add('border-red-300', 'focus:ring-red-500');
+                this.classList.remove('border-gray-300', 'focus:ring-purple-500');
+                emailError.classList.remove('hidden');
+            }
+        });
+        
+        // Validación antes de enviar
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const email = emailInput.value.trim();
+            const password = document.getElementById('password').value;
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Validar email
+            if (!emailRegex.test(email)) {
+                e.preventDefault();
+                emailInput.classList.add('border-red-300', 'focus:ring-red-500');
+                emailError.classList.remove('hidden');
+                emailInput.focus();
+                return;
+            }
+            
+            // Validar contraseña
+            if (password.length === 0) {
+                e.preventDefault();
+                document.getElementById('password').focus();
+                return;
+            }
+            
+            // Deshabilitar botón y mostrar loading
+            const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="ri-loader-line animate-spin mr-2"></i>Iniciando sesión...';
             submitBtn.disabled = true;
             
@@ -283,23 +339,6 @@ if (!empty($urlUser)) {
                     submitBtn.disabled = false;
                 }
             }, 3000);
-        });
-        
-        // Validación en tiempo real
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        
-        emailInput.addEventListener('blur', function() {
-            const email = this.value.trim();
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            
-            if (email && !emailRegex.test(email)) {
-                this.classList.add('border-red-300', 'focus:ring-red-500');
-                this.classList.remove('border-gray-300', 'focus:ring-purple-500');
-            } else {
-                this.classList.remove('border-red-300', 'focus:ring-red-500');
-                this.classList.add('border-gray-300', 'focus:ring-purple-500');
-            }
         });
     </script>
 </body>
