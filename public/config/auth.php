@@ -58,6 +58,32 @@ function isSessionExpired(): bool {
     return (time() - $lastActivity) > $timeout;
 }
 
+
+function setAuthenticatedUser(array $userData): void {
+    // Regenerar ID de sesión por seguridad
+    session_regenerate_id(true);
+    
+    // Validar datos requeridos
+    if (empty($userData['id']) || empty($userData['email'])) {
+        throw new \InvalidArgumentException('Los campos id y email son obligatorios');
+    }
+    
+    // Establecer datos de sesión
+    $_SESSION['user_authenticated'] = true;
+    $_SESSION['user_id'] = $userData['id'];
+    $_SESSION['user_email'] = $userData['email'];
+    $_SESSION['user_name'] = $userData['nombre'] ?? '';
+    $_SESSION['user_negocio'] = $userData['negocio'] ?? '';
+    $_SESSION['user_plan'] = $userData['plan'] ?? 'gratis';
+    $_SESSION['is_admin'] = $userData['is_admin'] ?? false;
+    $_SESSION['user_role'] = ($userData['is_admin'] ?? false) ? 'admin' : 'user';
+    $_SESSION['login_time'] = time();
+    $_SESSION['last_activity'] = time();
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+    
+    debug_log("auth.php: Sesión creada para usuario {$userData['id']} - Admin: " . ($userData['is_admin'] ? 'Sí' : 'No'));
+}
+
 function getAuthenticatedUser(): ?array {
     if (!isAuthenticated()) {
         return null;
@@ -98,6 +124,23 @@ function logout(): void {
     }
     
     session_destroy();
+}
+
+function extendSessionCookie(int $days = 30): void {
+    $cookieLifetime = $days * 24 * 60 * 60;
+    $params = session_get_cookie_params();
+    
+    setcookie(
+        session_name(), 
+        session_id(), 
+        time() + $cookieLifetime,
+        $params["path"], 
+        $params["domain"],
+        $params["secure"], 
+        $params["httponly"]
+    );
+    
+    debug_log("auth.php: Cookie de sesión extendida por {$days} días");
 }
 
 // ========== CSRF ==========

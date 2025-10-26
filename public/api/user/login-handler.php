@@ -37,42 +37,33 @@ if (!empty($errors)) {
 
 try {
     $usuarioDomain = getContainer()->getUsuarioDomain();
-    $usuario = $usuarioDomain->autenticar($email, $password);
     
-    // Si marcó "recordar sesión", extender duración de cookie
-    if ($remember) {
-        $cookieLifetime = 30 * 24 * 60 * 60; // 30 días
-        $params = session_get_cookie_params();
-        setcookie(session_name(), session_id(), time() + $cookieLifetime,
-            $params["path"], $params["domain"],
-            $params["secure"], $params["httponly"]
-        );
-    }
+    $usuario = $usuarioDomain->autenticar($email, $password);
     
     // Limpiar errores previos
     unset($_SESSION['login_errors'], $_SESSION['login_email'], $_SESSION['login_message']);
     
     // Generar datos de demo si es necesario
     handleDemoDataGeneration($email);
-        
-    // Crear sesión
-    session_regenerate_id(true);
-    
-    // ⭐ DETERMINAR SI ES ADMIN DESDE USUARIODOMAIN
+            
+    // Verificar si es admin
     $esAdmin = $usuarioDomain->esAdministrador($usuario->getId());
 
-    $_SESSION['user_authenticated'] = true;
-    $_SESSION['user_id'] = $usuario->getId();
-    $_SESSION['user_email'] = $usuario->getEmail();
-    $_SESSION['user_name'] = $usuario->getNombre();
-    $_SESSION['user_role'] = 'user';
-    $_SESSION['user_negocio'] = $usuario->getNegocio();
-    $_SESSION['user_plan'] = $usuario->getPlan();
-    $_SESSION['is_admin'] = $esAdmin;
-    $_SESSION['login_time'] = time();
-    $_SESSION['last_activity'] = time();
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+    // crear usuario autenticado en sesión
+    setAuthenticatedUser([
+        'id' => $usuario->getId(),
+        'email' => $usuario->getEmail(),
+        'nombre' => $usuario->getNombre(),
+        'negocio' => $usuario->getNegocio(),
+        'plan' => $usuario->getPlan(),
+        'is_admin' => $esAdmin
+    ]);
     
+    // Extender cookie si marcó "recordar"
+    if ($remember) {
+        extendSessionCookie(30);
+    }
+
     header('Location: /reservas');
     exit;
     
