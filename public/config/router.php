@@ -203,7 +203,7 @@ class Router {
     private function adminMiddleware() {       
         debug_log("Router: Verificando acceso de administrador");
 
-        return isAdminUser(getAuthenticatedUser()['email']);
+        return isAdmin();
     }
     
     private function redirectToLogin($message = null) {

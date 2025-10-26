@@ -1,6 +1,5 @@
 <?php
 // pages/reservas.php
-debug_log("reservas.php: Inicio de carga de la página de reservas");
 
 // Configurar la página actual
 $currentPage = 'reservas';
@@ -12,7 +11,7 @@ try {
     $currentUser = getAuthenticatedUser();
     
     // Redirigir a admin si el usuario es administrador
-    if (isAdminUser(getAuthenticatedUser()['email']))
+    if (isAdmin())
     {
         header("Location: /admin");
     }                 
@@ -25,11 +24,8 @@ try {
     $reservasConfirmadas = [];
 } 
 catch (Exception $e) {    
-    debug_log("Error en reservas.php: " . $e->getMessage());
-    echo "Error en la configuración: " . $e->getMessage();
-    exit;
+    error_log("Error en reservas.php: " . $e->getMessage());
 }
-
 
 try {
     $reservaDomain = getContainer()->getReservaDomain();
