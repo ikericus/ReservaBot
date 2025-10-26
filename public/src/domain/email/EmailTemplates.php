@@ -220,68 +220,67 @@ class EmailTemplates {
      * Template: Contacto web
      */
     public function contactoWeb(string $nombre, string $emailCliente, string $asunto, string $mensaje): array {
-            $fechaActual = date('d/m/Y H:i:s');
-            $asuntoFormateado = !empty($asunto) ? ucfirst($asunto) : 'Consulta general';
+        $fechaActual = date('d/m/Y H:i:s');
+        $asuntoFormateado = !empty($asunto) ? ucfirst($asunto) : 'Consulta general';
+        
+        $contenidoHtml = "
+            <h2 style='color: #1f2937; margin-top: 0;'>📧 Nuevo Contacto Web</h2>
+            <p style='color: #6b7280;'>Se ha recibido un nuevo mensaje desde el formulario de contacto.</p>
             
-            $contenidoHtml = "
-                <h2 style='color: #1f2937; margin-top: 0;'>📧 Nuevo Contacto Web</h2>
-                <p style='color: #6b7280;'>Se ha recibido un nuevo mensaje desde el formulario de contacto.</p>
-                
-                <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;'>
-                    <h3 style='margin-top: 0; color: #374151;'>👤 Información del contacto</h3>
-                    <table style='width: 100%; border-collapse: collapse;'>
-                        <tr>
-                            <td style='padding: 8px 0; color: #374151; width: 120px;'><strong>Nombre:</strong></td>
-                            <td style='padding: 8px 0; color: #6b7280;'>{$nombre}</td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 8px 0; color: #374151;'><strong>Email:</strong></td>
-                            <td style='padding: 8px 0; color: #6b7280;'>
-                                <a href='mailto:{$emailCliente}' style='color: #667eea;'>{$emailCliente}</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 8px 0; color: #374151;'><strong>Asunto:</strong></td>
-                            <td style='padding: 8px 0; color: #6b7280;'>{$asuntoFormateado}</td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 8px 0; color: #374151;'><strong>Fecha:</strong></td>
-                            <td style='padding: 8px 0; color: #6b7280;'>{$fechaActual}</td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <div style='background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #bfdbfe;'>
-                    <h3 style='margin-top: 0; color: #374151;'>💬 Mensaje</h3>
-                    <div style='color: #1e40af; line-height: 1.6; white-space: pre-wrap;'>{$mensaje}</div>
-                </div>
-                
-                <div style='text-align: center; margin: 30px 0;'>
-                    <a href='mailto:{$emailCliente}?subject=Re: {$asuntoFormateado}' style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;'>
-                        📧 Responder
-                    </a>
-                </div>
-                
-                <p style='font-size: 12px; color: #9ca3af; text-align: center; margin: 20px 0 0 0; padding-top: 20px; border-top: 1px solid #e5e7eb;'>
-                    Este email fue generado automáticamente desde el formulario de contacto.<br>
-                    <strong>No responder a este email</strong> - Usar el botón de respuesta.
-                </p>";
+            <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;'>
+                <h3 style='margin-top: 0; color: #374151;'>👤 Información del contacto</h3>
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr>
+                        <td style='padding: 8px 0; color: #374151; width: 120px;'><strong>Nombre:</strong></td>
+                        <td style='padding: 8px 0; color: #6b7280;'>{$nombre}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #374151;'><strong>Email:</strong></td>
+                        <td style='padding: 8px 0; color: #6b7280;'>
+                            <a href='mailto:{$emailCliente}' style='color: #667eea;'>{$emailCliente}</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #374151;'><strong>Asunto:</strong></td>
+                        <td style='padding: 8px 0; color: #6b7280;'>{$asuntoFormateado}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #374151;'><strong>Fecha:</strong></td>
+                        <td style='padding: 8px 0; color: #6b7280;'>{$fechaActual}</td>
+                    </tr>
+                </table>
+            </div>
             
-            $contenidoTexto = "NUEVO CONTACTO WEB\n\n";
-            $contenidoTexto .= "Información del contacto:\n";
-            $contenidoTexto .= "- Nombre: {$nombre}\n";
-            $contenidoTexto .= "- Email: {$emailCliente}\n";
-            $contenidoTexto .= "- Asunto: {$asuntoFormateado}\n";
-            $contenidoTexto .= "- Fecha: {$fechaActual}\n\n";
-            $contenidoTexto .= "Mensaje:\n";
-            $contenidoTexto .= "---\n{$mensaje}\n---\n\n";
-            $contenidoTexto .= "Para responder, envía un email a: {$emailCliente}\n";
+            <div style='background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #bfdbfe;'>
+                <h3 style='margin-top: 0; color: #374151;'>💬 Mensaje</h3>
+                <div style='color: #1e40af; line-height: 1.6; white-space: pre-wrap;'>{$mensaje}</div>
+            </div>
             
-            return [
-                'asunto' => 'Contacto Web - ' . $asuntoFormateado,
-                'cuerpo_texto' => $contenidoTexto,
-                'cuerpo_html' => $this->wrapHtml('Nuevo Contacto', $contenidoHtml)
-            ];
-        }
+            <div style='text-align: center; margin: 30px 0;'>
+                <a href='mailto:{$emailCliente}?subject=Re: {$asuntoFormateado}' style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;'>
+                    📧 Responder
+                </a>
+            </div>
+            
+            <p style='font-size: 12px; color: #9ca3af; text-align: center; margin: 20px 0 0 0; padding-top: 20px; border-top: 1px solid #e5e7eb;'>
+                Este email fue generado automáticamente desde el formulario de contacto.<br>
+                <strong>No responder a este email</strong> - Usar el botón de respuesta.
+            </p>";
+        
+        $contenidoTexto = "NUEVO CONTACTO WEB\n\n";
+        $contenidoTexto .= "Información del contacto:\n";
+        $contenidoTexto .= "- Nombre: {$nombre}\n";
+        $contenidoTexto .= "- Email: {$emailCliente}\n";
+        $contenidoTexto .= "- Asunto: {$asuntoFormateado}\n";
+        $contenidoTexto .= "- Fecha: {$fechaActual}\n\n";
+        $contenidoTexto .= "Mensaje:\n";
+        $contenidoTexto .= "---\n{$mensaje}\n---\n\n";
+        $contenidoTexto .= "Para responder, envía un email a: {$emailCliente}\n";
+        
+        return [
+            'asunto' => 'Contacto Web - ' . $asuntoFormateado,
+            'cuerpo_texto' => $contenidoTexto,
+            'cuerpo_html' => $this->wrapHtml('Nuevo Contacto', $contenidoHtml)
+        ];
     }
 }
