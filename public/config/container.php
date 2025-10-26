@@ -20,6 +20,7 @@ use ReservaBot\Infrastructure\WhatsAppServerManager;
 use ReservaBot\Infrastructure\FormularioRepository;
 use ReservaBot\Infrastructure\AdminRepository;
 use ReservaBot\Infrastructure\UsuarioRepository;
+use ReservaBot\Infrastructure\EmailRepository;
 use PDO;
 
 class Container {
@@ -42,7 +43,7 @@ class Container {
 
     
     // ==================== DOMAINS ====================
-    
+
     public function getAdminDomain(): AdminDomain {
         if (!isset($this->services['adminDomain'])) {
             $this->services['adminDomain'] = new AdminDomain(
@@ -56,7 +57,8 @@ class Container {
         if (!isset($this->services['reservaDomain'])) {
             $this->services['reservaDomain'] = new ReservaDomain(
                 $this->getReservaRepository(),
-                $this->getDisponibilidadRepository()
+                $this->getDisponibilidadRepository(),
+                $this->getEmailRepository()
             );
         }
         return $this->services['reservaDomain'];
@@ -104,7 +106,8 @@ class Container {
         if (!isset($this->services['usuarioDomain'])) {
             $this->services['usuarioDomain'] = new UsuarioDomain(
                 $this->getUsuarioRepository(),
-                $this->getConfiguracionDomain()
+                $this->getConfiguracionDomain(),
+                $this->getEmailRepository()
             );
         }
         return $this->services['usuarioDomain'];
@@ -171,6 +174,13 @@ class Container {
             $this->services['usuarioRepository'] = new UsuarioRepository($this->pdo);
         }
         return $this->services['usuarioRepository'];
+    }
+
+        public function getEmailRepository(): EmailRepository {
+        if (!isset($this->services['emailRepository'])) {
+            $this->services['emailRepository'] = new EmailRepository();
+        }
+        return $this->services['emailRepository'];
     }
 
 

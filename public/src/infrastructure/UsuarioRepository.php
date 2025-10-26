@@ -132,6 +132,28 @@ class UsuarioRepository implements IUsuarioRepository {
         
         return $stmt->fetchColumn() > 0;
     }
+
+     /** Verifica si un usuario es administrador. Por ahora usa email hardcodeado de .env */
+    public function esAdmin(int $usuarioId): bool {
+        $usuario = $this->obtenerPorId($usuarioId);
+        
+        if (!$usuario) {
+            return false;
+        }
+        
+        // Obtener email de admin desde .env
+        $adminEmail = $_ENV['ADMIN_EMAIL'] ?? '';
+        
+        if (empty($adminEmail)) {
+            error_log('ADMIN_EMAIL no está configurado en .env');
+            return false;
+        }
+        
+        $esAdmin = strtolower(trim($usuario->getEmail())) === strtolower(trim($adminEmail));
+                
+        return $esAdmin;
+    }
+
     
     private function mapearDesdeArray(array $row): Usuario {
         return new Usuario(

@@ -7,8 +7,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-logMessage("login-handler.php: Inicio de procesamiento de login");
-
 // Obtener datos del formulario
 $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
@@ -37,14 +35,10 @@ if (!empty($errors)) {
     exit;
 }
 
-logMessage("login-handler.php: Validaciones completadas");
-
 try {
     $usuarioDomain = getContainer()->getUsuarioDomain();
     $usuario = $usuarioDomain->autenticar($email, $password);
     
-    logMessage("login-handler.php: Usuario autenticado: " . $usuario->getEmail());
-
     // Si marcó "recordar sesión", extender duración de cookie
     if ($remember) {
         $cookieLifetime = 30 * 24 * 60 * 60; // 30 días
@@ -64,6 +58,9 @@ try {
     // Crear sesión
     session_regenerate_id(true);
     
+    // ⭐ DETERMINAR SI ES ADMIN DESDE USUARIODOMAIN
+    $esAdmin = $usuarioDomain->esAdministrador($usuario->getId());
+
     $_SESSION['user_authenticated'] = true;
     $_SESSION['user_id'] = $usuario->getId();
     $_SESSION['user_email'] = $usuario->getEmail();
@@ -71,6 +68,7 @@ try {
     $_SESSION['user_role'] = 'user';
     $_SESSION['user_negocio'] = $usuario->getNegocio();
     $_SESSION['user_plan'] = $usuario->getPlan();
+    $_SESSION['is_admin'] = $esAdmin;
     $_SESSION['login_time'] = time();
     $_SESSION['last_activity'] = time();
     $_SESSION['csrf_token'] = bin2hex(random_bytes(16));

@@ -37,6 +37,12 @@ function isAuthenticated(): bool {
     return isset($_SESSION['user_authenticated']) && $_SESSION['user_authenticated'] === true;
 }
 
+function isAdmin(): bool {
+    // Lee de la sesión, NO decide
+    return isAuthenticated() 
+        && ($_SESSION['is_admin'] ?? false) === true;
+}
+
 function isSessionExpired(): bool {
     if (!isAuthenticated()) {
         return true;
@@ -64,8 +70,6 @@ function getAuthenticatedUser(): ?array {
         return null;
     }
     
-    logMessage("auth.php: Obteniendo usuario autenticado - ID: " . ($_SESSION['user_id'] ?? 'N/A'));
-
     return [
         'id' => $_SESSION['user_id'] ?? null,
         'email' => $_SESSION['user_email'] ?? '',
@@ -73,9 +77,9 @@ function getAuthenticatedUser(): ?array {
         'role' => $_SESSION['user_role'] ?? 'user',
         'negocio' => $_SESSION['user_negocio'] ?? '',
         'plan' => $_SESSION['user_plan'] ?? 'gratis',
+        'is_admin' => $_SESSION['is_admin'] ?? false, // ← De la sesión
         'login_time' => $_SESSION['login_time'] ?? '',
-        'last_activity' => $_SESSION['last_activity'] ?? '',
-        'is_admin' => isAdminUser($_SESSION['user_email'])
+        'last_activity' => $_SESSION['last_activity'] ?? ''
     ];
 }
 
@@ -213,18 +217,4 @@ function redirectToLogin(string $loginUrl = '/login', ?string $message = null): 
     
     header("Location: $loginUrl");
     exit;
-}
-
-// ========== VARIABLES DE ADMINISTRADOR ==========
-
-// Email del propietario del sistema (configurable desde .env)
-define('ADMIN_EMAIL', $_ENV['ADMIN_EMAIL']);
-
-// ========== FUNCIONES DE VERIFICACIÓN ==========
-
-/**
- * Verifica si el usuario actual es administrador
- */
-function isAdminUser($email): bool {
-    return strtolower(trim($email)) === strtolower(ADMIN_EMAIL);
 }

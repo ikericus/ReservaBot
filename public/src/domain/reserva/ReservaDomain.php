@@ -4,11 +4,13 @@
 namespace ReservaBot\Domain\Reserva;
 
 use ReservaBot\Domain\Disponibilidad\IDisponibilidadRepository;
+use ReservaBot\Domain\Email\EmailTemplates;
 use DateTime;
 
 class ReservaDomain {
     private IReservaRepository $reservaRepository;
     private IDisponibilidadRepository $disponibilidadRepository;
+    private EmailTemplates $emailTemplates;
     
     public function __construct(
         IReservaRepository $reservaRepository,
@@ -16,6 +18,7 @@ class ReservaDomain {
     ) {
         $this->reservaRepository = $reservaRepository;
         $this->disponibilidadRepository = $disponibilidadRepository;
+        $this->emailTemplates = new EmailTemplates();
     }
     
     /**
@@ -288,6 +291,33 @@ class ReservaDomain {
         $reserva->cancelar();
         
         return $this->reservaRepository->guardar($reserva);
+    }
+
+     /**
+     * Envía email de confirmación de reserva
+     */
+    public function enviarConfirmacion(int $reservaId): bool {
+        $reserva = $this->repository->obtenerPorId($reservaId);
+        
+        if (!$reserva) {
+            throw new \DomainException('Reserva no encontrada');
+        }
+        
+        // Generar URL de gestión
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+        $host = $_SERVER['HTTP_HOST'];
+        $gestionUrl = $protocol . $host . '/mi-reserva?token=' . $reserva['access_token'];
+        
+        // Generar contenido del email
+        $email = $this->emailTemplates->confirmacionReserva($reserva, $gestionUrl);
+        
+        // Enviar
+        return $this->emailRepository->enviar(
+            $reserva['email'],
+            $email['asunto'],
+            $email['cuerpo_texto'],
+            $email['cuerpo_html']
+        );
     }
 
     /**

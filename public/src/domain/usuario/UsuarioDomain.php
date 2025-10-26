@@ -8,13 +8,18 @@ use ReservaBot\Domain\Configuracion\ConfiguracionDomain;
 class UsuarioDomain {
     private IUsuarioRepository $repository;
     private ConfiguracionDomain $configuracionDomain;
+    private IEmailRepository $emailRepository;
+    private EmailTemplates $emailTemplates;
     
     public function __construct(
         IUsuarioRepository $repository,
-        ConfiguracionDomain $configuracionDomain
+        ConfiguracionDomain $configuracionDomain,
+        IEmailRepository $emailRepository
     ) {
         $this->repository = $repository;
         $this->configuracionDomain = $configuracionDomain;
+        $this->emailRepository = $emailRepository;
+        $this->emailTemplates = new EmailTemplates();
     }
     
     /**
@@ -169,7 +174,7 @@ class UsuarioDomain {
         $usuario = $this->repository->obtenerPorEmail($email);
         
         if (!$usuario || !$usuario->isActivo()) {
-            return null; // Por seguridad, no revelar si existe
+            return null;
         }
         
         $token = bin2hex(random_bytes(32));
@@ -177,14 +182,25 @@ class UsuarioDomain {
         
         $this->repository->establecerResetToken($usuario->getId(), $token, $expiry);
         
-        // Devolver usuario actualizado
+        // Generar email
+        $emailData = $this->emailTemplates->resetPassword($usuario->getNombre(), $token);
+        
+        // Enviar
+        $this->emailRepository->enviar(
+            $usuario->getEmail(),
+            $emailData['asunto'],
+            $emailData['cuerpo_texto'],
+            $emailData['cuerpo_html']
+        );
+        
         return $this->repository->obtenerPorId($usuario->getId());
     }
     
     /**
      * Verifica token de reset
      */
-    public function verificarResetToken(string $token): ?Usuario {
+    public function verificarResetToken(string $token
+    ): ?Usuario {
         $usuario = $this->repository->obtenerPorResetToken($token);
         
         if (!$usuario) {
@@ -201,7 +217,10 @@ class UsuarioDomain {
     /**
      * Resetea contraseña con token
      */
-    public function resetearPassword(string $token, string $passwordNueva): void {
+    public function resetearPassword(
+        string $token, 
+        string $passwordNueva
+    ): void {
         if (strlen($passwordNueva) < 6) {
             throw new \InvalidArgumentException('La contraseña debe tener al menos 6 caracteres');
         }
@@ -220,10 +239,79 @@ class UsuarioDomain {
     /**
      * Obtiene usuario por ID
      */
-    public function obtenerPorId(int $id): ?Usuario {
+    public function obtenerPorId(int $id
+    ): ?Usuario {
         return $this->repository->obtenerPorId($id);
     }
     
+    /**
+     * Verifica si un usuario tiene permisos de administrador
+     */
+    public function esAdministrador(int $usuarioId
+    ): bool {
+        return $this->repository->esAdmin($usuarioId);
+    }
+
+    /**
+     * Inicia proceso de verificación de correo
+     */
+    public function iniciarVerificacionCorreo(int $usuarioId): bool {
+        $usuario = $this->repository->obtenerPorId($usuarioId);
+        
+        if (!$usuario) {
+            throw new \DomainException('Usuario no encontrado');
+        }
+        
+        // Generar token
+        $token = bin2hex(random_bytes(32));
+        $expiry = new \DateTime('+24 hours');
+        
+        // Guardar en BD
+        $this->repository->establecerVerificacionToken($usuarioId, $token, $expiry);
+        
+        // Generar contenido del email
+        $email = $this->emailTemplates->verificacionEmail($usuario->getNombre(), $token);
+        
+        // Enviar usando repositorio genérico
+        return $this->emailRepository->enviar(
+            $usuario->getEmail(),
+            $email['asunto'],
+            $email['cuerpo_texto'],
+            $email['cuerpo_html']
+        );
+    }
+
+     /**
+     * Verifica el token y envía bienvenida
+     */
+    public function verificarCorreo(string $token): bool {
+        $usuario = $this->repository->obtenerPorVerificacionToken($token);
+        
+        if (!$usuario) {
+            throw new \DomainException('Token inválido');
+        }
+        
+        if (!$usuario->tokenVerificacionValido()) {
+            throw new \DomainException('Token expirado');
+        }
+        
+        // Marcar como verificado
+        $this->repository->marcarEmailVerificado($usuario->getId());
+        
+        // Generar email de bienvenida
+        $email = $this->emailTemplates->bienvenida($usuario->getNombre());
+        
+        // Enviar
+        $this->emailRepository->enviar(
+            $usuario->getEmail(),
+            $email['asunto'],
+            $email['cuerpo_texto'],
+            $email['cuerpo_html']
+        );
+        
+        return true;
+    }
+
     /**
      * Crea configuraciones iniciales para un nuevo usuario
      */

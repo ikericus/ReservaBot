@@ -1,7 +1,8 @@
 <?php
+// api/contacto-handler.php
+
 /**
  * Manejador del formulario de contacto
- * Archivo: public/contacto-handler.php
  */
 
 header('Content-Type: application/json');
@@ -16,6 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+require_once dirname(__DIR__) . '/includes/bootstrap.php';
+
 // Validar datos de entrada
 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -29,7 +32,7 @@ $email = trim($input['email'] ?? '');
 $asunto = trim($input['subject'] ?? '');
 $mensaje = trim($input['message'] ?? '');
 
-// Validaciones
+// Validaciones básicas
 $errores = [];
 
 if (empty($nombre)) {
@@ -52,11 +55,31 @@ if (!empty($errores)) {
     exit;
 }
 
-// Incluir las funciones de email
-require_once dirname(__DIR__) . '/includes/email-functions.php';
-
 try {
-    $enviado = enviarEmailContactoWeb($nombre, $email, $asunto, $mensaje);
+    $container = getContainer();
+    $emailRepository = $container->getEmailRepository();
+    $emailTemplates = new \ReservaBot\Domain\Email\EmailTemplates();
+    
+    // Generar contenido del email
+    $emailData = $emailTemplates->contactoWeb($nombre, $email, $asunto, $mensaje);
+    
+    // Email de destino
+    $emailContacto = $_ENV['CONTACT_EMAIL'] ?? 'contacto@reservabot.es';
+    
+    // Opciones: responder al email del cliente
+    $opciones = [
+        'reply_to' => $email,
+        'reply_to_name' => $nombre
+    ];
+    
+    // Enviar usando EmailRepository
+    $enviado = $emailRepository->enviar(
+        $emailContacto,
+        $emailData['asunto'],
+        $emailData['cuerpo_texto'],
+        $emailData['cuerpo_html'],
+        $opciones
+    );
     
     if ($enviado) {
         echo json_encode([
@@ -71,7 +94,7 @@ try {
         ]);
     }
     
-} catch (Exception $e) {
+} catch (\Exception $e) {
     error_log("Error en contacto-handler: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
@@ -79,4 +102,3 @@ try {
         'error' => 'Error interno del servidor'
     ]);
 }
-?>

@@ -27,20 +27,19 @@ class Router {
         $this->addRoute('GET',      '/test',                        'pages/test.php',        ['auth', 'admin']);
         $this->addRoute('GET',      '/',                            'pages/home.php');
         $this->addRoute('GET',      '/landing',                     'pages/landing.php');
-        $this->addRoute('GET',      '/login',                       'pages/login.php');
-        $this->addRoute('GET',      '/signup',                      'pages/signup.php');
-        $this->addRoute('GET',      '/logout',                      'pages/logout.php');
-        $this->addRoute('GET',      '/password-reset',              'pages/password-reset.php');
-        $this->addRoute('POST',     '/password-reset',              'pages/password-reset.php');
         $this->addRoute('GET',      '/reservar',                    'pages/reservar.php');
         $this->addRoute('POST',     '/reservar',                    'pages/reservar.php');
         $this->addRoute('GET',      '/mi-reserva',                  'pages/mi-reserva.php');
-        $this->addRoute('POST',     '/api/contacto-handler',        'api/contacto-handler.php');                    
-        $this->addRoute('POST',     '/api/login-handler',           'api/login-handler.php');        
-        $this->addRoute('POST',     '/api/register-handler',        'api/register-handler.php');
-        //$this->addRoute('POST',     '/api/login',                   'api/login.php');
-        $this->addRoute('POST',     '/api/register',                'api/register.php');
-        //$this->addRoute('POST',     '/api/logout',                  'api/logout.php');
+        $this->addRoute('GET',      '/login',                       'pages/user/login.php');
+        $this->addRoute('GET',      '/signup',                      'pages/user/signup.php');
+        $this->addRoute('GET',      '/logout',                      'pages/user/logout.php');
+        $this->addRoute('GET',      '/password-reset',              'pages/user/password-reset.php');
+        $this->addRoute('POST',     '/password-reset',              'pages/user/password-reset.php');    
+        $this->addRoute('POST',     '/verificar-email',             'pages/user/verificar-email.php');               
+        $this->addRoute('POST',     '/api/login-handler',           'api/user/login-handler.php');        
+        $this->addRoute('POST',     '/api/register-handler',        'api/user/register-handler.php');
+        $this->addRoute('POST',     '/api/register',                'api/user/register.php');
+        $this->addRoute('POST',     '/api/contacto-handler',        'api/contacto-handler.php');   
 
         // Admin
         $this->addRoute('GET',      '/admin',                       'pages/admin/dashboard.php',        ['auth', 'admin']);

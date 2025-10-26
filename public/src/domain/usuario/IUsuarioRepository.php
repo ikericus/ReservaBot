@@ -55,4 +55,9 @@ interface IUsuarioRepository {
      * Verifica si email existe
      */
     public function emailExiste(string $email, ?int $excluirId = null): bool;
+
+    /**
+     * Verifica si el usuario es administrador
+     */
+    public function esAdmin(int $usuarioId): bool;
 }
