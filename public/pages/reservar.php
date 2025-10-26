@@ -1,6 +1,8 @@
 <?php
+
 // pages/reservar.php
 
+// Obtener el formulario por slug usando DDD
 $slug = $_GET['f'] ?? '';
 $formulario = null;
 $formularioEntity = null;
@@ -31,30 +33,58 @@ if (empty($slug)) {
     }
 }
 
-// Obtener configuración de horarios usando DisponibilidadRepository
+// Obtener configuración de horarios usando ReservaDomain
 $horarios = [];
 $intervaloReservas = 30;
 $modoAceptacion = 'manual';
 
 if ($formulario) {
     try {
-        $disponibilidadRepository = getContainer()->getDisponibilidadRepository();
+        $reservaDomain = getContainer()->getReservaDomain();
         $usuarioId = $formulario['usuario_id'];
         
-        // Obtener configuración de horarios
+        // Obtener configuración de horarios a través del dominio
         $diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
         
-        foreach ($diasSemana as $dia) {
-            $horarioConfig = $disponibilidadRepository->obtenerHorarioDia($dia, $usuarioId);
-            $horarios[$dia] = [
-                'activo' => $horarioConfig['activo'],
-                'inicio' => $horarioConfig['ventanas'][0]['inicio'] ?? '09:00',
-                'fin' => $horarioConfig['ventanas'][0]['fin'] ?? '18:00'
-            ];
+        // Crear una fecha de ejemplo para cada día de la semana
+        $fechaBase = new DateTime();
+        $diaActual = (int)$fechaBase->format('w'); // 0 (domingo) a 6 (sábado)
+        
+        foreach ($diasSemana as $index => $dia) {
+            // Mapear índice a día de semana: lun=1, mar=2, ..., dom=0
+            $diaNumerico = $index === 6 ? 0 : $index + 1;
+            
+            // Calcular días de diferencia desde hoy
+            $diferenciaDias = ($diaNumerico - $diaActual + 7) % 7;
+            if ($diferenciaDias === 0) {
+                $diferenciaDias = 0; // Hoy
+            }
+            
+            $fechaPrueba = clone $fechaBase;
+            $fechaPrueba->modify("+{$diferenciaDias} days");
+            
+            try {
+                // Obtener horas del día a través del dominio
+                $horasDelDia = $reservaDomain->obtenerHorasDelDia($fechaPrueba, $usuarioId);
+                
+                $horarios[$dia] = [
+                    'activo' => !empty($horasDelDia),
+                    'inicio' => !empty($horasDelDia) ? $horasDelDia[0] : '09:00',
+                    'fin' => !empty($horasDelDia) ? end($horasDelDia) : '18:00'
+                ];
+            } catch (Exception $e) {
+                // Si falla, marcar como inactivo
+                $horarios[$dia] = [
+                    'activo' => false,
+                    'inicio' => '09:00',
+                    'fin' => '18:00'
+                ];
+            }
         }
         
-        // Obtener intervalo de reservas
-        $intervaloReservas = $disponibilidadRepository->obtenerIntervalo($usuarioId);
+        // El intervalo se puede inferir o obtener de configuración
+        // Por ahora usamos un valor por defecto
+        $intervaloReservas = 30;
         
         // Obtener modo de aceptación desde configuraciones
         $stmt = getPDO()->prepare("SELECT valor FROM configuraciones WHERE clave = 'modo_aceptacion' AND usuario_id = ?");
@@ -65,7 +95,7 @@ if ($formulario) {
         error_log("Error obteniendo configuración de horarios: " . $e->getMessage());
         
         // Si hay error, usar horarios por defecto
-        foreach ($diasSemana as $dia) {
+        foreach (['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'] as $dia) {
             $horarios[$dia] = [
                 'activo' => in_array($dia, ['lun', 'mar', 'mie', 'jue', 'vie']),
                 'inicio' => '09:00',
