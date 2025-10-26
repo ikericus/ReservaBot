@@ -64,7 +64,7 @@ function getFlashMessages(): array {
 }
 
 
-function logMessage($msg) {
+function debug_log($msg) {
     $path = PROJECT_ROOT . '/../debug.log';
     error_log(date('[Y-m-d H:i:s] ') . $msg . PHP_EOL, 3, $path);
 }

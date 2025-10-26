@@ -106,6 +106,6 @@ function generateCSRFToken(): string {
     if (!isset($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
     }
-    logMessage("auth.php: CSRF token generado: " . $_SESSION['csrf_token']);
+    debug_log("auth.php: CSRF token generado: " . $_SESSION['csrf_token']);
     return $_SESSION['csrf_token'];
 }

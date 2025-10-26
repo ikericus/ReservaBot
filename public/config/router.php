@@ -132,16 +132,16 @@ class Router {
                 require_once PROJECT_ROOT . '/config/bootstrap.php';
             }
 
-            logMessage("Router: Resolviendo ruta - {$route['path']}");
+            debug_log("Router: Resolviendo ruta - {$route['path']}");
             
             foreach ($route['middlewares'] as $middleware) {
                 if (!$this->applyMiddleware($middleware)) {
-                    logMessage("Router: Middleware {$middleware} bloqueó la ruta - {$route['path']}");
+                    debug_log("Router: Middleware {$middleware} bloqueó la ruta - {$route['path']}");
                     return false;
                 }
             }
 
-            logMessage("Router: Cargando ruta - {$route['path']}");
+            debug_log("Router: Cargando ruta - {$route['path']}");
             
             if (!empty($route['params'])) {
                 $GLOBALS['route_params'] = $route['params'];
@@ -153,7 +153,7 @@ class Router {
                 return $this->handleNotFound();
             }
 
-            logMessage("Router: Cargando fichero - " . $filePath);
+            debug_log("Router: Cargando fichero - " . $filePath);
             require_once $filePath;
             return true;
             
@@ -164,7 +164,7 @@ class Router {
     }
     
     private function applyMiddleware($middleware) {
-        logMessage("Router: Aplicando middleware - {$middleware}");
+        debug_log("Router: Aplicando middleware - {$middleware}");
         switch ($middleware) {
             case 'auth':
                 return $this->authMiddleware();
@@ -180,28 +180,28 @@ class Router {
      */
     private function authMiddleware() {
         // Bootstrap ya está cargado por executeRoute
-        logMessage("Router: Verificando autenticación de usuario");
+        debug_log("Router: Verificando autenticación de usuario");
         updateLastActivity();
         
         if (!isAuthenticated()) {
             $this->redirectToLogin();
             return false;
         }
-        logMessage("Router: Usuario autenticado");
+        debug_log("Router: Usuario autenticado");
         if (isSessionExpired()) {
             logout();
             $this->redirectToLogin('Tu sesión ha expirado.');
             return false;
         }
-        logmessage("Router: Sesión válida");
+        debug_log("Router: Sesión válida");
         $GLOBALS['currentUser'] = getAuthenticatedUser();
         $GLOBALS['csrfToken'] = generateCSRFToken();
-        logMessage("Router: CSRF token generado");
+        debug_log("Router: CSRF token generado");
         return true;
     }
 
     private function adminMiddleware() {       
-        logMessage("Router: Verificando acceso de administrador");
+        debug_log("Router: Verificando acceso de administrador");
 
         return isAdminUser(getAuthenticatedUser()['email']);
     }

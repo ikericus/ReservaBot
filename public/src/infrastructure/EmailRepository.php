@@ -81,7 +81,7 @@ class EmailRepository implements IEmailRepository {
             
             // Log
             if ($resultado) {
-                error_log("Email enviado a {$destinatario}: {$asunto}");
+                debug_log("Email enviado a {$destinatario}: {$asunto}");
             } else {
                 error_log("Error al enviar email a {$destinatario}: {$asunto}");
             }
