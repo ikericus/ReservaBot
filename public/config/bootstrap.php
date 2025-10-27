@@ -44,7 +44,7 @@ require_once PROJECT_ROOT . '/includes/functions.php';
 // ========== 4. AUTOLOAD ==========
 spl_autoload_register(function ($class) {
     $prefix = 'ReservaBot\\';
-    $base_dir = PROJECT_ROOT . '/src/';
+    $base_dir = PROJECT_ROOT . '/';
     
     $len = strlen($prefix);
     if (strncmp($prefix, $class, $len) !== 0) {

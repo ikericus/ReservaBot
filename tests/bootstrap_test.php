@@ -6,7 +6,7 @@ define('PROJECT_ROOT', dirname(__DIR__) . '/public');
 // Autoload
 spl_autoload_register(function ($class) {
     $prefix = 'ReservaBot\\';
-    $base_dir = PROJECT_ROOT . '/src/';
+    $base_dir = PROJECT_ROOT . '/';
     
     $len = strlen($prefix);
     if (strncmp($prefix, $class, $len) !== 0) {

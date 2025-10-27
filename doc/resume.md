@@ -12,21 +12,20 @@ public/ (PROJECT_ROOT)
 │   ├── database.php       # Config BD (lee .env)
 │   ├── auth.php           # Sistema de autenticación
 │   └── router.php         # Rutas y middleware
-├── src/
-│   ├── domain/
-│   │   ├── reserva/         # ReservaDomain
-│   │   ├── cliente/         # ClienteDomain  
-│   │   ├── configuracion/   # ConfiguracionDomain
-│   │   ├── disponibilidad/  # IDisponibilidadRepository
-│   │   ├── whatsapp/        # WhatsAppDomain
-│   │   ├── formulario/      # FormularioDomain
-│   │   └── shared/
-│   └── infrastructure/
-│       ├── ReservaRepository.php, ClienteRepository.php
-│       ├── ConfiguracionNegocioRepository.php, DisponibilidadRepository.php
-│       ├── WhatsAppRepository.php, WhatsAppServerManager.php
-│       ├── WhatsAppWebhookHandler.php
-│       └── FormularioRepository.php
+├── domain/
+│   ├── reserva/         # ReservaDomain
+│   ├── cliente/         # ClienteDomain  
+│   ├── configuracion/   # ConfiguracionDomain
+│   ├── disponibilidad/  # IDisponibilidadRepository
+│   ├── whatsapp/        # WhatsAppDomain
+│   ├── formulario/      # FormularioDomain
+│   └── shared/
+├── infrastructure/
+│   ├── ReservaRepository.php, ClienteRepository.php
+│   ├── ConfiguracionNegocioRepository.php, DisponibilidadRepository.php
+│   ├── WhatsAppRepository.php, WhatsAppServerManager.php
+│   ├── WhatsAppWebhookHandler.php
+│   └── FormularioRepository.php
 ├── pages/                  # Páginas web
 ├── api/                    # Endpoints API
 ├── includes/
@@ -38,7 +37,7 @@ public/ (PROJECT_ROOT)
 ```
 
 ## Convenciones
-- **Carpetas**: minúsculas (`src/domain/formulario/`)
+- **Carpetas**: minúsculas (`domain/formulario/`)
 - **Archivos**: PascalCase (`Formulario.php`)
 - **Métodos Repo**: `obtenerPor...` (no `findBy...`)
 - **Métodos Domain con servidor externo**: prefijo verbal (`conectarConServidor()`, `enviarMensajePorServidor()`)
