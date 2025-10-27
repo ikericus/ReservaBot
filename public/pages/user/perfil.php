@@ -1,12 +1,33 @@
 <?php
 // pages/user/perfil.php
 
+use ReservaBot\Infrastructure\UsuarioRepository;
+use ReservaBot\Domain\Usuario\UsuarioDomain;
+use ReservaBot\Domain\Configuracion\ConfiguracionDomain;
+use ReservaBot\Infrastructure\ConfiguracionRepository;
+use ReservaBot\Infrastructure\EmailRepository;
+
 $currentPage = 'perfil';
 $pageTitle = 'ReservaBot - Mi Perfil';
 $pageScript = 'perfil';
 
-// Obtener datos del usuario
-$usuario = getAuthenticatedUser();
+// Inicializar dependencias
+$pdo = getPDO();
+$usuarioRepository = new UsuarioRepository($pdo);
+$configuracionRepository = new ConfiguracionRepository($pdo);
+$emailRepository = new EmailRepository($pdo);
+$configuracionDomain = new ConfiguracionDomain($configuracionRepository);
+$usuarioDomain = new UsuarioDomain($usuarioRepository, $configuracionDomain, $emailRepository);
+
+// Obtener datos del usuario autenticado
+$usuarioAuth = getAuthenticatedUser();
+$usuarioEntity = $usuarioDomain->obtenerPorId($usuarioAuth['id']);
+
+if (!$usuarioEntity) {
+    header('Location: /logout');
+    exit;
+}
+
 $mensaje = '';
 $tipoMensaje = '';
 
@@ -14,109 +35,79 @@ $tipoMensaje = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = $_POST['accion'] ?? '';
     
-    $errors = [];
-    
-    // ACTUALIZAR INFORMACIÓN PERSONAL
-    if ($accion === 'actualizar_info') {
-        $nombre = trim($_POST['nombre'] ?? '');
-        $negocio = trim($_POST['negocio'] ?? '');
+    try {
+        // ACTUALIZAR INFORMACIÓN PERSONAL
+        if ($accion === 'actualizar_info') {
+            $nombre = trim($_POST['nombre'] ?? '');
+            $negocio = trim($_POST['negocio'] ?? '');
+            
+            // Usar el método del dominio (necesitamos el email aunque no se edite)
+            $usuarioDomain->actualizarPerfil(
+                $usuarioEntity->getId(),
+                $nombre,
+                $usuarioEntity->getEmail(), // Email no cambia
+                $usuarioEntity->getTelefono(), // Teléfono no cambia
+                $negocio
+            );
+            
+            // Actualizar la sesión
+            $_SESSION['user_name'] = $nombre;
+            $_SESSION['user_negocio'] = $negocio;
+            
+            $mensaje = 'Información actualizada correctamente';
+            $tipoMensaje = 'success';
+            
+            // Recargar datos
+            $usuarioEntity = $usuarioDomain->obtenerPorId($usuarioAuth['id']);
+        }
         
-        // Validaciones básicas
-        if (empty($nombre)) $errors[] = 'El nombre es obligatorio';
-        if (empty($negocio)) $errors[] = 'El nombre del negocio es obligatorio';
-        
-        if (empty($errors)) {
-            try {
-                $stmt = getPDO()->prepare("UPDATE usuarios SET nombre = ?, negocio = ?, updated_at = NOW() WHERE id = ?");
-                $stmt->execute([$nombre, $negocio, $usuario['id']]);
-                
-                // Actualizar la sesión
-                $_SESSION['user_name'] = $nombre;
-                $_SESSION['user_negocio'] = $negocio;
-                
-                $mensaje = 'Información actualizada correctamente';
-                $tipoMensaje = 'success';
-                
-                // Actualizar datos para mostrar
-                $usuario['name'] = $nombre;
-                $usuario['negocio'] = $negocio;
-            } catch (Exception $e) {
-                error_log("Error actualizando información: " . $e->getMessage());
-                $errors[] = 'Error interno del servidor';
+        // CAMBIAR CONTRASEÑA
+        if ($accion === 'cambiar_password') {
+            $current_password = $_POST['current_password'] ?? '';
+            $new_password = $_POST['new_password'] ?? '';
+            $confirm_password = $_POST['confirm_password'] ?? '';
+            
+            if ($new_password !== $confirm_password) {
+                throw new \InvalidArgumentException('Las contraseñas nuevas no coinciden');
             }
-        }
-    }
-    
-    // CAMBIAR CONTRASEÑA
-    if ($accion === 'cambiar_password') {
-        $current_password = $_POST['current_password'] ?? '';
-        $new_password = $_POST['new_password'] ?? '';
-        $confirm_password = $_POST['confirm_password'] ?? '';
-        
-        if (empty($current_password)) {
-            $errors[] = 'Debes proporcionar tu contraseña actual';
-        }
-        
-        if (strlen($new_password) < 6) {
-            $errors[] = 'La nueva contraseña debe tener al menos 6 caracteres';
+            
+            // Usar el método del dominio
+            $usuarioDomain->cambiarPassword(
+                $usuarioEntity->getId(),
+                $current_password,
+                $new_password
+            );
+            
+            $mensaje = 'Contraseña actualizada correctamente';
+            $tipoMensaje = 'success';
         }
         
-        if ($new_password !== $confirm_password) {
-            $errors[] = 'Las contraseñas nuevas no coinciden';
+        // CAMBIAR PLAN
+        if ($accion === 'cambiar_plan') {
+            $nuevoPlan = $_POST['plan'] ?? '';
+            
+            // Usar el método del dominio
+            $usuarioDomain->actualizarPlan(
+                $usuarioEntity->getId(),
+                $nuevoPlan
+            );
+            
+            $mensaje = 'Plan actualizado correctamente';
+            $tipoMensaje = 'success';
+            
+            // Recargar datos
+            $usuarioEntity = $usuarioDomain->obtenerPorId($usuarioAuth['id']);
         }
         
-        if (empty($errors)) {
-            try {
-                $stmt = getPDO()->prepare("SELECT password_hash FROM usuarios WHERE id = ?");
-                $stmt->execute([$usuario['id']]);
-                $currentHash = $stmt->fetchColumn();
-                
-                if (!password_verify($current_password, $currentHash)) {
-                    $errors[] = 'La contraseña actual es incorrecta';
-                } else {
-                    $passwordHash = password_hash($new_password, PASSWORD_DEFAULT);
-                    $stmt = getPDO()->prepare("UPDATE usuarios SET password_hash = ?, updated_at = NOW() WHERE id = ?");
-                    $stmt->execute([$passwordHash, $usuario['id']]);
-                    
-                    $mensaje = 'Contraseña actualizada correctamente';
-                    $tipoMensaje = 'success';
-                }
-            } catch (Exception $e) {
-                error_log("Error cambiando contraseña: " . $e->getMessage());
-                $errors[] = 'Error interno del servidor';
-            }
-        }
-    }
-    
-    // CAMBIAR PLAN
-    if ($accion === 'cambiar_plan') {
-        $nuevoPlan = $_POST['plan'] ?? '';
-        
-        // Validar que el plan sea válido
-        $planesValidos = ['gratis', 'estandar'];
-        if (!in_array($nuevoPlan, $planesValidos)) {
-            $errors[] = 'Plan no válido';
-        }
-        
-        if (empty($errors)) {
-            try {
-                $stmt = getPDO()->prepare("UPDATE usuarios SET plan = ?, updated_at = NOW() WHERE id = ?");
-                $stmt->execute([$nuevoPlan, $usuario['id']]);
-                
-                $mensaje = 'Plan actualizado correctamente';
-                $tipoMensaje = 'success';
-                
-                // Actualizar datos para mostrar
-                $usuario['plan'] = $nuevoPlan;
-            } catch (Exception $e) {
-                error_log("Error cambiando plan: " . $e->getMessage());
-                $errors[] = 'Error interno del servidor';
-            }
-        }
-    }
-    
-    if (!empty($errors)) {
-        $mensaje = implode('<br>', $errors);
+    } catch (\InvalidArgumentException $e) {
+        $mensaje = $e->getMessage();
+        $tipoMensaje = 'error';
+    } catch (\DomainException $e) {
+        $mensaje = $e->getMessage();
+        $tipoMensaje = 'error';
+    } catch (\Exception $e) {
+        error_log("Error en perfil: " . $e->getMessage());
+        $mensaje = 'Error interno del servidor';
         $tipoMensaje = 'error';
     }
 }
@@ -168,7 +159,7 @@ include 'includes/header.php';
                                 name="nombre"
                                 required
                                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                value="<?php echo htmlspecialchars($usuario['name']); ?>"
+                                value="<?php echo htmlspecialchars($usuarioEntity->getNombre()); ?>"
                             >
                         </div>
                         
@@ -182,7 +173,7 @@ include 'includes/header.php';
                                 name="negocio"
                                 required
                                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                value="<?php echo htmlspecialchars($usuario['negocio']); ?>"
+                                value="<?php echo htmlspecialchars($usuarioEntity->getNegocio()); ?>"
                             >
                         </div>
                     </div>
@@ -196,7 +187,7 @@ include 'includes/header.php';
                             id="email_display"
                             disabled
                             class="block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm cursor-not-allowed"
-                            value="<?php echo htmlspecialchars($usuario['email']); ?>"
+                            value="<?php echo htmlspecialchars($usuarioEntity->getEmail()); ?>"
                         >
                         <p class="mt-1 text-xs text-gray-500">
                             <i class="ri-information-line"></i>
@@ -298,8 +289,8 @@ include 'includes/header.php';
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Plan actual</dt>
                         <dd class="text-sm text-gray-900 mt-1">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $usuario['plan'] === 'estandar' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'; ?>">
-                                <?php echo $usuario['plan'] === 'estandar' ? 'Profesional' : 'Básico'; ?>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'; ?>">
+                                <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'Profesional' : 'Básico'; ?>
                             </span>
                         </dd>
                     </div>
@@ -307,13 +298,7 @@ include 'includes/header.php';
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Miembro desde</dt>
                         <dd class="text-sm text-gray-900">
-                            <?php 
-                            if (isset($usuario['created_at'])) {
-                                echo date('d/m/Y', strtotime($usuario['created_at']));
-                            } else {
-                                echo 'Información no disponible';
-                            }
-                            ?>
+                            <?php echo $usuarioEntity->getCreatedAt()->format('d/m/Y'); ?>
                         </dd>
                     </div>
                     
@@ -341,13 +326,13 @@ include 'includes/header.php';
                     
                     <div class="space-y-3">
                         <!-- Plan Básico -->
-                        <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuario['plan'] === 'gratis' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
+                        <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuarioEntity->getPlan() === 'gratis' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
                             <input 
                                 type="radio" 
                                 name="plan" 
                                 value="gratis" 
                                 class="mt-1"
-                                <?php echo $usuario['plan'] === 'gratis' ? 'checked' : ''; ?>
+                                <?php echo $usuarioEntity->getPlan() === 'gratis' ? 'checked' : ''; ?>
                             >
                             <div class="ml-3 flex-1">
                                 <div class="flex items-center justify-between">
@@ -361,13 +346,13 @@ include 'includes/header.php';
                         </label>
                         
                         <!-- Plan Profesional -->
-                        <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuario['plan'] === 'estandar' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
+                        <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
                             <input 
                                 type="radio" 
                                 name="plan" 
                                 value="estandar" 
                                 class="mt-1"
-                                <?php echo $usuario['plan'] === 'estandar' ? 'checked' : ''; ?>
+                                <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'checked' : ''; ?>
                             >
                             <div class="ml-3 flex-1">
                                 <div class="flex items-center justify-between mb-1">

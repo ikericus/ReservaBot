@@ -314,6 +314,28 @@ class UsuarioDomain {
         return true;
     }
 
+    /**
+     * Actualiza el plan de un usuario
+     */
+    public function actualizarPlan(int $id, string $plan): void {
+        // Validar que el plan sea válido
+        $planesValidos = ['gratis', 'estandar', 'premium'];
+        if (!in_array($plan, $planesValidos)) {
+            throw new \InvalidArgumentException('Plan no válido');
+        }
+        
+        // Verificar que el usuario existe
+        $usuario = $this->repository->obtenerPorId($id);
+        if (!$usuario) {
+            throw new \DomainException('Usuario no encontrado');
+        }
+        
+        // Actualizar el plan
+        $this->repository->actualizar($id, [
+            'plan' => $plan
+        ]);
+    }
+
     // ========================================================================
     // MÉTODOS PRIVADOS
     // ========================================================================
