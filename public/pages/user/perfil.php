@@ -1,23 +1,11 @@
 <?php
 // pages/user/perfil.php
 
-use ReservaBot\Infrastructure\UsuarioRepository;
-use ReservaBot\Domain\Usuario\UsuarioDomain;
-use ReservaBot\Domain\Configuracion\ConfiguracionDomain;
-use ReservaBot\Infrastructure\ConfiguracionRepository;
-use ReservaBot\Infrastructure\EmailRepository;
-
 $currentPage = 'perfil';
 $pageTitle = 'ReservaBot - Mi Perfil';
 $pageScript = 'perfil';
 
-// Inicializar dependencias
-$pdo = getPDO();
-$usuarioRepository = new UsuarioRepository($pdo);
-$configuracionRepository = new ConfiguracionRepository($pdo);
-$emailRepository = new EmailRepository($pdo);
-$configuracionDomain = new ConfiguracionDomain($configuracionRepository);
-$usuarioDomain = new UsuarioDomain($usuarioRepository, $configuracionDomain, $emailRepository);
+$usuarioDomain = getContainer()->getUsuarioDomain();
 
 // Obtener datos del usuario autenticado
 $usuarioAuth = getAuthenticatedUser();
