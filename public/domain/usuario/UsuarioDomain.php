@@ -60,8 +60,7 @@ class UsuarioDomain {
     ): Usuario {
         // Validaciones
         $nombre = trim($nombre);
-        $email = trim(strtolower($email));
-        $telefono = trim($telefono);
+        $telefono = !empty($telefono) ? trim($telefono) : '';
         $negocio = trim($negocio);
         
         if (empty($nombre)) {
@@ -70,10 +69,6 @@ class UsuarioDomain {
         
         if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new \InvalidArgumentException('Email inválido');
-        }
-        
-        if (empty($telefono)) {
-            throw new \InvalidArgumentException('El teléfono es obligatorio');
         }
         
         if (empty($negocio)) {
@@ -330,7 +325,7 @@ class UsuarioDomain {
         $configuracionesIniciales = [
             'app_name' => $negocio,
             'empresa_nombre' => $negocio,
-            'empresa_telefono' => $telefono,
+            'empresa_telefono' => !empty($telefono) ? $telefono : '',
             'modo_aceptacion' => 'manual',
             'intervalo_reservas' => '30',
             'horario_lun' => 'true|[{"inicio":"09:00","fin":"18:00"}]',

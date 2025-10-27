@@ -56,6 +56,8 @@ try {
 
     $usuarioDomain = getContainer()->getUsuarioDomain();
 
+    $telefono = $_POST['telefono'] ?? '';
+    
     // Registrar usuario (ya valida email duplicado internamente)
     $usuario = $usuarioDomain->registrar(
         $nombre,

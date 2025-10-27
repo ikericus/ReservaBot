@@ -155,10 +155,10 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                     <!-- Información personal -->
                     <div class="grid md:grid-cols-2 gap-6">
                         
-                        <!-- Nombre completo -->
+                        <!-- Nombre -->
                         <div>
                             <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">
-                                Nombre completo *
+                                Nombre *
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -170,7 +170,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                                     name="nombre"
                                     required
                                     class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-                                    placeholder="Tu nombre completo"
+                                    placeholder="Tu nombre"
                                     value="<?php echo htmlspecialchars($formData['nombre'] ?? ''); ?>"
                                 >
                             </div>
@@ -203,47 +203,26 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                     <!-- Información del negocio -->
                     <div class="grid md:grid-cols-2 gap-6">
                         
-                        <!-- Teléfono -->
-                        <div>
-                            <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">
-                                Teléfono *
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="ri-phone-line text-gray-400"></i>
+                          <!-- Nombre del negocio -->
+                            <div>
+                                <label for="negocio" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Nombre del negocio *
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="ri-store-line text-gray-400"></i>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        id="negocio"
+                                        name="negocio"
+                                        required
+                                        class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                                        placeholder="Nombre de tu negocio"
+                                        value="<?php echo htmlspecialchars($formData['negocio'] ?? ''); ?>"
+                                    >
                                 </div>
-                                <input
-                                    type="tel"
-                                    id="telefono"
-                                    name="telefono"
-                                    required
-                                    class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-                                    placeholder="+34 600 123 456"
-                                    value="<?php echo htmlspecialchars($formData['telefono'] ?? ''); ?>"
-                                >
                             </div>
-                        </div>
-                        
-                        <!-- Nombre del negocio -->
-                        <div>
-                            <label for="negocio" class="block text-sm font-medium text-gray-700 mb-2">
-                                Nombre del negocio *
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="ri-store-line text-gray-400"></i>
-                                </div>
-                                <input
-                                    type="text"
-                                    id="negocio"
-                                    name="negocio"
-                                    required
-                                    class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-                                    placeholder="Nombre de tu negocio"
-                                    value="<?php echo htmlspecialchars($formData['negocio'] ?? ''); ?>"
-                                >
-                            </div>
-                        </div>
                         
                     </div>
                     
