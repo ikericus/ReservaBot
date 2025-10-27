@@ -312,10 +312,6 @@ include 'includes/header.php';
 }
 </style>
 
-<div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Clientes</h1>
-</div>
-
 <!-- Búsqueda - Vista Desktop -->
 <div class="desktop-view bg-white rounded-lg shadow-sm p-4 mb-6">
     <form method="GET" class="flex flex-wrap gap-4">

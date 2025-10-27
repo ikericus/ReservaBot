@@ -311,9 +311,10 @@
                                         'formularios' => 'Formularios',
                                         'configuracion' => 'Configuración',
                                         'conversaciones' => 'Conversaciones',
-                                        'admin-dashboard' => 'Panel de Administración'
+                                        'admin-dashboard' => 'Panel de Administración',
+                                        'perfil' => 'Mi perfil'
                                     ];
-                                    echo $pageNames[$currentPage] ?? 'Reservas';
+                                    echo $pageNames[$currentPage] ?? '';
                                     ?>
                                 </span>
                             </nav>
