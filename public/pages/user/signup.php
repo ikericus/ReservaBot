@@ -176,36 +176,9 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                             </div>
                         </div>
                         
-                        <!-- Email -->
+                        <!-- Nombre del negocio -->
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                                Email *
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="ri-mail-line text-gray-400"></i>
-                                </div>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    required
-                                    class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-                                    placeholder="tu@email.com"
-                                    value="<?php echo htmlspecialchars($formData['email'] ?? ''); ?>"
-                                >
-                            </div>
-                            <p id="emailError" class="text-xs text-red-500 mt-1 hidden">El formato del email no es válido</p>
-                        </div>
-                        
-                    </div>
-                    
-                    <!-- Información del negocio -->
-                    <div class="grid md:grid-cols-2 gap-6">
-                        
-                          <!-- Nombre del negocio -->
-                            <div>
-                                <label for="negocio" class="block text-sm font-medium text-gray-700 mb-2">
+                           <label for="negocio" class="block text-sm font-medium text-gray-700 mb-2">
                                     Nombre del negocio *
                                 </label>
                                 <div class="relative">
@@ -222,8 +195,32 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                                         value="<?php echo htmlspecialchars($formData['negocio'] ?? ''); ?>"
                                     >
                                 </div>
-                            </div>
-                        
+                        </div>                        
+                    </div>
+                    
+                    <!-- Información del negocio -->
+                    <div class="grid md:grid-cols-2 gap-6">                        
+                            <!-- Email -->
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Email *
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="ri-mail-line text-gray-400"></i>
+                                    </div>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        required
+                                        class="input-focus block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                                        placeholder="tu@email.com"
+                                        value="<?php echo htmlspecialchars($formData['email'] ?? ''); ?>"
+                                    >
+                                </div>
+                                <p id="emailError" class="text-xs text-red-500 mt-1 hidden">El formato del email no es válido</p>
+                            </div>                        
                     </div>
                     
                     <!-- Contraseñas -->
