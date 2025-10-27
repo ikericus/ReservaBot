@@ -314,10 +314,10 @@ try {
                     Centro de Ayuda
                 </a>
                 
-                <a href="mailto:soporte@reservabot.es" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                <!-- <a href="mailto:soporte@reservabot.es" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
                     <i class="ri-mail-line mr-3 text-gray-400"></i>
                     Contactar Soporte
-                </a>
+                </a> -->
                 
                 <div class="border-t border-gray-100 my-1"></div>
                 

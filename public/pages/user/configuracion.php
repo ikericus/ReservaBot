@@ -462,10 +462,6 @@ main {
 }
 </style>
 
-<div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Configuración General</h1>
-</div>
-
 <div class="max-w-4xl mx-auto">
     <form id="configForm" class="space-y-8">
 

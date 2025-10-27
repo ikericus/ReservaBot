@@ -112,17 +112,7 @@
                             <h3 class="text-lg font-semibold text-gray-900">Centro de Ayuda</h3>
                         </div>
                         
-                        <div class="space-y-4 mb-6">
-                            <div class="p-3 bg-blue-50 rounded-lg">
-                                <h4 class="font-medium text-blue-900 mb-2">Recursos Disponibles:</h4>
-                                <ul class="text-sm text-blue-800 space-y-1">
-                                    <li>• Documentación completa en línea</li>
-                                    <li>• Videos tutoriales paso a paso</li>
-                                    <li>• Soporte por email 24/7</li>
-                                    <li>• Chat en vivo (horario comercial)</li>
-                                </ul>
-                            </div>
-                            
+                        <div class="space-y-4 mb-6">                            
                             <div class="text-sm text-gray-600">
                                 <p><strong>¿Necesitas ayuda inmediata?</strong></p>
                                 <p>Envíanos un email a <a href="mailto:soporte@reservabot.es" class="text-blue-600 hover:underline">soporte@reservabot.es</a> y te responderemos en menos de 24 horas.</p>
