@@ -22,7 +22,6 @@ $errors = [];
 
 if (empty($nombre)) $errors[] = 'El nombre es obligatorio';
 if (empty($email)) $errors[] = 'El email es obligatorio';
-if (empty($telefono)) $errors[] = 'El teléfono es obligatorio';
 if (empty($negocio)) $errors[] = 'El nombre del negocio es obligatorio';
 if (empty($password)) $errors[] = 'La contraseña es obligatoria';
 if (empty($confirmPassword)) $errors[] = 'La confirmación de contraseña es obligatoria';
@@ -56,8 +55,6 @@ try {
 
     $usuarioDomain = getContainer()->getUsuarioDomain();
 
-    $telefono = $_POST['telefono'] ?? '';
-    
     // Registrar usuario (ya valida email duplicado internamente)
     $usuario = $usuarioDomain->registrar(
         $nombre,
