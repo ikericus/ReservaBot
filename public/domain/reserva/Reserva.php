@@ -1,5 +1,5 @@
 <?php
-// Domain/Reserva/Reserva.php
+// domain/reserva/Reserva.php
 
 namespace ReservaBot\Domain\Reserva;
 

@@ -1,10 +1,6 @@
 <?php
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
+// pages/user/perfil.php
 
-// Configurar la página actual
 $currentPage = 'perfil';
 $pageTitle = 'ReservaBot - Mi Perfil';
 $pageScript = 'perfil';
