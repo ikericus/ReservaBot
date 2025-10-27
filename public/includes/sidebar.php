@@ -328,12 +328,13 @@ try {
             </div>
         </div>
         
-        <!-- Indicador de plan -->
+        <!-- Indicador de plan - Ahora es un enlace -->
         <div class="mt-3 text-center">
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800">
+            <a href="/perfil" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 hover:from-purple-200 hover:to-blue-200 transition-all duration-300 hover:shadow-md group">
                 <i class="ri-vip-crown-line mr-1"></i>
                 Plan <?php echo ucfirst($user['plan'] ?? 'Gratis'); ?>
-            </span>
+                <i class="ri-arrow-right-s-line ml-1 text-purple-600 group-hover:translate-x-0.5 transition-transform"></i>
+            </a>
         </div>
     </div>
 </div>
