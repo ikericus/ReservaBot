@@ -21,7 +21,7 @@ $userId = $user['id'];
 try {
     $whatsappDomain = getContainer()->getWhatsAppDomain();
     
-    $resultado = $whatsappDomain->conectarConServidor($userId);
+    $resultado = $whatsappDomain->conectarWhatsApp($userId);
     
     echo json_encode($resultado);
     

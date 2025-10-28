@@ -157,7 +157,6 @@ class WhatsAppDomain {
         return $config->estaConectado();
     }
 
-
     /**
      * Conecta WhatsApp
      */

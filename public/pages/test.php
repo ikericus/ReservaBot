@@ -77,11 +77,11 @@ header('Content-Type: text/html; charset=utf-8');
                                 echo "<div class='success'>✓ WhatsApp Domain obtenido</div>";
                                 echo "<div>Clase: " . get_class($whatsappDomain) . "</div>";
                                 
-                                // Verificar método conectarConServidor
-                                if (method_exists($whatsappDomain, 'conectarConServidor')) {
-                                    echo "<div class='success'>✓ Método conectarConServidor() existe</div>";
+                                // Verificar método conectarWhatsApp
+                                if (method_exists($whatsappDomain, 'conectarWhatsApp')) {
+                                    echo "<div class='success'>✓ Método conectarWhatsApp() existe</div>";
                                 } else {
-                                    echo "<div class='error'>✗ Método conectarConServidor() NO existe</div>";
+                                    echo "<div class='error'>✗ Método conectarWhatsApp() NO existe</div>";
                                 }
                             } else {
                                 echo "<div class='error'>✗ getWhatsAppDomain() devolvió null</div>";
