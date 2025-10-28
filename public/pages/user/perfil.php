@@ -5,6 +5,309 @@ $currentPage = 'perfil';
 $pageTitle = 'ReservaBot - Mi Perfil';
 $pageScript = 'perfil';
 
+?>
+<style>
+/* Estilos responsivos para perfil - Mobile First */
+* {
+    box-sizing: border-box;
+}
+
+main {
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+    /* Contenedor principal móvil */
+    main .max-w-6xl {
+        max-width: 100%;
+        margin: 0;
+        padding: 0 1rem;
+    }
+    
+    /* Grid de columnas - stack en móvil */
+    main .grid.grid-cols-1.lg\\:grid-cols-3 {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    /* Tarjetas de sección mejoradas */
+    main .bg-white.rounded-lg.shadow-sm {
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    }
+    
+    /* Títulos de sección */
+    main .bg-white h2,
+    main .bg-white h3 {
+        font-size: 1.125rem;
+        line-height: 1.4;
+        margin-bottom: 1rem;
+        word-wrap: break-word;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    main .bg-white h2 i,
+    main .bg-white h3 i {
+        flex-shrink: 0;
+        font-size: 1.25rem;
+    }
+    
+    /* Formularios - estilo mejorado */
+    main form {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Labels mejorados */
+    main label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+        word-wrap: break-word;
+    }
+    
+    /* Inputs mejorados */
+    main input[type="text"],
+    main input[type="email"],
+    main input[type="password"] {
+        width: 100%;
+        max-width: 100%;
+        padding: 0.875rem;
+        border-radius: 0.75rem;
+        border: 2px solid #e5e7eb;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background: white;
+        margin-bottom: 0.5rem;
+        box-sizing: border-box;
+    }
+    
+    main input[type="text"]:focus,
+    main input[type="email"]:focus,
+    main input[type="password"]:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+    
+    main input:disabled {
+        background: #f9fafb;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    
+    /* Grid de inputs - stack en móvil */
+    main .grid.grid-cols-1.md\\:grid-cols-2 {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    main .grid.grid-cols-1.md\\:grid-cols-2 > div {
+        width: 100%;
+    }
+    
+    /* Textos de ayuda */
+    main .text-xs.text-gray-500 {
+        font-size: 0.8125rem;
+        margin-top: 0.25rem;
+        color: #6b7280;
+        word-wrap: break-word;
+    }
+    
+    /* Botones mejorados */
+    main button[type="submit"] {
+        width: 100%;
+        max-width: 100%;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        box-sizing: border-box;
+        margin-top: 1rem;
+    }
+    
+    main button[type="submit"]:hover {
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    main .flex.justify-end {
+        justify-content: stretch;
+        width: 100%;
+    }
+    
+    /* Sección de información de cuenta */
+    main dl.space-y-3 > div {
+        padding: 0.75rem;
+        background: rgba(102, 126, 234, 0.03);
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    main dl dt {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+    }
+    
+    main dl dd {
+        font-size: 0.875rem;
+        color: #1f2937;
+        font-weight: 500;
+    }
+    
+    /* Badges */
+    main .inline-flex.items-center.px-2\\.5 {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 9999px;
+        font-weight: 500;
+    }
+    
+    /* Radio buttons de planes mejorados */
+    main label.relative.flex {
+        flex-direction: row;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+    }
+    
+    main label.relative.flex input[type="radio"] {
+        margin-top: 0.25rem;
+        flex-shrink: 0;
+        width: 1.125rem;
+        height: 1.125rem;
+    }
+    
+    main label.relative.flex .ml-3 {
+        margin-left: 0.75rem;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    main label.relative.flex .text-sm {
+        font-size: 0.9375rem;
+    }
+    
+    main label.relative.flex .text-xs {
+        font-size: 0.8125rem;
+        line-height: 1.4;
+    }
+    
+    main label.relative.flex .text-lg {
+        font-size: 1.125rem;
+    }
+    
+    /* Nota informativa mejorada */
+    main .p-3.bg-blue-50 {
+        padding: 0.875rem;
+        border-radius: 0.75rem;
+        margin-top: 1rem;
+    }
+    
+    main .p-3.bg-blue-50 .text-xs {
+        font-size: 0.8125rem;
+        line-height: 1.4;
+    }
+    
+    /* Espaciado de secciones */
+    main .space-y-6 > * {
+        margin-bottom: 1rem;
+    }
+    
+    main .space-y-3 > * {
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Mensaje de alerta/éxito mejorado */
+    main .mb-6.p-4.rounded-md {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        word-wrap: break-word;
+    }
+    
+    /* Prevenir overflow */
+    main *,
+    main p,
+    main span,
+    main div {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+    }
+    
+    /* Pantallas muy pequeñas */
+    @media (max-width: 380px) {
+        main .max-w-6xl {
+            padding: 0 0.75rem;
+        }
+        
+        main .bg-white.rounded-lg.shadow-sm {
+            padding: 1rem;
+        }
+        
+        main input[type="text"],
+        main input[type="email"],
+        main input[type="password"] {
+            font-size: 0.9375rem;
+            padding: 0.75rem;
+        }
+        
+        main button[type="submit"] {
+            font-size: 0.9375rem;
+            padding: 0.875rem;
+        }
+        
+        main label.relative.flex {
+            padding: 0.875rem;
+        }
+    }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+main .bg-white.rounded-lg.shadow-sm {
+    animation: fadeIn 0.3s ease-out;
+}
+</style>
+<?php
+
 $usuarioDomain = getContainer()->getUsuarioDomain();
 
 // Obtener datos del usuario autenticado

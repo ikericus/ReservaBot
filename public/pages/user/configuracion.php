@@ -5,6 +5,479 @@ $pageTitle = 'ReservaBot - Configuración';
 $currentPage = 'configuracion';
 $pageScript = 'configuracion';
 
+?>
+<style>
+/* Estilos responsivos para configuración - Mobile First */
+* {
+    box-sizing: border-box;
+}
+
+main {
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+/* Estilos para el campo de capacidad */
+.capacidad-badge {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.capacidad-input {
+    text-align: center;
+    font-weight: 600;
+}
+
+.capacidad-help {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    /* Contenedor principal móvil */
+    main .max-w-4xl {
+        max-width: 100%;
+        margin: 0;
+        padding: 0 1rem;
+    }
+    
+    /* Formulario principal */
+    #configForm {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+    }
+    
+    #configForm .space-y-8 > * {
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Tarjetas de configuración mejoradas */
+    main .bg-white.rounded-lg.shadow-sm {
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    }
+    
+    /* Títulos de sección */
+    main .bg-white h2 {
+        font-size: 1.125rem;
+        line-height: 1.4;
+        margin-bottom: 1rem;
+        word-wrap: break-word;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    main .bg-white h2 i {
+        flex-shrink: 0;
+        font-size: 1.25rem;
+    }
+    
+    /* Labels mejorados */
+    main label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+        word-wrap: break-word;
+    }
+    
+    /* Selector de intervalo */
+    main .space-y-4 > div {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    main .space-y-4 select {
+        width: 100%;
+        max-width: 100%;
+        font-size: 0.875rem;
+        padding: 0.875rem;
+        border-radius: 0.75rem;
+        border: 2px solid #e5e7eb;
+        transition: all 0.2s ease;
+        background: white;
+    }
+    
+    main .space-y-4 select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+    
+    main .space-y-4 .text-sm.text-gray-500 {
+        font-size: 0.8125rem;
+        margin-top: 0.25rem;
+        color: #6b7280;
+    }
+    
+    /* Horarios de atención */
+    main .flex.items-center.justify-between.mb-4 {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    main .flex.items-center.justify-between.mb-4 h2 {
+        width: 100%;
+        margin-bottom: 0;
+    }
+    
+    main .flex.items-center.justify-between.mb-4 .text-sm {
+        width: 100%;
+        font-size: 0.8125rem;
+        color: #6b7280;
+        padding: 0.75rem;
+        background: rgba(59, 130, 246, 0.05);
+        border-radius: 0.75rem;
+        border: 1px solid rgba(59, 130, 246, 0.1);
+        line-height: 1.4;
+    }
+    
+    /* Contenedor de días */
+    .space-y-6 {
+        gap: 1rem;
+    }
+    
+    .space-y-6 > div {
+        margin-bottom: 1rem;
+    }
+    
+    /* Tarjetas de días individuales */
+    main .border.border-gray-200.rounded-lg.p-4 {
+        border-radius: 0.75rem;
+        padding: 1rem;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    
+    /* Header de cada día */
+    main .border .flex.items-center.justify-between.mb-4 {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    main .border .flex.items-center.justify-between.mb-4 > div:first-child {
+        width: 100%;
+    }
+    
+    main .border .flex.items-center.justify-between.mb-4 .btn-add-ventana {
+        width: 100%;
+        justify-content: center;
+        padding: 0.75rem;
+        background: rgba(59, 130, 246, 0.05);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    main .border .flex.items-center.justify-between.mb-4 .btn-add-ventana:hover {
+        background: rgba(59, 130, 246, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    /* Checkbox y label de días */
+    main .flex.items-center input[type="checkbox"] {
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+        width: 1.125rem;
+        height: 1.125rem;
+        accent-color: #667eea;
+    }
+    
+    main .flex.items-center label {
+        font-size: 1rem;
+        font-weight: 600;
+        word-wrap: break-word;
+    }
+    
+    /* Ventanas horarias */
+    .ventanas-horarias {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .ventanas-horarias .space-y-3 > * {
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Ventana horaria individual */
+    .ventana-horaria {
+        padding: 1rem;
+        border-radius: 0.75rem;
+        width: 100%;
+        max-width: 100%;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s ease;
+    }
+    
+    /* Grid de inputs de hora - stack en móvil */
+    .ventana-horaria > div {
+        width: 100%;
+    }
+    
+    .ventana-horaria .grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .ventana-horaria .grid .flex {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 0.5rem;
+    }
+    
+    .ventana-horaria .grid .flex label {
+        font-size: 0.875rem;
+        margin-bottom: 0;
+        flex-shrink: 0;
+        min-width: 4rem;
+        font-weight: 500;
+    }
+    
+    .ventana-horaria .grid .flex input {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.875rem;
+        padding: 0.625rem;
+        border-radius: 0.5rem;
+        border: 2px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+    
+    .ventana-horaria .grid .flex input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+    
+    /* Capacidad input específico */
+    .capacidad-input {
+        max-width: 100px;
+        text-align: center;
+    }
+    
+    /* Ayuda de capacidad */
+    .capacidad-help {
+        text-align: center;
+        padding: 0.5rem;
+        background: rgba(59, 130, 246, 0.03);
+        border-radius: 0.5rem;
+        margin: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+    }
+    
+    /* Badges y botones de acción en ventanas */
+    .ventana-horaria .flex.items-center.justify-between:last-child {
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .ventana-horaria .px-2.py-1 {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.625rem;
+        border-radius: 9999px;
+        white-space: nowrap;
+    }
+    
+    .btn-remove-ventana {
+        padding: 0.5rem;
+        border-radius: 50%;
+        flex-shrink: 0;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-remove-ventana:hover {
+        transform: scale(1.1);
+    }
+    
+    /* Botón guardar mejorado */
+    .pt-4.text-right {
+        padding-top: 1rem;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .pt-4.text-right button {
+        width: 100%;
+        max-width: 100%;
+        padding: 1rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 0.75rem;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: all 0.2s ease;
+    }
+    
+    .pt-4.text-right button:hover {
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Mensaje de éxito */
+    #saveSuccessMessage {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+        max-width: calc(100vw - 2rem);
+        font-size: 0.875rem;
+        padding: 1rem;
+        border-radius: 0.75rem;
+    }
+    
+    /* Template y elementos ocultos */
+    template {
+        display: none;
+    }
+    
+    /* Mejoras para inputs pequeños */
+    input[type="time"], 
+    input[type="number"] {
+        min-height: 2.5rem;
+    }
+    
+    input[type="checkbox"] {
+        min-width: 1.125rem;
+        min-height: 1.125rem;
+    }
+    
+    select {
+        min-height: 2.75rem;
+    }
+    
+    /* Prevenir texto que se salga */
+    main *,
+    main p,
+    main span,
+    main div {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        max-width: 100%;
+    }
+    
+    /* Específico para pantallas muy pequeñas */
+    @media (max-width: 380px) {
+        main .max-w-4xl {
+            padding: 0 0.75rem;
+        }
+        
+        main .bg-white.rounded-lg.shadow-sm {
+            padding: 1rem;
+        }
+        
+        main .ventana-horaria {
+            padding: 0.875rem;
+        }
+        
+        main .ventana-horaria .grid .flex {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+        }
+        
+        main .ventana-horaria .grid .flex label {
+            min-width: auto;
+            text-align: left;
+        }
+        
+        main .border .flex.items-center.justify-between.mb-4 .btn-add-ventana {
+            font-size: 0.8125rem;
+            padding: 0.625rem;
+        }
+        
+        main .capacidad-input {
+            max-width: 100%;
+        }
+    }
+    
+    /* Animaciones suaves */
+    .ventana-horaria {
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .btn-add-ventana {
+        transition: all 0.2s ease;
+    }
+    
+    /* Scroll suave para el formulario */
+    #configForm {
+        scroll-behavior: smooth;
+    }
+    
+    /* Mejora visual de campos activos */
+    .ventana-horaria:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+}
+
+/* Animación de fade in para tarjetas */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+main .bg-white.rounded-lg.shadow-sm {
+    animation: fadeIn 0.3s ease-out;
+}
+</style>
+<?php
+
 // Obtener usuario
 $currentUser = getAuthenticatedUser();
 $userId = $currentUser['id'];
@@ -24,7 +497,7 @@ try {
 $intervaloReservas = $configuraciones['intervalo_reservas'] ?? '30';
 
 // Horarios con soporte para múltiples ventanas y capacidad
-$diasSemana = ['lun', 'mar', 'mie', 'vie', 'sab', 'dom'];
+$diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
 $horarios = [];
 
 foreach ($diasSemana as $dia) {
@@ -80,387 +553,6 @@ $nombresDias = [
 
 include 'includes/header.php';
 ?>
-
-<style>
-/* Estilos responsivos para la página de configuración - Móvil */
-
-/* Base responsive SOLO para el contenido de configuración */
-main * {
-    box-sizing: border-box;
-}
-
-/* Evitar que afecte al header */
-main {
-    max-width: 100vw;
-    overflow-x: hidden;
-}
-
-/* Contenedor principal - SOLO main content */
-@media (max-width: 768px) {
-    main .max-w-4xl {
-        max-width: 100%;
-        margin: 0;
-        padding: 0 1rem;
-    }
-    
-    /* Título principal - SOLO en main */
-    main .flex.justify-between.items-center.mb-6 {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-        padding: 0 0.5rem;
-    }
-    
-    main .flex.justify-between.items-center.mb-6 h1 {
-        font-size: 1.5rem;
-        line-height: 1.3;
-        word-wrap: break-word;
-    }
-    
-    /* Formulario principal */
-    #configForm {
-        width: 100%;
-        max-width: 100%;
-        overflow: hidden;
-    }
-    
-    #configForm .space-y-8 > * {
-        margin-bottom: 1.5rem;
-    }
-    
-    /* Tarjetas de configuración - SOLO en main */
-    main .bg-white.rounded-lg.shadow-sm {
-        border-radius: 1rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        width: 100%;
-        max-width: 100%;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    }
-    
-    /* Títulos de sección - SOLO en main */
-    main .bg-white h2 {
-        font-size: 1.125rem;
-        line-height: 1.4;
-        margin-bottom: 1rem;
-        word-wrap: break-word;
-    }
-    
-    main .bg-white h2 i {
-        margin-right: 0.5rem;
-        flex-shrink: 0;
-    }
-    
-    /* Selector de intervalo - SOLO en main */
-    main .space-y-4 > div {
-        width: 100%;
-        margin-bottom: 1rem;
-    }
-    
-    main .space-y-4 label {
-        font-size: 0.875rem;
-        margin-bottom: 0.5rem;
-        display: block;
-        word-wrap: break-word;
-    }
-    
-    main .space-y-4 select {
-        width: 100%;
-        max-width: 100%;
-        font-size: 0.875rem;
-        padding: 0.75rem;
-        border-radius: 0.5rem;
-    }
-    
-    /* Horarios de atención - SOLO en main */
-    main .flex.items-center.justify-between.mb-4 {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-    }
-    
-    main .flex.items-center.justify-between.mb-4 h2 {
-        width: 100%;
-        margin-bottom: 0;
-    }
-    
-    main .flex.items-center.justify-between.mb-4 .text-sm {
-        width: 100%;
-        font-size: 0.8125rem;
-        color: #6b7280;
-        padding: 0.5rem;
-        background: rgba(59, 130, 246, 0.05);
-        border-radius: 0.5rem;
-        border: 1px solid rgba(59, 130, 246, 0.1);
-    }
-    
-    /* Contenedor de días */
-    .space-y-6 {
-        gap: 1rem;
-    }
-    
-    .space-y-6 > div {
-        margin-bottom: 1rem;
-    }
-    
-    /* Tarjetas de días individuales - SOLO en main */
-    main .border.border-gray-200.rounded-lg.p-4 {
-        border-radius: 0.75rem;
-        padding: 1rem;
-        width: 100%;
-        max-width: 100%;
-        overflow: hidden;
-    }
-    
-    /* Header de cada día - SOLO en main */
-    main .border .flex.items-center.justify-between.mb-4 {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-    }
-    
-    main .border .flex.items-center.justify-between.mb-4 > div:first-child {
-        width: 100%;
-    }
-    
-    main .border .flex.items-center.justify-between.mb-4 .btn-add-ventana {
-        width: 100%;
-        justify-content: center;
-        padding: 0.5rem;
-        background: rgba(59, 130, 246, 0.05);
-        border: 1px solid rgba(59, 130, 246, 0.2);
-        border-radius: 0.5rem;
-        font-size: 0.875rem;
-    }
-    
-    /* Checkbox y label de días - SOLO en main */
-    main .flex.items-center input[type="checkbox"] {
-        margin-right: 0.75rem;
-        flex-shrink: 0;
-    }
-    
-    main .flex.items-center label {
-        font-size: 1rem;
-        font-weight: 500;
-        word-wrap: break-word;
-    }
-    
-    /* Ventanas horarias */
-    .ventanas-horarias {
-        width: 100%;
-        max-width: 100%;
-    }
-    
-    .ventanas-horarias .space-y-3 > * {
-        margin-bottom: 0.75rem;
-    }
-    
-    /* Ventana horaria individual */
-    .ventana-horaria {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.75rem;
-        padding: 1rem;
-        border-radius: 0.75rem;
-        width: 100%;
-        max-width: 100%;
-    }
-    
-    /* Grupo de inputs de hora */
-    .ventana-horaria > div {
-        width: 100%;
-    }
-    
-    .ventana-horaria .grid {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    
-    .ventana-horaria .grid .flex {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        gap: 0.5rem;
-    }
-    
-    .ventana-horaria .grid .flex label {
-        font-size: 0.875rem;
-        margin-bottom: 0;
-        flex-shrink: 0;
-        min-width: 3.5rem;
-    }
-    
-    .ventana-horaria .grid .flex input {
-        flex: 1;
-        min-width: 0;
-        font-size: 0.875rem;
-        padding: 0.5rem;
-        border-radius: 0.5rem;
-    }
-    
-    /* Capacidad input específico */
-    .capacidad-input {
-        max-width: 120px;
-    }
-    
-    /* Badges y botones de acción en ventanas */
-    .ventana-horaria .flex.items-center.justify-between:last-child {
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 0.5rem;
-        padding-top: 0.5rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
-    }
-    
-    .ventana-horaria .px-2.py-1 {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 9999px;
-        white-space: nowrap;
-    }
-    
-    .btn-remove-ventana {
-        padding: 0.375rem;
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-    
-    /* Botón guardar */
-    .pt-4.text-right {
-        padding-top: 1rem;
-        text-align: center;
-        width: 100%;
-    }
-    
-    .pt-4.text-right button {
-        width: 100%;
-        max-width: 100%;
-        padding: 0.875rem 1rem;
-        font-size: 1rem;
-        border-radius: 0.75rem;
-        justify-content: center;
-    }
-    
-    /* Mensaje de éxito */
-    #saveSuccessMessage {
-        bottom: 1rem;
-        right: 1rem;
-        left: 1rem;
-        max-width: calc(100vw - 2rem);
-        font-size: 0.875rem;
-    }
-    
-    /* Template y elementos ocultos */
-    template {
-        display: none;
-    }
-    
-    /* Mejoras para inputs pequeños */
-    input[type="time"], input[type="number"] {
-        min-height: 2.5rem;
-    }
-    
-    input[type="checkbox"] {
-        min-width: 1rem;
-        min-height: 1rem;
-    }
-    
-    select {
-        min-height: 2.5rem;
-    }
-    
-    /* Prevenir texto que se salga - SOLO en main */
-    main * {
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        hyphens: auto;
-    }
-    
-    /* Específico para pantallas muy pequeñas - SOLO main */
-    @media (max-width: 380px) {
-        main .max-w-4xl {
-            padding: 0 0.75rem;
-        }
-        
-        main .bg-white.rounded-lg.shadow-sm {
-            padding: 0.75rem;
-        }
-        
-        main .ventana-horaria {
-            padding: 0.75rem;
-        }
-        
-        main .ventana-horaria .grid .flex {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 0.5rem;
-        }
-        
-        main .ventana-horaria .grid .flex label {
-            min-width: auto;
-            text-align: left;
-        }
-        
-        main .border .flex.items-center.justify-between.mb-4 .btn-add-ventana {
-            font-size: 0.8125rem;
-            padding: 0.625rem;
-        }
-        
-        main .flex.justify-between.items-center.mb-6 h1 {
-            font-size: 1.375rem;
-        }
-    }
-    
-    /* Animaciones suaves */
-    .ventana-horaria {
-        transition: all 0.3s ease;
-    }
-    
-    .btn-add-ventana {
-        transition: all 0.2s ease;
-    }
-    
-    .btn-add-ventana:hover {
-        background: rgba(59, 130, 246, 0.1);
-        transform: translateY(-1px);
-    }
-    
-    /* Scroll suave para el formulario */
-    #configForm {
-        scroll-behavior: smooth;
-    }
-}
-
-/* Mantener estilos desktop intactos */
-@media (min-width: 769px) {
-    /* Estilos desktop originales se mantienen */
-}
-
-/* Estilos para el campo de capacidad */
-.capacidad-badge {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.capacidad-input {
-    text-align: center;
-    font-weight: 600;
-}
-
-.capacidad-help {
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-top: 0.25rem;
-}
-</style>
 
 <div class="max-w-4xl mx-auto">
     <form id="configForm" class="space-y-8">
