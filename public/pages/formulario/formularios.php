@@ -87,6 +87,57 @@ include 'includes/header.php';
     overflow-x: hidden;
 }
 
+/* Formulario colapsable */
+.collapsible-form {
+    transition: all 0.3s ease;
+}
+
+.collapsible-form.collapsed {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.collapsible-form.expanded {
+    max-height: 5000px;
+    opacity: 1;
+}
+
+.toggle-form-btn {
+    transition: all 0.2s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.toggle-form-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.toggle-form-btn i.ri-arrow-down-s-line {
+    transition: transform 0.3s ease;
+    font-size: 1.25rem;
+}
+
+.toggle-form-btn.active i.ri-arrow-down-s-line {
+    transform: rotate(180deg);
+}
+
 /* Tarjetas de formularios móviles */
 .form-mobile-card {
     margin: 0.75rem 0;
@@ -642,8 +693,17 @@ include 'includes/header.php';
     </div>
 <?php endif; ?>
 
+<!-- Botón para expandir/colapsar formulario - Vista Desktop -->
+<div class="desktop-view mb-4">
+    <button type="button" id="toggleFormDesktop" class="toggle-form-btn">
+        <i class="ri-add-circle-line"></i>
+        <span>Crear Nuevo Enlace de Reserva</span>
+        <i class="ri-arrow-down-s-line"></i>
+    </button>
+</div>
+
 <!-- Formulario para crear nuevo enlace - Vista Desktop -->
-<div class="desktop-view bg-white rounded-lg shadow-sm p-6 mb-6">
+<div class="desktop-view bg-white rounded-lg shadow-sm p-6 mb-6 collapsible-form collapsed" id="formContainerDesktop">
     <h2 class="text-lg font-medium text-gray-900 mb-4">Crear Nuevo Enlace de Reserva</h2>
     
     <form method="post" class="space-y-4">
@@ -805,8 +865,17 @@ include 'includes/header.php';
     </form>
 </div>
 
+<!-- Botón para expandir/colapsar formulario - Vista Mobile -->
+<div class="mobile-view p-4">
+    <button type="button" id="toggleFormMobile" class="toggle-form-btn">
+        <i class="ri-add-circle-line"></i>
+        <span>Crear Nuevo Enlace</span>
+        <i class="ri-arrow-down-s-line"></i>
+    </button>
+</div>
+
 <!-- Formulario para crear nuevo enlace - Vista Mobile -->
-<div class="mobile-view mobile-create-form">
+<div class="mobile-view mobile-create-form collapsible-form collapsed" id="formContainerMobile">
     <h2 class="mobile-form-title">
         <i class="ri-add-circle-line"></i>
         Crear Nuevo Enlace
@@ -1146,7 +1215,7 @@ include 'includes/header.php';
             <div class="mobile-empty-state">
                 <i class="ri-link mobile-empty-icon"></i>
                 <h3 class="mobile-empty-title">No hay enlaces creados</h3>
-                <p class="mobile-empty-description">Crea tu primer enlace de reserva usando el formulario de arriba</p>
+                <p class="mobile-empty-description">Crea tu primer enlace de reserva usando el botón de arriba</p>
             </div>
         <?php else: ?>
             <div class="p-4">
@@ -1377,5 +1446,72 @@ include 'includes/header.php';
 <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script>
 <!-- QRCode.js -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+
+<script>
+// Script para manejar el collapse del formulario
+document.addEventListener('DOMContentLoaded', function() {
+    // Desktop
+    const toggleBtnDesktop = document.getElementById('toggleFormDesktop');
+    const formContainerDesktop = document.getElementById('formContainerDesktop');
+    
+    if (toggleBtnDesktop && formContainerDesktop) {
+        toggleBtnDesktop.addEventListener('click', function() {
+            formContainerDesktop.classList.toggle('collapsed');
+            formContainerDesktop.classList.toggle('expanded');
+            toggleBtnDesktop.classList.toggle('active');
+        });
+    }
+    
+    // Mobile
+    const toggleBtnMobile = document.getElementById('toggleFormMobile');
+    const formContainerMobile = document.getElementById('formContainerMobile');
+    
+    if (toggleBtnMobile && formContainerMobile) {
+        toggleBtnMobile.addEventListener('click', function() {
+            formContainerMobile.classList.toggle('collapsed');
+            formContainerMobile.classList.toggle('expanded');
+            toggleBtnMobile.classList.toggle('active');
+        });
+    }
+    
+    // Sincronizar inputs de color con texto (Desktop)
+    const colorPrimario = document.getElementById('color_primario');
+    const colorPrimarioText = document.getElementById('color_primario_text');
+    
+    if (colorPrimario && colorPrimarioText) {
+        colorPrimario.addEventListener('input', function() {
+            colorPrimarioText.value = this.value;
+        });
+    }
+    
+    const colorSecundario = document.getElementById('color_secundario');
+    const colorSecundarioText = document.getElementById('color_secundario_text');
+    
+    if (colorSecundario && colorSecundarioText) {
+        colorSecundario.addEventListener('input', function() {
+            colorSecundarioText.value = this.value;
+        });
+    }
+    
+    // Sincronizar inputs de color con texto (Mobile)
+    const colorPrimarioMobile = document.getElementById('color_primario_mobile');
+    const colorPrimarioTextMobile = document.getElementById('color_primario_text_mobile');
+    
+    if (colorPrimarioMobile && colorPrimarioTextMobile) {
+        colorPrimarioMobile.addEventListener('input', function() {
+            colorPrimarioTextMobile.value = this.value;
+        });
+    }
+    
+    const colorSecundarioMobile = document.getElementById('color_secundario_mobile');
+    const colorSecundarioTextMobile = document.getElementById('color_secundario_text_mobile');
+    
+    if (colorSecundarioMobile && colorSecundarioTextMobile) {
+        colorSecundarioMobile.addEventListener('input', function() {
+            colorSecundarioTextMobile.value = this.value;
+        });
+    }
+});
+</script>
 
 <?php include 'includes/footer.php'; ?>
