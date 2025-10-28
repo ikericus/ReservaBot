@@ -139,33 +139,6 @@ include 'includes/header.php';
 }
 </style>
 
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900 flex items-center">
-            <i class="ri-whatsapp-line text-green-500 mr-3 text-3xl"></i>
-            WhatsApp
-        </h1>
-        <p class="text-gray-600 mt-1">Conecta tu WhatsApp para automatizar la comunicación con tus clientes</p>
-    </div>
-    
-    <!-- Estado de conexión -->
-    <div class="flex items-center space-x-3" data-status="<?php echo $connectionStatus; ?>">
-        <div class="status-indicator w-3 h-3 rounded-full <?php echo $connectionStatus; ?>"></div>
-        <span class="text-sm font-medium text-gray-700 capitalize">
-            <?php 
-            $statusLabels = [
-                'connected' => 'Conectado',
-                'ready' => 'Conectado',
-                'waiting_qr' => 'Esperando QR...',
-                'connecting' => 'Conectando...',
-                'disconnected' => 'Desconectado'
-            ];
-            echo $statusLabels[$connectionStatus] ?? 'Desconectado';
-            ?>
-        </span>
-    </div>
-</div>
-
 <!-- Layout dinámico basado en estado de conexión -->
 <div id="mainLayout" class="grid gap-6 items-start <?php echo ($connectionStatus === 'connected' || $connectionStatus === 'ready') ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 lg:grid-cols-3'; ?>">
     
