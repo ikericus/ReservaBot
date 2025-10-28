@@ -157,17 +157,6 @@ CREATE TABLE usuarios (
   whatsapp_updated_at datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Usuarios del sistema ReservaBot';
 
-CREATE TABLE usuarios_whatsapp (
-  id varchar(50) NOT NULL,
-  usuario_id int(11) DEFAULT NULL,
-  nombre varchar(150) DEFAULT NULL,
-  telefono varchar(25) DEFAULT NULL,
-  avatar_url varchar(500) DEFAULT NULL,
-  is_business tinyint(1) DEFAULT 0,
-  created_at timestamp NULL DEFAULT current_timestamp(),
-  last_active timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Usuarios de WhatsApp registrados';
-
 CREATE TABLE whatsapp_config (
   id int(11) NOT NULL,
   usuario_id int(11) NOT NULL,
@@ -278,12 +267,6 @@ ALTER TABLE usuarios
   ADD KEY idx_last_activity (last_activity),
   ADD KEY idx_verificacion_token (verificacion_token),
   ADD KEY idx_reset_token (reset_token);
-
-ALTER TABLE usuarios_whatsapp
-  ADD PRIMARY KEY (id),
-  ADD KEY idx_telefono (telefono),
-  ADD KEY idx_last_active (last_active),
-  ADD KEY idx_usuario_whatsapp (usuario_id);
 
 ALTER TABLE whatsapp_config
   ADD PRIMARY KEY (id),
