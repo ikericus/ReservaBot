@@ -669,10 +669,6 @@ include 'includes/header.php';
 }
 </style>
 
-<div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Enlaces de Reserva</h1>
-</div>
-
 <?php if (!empty($mensaje)): ?>
     <!-- Mensaje Desktop -->
     <div class="desktop-view mb-4 p-4 rounded-md <?php echo $tipoMensaje === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'; ?>">
