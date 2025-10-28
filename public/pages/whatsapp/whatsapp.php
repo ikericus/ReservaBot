@@ -188,29 +188,6 @@ include 'includes/header.php';
                     Para comenzar a automatizar la comunicación con tus clientes, conecta tu cuenta de WhatsApp escaneando el código QR.
                 </p>
                 
-                <!-- Formulario con número de teléfono -->
-                <div class="max-w-md mx-auto mb-6">
-                    <label for="whatsappPhone" class="block text-sm font-medium text-gray-700 mb-2 text-left">
-                        Número de WhatsApp a conectar
-                    </label>
-                    <div class="relative">
-                        <input 
-                            type="tel" 
-                            id="whatsappPhone" 
-                            placeholder="Ej: 34612345678" 
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-center font-mono text-lg"
-                            value="<?php echo htmlspecialchars($currentUser['telefono'] ?? ''); ?>"
-                        >
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="ri-phone-line text-gray-400"></i>
-                        </div>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-2 text-left">
-                        <i class="ri-information-line mr-1"></i>
-                        Incluye código de país sin el símbolo + (ej: 34 para España)
-                    </p>
-                </div>
-                
                 <button id="connectBtn" class="whatsapp-button text-white px-6 py-3 rounded-lg font-medium inline-flex items-center">
                     <i class="ri-qr-code-line mr-2"></i>
                     Conectar WhatsApp
@@ -460,10 +437,7 @@ include 'includes/header.php';
                 connectBtn: document.getElementById('connectBtn'),
                 disconnectBtn: document.getElementById('disconnectBtn'),
                 refreshQrBtn: document.getElementById('refreshQrBtn'),
-                
-                // Input de teléfono
-                whatsappPhone: document.getElementById('whatsappPhone'),
-                
+                                
                 // Modal
                 disconnectModal: document.getElementById('disconnectModal'),
                 confirmDisconnect: document.getElementById('confirmDisconnect'),
@@ -505,28 +479,6 @@ include 'includes/header.php';
                     this.hideDisconnectModal();
                 }
             });
-            
-            // Validar teléfono mientras se escribe
-            this.elements.whatsappPhone?.addEventListener('input', (e) => this.validatePhoneInput(e));
-        }
-
-        // =============== VALIDACIÓN DE TELÉFONO ===============
-
-        validatePhoneInput(e) {
-            // Eliminar todo excepto números
-            let value = e.target.value.replace(/\D/g, '');
-            e.target.value = value;
-            
-            // Indicador visual de validez
-            if (value.length >= 8 && value.length <= 15) {
-                e.target.classList.remove('border-red-300');
-                e.target.classList.add('border-green-300');
-            } else if (value.length > 0) {
-                e.target.classList.remove('border-green-300');
-                e.target.classList.add('border-red-300');
-            } else {
-                e.target.classList.remove('border-green-300', 'border-red-300');
-            }
         }
 
         // =============== GESTIÓN DE ESTADO ===============
@@ -698,28 +650,13 @@ include 'includes/header.php';
         // =============== CONEXIÓN/DESCONEXIÓN ===============
 
         async connect() {
-            // Validar teléfono
-            const phone = this.elements.whatsappPhone?.value.trim();
-            
-            if (!phone) {
-                this.showNotification('Por favor, introduce un número de teléfono', 'warning');
-                this.elements.whatsappPhone?.focus();
-                return;
-            }
-            
-            if (!/^\d{8,15}$/.test(phone)) {
-                this.showNotification('Formato de teléfono inválido. Usa solo números (8-15 dígitos)', 'error');
-                this.elements.whatsappPhone?.focus();
-                return;
-            }
-            
+
             try {
                 this.setButtonLoading(this.elements.connectBtn, true, 'Conectando...');
                 
                 const response = await fetch('/api/whatsapp-connect', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: phone })
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 
                 const data = await response.json();
