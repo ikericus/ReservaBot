@@ -2,18 +2,24 @@
 // pages/admin/whatsapp.php
 
 /**
- * Página de monitoreo de WhatsApp
+ * Página de administración y debug de WhatsApp
  */
 
 $adminDomain = getContainer()->getAdminDomain();
+$whatsappDomain = getContainer()->getWhatsAppDomain();
 
 $currentPage = 'admin-whatsapp';
 $pageTitle = 'ReservaBot Admin - WhatsApp';
 
+// Configuración del servidor
+$serverUrl = $_ENV['WHATSAPP_SERVER_URL'] ?? 'http://localhost:3001';
+$jwtSecret = $_ENV['JWT_SECRET'] ?? '';
+$webhookSecret = $_ENV['WEBHOOK_SECRET'] ?? '';
+
 // Obtener datos
 $salud = $adminDomain->obtenerSaludWhatsApp();
 $stats = $adminDomain->obtenerEstadisticasMensajes();
-$ultimos_usuarios = $adminDomain->obtenerUltimosUsuariosWhatsApp(10);
+$ultimos_usuarios = $adminDomain->obtenerUltimosUsuariosWhatsApp(20);
 $numeros_activos = $adminDomain->obtenerNumerosMasActivos(10);
 $volumen_7 = $adminDomain->obtenerVolumenMensajesPor7Dias();
 
@@ -24,237 +30,696 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
    
     <?php include PROJECT_ROOT . '/pages/admin/menu.php'; ?>
 
-    <!-- Salud del Sistema -->
-    <div class="health-card">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">
-            <i class="ri-heart-pulse-line mr-2"></i>Estado del Sistema
-        </h2>
-        
-        <div class="health-status <?php echo $salud['estado_servidor'] === 'online' ? '' : 'danger'; ?>">
-            <span class="status-dot"></span>
+    <!-- Header con tabs -->
+    <div class="admin-header">
+        <div class="flex items-center justify-between mb-4">
             <div>
-                <div class="font-semibold">Servidor WhatsApp</div>
-                <div class="text-sm"><?php echo ucfirst($salud['estado_servidor']); ?></div>
+                <h1 class="text-2xl font-bold text-white">
+                    <i class="ri-whatsapp-line mr-2"></i>WhatsApp Admin
+                </h1>
+                <p class="text-green-100">Monitoreo, estadísticas y herramientas de debug</p>
+            </div>
+            <div class="text-right">
+                <div class="text-sm text-green-100 mb-1">Estado del Servidor</div>
+                <div id="serverStatus" class="text-white font-semibold text-lg">
+                    <span class="loading-spinner"></span> Verificando...
+                </div>
             </div>
         </div>
-
-        <div class="stat-row">
-            <span class="stat-label">Conexión de Usuarios</span>
-            <span class="stat-value"><?php echo $salud['usuarios_conectados']; ?>/<?php echo $salud['usuarios_registrados']; ?></span>
-        </div>
-
-        <div class="stat-row">
-            <span class="stat-label">Tasa de Conexión</span>
-            <span class="stat-value"><?php echo round($salud['tasa_conexion'], 1); ?>%</span>
-        </div>
-
-        <div class="progress-bar">
-            <div class="progress-bar-fill" style="width: <?php echo $salud['tasa_conexion']; ?>%"></div>
-        </div>
-
-        <div class="stat-row mt-4">
-            <span class="stat-label">Mensajes Hoy</span>
-            <span class="stat-value"><?php echo number_format($salud['mensajes_hoy']); ?></span>
+        
+        <!-- Tabs -->
+        <div class="tabs-header">
+            <button class="tab-btn active" data-tab="overview">
+                <i class="ri-dashboard-line"></i> Overview
+            </button>
+            <button class="tab-btn" data-tab="debug">
+                <i class="ri-bug-line"></i> Debug Tools
+            </button>
+            <button class="tab-btn" data-tab="clients">
+                <i class="ri-group-line"></i> Clients
+            </button>
         </div>
     </div>
 
-    <!-- Métricas de Mensajes -->
-    <div class="metrics-grid">
-        <div class="metric-card">
-            <div class="metric-label">Total Enviados</div>
-            <div class="metric-value"><?php echo number_format($stats['total_enviados']); ?></div>
-            <div class="metric-subtitle">Todos los tiempos</div>
-        </div>
+    <!-- TAB 1: OVERVIEW -->
+    <div class="tab-content active" id="tab-overview">
+        
+        <!-- Salud del Sistema -->
+        <div class="grid-2 mb-6">
+            <div class="health-card">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">
+                    <i class="ri-heart-pulse-line mr-2"></i>Estado del Sistema
+                </h2>
+                
+                <div class="health-status" id="mainHealthStatus">
+                    <span class="status-dot"></span>
+                    <div>
+                        <div class="font-semibold">Servidor WhatsApp</div>
+                        <div class="text-sm">Verificando...</div>
+                    </div>
+                </div>
 
-        <div class="metric-card">
-            <div class="metric-label">Total Recibidos</div>
-            <div class="metric-value"><?php echo number_format($stats['total_recibidos']); ?></div>
-            <div class="metric-subtitle">Todos los tiempos</div>
-        </div>
+                <div class="stat-row">
+                    <span class="stat-label">Conexión de Usuarios</span>
+                    <span class="stat-value"><?php echo $salud['usuarios_conectados']; ?>/<?php echo $salud['usuarios_registrados']; ?></span>
+                </div>
 
-        <div class="metric-card">
-            <div class="metric-label">Hoy Enviados</div>
-            <div class="metric-value"><?php echo $stats['hoy_enviados']; ?></div>
-            <div class="metric-subtitle">Desde las 00:00</div>
-        </div>
+                <div class="stat-row">
+                    <span class="stat-label">Tasa de Conexión</span>
+                    <span class="stat-value"><?php echo round($salud['tasa_conexion'], 1); ?>%</span>
+                </div>
 
-        <div class="metric-card">
-            <div class="metric-label">Promedio por Usuario</div>
-            <div class="metric-value"><?php echo $stats['promedio_por_usuario']; ?></div>
-            <div class="metric-subtitle">Mensajes/usuario</div>
-        </div>
-    </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" style="width: <?php echo $salud['tasa_conexion']; ?>%"></div>
+                </div>
 
-    <!-- Gráficos -->
-    <div class="grid-2">
-        <!-- Últimos Usuarios WhatsApp -->
-        <div class="card">
-            <div class="card-title">
-                <i class="ri-user-add-line mr-2"></i>Últimos Usuarios Conectados
-            </div>
-            
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Usuario</th>
-                        <th>Teléfono</th>
-                        <th>Estado</th>
-                        <th>Conversaciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($ultimos_usuarios)): ?>
-                        <tr>
-                            <td colspan="4" class="text-center py-8 text-gray-500">
-                                No hay usuarios conectados
-                            </td>
-                        </tr>
-                    <?php else: ?>
-                        <?php foreach ($ultimos_usuarios as $usuario): ?>
-                        <tr>
-                            <td>
-                                <div class="font-medium text-sm"><?php echo htmlspecialchars($usuario['nombre'] ?? 'N/A'); ?></div>
-                                <div class="text-xs text-gray-600"><?php echo htmlspecialchars($usuario['email'] ?? 'N/A'); ?></div>
-                            </td>
-                            <td class="text-sm font-mono"><?php echo htmlspecialchars($usuario['phone_number'] ?? 'N/A'); ?></td>
-                            <td>
-                                <span class="badge <?php echo $usuario['status']; ?>">
-                                    <?php echo ucfirst(str_replace('_', ' ', $usuario['status'])); ?>
-                                </span>
-                            </td>
-                            <td class="text-center font-semibold"><?php echo $usuario['total_conversaciones']; ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Números Más Activos -->
-        <div class="card">
-            <div class="card-title">
-                <i class="ri-phone-line mr-2"></i>Números Más Activos
+                <div class="stat-row mt-4">
+                    <span class="stat-label">Mensajes Hoy</span>
+                    <span class="stat-value"><?php echo number_format($salud['mensajes_hoy']); ?></span>
+                </div>
+                
+                <button onclick="checkServerHealth()" class="btn-primary mt-4 w-full">
+                    <i class="ri-refresh-line mr-2"></i>Actualizar Estado
+                </button>
             </div>
             
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Teléfono</th>
-                        <th>Mensajes</th>
-                        <th>Usuarios</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($numeros_activos)): ?>
+            <div class="health-card">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">
+                    <i class="ri-server-line mr-2"></i>Detalles del Servidor
+                </h2>
+                
+                <div class="stat-row">
+                    <span class="stat-label">URL</span>
+                    <span class="stat-value text-xs font-mono"><?php echo htmlspecialchars($serverUrl); ?></span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">JWT Secret</span>
+                    <span class="badge <?php echo !empty($jwtSecret) ? 'connected' : 'disconnected'; ?>">
+                        <?php echo !empty($jwtSecret) ? 'Configurado' : 'No configurado'; ?>
+                    </span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">Webhook Secret</span>
+                    <span class="badge <?php echo !empty($webhookSecret) ? 'connected' : 'disconnected'; ?>">
+                        <?php echo !empty($webhookSecret) ? 'Configurado' : 'No configurado'; ?>
+                    </span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">Uptime</span>
+                    <span class="stat-value" id="serverUptime">-</span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">Clientes Activos</span>
+                    <span class="stat-value" id="activeClients">-</span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">Tiempo de Respuesta</span>
+                    <span class="stat-value" id="responseTime">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métricas de Mensajes -->
+        <div class="metrics-grid mb-6">
+            <div class="metric-card">
+                <div class="metric-label">Total Enviados</div>
+                <div class="metric-value"><?php echo number_format($stats['total_enviados']); ?></div>
+                <div class="metric-subtitle">Todos los tiempos</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Total Recibidos</div>
+                <div class="metric-value"><?php echo number_format($stats['total_recibidos']); ?></div>
+                <div class="metric-subtitle">Todos los tiempos</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Hoy Enviados</div>
+                <div class="metric-value"><?php echo $stats['hoy_enviados']; ?></div>
+                <div class="metric-subtitle">Desde las 00:00</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Promedio por Usuario</div>
+                <div class="metric-value"><?php echo $stats['promedio_por_usuario']; ?></div>
+                <div class="metric-subtitle">Mensajes/usuario</div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid-2">
+            <!-- Últimos Usuarios WhatsApp -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="ri-user-add-line mr-2"></i>Últimos Usuarios Conectados
+                </div>
+                
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td colspan="3" class="text-center py-8 text-gray-500">
-                                No hay datos de números activos
-                            </td>
+                            <th>Usuario</th>
+                            <th>Teléfono</th>
+                            <th>Estado</th>
+                            <th>Conversaciones</th>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($numeros_activos as $numero): ?>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($ultimos_usuarios)): ?>
+                            <tr>
+                                <td colspan="4" class="text-center py-8 text-gray-500">
+                                    No hay usuarios conectados
+                                </td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach (array_slice($ultimos_usuarios, 0, 10) as $usuario): ?>
+                            <tr>
+                                <td>
+                                    <div class="font-medium text-sm"><?php echo htmlspecialchars($usuario['nombre'] ?? 'N/A'); ?></div>
+                                    <div class="text-xs text-gray-600"><?php echo htmlspecialchars($usuario['email'] ?? 'N/A'); ?></div>
+                                </td>
+                                <td class="text-sm font-mono"><?php echo htmlspecialchars($usuario['phone_number'] ?? 'N/A'); ?></td>
+                                <td>
+                                    <span class="badge <?php echo $usuario['status']; ?>">
+                                        <?php echo ucfirst(str_replace('_', ' ', $usuario['status'])); ?>
+                                    </span>
+                                </td>
+                                <td class="text-center font-semibold"><?php echo $usuario['total_conversaciones']; ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Números Más Activos -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="ri-phone-line mr-2"></i>Números Más Activos
+                </div>
+                
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td class="text-sm font-mono"><?php echo htmlspecialchars($numero['telefono']); ?></td>
-                            <td class="text-center font-semibold"><?php echo $numero['total_conversaciones']; ?></td>
-                            <td class="text-center"><?php echo $numero['total_usuarios']; ?></td>
+                            <th>Teléfono</th>
+                            <th>Mensajes</th>
+                            <th>Usuarios</th>
                         </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($numeros_activos)): ?>
+                            <tr>
+                                <td colspan="3" class="text-center py-8 text-gray-500">
+                                    No hay datos de números activos
+                                </td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($numeros_activos as $numero): ?>
+                            <tr>
+                                <td class="text-sm font-mono"><?php echo htmlspecialchars($numero['telefono']); ?></td>
+                                <td class="text-center font-semibold"><?php echo $numero['total_conversaciones']; ?></td>
+                                <td class="text-center"><?php echo $numero['total_usuarios']; ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Gráfico de Volumen -->
+        <div class="card mt-6">
+            <div class="card-title">
+                <i class="ri-line-chart-line mr-2"></i>Volumen de Mensajes (Últimos 7 Días)
+            </div>
+            <div style="height: 300px;">
+                <canvas id="volumenChart"></canvas>
+            </div>
         </div>
     </div>
 
-    <!-- Gráfico de Volumen -->
-    <div class="card">
-        <div class="card-title">
-            <i class="ri-line-chart-line mr-2"></i>Volumen de Mensajes (Últimos 7 Días)
+    <!-- TAB 2: DEBUG TOOLS -->
+    <div class="tab-content" id="tab-debug">
+        
+        <div class="grid-2 mb-6">
+            <!-- API Tester -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="ri-code-s-slash-line mr-2"></i>API Tester
+                </div>
+                
+                <div class="form-group">
+                    <label>User ID</label>
+                    <input type="number" id="apiUserId" class="form-input" placeholder="1" value="1">
+                </div>
+                
+                <div class="form-group">
+                    <label>Endpoint</label>
+                    <select id="apiEndpoint" class="form-input" onchange="updateApiBody()">
+                        <option value="/health">GET /health</option>
+                        <option value="/api/connect">POST /api/connect</option>
+                        <option value="/api/disconnect">POST /api/disconnect</option>
+                        <option value="/api/status">GET /api/status</option>
+                        <option value="/api/send">POST /api/send</option>
+                        <option value="/api/chats">GET /api/chats</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="apiBodyContainer" style="display: none;">
+                    <label>Body (JSON)</label>
+                    <textarea id="apiBody" class="form-input" rows="4"></textarea>
+                </div>
+                
+                <button onclick="testApiEndpoint()" class="btn-primary w-full">
+                    <i class="ri-send-plane-line mr-2"></i>Enviar Request
+                </button>
+                
+                <div class="response-box mt-4" id="apiResponse">
+                    <div class="text-gray-500 text-center py-4 text-sm">
+                        La respuesta aparecerá aquí
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Webhook Simulator -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="ri-webhook-line mr-2"></i>Webhook Simulator
+                </div>
+                
+                <div class="form-group">
+                    <label>User ID</label>
+                    <input type="number" id="webhookUserId" class="form-input" placeholder="1" value="1">
+                </div>
+                
+                <div class="form-group">
+                    <label>Evento</label>
+                    <select id="webhookEvent" class="form-input" onchange="updateWebhookData()">
+                        <option value="qr_generated">QR Generated</option>
+                        <option value="connected">Connected</option>
+                        <option value="disconnected">Disconnected</option>
+                        <option value="auth_failure">Auth Failure</option>
+                        <option value="message_received">Message Received</option>
+                        <option value="message_sent">Message Sent</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Datos (JSON)</label>
+                    <textarea id="webhookData" class="form-input" rows="4"></textarea>
+                </div>
+                
+                <button onclick="sendWebhook()" class="btn-primary w-full">
+                    <i class="ri-send-plane-line mr-2"></i>Enviar Webhook
+                </button>
+                
+                <div class="response-box mt-4" id="webhookResponse">
+                    <div class="text-gray-500 text-center py-4 text-sm">
+                        La respuesta aparecerá aquí
+                    </div>
+                </div>
+            </div>
         </div>
-        <div style="height: 300px;">
-            <canvas id="volumenChart"></canvas>
+        
+        <!-- JWT Generator -->
+        <div class="card">
+            <div class="card-title">
+                <i class="ri-key-2-line mr-2"></i>JWT Generator
+            </div>
+            
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>User ID</label>
+                    <input type="number" id="jwtUserId" class="form-input" placeholder="1" value="1">
+                </div>
+                
+                <div class="form-group">
+                    <label>Expiración (segundos)</label>
+                    <input type="number" id="jwtExpiry" class="form-input" placeholder="3600" value="3600">
+                </div>
+                
+                <div class="form-group flex items-end">
+                    <button onclick="generateJWT()" class="btn-primary w-full">
+                        <i class="ri-key-line mr-2"></i>Generar Token
+                    </button>
+                </div>
+            </div>
+            
+            <div class="token-display mt-4" id="jwtTokenDisplay">
+                <div class="text-gray-500 text-center py-4 text-sm">
+                    El token aparecerá aquí
+                </div>
+            </div>
+            
+            <button onclick="copyJWT()" id="copyJwtBtn" class="btn-secondary w-full mt-3" style="display: none;">
+                <i class="ri-file-copy-line mr-2"></i>Copiar Token
+            </button>
+        </div>
+    </div>
+
+    <!-- TAB 3: CLIENTS -->
+    <div class="tab-content" id="tab-clients">
+        <div class="card">
+            <div class="card-title">
+                <i class="ri-group-line mr-2"></i>Monitor de Clientes
+                <button onclick="location.reload()" class="btn-secondary-sm ml-auto">
+                    <i class="ri-refresh-line mr-1"></i>Actualizar
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Estado</th>
+                            <th>Última Act.</th>
+                            <th>Conv.</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($ultimos_usuarios)): ?>
+                            <tr>
+                                <td colspan="8" class="text-center py-8 text-gray-500">
+                                    No hay usuarios con WhatsApp configurado
+                                </td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($ultimos_usuarios as $usuario): ?>
+                            <tr>
+                                <td class="font-mono"><?php echo $usuario['id']; ?></td>
+                                <td><?php echo htmlspecialchars($usuario['nombre'] ?? 'N/A'); ?></td>
+                                <td class="text-sm"><?php echo htmlspecialchars($usuario['email'] ?? 'N/A'); ?></td>
+                                <td class="font-mono text-sm"><?php echo htmlspecialchars($usuario['phone_number'] ?? '-'); ?></td>
+                                <td>
+                                    <span class="badge <?php echo $usuario['status']; ?>">
+                                        <?php echo ucfirst(str_replace('_', ' ', $usuario['status'])); ?>
+                                    </span>
+                                </td>
+                                <td class="text-xs text-gray-600">
+                                    <?php echo $usuario['last_activity'] ? date('d/m/Y H:i', strtotime($usuario['last_activity'])) : '-'; ?>
+                                </td>
+                                <td class="text-center"><?php echo $usuario['total_conversaciones']; ?></td>
+                                <td>
+                                    <button onclick="testUserConnection(<?php echo $usuario['id']; ?>)" class="btn-icon" title="Test conexión">
+                                        <i class="ri-plug-line"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Chart.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
-    // Gráfico de Volumen
-    const volumenCtx = document.getElementById('volumenChart')?.getContext('2d');
-    if (volumenCtx) {
-        const fechas = [
-            <?php foreach ($volumen_7 as $v): ?>
-                '<?php echo date('d/m', strtotime($v['fecha'])); ?>',
-            <?php endforeach; ?>
-        ];
-        
-        const enviados = [
-            <?php foreach ($volumen_7 as $v): ?>
-                <?php echo $v['enviados'] ?? 0; ?>,
-            <?php endforeach; ?>
-        ];
-        
-        const recibidos = [
-            <?php foreach ($volumen_7 as $v): ?>
-                <?php echo $v['recibidos'] ?? 0; ?>,
-            <?php endforeach; ?>
-        ];
-        
-        new Chart(volumenCtx, {
-            type: 'line',
-            data: {
-                labels: fechas,
-                datasets: [
-                    {
-                        label: 'Enviados',
-                        data: enviados,
-                        borderColor: '#25d366',
-                        backgroundColor: 'rgba(37, 211, 102, 0.1)',
-                        tension: 0.4,
-                        fill: false,
-                        pointBackgroundColor: '#25d366',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2
-                    },
-                    {
-                        label: 'Recibidos',
-                        data: recibidos,
-                        borderColor: '#128c7e',
-                        backgroundColor: 'rgba(18, 140, 126, 0.1)',
-                        tension: 0.4,
-                        fill: false,
-                        pointBackgroundColor: '#128c7e',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-    }
-</script>
+const config = {
+    serverUrl: '<?php echo $serverUrl; ?>',
+    jwtSecret: '<?php echo $jwtSecret; ?>',
+    webhookSecret: '<?php echo $webhookSecret; ?>',
+    webappUrl: window.location.origin
+};
 
+// Sistema de tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tabId = btn.dataset.tab;
+        
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+    });
+});
+
+// Health check del servidor
+async function checkServerHealth() {
+    try {
+        const startTime = Date.now();
+        const response = await fetch(`${config.serverUrl}/health`);
+        const responseTime = Date.now() - startTime;
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('serverStatus').innerHTML = `<span class="text-green-400">●</span> Online (${responseTime}ms)`;
+            
+            const healthStatus = document.getElementById('mainHealthStatus');
+            healthStatus.className = 'health-status';
+            healthStatus.innerHTML = `
+                <span class="status-dot"></span>
+                <div>
+                    <div class="font-semibold">Servidor WhatsApp</div>
+                    <div class="text-sm">Online</div>
+                </div>
+            `;
+            
+            document.getElementById('serverUptime').textContent = formatUptime(data.uptime);
+            document.getElementById('activeClients').textContent = data.activeClients || 0;
+            document.getElementById('responseTime').textContent = `${responseTime}ms`;
+        } else {
+            throw new Error('Servidor no responde');
+        }
+    } catch (error) {
+        document.getElementById('serverStatus').innerHTML = `<span class="text-red-400">●</span> Offline`;
+        
+        const healthStatus = document.getElementById('mainHealthStatus');
+        healthStatus.className = 'health-status danger';
+        healthStatus.innerHTML = `
+            <span class="status-dot"></span>
+            <div>
+                <div class="font-semibold">Servidor WhatsApp</div>
+                <div class="text-sm">Offline</div>
+            </div>
+        `;
+        
+        console.error('Error conectando con servidor:', error);
+    }
+}
+
+function formatUptime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}h ${minutes}m`;
+}
+
+// JWT Generator
+function generateJWT() {
+    const userId = document.getElementById('jwtUserId').value;
+    const expiry = document.getElementById('jwtExpiry').value || 3600;
+    
+    if (!userId) {
+        alert('User ID requerido');
+        return;
+    }
+    
+    const header = btoa(JSON.stringify({ typ: 'JWT', alg: 'HS256' }));
+    const payload = btoa(JSON.stringify({
+        userId: parseInt(userId),
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + parseInt(expiry)
+    }));
+    
+    const signature = btoa(`${header}.${payload}`);
+    const token = `${header}.${payload}.${signature}`;
+    
+    document.getElementById('jwtTokenDisplay').innerHTML = `<div class="font-mono text-xs break-all p-3">${token}</div>`;
+    document.getElementById('copyJwtBtn').style.display = 'block';
+}
+
+function copyJWT() {
+    const tokenText = document.getElementById('jwtTokenDisplay').textContent;
+    navigator.clipboard.writeText(tokenText).then(() => {
+        const btn = document.getElementById('copyJwtBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ri-check-line mr-2"></i>Copiado!';
+        setTimeout(() => btn.innerHTML = originalText, 2000);
+    });
+}
+
+// API Tester
+function updateApiBody() {
+    const endpoint = document.getElementById('apiEndpoint').value;
+    const bodyContainer = document.getElementById('apiBodyContainer');
+    const bodyTextarea = document.getElementById('apiBody');
+    
+    if (endpoint.includes('POST')) {
+        bodyContainer.style.display = 'block';
+        const examples = {
+            '/api/send': JSON.stringify({ to: '34612345678', message: 'Test' }, null, 2),
+            '/api/connect': '{}',
+            '/api/disconnect': '{}'
+        };
+        bodyTextarea.value = examples[endpoint] || '{}';
+    } else {
+        bodyContainer.style.display = 'none';
+    }
+}
+
+async function testApiEndpoint() {
+    const userId = document.getElementById('apiUserId').value;
+    const endpoint = document.getElementById('apiEndpoint').value;
+    const method = endpoint.includes('POST') ? 'POST' : 'GET';
+    
+    try {
+        const token = generateTokenForRequest(userId);
+        const url = `${config.serverUrl}${endpoint}`;
+        
+        const options = {
+            method: method,
+            headers: { 'Content-Type': 'application/json' }
+        };
+        
+        if (!endpoint.includes('/health')) {
+            options.headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        if (method === 'POST') {
+            options.body = document.getElementById('apiBody').value;
+        }
+        
+        const response = await fetch(url, options);
+        const data = await response.json();
+        
+        document.getElementById('apiResponse').innerHTML = `<pre class="text-xs">${JSON.stringify(data, null, 2)}</pre>`;
+        
+    } catch (error) {
+        document.getElementById('apiResponse').innerHTML = `<div class="text-red-600 text-sm"><i class="ri-error-warning-line mr-2"></i>${error.message}</div>`;
+    }
+}
+
+function generateTokenForRequest(userId) {
+    const header = btoa(JSON.stringify({ typ: 'JWT', alg: 'HS256' }));
+    const payload = btoa(JSON.stringify({
+        userId: parseInt(userId),
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 3600
+    }));
+    const signature = btoa(`${header}.${payload}`);
+    return `${header}.${payload}.${signature}`;
+}
+
+// Webhook Simulator
+function updateWebhookData() {
+    const event = document.getElementById('webhookEvent').value;
+    const examples = {
+        'qr_generated': JSON.stringify({ qr: 'data:image/png;base64,...' }, null, 2),
+        'connected': JSON.stringify({ phoneNumber: '34612345678', pushname: 'Test User' }, null, 2),
+        'disconnected': JSON.stringify({ reason: 'logout' }, null, 2),
+        'auth_failure': JSON.stringify({ error: 'Authentication failed' }, null, 2),
+        'message_received': JSON.stringify({ from: '34612345678@c.us', body: 'Test', timestamp: Date.now() }, null, 2),
+        'message_sent': JSON.stringify({ to: '34612345678@c.us', messageId: 'test_123' }, null, 2)
+    };
+    document.getElementById('webhookData').value = examples[event] || '{}';
+}
+
+async function sendWebhook() {
+    const userId = document.getElementById('webhookUserId').value;
+    const event = document.getElementById('webhookEvent').value;
+    let data;
+    
+    try {
+        data = JSON.parse(document.getElementById('webhookData').value);
+    } catch (e) {
+        alert('JSON inválido');
+        return;
+    }
+    
+    const payload = {
+        userId: parseInt(userId),
+        event: event,
+        data: data,
+        timestamp: new Date().toISOString()
+    };
+    
+    try {
+        const response = await fetch(`${config.webappUrl}/api/whatsapp-webhook`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Webhook-Secret': config.webhookSecret
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        document.getElementById('webhookResponse').innerHTML = `<pre class="text-xs">${JSON.stringify(result, null, 2)}</pre>`;
+        
+    } catch (error) {
+        document.getElementById('webhookResponse').innerHTML = `<div class="text-red-600 text-sm"><i class="ri-error-warning-line mr-2"></i>${error.message}</div>`;
+    }
+}
+
+// Clients Monitor
+function testUserConnection(userId) {
+    document.getElementById('apiUserId').value = userId;
+    document.getElementById('apiEndpoint').value = '/api/status';
+    document.querySelector('[data-tab="debug"]').click();
+    setTimeout(() => testApiEndpoint(), 300);
+}
+
+// Gráfico de volumen
+const volumenCtx = document.getElementById('volumenChart')?.getContext('2d');
+if (volumenCtx) {
+    const fechas = [<?php foreach ($volumen_7 as $v): ?>'<?php echo date('d/m', strtotime($v['fecha'])); ?>',<?php endforeach; ?>];
+    const enviados = [<?php foreach ($volumen_7 as $v): ?><?php echo $v['enviados'] ?? 0; ?>,<?php endforeach; ?>];
+    const recibidos = [<?php foreach ($volumen_7 as $v): ?><?php echo $v['recibidos'] ?? 0; ?>,<?php endforeach; ?>];
+    
+    new Chart(volumenCtx, {
+        type: 'line',
+        data: {
+            labels: fechas,
+            datasets: [
+                {
+                    label: 'Enviados',
+                    data: enviados,
+                    borderColor: '#25d366',
+                    backgroundColor: 'rgba(37, 211, 102, 0.1)',
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: 'Recibidos',
+                    data: recibidos,
+                    borderColor: '#128c7e',
+                    backgroundColor: 'rgba(18, 140, 126, 0.1)',
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            scales: {
+                y: { beginAtZero: true },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    checkServerHealth();
+    updateApiBody();
+    updateWebhookData();
+    setInterval(checkServerHealth, 30000);
+});
+</script>
 
 <style>
 .admin-container {
@@ -271,11 +736,63 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
     margin-bottom: 2rem;
 }
 
+.tabs-header {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.tab-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.tab-btn.active {
+    background: white;
+    color: #128c7e;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
-    margin-bottom: 2rem;
 }
 
 .metric-card {
@@ -310,7 +827,6 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     padding: 2rem;
-    margin-bottom: 2rem;
 }
 
 .health-status {
@@ -324,26 +840,17 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
     margin-bottom: 1rem;
 }
 
-.health-status.warning {
-    background: #fffff0;
-    border-left-color: #ed8936;
-}
-
 .health-status.danger {
     background: #fff5f5;
     border-left-color: #f56565;
 }
 
-.status-dot {
+.health-status .status-dot {
     width: 12px;
     height: 12px;
     border-radius: 50%;
     background: #48bb78;
     animation: pulse 2s infinite;
-}
-
-.health-status.warning .status-dot {
-    background: #ed8936;
 }
 
 .health-status.danger .status-dot {
@@ -360,7 +867,6 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     padding: 1.5rem;
-    margin-bottom: 2rem;
 }
 
 .card-title {
@@ -410,7 +916,6 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
 .badge.connecting { background: #feebc8; color: #7c2d12; }
 .badge.disconnected { background: #fed7d7; color: #742a2a; }
 .badge.waiting_qr { background: #bee3f8; color: #2c5282; }
-.badge.error { background: #fed7d7; color: #742a2a; }
 
 .stat-row {
     display: flex;
@@ -453,4 +958,117 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
 }
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-secondary-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon:hover {
+    background: #e2e8f0;
+}
+
+.response-box,
+.token-display {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    min-height: 100px;
+    overflow: auto;
+}
+
+.overflow-x-auto {
+    overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 1rem;
+    }
+    
+    .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
 </style>
+
+<?php include PROJECT_ROOT . '/includes/footerAdmin.php'; ?>

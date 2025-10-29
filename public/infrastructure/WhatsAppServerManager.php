@@ -14,7 +14,14 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
         $this->jwtSecret = $jwtSecret;
     }
     
-    public function conectar(int $usuarioId): array {
+    /**
+     * Conecta con el servidor WhatsApp
+     * 
+     * @param int $usuarioId ID del usuario
+     * @param string|null $phoneNumber Número de teléfono a conectar (opcional)
+     * @return array Respuesta con estado de conexión
+     */
+    public function conectar(int $usuarioId, ?string $phoneNumber = null): array {
         // Verificar estado actual
         $statusResponse = $this->llamarAPI('/api/status', 'GET', null, $usuarioId);
         
@@ -34,8 +41,16 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
             ];
         }
         
+        // Preparar datos para iniciar nueva conexión
+        $requestData = ['userId' => $usuarioId];
+        
+        // Agregar el número de teléfono si está disponible
+        if ($phoneNumber) {
+            $requestData['phoneNumber'] = $this->formatearTelefono($phoneNumber);
+        }
+        
         // Iniciar nueva conexión
-        $connectResponse = $this->llamarAPI('/api/connect', 'POST', ['userId' => $usuarioId], $usuarioId);
+        $connectResponse = $this->llamarAPI('/api/connect', 'POST', $requestData, $usuarioId);
         
         if (!$connectResponse['success']) {
             throw new \RuntimeException($connectResponse['error'] ?? 'Error conectando al servidor WhatsApp');
@@ -43,7 +58,8 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
         
         return [
             'success' => true,
-            'status' => 'connecting'
+            'status' => 'connecting',
+            'phoneNumber' => $phoneNumber // Retornar el número que se intenta conectar
         ];
     }
     
@@ -125,7 +141,7 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
     private function llamarAPI(string $endpoint, string $method, ?array $data, int $usuarioId): array {
         $url = $this->serverUrl . $endpoint;
         $token = $this->generarJWT($usuarioId);
-        
+         
         $headers = [
             'Content-Type: application/json',
             'Authorization: Bearer ' . $token
@@ -153,7 +169,7 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new \RuntimeException('Respuesta inválida del servidor WhatsApp');
         }
-        
+
         return $response;
     }
     
@@ -175,11 +191,16 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
     }
     
     /**
-     * Formatea número de teléfono
+     * Formatea número de teléfono para WhatsApp
+     * 
+     * @param string $telefono Número de teléfono a formatear
+     * @return string Número formateado
      */
     private function formatearTelefono(string $telefono): string {
+        // Eliminar todos los caracteres no numéricos
         $clean = preg_replace('/[^\d]/', '', $telefono);
         
+        // Si empieza con 00, remover
         if (substr($clean, 0, 2) === '00') {
             $clean = substr($clean, 2);
         }
