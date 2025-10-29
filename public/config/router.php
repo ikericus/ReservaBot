@@ -50,6 +50,7 @@ class Router {
         $this->addRoute('GET',      '/admin/reservas',                  'pages/admin/reservas.php',             ['auth', 'admin']);
         $this->addRoute('GET',      '/admin/whatsapp',                  'pages/admin/whatsapp.php',             ['auth', 'admin']);
         $this->addRoute('GET',      '/admin/logs',                      'pages/admin/logs.php',                 ['auth', 'admin']);
+        $this->addRoute('GET',      '/api/admin/whatsapp-debug',        'api/admin/whatsapp-debug.php',         ['auth', 'admin']);
         
 
         $this->addRoute('GET',      '/test',                            'pages/test.php',             ['auth']);   
@@ -69,6 +70,8 @@ class Router {
         $this->addRoute('GET',      '/perfil',                          'pages/user/perfil.php',                ['auth']);  
         $this->addRoute('GET',      '/whatsapp',                        'pages/whatsapp/whatsapp.php',          ['auth']);          
         $this->addRoute('GET',      '/conversaciones',                  'pages/whatsapp/conversaciones.php',    ['auth']);  
+
+        // API protegida        
         $this->addRoute('POST',     '/api/crear-reserva',               'api/crear-reserva.php',                ['auth']);
         $this->addRoute('POST',     '/api/actualizar-reserva',          'api/actualizar-reserva.php',           ['auth']);        
         $this->addRoute('POST',     '/api/crear-reserva-publica',       'api/crear-reserva-publica.php',        ['auth']);

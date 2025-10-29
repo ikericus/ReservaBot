@@ -445,13 +445,6 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
-const config = {
-    serverUrl: '<?php echo $serverUrl; ?>',
-    jwtSecret: '<?php echo $jwtSecret; ?>',
-    webhookSecret: '<?php echo $webhookSecret; ?>',
-    webappUrl: window.location.origin
-};
-
 // Sistema de tabs
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -465,16 +458,16 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
-// Health check del servidor
+// Health check del servidor (vía PHP backend)
 async function checkServerHealth() {
     try {
-        const startTime = Date.now();
-        const response = await fetch(`${config.serverUrl}/health`);
-        const responseTime = Date.now() - startTime;
+        const response = await fetch('/api/admin/whatsapp-debug?action=health');
         const data = await response.json();
         
-        if (response.ok) {
-            document.getElementById('serverStatus').innerHTML = `<span class="text-green-400">●</span> Online (${responseTime}ms)`;
+        if (data.success && data.health.online) {
+            const health = data.health;
+            
+            document.getElementById('serverStatus').innerHTML = `<span class="text-green-400">●</span> Online (${health.responseTime}ms)`;
             
             const healthStatus = document.getElementById('mainHealthStatus');
             healthStatus.className = 'health-status';
@@ -486,11 +479,11 @@ async function checkServerHealth() {
                 </div>
             `;
             
-            document.getElementById('serverUptime').textContent = formatUptime(data.uptime);
-            document.getElementById('activeClients').textContent = data.activeClients || 0;
-            document.getElementById('responseTime').textContent = `${responseTime}ms`;
+            document.getElementById('serverUptime').textContent = formatUptime(health.data?.uptime || 0);
+            document.getElementById('activeClients').textContent = health.data?.activeClients || 0;
+            document.getElementById('responseTime').textContent = `${health.responseTime}ms`;
         } else {
-            throw new Error('Servidor no responde');
+            throw new Error(data.health?.error || 'Servidor no responde');
         }
     } catch (error) {
         document.getElementById('serverStatus').innerHTML = `<span class="text-red-400">●</span> Offline`;
@@ -515,8 +508,8 @@ function formatUptime(seconds) {
     return `${hours}h ${minutes}m`;
 }
 
-// JWT Generator
-function generateJWT() {
+// JWT Generator (vía PHP backend)
+async function generateJWT() {
     const userId = document.getElementById('jwtUserId').value;
     const expiry = document.getElementById('jwtExpiry').value || 3600;
     
@@ -525,18 +518,24 @@ function generateJWT() {
         return;
     }
     
-    const header = btoa(JSON.stringify({ typ: 'JWT', alg: 'HS256' }));
-    const payload = btoa(JSON.stringify({
-        userId: parseInt(userId),
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + parseInt(expiry)
-    }));
-    
-    const signature = btoa(`${header}.${payload}`);
-    const token = `${header}.${payload}.${signature}`;
-    
-    document.getElementById('jwtTokenDisplay').innerHTML = `<div class="font-mono text-xs break-all p-3">${token}</div>`;
-    document.getElementById('copyJwtBtn').style.display = 'block';
+    try {
+        const response = await fetch('/api/admin/whatsapp-debug', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `action=generate-jwt&userId=${userId}&expiry=${expiry}`
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('jwtTokenDisplay').innerHTML = `<div class="font-mono text-xs break-all p-3">${data.token}</div>`;
+            document.getElementById('copyJwtBtn').style.display = 'block';
+        } else {
+            throw new Error(data.error);
+        }
+    } catch (error) {
+        alert('Error generando token: ' + error.message);
+    }
 }
 
 function copyJWT() {
@@ -572,90 +571,110 @@ async function testApiEndpoint() {
     const userId = document.getElementById('apiUserId').value;
     const endpoint = document.getElementById('apiEndpoint').value;
     const method = endpoint.includes('POST') ? 'POST' : 'GET';
+    const bodyText = document.getElementById('apiBody').value;
+    
+    if (!userId && !endpoint.includes('/health')) {
+        alert('User ID requerido');
+        return;
+    }
     
     try {
-        const token = generateTokenForRequest(userId);
-        const url = `${config.serverUrl}${endpoint}`;
-        
-        const options = {
-            method: method,
-            headers: { 'Content-Type': 'application/json' }
-        };
-        
-        if (!endpoint.includes('/health')) {
-            options.headers['Authorization'] = `Bearer ${token}`;
+        const formData = new URLSearchParams();
+        formData.append('action', 'test-api');
+        formData.append('userId', userId);
+        formData.append('endpoint', endpoint);
+        formData.append('method', method);
+        if (method === 'POST' && bodyText) {
+            formData.append('body', bodyText);
         }
         
-        if (method === 'POST') {
-            options.body = document.getElementById('apiBody').value;
-        }
+        const response = await fetch('/api/admin/whatsapp-debug', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData
+        });
         
-        const response = await fetch(url, options);
         const data = await response.json();
         
-        document.getElementById('apiResponse').innerHTML = `<pre class="text-xs">${JSON.stringify(data, null, 2)}</pre>`;
-        
+        if (data.success) {
+            const result = data.result;
+            
+            document.getElementById('apiResponse').innerHTML = `
+                <div class="mb-2 text-sm">
+                    <span class="font-semibold">Status:</span> 
+                    <span class="badge ${result.success ? 'connected' : 'disconnected'}">${result.statusCode}</span>
+                    <span class="ml-3 font-semibold">Tiempo:</span> ${result.responseTime}ms
+                </div>
+                <pre class="text-xs">${JSON.stringify(result.body, null, 2)}</pre>
+            `;
+        } else {
+            throw new Error(data.error);
+        }
     } catch (error) {
         document.getElementById('apiResponse').innerHTML = `<div class="text-red-600 text-sm"><i class="ri-error-warning-line mr-2"></i>${error.message}</div>`;
     }
 }
 
-function generateTokenForRequest(userId) {
-    const header = btoa(JSON.stringify({ typ: 'JWT', alg: 'HS256' }));
-    const payload = btoa(JSON.stringify({
-        userId: parseInt(userId),
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 3600
-    }));
-    const signature = btoa(`${header}.${payload}`);
-    return `${header}.${payload}.${signature}`;
-}
+// Ya no necesitamos esta función
+// function generateTokenForRequest(userId) { ... }
 
-// Webhook Simulator
-function updateWebhookData() {
+// Webhook Simulator (vía PHP backend)
+async function updateWebhookData() {
     const event = document.getElementById('webhookEvent').value;
-    const examples = {
-        'qr_generated': JSON.stringify({ qr: 'data:image/png;base64,...' }, null, 2),
-        'connected': JSON.stringify({ phoneNumber: '34612345678', pushname: 'Test User' }, null, 2),
-        'disconnected': JSON.stringify({ reason: 'logout' }, null, 2),
-        'auth_failure': JSON.stringify({ error: 'Authentication failed' }, null, 2),
-        'message_received': JSON.stringify({ from: '34612345678@c.us', body: 'Test', timestamp: Date.now() }, null, 2),
-        'message_sent': JSON.stringify({ to: '34612345678@c.us', messageId: 'test_123' }, null, 2)
-    };
-    document.getElementById('webhookData').value = examples[event] || '{}';
+    
+    try {
+        const response = await fetch(`/api/admin/whatsapp-debug?action=webhook-example&event=${event}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('webhookData').value = JSON.stringify(data.data, null, 2);
+        }
+    } catch (error) {
+        console.error('Error obteniendo ejemplo:', error);
+    }
 }
 
 async function sendWebhook() {
     const userId = document.getElementById('webhookUserId').value;
     const event = document.getElementById('webhookEvent').value;
-    let data;
+    const dataText = document.getElementById('webhookData').value;
+    
+    if (!userId) {
+        alert('User ID requerido');
+        return;
+    }
     
     try {
-        data = JSON.parse(document.getElementById('webhookData').value);
+        // Validar JSON
+        JSON.parse(dataText);
     } catch (e) {
         alert('JSON inválido');
         return;
     }
     
-    const payload = {
-        userId: parseInt(userId),
-        event: event,
-        data: data,
-        timestamp: new Date().toISOString()
-    };
-    
     try {
-        const response = await fetch(`${config.webappUrl}/api/whatsapp-webhook`, {
+        const formData = new URLSearchParams();
+        formData.append('action', 'simulate-webhook');
+        formData.append('userId', userId);
+        formData.append('event', event);
+        formData.append('data', dataText);
+        
+        const response = await fetch('/api/admin/whatsapp-debug', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Webhook-Secret': config.webhookSecret
-            },
-            body: JSON.stringify(payload)
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData
         });
         
-        const result = await response.json();
-        document.getElementById('webhookResponse').innerHTML = `<pre class="text-xs">${JSON.stringify(result, null, 2)}</pre>`;
+        const data = await response.json();
+        
+        document.getElementById('webhookResponse').innerHTML = `
+            <div class="mb-2 text-sm">
+                <span class="font-semibold">Status:</span> 
+                <span class="badge ${data.success ? 'connected' : 'disconnected'}">${data.statusCode || 'Error'}</span>
+                <span class="ml-3 font-semibold">Tiempo:</span> ${data.responseTime || 0}ms
+            </div>
+            <pre class="text-xs">${JSON.stringify(data.response, null, 2)}</pre>
+        `;
         
     } catch (error) {
         document.getElementById('webhookResponse').innerHTML = `<div class="text-red-600 text-sm"><i class="ri-error-warning-line mr-2"></i>${error.message}</div>`;
