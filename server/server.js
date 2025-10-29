@@ -403,7 +403,7 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
             message: 'Usuario desconectado (con errores)'
         });
     }
-});
+}); 
 
 // Estado del usuario
 app.get('/api/status', authenticateJWT, (req, res) => {
