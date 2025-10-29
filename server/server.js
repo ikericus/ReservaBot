@@ -104,7 +104,7 @@ const authenticateJWT = (req, res, next) => {
         next();
     });
 };
-
+ 
 // Función para crear cliente WhatsApp
 function createWhatsAppClient(userId) {
     const clientId = `client_${userId}`;
