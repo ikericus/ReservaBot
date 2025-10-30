@@ -3,14 +3,6 @@
 
 header('Content-Type: application/json');
 
-// Solo admins pueden acceder
-$user = getAuthenticatedUser();
-if (!$user || !esAdmin($user['id'])) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'Acceso denegado']);
-    exit;
-}
-
 $action = $_GET['action'] ?? '';
 $userId = (int)($_GET['userId'] ?? 0);
 
