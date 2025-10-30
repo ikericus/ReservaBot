@@ -15,7 +15,7 @@ $userId = $user['id'];
 try {
     $whatsappDomain = getContainer()->getWhatsAppDomain();
     
-    $resultado = $whatsappDomain->obtenerEstadoServidor($userId);
+    $resultado = $whatsappDomain->obtenerEstadoWhatsApp($userId);
     
     echo json_encode($resultado);
     
