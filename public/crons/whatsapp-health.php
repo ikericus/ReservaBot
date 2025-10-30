@@ -35,3 +35,5 @@ catch (\Exception $e)
     error_log("Error en el cron: " . $e->getMessage());
     exit(1);
 }
+
+?>
