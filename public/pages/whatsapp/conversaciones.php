@@ -1,7 +1,6 @@
 <?php
 // pages/whatsapp/conversaciones.php
 
-
 // Configurar la página actual
 $currentPage = 'conversaciones';
 $pageTitle = 'ReservaBot - Conversaciones WhatsApp';
@@ -27,7 +26,7 @@ try {
     setFlashError('Error al verificar estado de WhatsApp');
 }
 
-// Incluir la cabecera - RUTA CORREGIDA
+// Incluir la cabecera
 include dirname(__DIR__) . '/includes/header.php';
 ?>
 
@@ -291,21 +290,19 @@ include dirname(__DIR__) . '/includes/header.php';
     gap: 0.5rem;
 }
 
-/* Responsive - CORREGIDO */
+/* Responsive */
 @media (max-width: 768px) {
     .conversations-container {
         height: calc(100vh - 140px);
         flex-direction: column;
     }
     
-    /* En móvil, mostrar solo la lista por defecto */
     .conversations-sidebar {
         width: 100%;
         border-right: none;
         border-bottom: 1px solid #e5e7eb;
     }
     
-    /* Área de chat oculta por defecto en móvil */
     .chat-area {
         display: none;
         position: fixed;
@@ -317,12 +314,10 @@ include dirname(__DIR__) . '/includes/header.php';
         background: white;
     }
     
-    /* Cuando se muestra el chat en móvil */
     .chat-area.mobile-active {
         display: flex;
     }
     
-    /* Ocultar sidebar cuando se muestra chat */
     .conversations-sidebar.mobile-hidden {
         display: none;
     }
@@ -350,47 +345,30 @@ include dirname(__DIR__) . '/includes/header.php';
     }
 }
 
-/* Mejor scroll */
-.conversations-sidebar {
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
-}
-
-.conversations-sidebar::-webkit-scrollbar {
-    width: 6px;
-}
-
-.conversations-sidebar::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.conversations-sidebar::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
-    border-radius: 3px;
-}
-
-.conversations-sidebar::-webkit-scrollbar-thumb:hover {
-    background-color: #94a3b8;
-}
-
+/* Scroll personalizado */
+.conversations-sidebar,
 .messages-container {
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
 }
 
+.conversations-sidebar::-webkit-scrollbar,
 .messages-container::-webkit-scrollbar {
     width: 6px;
 }
 
+.conversations-sidebar::-webkit-scrollbar-track,
 .messages-container::-webkit-scrollbar-track {
     background: transparent;
 }
 
+.conversations-sidebar::-webkit-scrollbar-thumb,
 .messages-container::-webkit-scrollbar-thumb {
     background-color: #cbd5e1;
     border-radius: 3px;
 }
 
+.conversations-sidebar::-webkit-scrollbar-thumb:hover,
 .messages-container::-webkit-scrollbar-thumb:hover {
     background-color: #94a3b8;
 }
@@ -413,22 +391,13 @@ include dirname(__DIR__) . '/includes/header.php';
         <p class="text-gray-600 mt-1">Gestiona todas tus conversaciones de WhatsApp</p>
     </div>
     
-    <!-- Estado de conexión -->
-    <!-- <div class="flex items-center space-x-4">
-        
-        <div class="connection-status <?php echo $whatsappConnected ? 'connected' : 'disconnected'; ?>">
-            <i class="ri-whatsapp-line mr-2"></i>
-            <?php if ($whatsappConnected): ?>
-                WhatsApp Conectado
-                <?php if ($phoneNumber): ?>
-                    <span class="hidden sm:inline">(<?php echo htmlspecialchars($phoneNumber); ?>)</span>
-                <?php endif; ?>
-            <?php else: ?>
-                WhatsApp Desconectado
-                <a href="/whatsapp" class="ml-2 underline hover:no-underline">Conectar</a>
-            <?php endif; ?>
-        </div>
-    </div> -->
+    <?php if ($whatsappConnected && $phoneNumber): ?>
+    <div class="connection-status connected">
+        <i class="ri-whatsapp-line mr-2"></i>
+        Conectado
+        <span class="hidden sm:inline ml-2">(<?php echo htmlspecialchars($phoneNumber); ?>)</span>
+    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Contenedor principal de conversaciones -->
@@ -1231,6 +1200,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php 
-// Incluir el pie de página - RUTA CORREGIDA
+// Incluir el pie de página
 include dirname(__DIR__) . '/includes/footer.php'; 
 ?>
