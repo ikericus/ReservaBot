@@ -287,7 +287,7 @@ class EmailTemplates {
 
     public function alertaServidorCaido(): array
     {
-        $asunto = "⚠️ Alerta: Servidor WhatsApp no saludable en {$this->appName}";
+        $asunto = "Alerta: Servidor WhatsApp no saludable en {$this->appName}";
 
         $estado = 'desconocido';
         $timestamp = date('Y-m-d H:i:s');
