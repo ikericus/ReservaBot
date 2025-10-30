@@ -107,7 +107,12 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
                 <h2 class="text-xl font-bold text-gray-900 mb-4">
                     <i class="ri-server-line mr-2"></i>Detalles del Servidor
                 </h2>
-                
+
+                <div class="stat-row">
+                    <span class="stat-label">IP web Hostinger</span>
+                    <span class="stat-value text-xs font-mono"><?php echo htmlspecialchars($_SERVER['SERVER_ADDR']); ?></span>
+                </div>
+
                 <div class="stat-row">
                     <span class="stat-label">URL</span>
                     <span class="stat-value text-xs font-mono"><?php echo htmlspecialchars($serverUrl); ?></span>
