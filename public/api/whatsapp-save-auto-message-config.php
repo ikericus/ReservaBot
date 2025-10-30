@@ -55,9 +55,9 @@ try {
         'success' => true,
         'message' => 'Configuración guardada correctamente',
         'config' => [
-            'confirmacion' => $config->getMensajesAutomaticosConfirmacion(),
-            'recordatorio' => $config->getMensajesAutomaticosRecordatorio(),
-            'bienvenida' => $config->getMensajesAutomaticosBienvenida()
+            'confirmacion' => $config->getAutoConfirmacion(),
+            'recordatorio' => $config->getAutoRecordatorio(),
+            'bienvenida' => $config->getAutoBienvenida()
         ]
     ]);
     
