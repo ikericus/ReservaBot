@@ -26,7 +26,7 @@ try
         $enviado = $emailRepository->enviar(
             $emailAdmin,
             '⚠️ Alerta: WhatsApp Server está caído',
-            "Se detectó un problema en el servidor WhatsApp:\n\n" . json_encode($healthData, JSON_PRETTY_PRINT) . "\n\nHora del cron: " . date('Y-m-d H:i:s'););
+            "Se detectó un problema en el servidor WhatsApp:\n\n" . json_encode($healthData, JSON_PRETTY_PRINT) . "\n\nHora del cron: " . date('Y-m-d H:i:s'));
 
         if (!$enviado) {
             error_log('Error: No se pudo enviar el correo de alerta usando EmailRepository.');
