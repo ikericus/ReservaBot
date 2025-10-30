@@ -26,8 +26,7 @@ try {
     setFlashError('Error al verificar estado de WhatsApp');
 }
 
-// Incluir la cabecera
-include dirname(__DIR__) . '/includes/header.php';
+include 'includes/header.php';
 ?>
 
 <style>
@@ -1199,7 +1198,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php 
-// Incluir el pie de página
-include dirname(__DIR__) . '/includes/footer.php'; 
-?>
+<?php include 'includes/footer.php'; ?>
