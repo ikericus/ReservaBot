@@ -88,6 +88,7 @@ class EmailTemplates {
         ];
     }
     
+    
     /**
      * Template: Reset de contraseña
      */
@@ -283,4 +284,48 @@ class EmailTemplates {
             'cuerpo_html' => $this->wrapHtml('Nuevo Contacto', $contenidoHtml)
         ];
     }
+
+    public function alertaServidorCaido(array $healthData): array
+    {
+        $asunto = "⚠️ Alerta: Servidor WhatsApp no saludable en {$this->appName}";
+
+        $estado = htmlspecialchars($healthData['status'] ?? 'desconocido');
+        $clientesActivos = $healthData['activeClients'] ?? 'N/A';
+        $totalClientes = $healthData['totalClients'] ?? 'N/A';
+        $pendientes = $healthData['pendingConnections'] ?? 'N/A';
+        $timestamp = $healthData['timestamp'] ?? date('Y-m-d H:i:s');
+
+        $contenidoHtml = "
+            <h2 style='color: #b91c1c; margin-top: 0;'>⚠️ Servidor no saludable</h2>
+            <p>Se ha detectado un problema con el servicio de WhatsApp en <strong>{$this->appName}</strong>.</p>
+            <table style='border-collapse: collapse; width: 100%; margin-top: 10px;'>
+                <tr><td style='padding: 6px; border: 1px solid #ddd;'>Estado</td><td style='padding: 6px; border: 1px solid #ddd;'>{$estado}</td></tr>
+                <tr><td style='padding: 6px; border: 1px solid #ddd;'>Clientes activos</td><td style='padding: 6px; border: 1px solid #ddd;'>{$clientesActivos}</td></tr>
+                <tr><td style='padding: 6px; border: 1px solid #ddd;'>Total clientes</td><td style='padding: 6px; border: 1px solid #ddd;'>{$totalClientes}</td></tr>
+                <tr><td style='padding: 6px; border: 1px solid #ddd;'>Conexiones pendientes</td><td style='padding: 6px; border: 1px solid #ddd;'>{$pendientes}</td></tr>
+                <tr><td style='padding: 6px; border: 1px solid #ddd;'>Último reporte</td><td style='padding: 6px; border: 1px solid #ddd;'>{$timestamp}</td></tr>
+            </table>
+            <p style='margin-top: 16px;'>Por favor, revisa el estado del servidor lo antes posible.</p>
+            " . $this->generarBoton($this->baseUrl . '/panel/whatsapp', 'Ver estado del servidor', '#ef4444') . "
+            <p style='color: #6b7280; font-size: 14px;'>
+                Este mensaje fue generado automáticamente por el monitor de {$this->appName}.
+            </p>";
+
+        $contenidoTexto  = "⚠️ Servidor no saludable en {$this->appName}\n\n";
+        $contenidoTexto .= "Estado: {$estado}\n";
+        $contenidoTexto .= "Clientes activos: {$clientesActivos}\n";
+        $contenidoTexto .= "Total clientes: {$totalClientes}\n";
+        $contenidoTexto .= "Conexiones pendientes: {$pendientes}\n";
+        $contenidoTexto .= "Último reporte: {$timestamp}\n\n";
+        $contenidoTexto .= "Por favor, revisa el estado del servidor lo antes posible:\n";
+        $contenidoTexto .= "{$this->baseUrl}/panel/whatsapp\n\n";
+        $contenidoTexto .= "Mensaje automático del monitor de {$this->appName}.\n";
+
+        return [
+            'asunto' => $asunto,
+            'cuerpo_texto' => $contenidoTexto,
+            'cuerpo_html' => $this->wrapHtml('Servidor no saludable', $contenidoHtml)
+        ];
+    }
+
 }

@@ -9,23 +9,36 @@ try
     require_once PROJECT_ROOT . '/config/bootstrap.php';
 
     $serverManager = getContainer()->getWhatsAppServerManager();
-    $health = $serverManager->verificarSalud();
+    $healthData = $serverManager->verificarSalud();
     
-    echo "Estado: " . $health['status'] . "\n";
+    echo "Estado: " . $healthData['status'] . "\n";
 
     // Si el estado no es "healthy", enviamos un correo de alerta
-    if ($health['status'] !== 'healthy') {
+    if ($healthData['status'] !== 'healthy') {
         echo "Enviando correo de alerta...\n";
         $emailRepository = getContainer()->getEmailRepository();
         
         // Email de destino
         $emailAdmin = $_ENV['ADMIN_EMAIL'];
             
+        $emailTemplates = new \ReservaBot\Domain\Email\EmailTemplates();    
+        // Generar contenido del email
+        $emailData = $emailTemplates->alertaServidorCaido($healthData);
+
+        // Opciones: responder al email del cliente
+        $opciones = [
+            'reply_to' => $emailAdmin,
+            'reply_to_name' => 'Administrador ReservaBot'
+        ];        
+
         // Enviar 
         $enviado = $emailRepository->enviar(
             $emailAdmin,
-            '⚠️ Alerta: WhatsApp Server está caído',
-            "Se detectó un problema en el servidor WhatsApp:\n\n" . json_encode($healthData, JSON_PRETTY_PRINT) . "\n\nHora del cron: " . date('Y-m-d H:i:s'));
+            $emailData['asunto'],
+            $emailData['cuerpo_texto'],
+            $emailData['cuerpo_html'],
+            $opciones
+        );
 
         if (!$enviado) {
             error_log('Error: No se pudo enviar el correo de alerta usando EmailRepository.');
