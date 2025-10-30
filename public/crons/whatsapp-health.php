@@ -6,13 +6,13 @@ try
     // Definir raíz del proyecto (public/)
     define('PROJECT_ROOT', dirname(__DIR__));
 
-    echo PROJECT_ROOT . "\n";
     require_once PROJECT_ROOT . '/config/bootstrap.php';
-    echo "Bootstrap cargado\n";
+
     $serverManager = getContainer()->getWhatsAppServerManager();
     $health = $serverManager->verificarSalud();
-    echo "Salud verificada\n";
     
+    echo "Estado: " . $health['status'] . "\n";
+
     // Si el estado no es "healthy", enviamos un correo de alerta
     if ($health['status'] !== 'healthy') {
         echo "Enviando correo de alerta...\n";
