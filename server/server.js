@@ -230,6 +230,14 @@ function createWhatsAppClient(userId) {
         }
     });
 
+    client.on('message_ack', async (message, ack) => {
+        
+        logger.info(`Mensaje ack para usuario ${userId}: ${message.id._serialized}, ack: ${ack}`);
+                
+        notifyWebApp(userId, 'message_ack', { ack: ack, messageId: message.id._serialized});
+    });
+
+
     return client;
 }
 
