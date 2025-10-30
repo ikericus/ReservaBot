@@ -54,6 +54,9 @@ class WhatsAppWebhookHandler {
             case 'message_sent':
                 return $this->handleMessageSent($userId, $eventData);
                 
+            case 'message_ack':
+                return $this->handleMessageAck($userId, $eventData);
+                
             default:
                 error_log("Evento webhook desconocido: {$event}");
                 return ['processed' => false, 'reason' => 'Evento desconocido'];
@@ -109,10 +112,7 @@ class WhatsAppWebhookHandler {
     private function handleAuthFailure(int $userId, array $data): array {
         $error = $data['error'] ?? 'Authentication failed';
         
-        // Marcar estado de error en configuración
-        $config = $this->whatsappDomain->obtenerConfiguracion($userId);
-        // Aquí podrías agregar un método en WhatsAppConfig para marcar error
-        // Por ahora, desconectar
+        // Desconectar
         $this->whatsappDomain->desconectar($userId);
         
         error_log("Fallo de autenticación para usuario {$userId}: {$error}");
@@ -122,10 +122,12 @@ class WhatsAppWebhookHandler {
     
     /**
      * Mensaje recibido
+     * ⭐ MODIFICADO: Usa registrarMensajeEntrante
      */
     private function handleMessageReceived(int $userId, array $data): array {
         $from = $data['from'] ?? '';
         $body = $data['body'] ?? '';
+        $messageId = $data['messageId'] ?? $data['id'] ?? uniqid('msg_');
         
         if (empty($from)) {
             error_log("Mensaje recibido sin remitente para usuario {$userId}");
@@ -135,32 +137,119 @@ class WhatsAppWebhookHandler {
         // Extraer número de teléfono limpio
         $phoneNumber = $this->extractPhoneNumber($from);
         
-        // Registrar mensaje en conversación
-        $this->whatsappDomain->registrarMensaje(
+        // Información adicional
+        $isGroup = $data['isGroup'] ?? false;
+        $hasMedia = $data['hasMedia'] ?? false;
+        
+        // ⭐ CAMBIO IMPORTANTE: Registrar mensaje usando el nuevo método
+        $mensaje = $this->whatsappDomain->registrarMensajeEntrante(
             $userId,
-            $from, // whatsappId completo
+            $messageId,
             $phoneNumber,
-            $body
+            $body,
+            $isGroup,
+            $hasMedia
         );
         
         // Actualizar actividad
         $this->whatsappDomain->actualizarActividad($userId);
         
-        error_log("Mensaje recibido de {$phoneNumber} para usuario {$userId}");
+        error_log("Mensaje recibido de {$phoneNumber} para usuario {$userId} (ID: {$messageId})");
         
-        return ['processed' => true, 'event' => 'message_received'];
+        return [
+            'processed' => true, 
+            'event' => 'message_received',
+            'messageId' => $mensaje->getId(),
+            'phone' => $phoneNumber
+        ];
     }
     
     /**
      * Mensaje enviado (confirmación)
+     * ⭐ MODIFICADO: Puede registrar mensaje saliente si no existe
      */
     private function handleMessageSent(int $userId, array $data): array {
+        $to = $data['to'] ?? '';
+        $body = $data['body'] ?? '';
+        $messageId = $data['messageId'] ?? $data['id'] ?? null;
+        
+        if ($messageId && $to) {
+            $phoneNumber = $this->extractPhoneNumber($to);
+            $hasMedia = $data['hasMedia'] ?? false;
+            
+            // Verificar si el mensaje ya existe (fue registrado al enviar)
+            $mensajeExistente = $this->whatsappDomain->obtenerMensajePorMessageId($messageId, $userId);
+            
+            if (!$mensajeExistente) {
+                // Si no existe, registrarlo ahora
+                $this->whatsappDomain->registrarMensajeSaliente(
+                    $userId,
+                    $messageId,
+                    $phoneNumber,
+                    $body,
+                    $hasMedia
+                );
+                
+                error_log("Mensaje saliente registrado retroactivamente para usuario {$userId} (ID: {$messageId})");
+            } else {
+                // Si existe, actualizar estado a 'sent'
+                $this->whatsappDomain->actualizarEstadoMensaje($messageId, $userId, 'sent');
+                
+                error_log("Estado de mensaje actualizado a 'sent' para usuario {$userId} (ID: {$messageId})");
+            }
+        }
+        
         // Actualizar actividad
         $this->whatsappDomain->actualizarActividad($userId);
         
         error_log("Mensaje enviado por usuario {$userId}");
         
         return ['processed' => true, 'event' => 'message_sent'];
+    }
+    
+    /**
+     * Actualización de estado de mensaje (ACK)
+     * ⭐ NUEVO MÉTODO
+     */
+    private function handleMessageAck(int $userId, array $data): array {
+        $messageId = $data['messageId'] ?? $data['id'] ?? null;
+        $ack = $data['ack'] ?? null;
+        
+        if (!$messageId || $ack === null) {
+            error_log("Message ACK incompleto para usuario {$userId}");
+            return ['processed' => false, 'reason' => 'Datos incompletos'];
+        }
+        
+        // Mapear ACK de WhatsApp a nuestros estados
+        // 0 = ERROR, 1 = PENDING, 2 = SERVER_ACK (sent), 3 = DELIVERY_ACK (delivered), 4 = READ, 5 = PLAYED
+        $statusMap = [
+            0 => 'failed',     // ACK_ERROR
+            1 => 'pending',    // ACK_PENDING
+            2 => 'sent',       // ACK_SERVER
+            3 => 'delivered',  // ACK_DEVICE
+            4 => 'read',       // ACK_READ
+            5 => 'read'        // ACK_PLAYED (para mensajes de voz)
+        ];
+        
+        $newStatus = $statusMap[$ack] ?? 'pending';
+        
+        // Actualizar estado del mensaje
+        $updated = $this->whatsappDomain->actualizarEstadoMensaje($messageId, $userId, $newStatus);
+        
+        if ($updated) {
+            error_log("Estado de mensaje {$messageId} actualizado a '{$newStatus}' (ACK: {$ack}) para usuario {$userId}");
+        } else {
+            error_log("No se pudo actualizar estado de mensaje {$messageId} para usuario {$userId}");
+        }
+        
+        return [
+            'processed' => true, 
+            'event' => 'message_ack',
+            'messageId' => $messageId,
+            'status' => $newStatus,
+            'ack' => $ack,
+            'updated' => $updated
+        ];
     }
     
     /**

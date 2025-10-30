@@ -26,11 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($data['action']) && $data['action'] === 'mark_as_read' && isset($data['phone_number'])) {
         try {
             $whatsappDomain = getContainer()->getWhatsAppDomain();
-            $whatsappDomain->marcarComoLeida($data['phone_number'], $userId);
+            $result = $whatsappDomain->marcarComoLeida($data['phone_number'], $userId);
             
             echo json_encode([
-                'success' => true,
-                'message' => 'Conversación marcada como leída'
+                'success' => $result,
+                'message' => $result ? 'Conversación marcada como leída' : 'No se pudo marcar como leída'
             ]);
         } catch (\Exception $e) {
             error_log('Error marcando como leída: ' . $e->getMessage());
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// GET: Obtener conversaciones
+// GET: Obtener lista de conversaciones
 $limit = isset($_GET['limit']) ? max(1, min(100, (int)$_GET['limit'])) : 20;
 
 try {
@@ -58,8 +58,41 @@ try {
     $conversaciones = $whatsappDomain->obtenerConversaciones($userId, $limit);
     $noLeidas = $whatsappDomain->contarNoLeidas($userId);
     
-    // Convertir a arrays
-    $conversacionesArray = array_map(fn($c) => $c->toArray(), $conversaciones);
+    // Las conversaciones vienen como arrays con esta estructura:
+    // [
+    //   'phone_number' => '34612345678',
+    //   'ultimo_mensaje' => WhatsAppMessage object,
+    //   'no_leidos' => 5,
+    //   'ultima_actividad' => '2025-10-30 10:30:00'
+    // ]
+    
+    // Transformar para el frontend
+    $conversacionesArray = array_map(function($conv) {
+        $ultimoMsg = $conv['ultimo_mensaje'];
+        $phoneNumber = $conv['phone_number'];
+        
+        // Formatear tiempo
+        $timestamp = new DateTime($conv['ultima_actividad']);
+        $now = new DateTime();
+        $diff = $now->diff($timestamp);
+        
+        if ($diff->days == 0) {
+            $timeStr = $timestamp->format('H:i');
+        } elseif ($diff->days == 1) {
+            $timeStr = 'Ayer';
+        } else {
+            $timeStr = $timestamp->format('d/m/Y');
+        }
+        
+        return [
+            'phone' => $phoneNumber,
+            'name' => 'Contacto ' . substr($phoneNumber, -4), // TODO: Buscar nombre real en tabla de contactos
+            'lastMessage' => $ultimoMsg->getMessageText(),
+            'lastMessageTime' => $timeStr,
+            'unreadCount' => $conv['no_leidos'],
+            'timestamp' => $conv['ultima_actividad']
+        ];
+    }, $conversaciones);
     
     echo json_encode([
         'success' => true,

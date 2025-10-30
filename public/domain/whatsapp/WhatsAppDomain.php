@@ -14,14 +14,14 @@ class WhatsAppDomain {
         $this->whatsappRepository = $whatsappRepository;
         $this->serverManager = $serverManager;
     }
-
+    
+    // ==================== CONFIGURACIÓN ====================
     
     /**
      * Obtiene configuración de WhatsApp
      */
     public function obtenerConfiguracion(int $usuarioId): WhatsAppConfig {
-        try
-        {
+        try {
             debug_log("Obteniendo configuración de WhatsApp para usuario ID: $usuarioId");
             $config = $this->whatsappRepository->obtenerConfiguracion($usuarioId);
             
@@ -32,10 +32,8 @@ class WhatsAppDomain {
             }
             
             debug_log("Configuración obtenida exitosamente para usuario ID: $usuarioId");
-
             return $config;
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             error_log('Error obteniendo configuración de WhatsApp: ' . $e->getMessage());
             throw new \RuntimeException('Error obteniendo configuración de WhatsApp: ' . $e->getMessage());
         }
@@ -101,6 +99,74 @@ class WhatsAppDomain {
         return $this->whatsappRepository->guardarConfiguracion($config);
     }
     
+    // ==================== MENSAJES ====================
+    
+    /**
+     * Registra mensaje entrante
+     */
+    public function registrarMensajeEntrante(
+        int $usuarioId,
+        string $messageId,
+        string $telefono,
+        string $mensaje,
+        bool $isGroup = false,
+        bool $hasMedia = false
+    ): WhatsAppMessage {
+        debug_log("Registrando mensaje entrante - messageId: $messageId, teléfono: $telefono");
+        
+        $whatsappMessage = WhatsAppMessage::crearEntrante(
+            $usuarioId,
+            $messageId,
+            $telefono,
+            $mensaje,
+            $isGroup,
+            $hasMedia
+        );
+        
+        return $this->whatsappRepository->guardarMensaje($whatsappMessage);
+    }
+    
+    /**
+     * Registra mensaje saliente
+     */
+    public function registrarMensajeSaliente(
+        int $usuarioId,
+        string $messageId,
+        string $telefono,
+        string $mensaje,
+        bool $hasMedia = false
+    ): WhatsAppMessage {
+        debug_log("Registrando mensaje saliente - messageId: $messageId, teléfono: $telefono");
+        
+        $whatsappMessage = WhatsAppMessage::crearSaliente(
+            $usuarioId,
+            $messageId,
+            $telefono,
+            $mensaje,
+            $hasMedia
+        );
+        
+        return $this->whatsappRepository->guardarMensaje($whatsappMessage);
+    }
+    
+    /**
+     * Obtiene mensajes de una conversación específica
+     */
+    public function obtenerMensajesConversacion(int $usuarioId, string $phoneNumber, int $limit = 50): array {
+        debug_log("Obteniendo mensajes de conversación para teléfono: $phoneNumber");
+        return $this->whatsappRepository->obtenerMensajesPorTelefono($usuarioId, $phoneNumber, $limit);
+    }
+    
+    /**
+     * Actualiza estado de un mensaje
+     */
+    public function actualizarEstadoMensaje(string $messageId, int $usuarioId, string $estado): bool {
+        debug_log("Actualizando estado de mensaje $messageId a $estado");
+        return $this->whatsappRepository->actualizarEstadoMensaje($messageId, $usuarioId, $estado);
+    }
+    
+    // ==================== CONVERSACIONES ====================
+    
     /**
      * Obtiene conversaciones recientes
      */
@@ -110,46 +176,21 @@ class WhatsAppDomain {
     }
     
     /**
-     * Registra o actualiza conversación
-     */
-    public function registrarMensaje(
-        int $usuarioId,
-        string $whatsappId,
-        string $telefono,
-        string $mensaje,
-        ?string $nombre = null
-    ): Conversacion {
-        debug_log("Registrando mensaje para conversación WhatsApp ID: $whatsappId del usuario ID: $usuarioId");
-        $conversacion = $this->whatsappRepository->obtenerConversacionPorWhatsappId($whatsappId, $usuarioId);
-        
-        if (!$conversacion) {
-            $conversacion = Conversacion::crear($usuarioId, $whatsappId, $nombre, $telefono, $mensaje);
-        } else {
-            $conversacion->actualizarMensaje($mensaje);
-        }
-        
-        return $this->whatsappRepository->guardarConversacion($conversacion);
-    }
-    
-    /**
      * Marca conversación como leída
      */
-    public function marcarComoLeida(string $whatsappId, int $usuarioId): void {
-        debug_log("Marcando conversación WhatsApp ID: $whatsappId como leída para usuario ID: $usuarioId");
-        $conversacion = $this->whatsappRepository->obtenerConversacionPorWhatsappId($whatsappId, $usuarioId);
-        
-        if ($conversacion) {
-            $conversacion->marcarComoLeido();
-            $this->whatsappRepository->guardarConversacion($conversacion);
-        }
+    public function marcarComoLeida(string $phoneNumber, int $usuarioId): bool {
+        debug_log("Marcando conversación con $phoneNumber como leída para usuario ID: $usuarioId");
+        return $this->whatsappRepository->marcarConversacionComoLeida($usuarioId, $phoneNumber);
     }
     
     /**
      * Obtiene contador de no leídas
      */
     public function contarNoLeidas(int $usuarioId): int {
-        return $this->whatsappRepository->contarNoLeidas($usuarioId);
+        return $this->whatsappRepository->contarMensajesNoLeidos($usuarioId);
     }
+    
+    // ==================== ESTADÍSTICAS ====================
     
     /**
      * Obtiene estadísticas
@@ -161,8 +202,9 @@ class WhatsAppDomain {
         return [
             'conectado' => $config->estaConectado(),
             'phone_number' => $config->getPhoneNumber(),
-            'conversaciones_totales' => $stats['total_conversaciones'] ?? 0,
+            'total_mensajes' => $stats['total_mensajes'] ?? 0,
             'mensajes_enviados_hoy' => $stats['mensajes_hoy'] ?? 0,
+            'conversaciones_totales' => $stats['total_conversaciones'] ?? 0,
             'conversaciones_activas' => $stats['conversaciones_activas'] ?? 0,
             'no_leidas' => $this->contarNoLeidas($usuarioId)
         ];
@@ -175,7 +217,9 @@ class WhatsAppDomain {
         $config = $this->obtenerConfiguracion($usuarioId);
         return $config->estaConectado();
     }
-
+    
+    // ==================== SERVIDOR WHATSAPP ====================
+    
     /**
      * Conecta WhatsApp
      */
@@ -234,6 +278,7 @@ class WhatsAppDomain {
         try {
             $serverResponse = $this->serverManager->obtenerEstado($usuarioId);
             debug_log("Respuesta del servidor WhatsApp: " . json_encode($serverResponse));
+            
             // Sincronizar con BD local
             $config = $this->obtenerConfiguracion($usuarioId);
             
@@ -254,7 +299,6 @@ class WhatsAppDomain {
                 default => 'Estado desconocido'
             };
             
-
             return $serverResponse;
             
         } catch (\RuntimeException $e) {
@@ -288,6 +332,18 @@ class WhatsAppDomain {
         try {
             $result = $this->serverManager->enviarMensaje($usuarioId, $telefono, $mensaje, $media);
             
+            // Registrar mensaje en BD si fue exitoso
+            if ($result['success'] ?? false) {
+                $messageId = $result['messageId'] ?? uniqid('msg_');
+                $this->registrarMensajeSaliente(
+                    $usuarioId,
+                    $messageId,
+                    $telefono,
+                    $mensaje,
+                    $media !== null
+                );
+            }
+            
             // Actualizar actividad
             $this->actualizarActividad($usuarioId);
             
@@ -297,4 +353,11 @@ class WhatsAppDomain {
             throw new \DomainException('Error enviando mensaje: ' . $e->getMessage());
         }
     }
+
+    /**
+ * Obtiene un mensaje por su messageId
+ */
+public function obtenerMensajePorMessageId(string $messageId, int $usuarioId): ?WhatsAppMessage {
+    return $this->whatsappRepository->obtenerMensajePorMessageId($messageId, $usuarioId);
+}
 }

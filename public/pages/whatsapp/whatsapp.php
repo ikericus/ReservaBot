@@ -625,7 +625,6 @@ include 'includes/header.php';
         // =============== CONEXIÓN/DESCONEXIÓN ===============
 
         async connect() {
-
             try {
                 this.setButtonLoading(this.elements.connectBtn, true, 'Conectando...');
                 
@@ -716,10 +715,10 @@ include 'includes/header.php';
             try {
                 this.setButtonLoading(this.elements.sendQuickBtn, true, 'Enviando...');
                 
-                const response = await fetch('/api/send-whatsapp', {
+                const response = await fetch('/api/whatsapp-send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ to: phone, message, clientName: null })
+                    body: JSON.stringify({ to: phone, message: message })
                 });
                 
                 const data = await response.json();
@@ -727,8 +726,6 @@ include 'includes/header.php';
                 if (data.success) {
                     this.showNotification('Mensaje enviado correctamente', 'success');
                     this.clearQuickMessageForm();
-                } else if (data.queued) {
-                    this.showNotification('Mensaje añadido a la cola (WhatsApp no conectado)', 'warning');
                 } else {
                     throw new Error(data.error);
                 }

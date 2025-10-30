@@ -53,7 +53,8 @@ if (empty($message)) {
 try {
     $whatsappDomain = getContainer()->getWhatsAppDomain();
     
-    $resultado = $whatsappDomain->enviarMensajePorServidor(
+    // Este método ahora registra automáticamente el mensaje en la BD
+    $resultado = $whatsappDomain->enviarMensajeWhatsApp(
         $userId,
         $to,
         $message,

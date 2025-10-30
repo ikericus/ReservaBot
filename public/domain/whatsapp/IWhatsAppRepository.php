@@ -4,38 +4,22 @@
 namespace ReservaBot\Domain\WhatsApp;
 
 interface IWhatsAppRepository {
-    /**
-     * Obtiene la configuración de WhatsApp de un usuario
-     */
+    // Configuración
     public function obtenerConfiguracion(int $usuarioId): ?WhatsAppConfig;
-    
-    /**
-     * Guarda o actualiza configuración de WhatsApp
-     */
     public function guardarConfiguracion(WhatsAppConfig $config): WhatsAppConfig;
     
-    /**
-     * Obtiene conversaciones recientes
-     */
-    public function obtenerConversaciones(int $usuarioId, int $limit = 10): array;
+    // Mensajes
+    public function guardarMensaje(WhatsAppMessage $mensaje): WhatsAppMessage;
+    public function obtenerMensajesPorTelefono(int $usuarioId, string $phoneNumber, int $limit = 50): array;
+    public function obtenerMensajesPorUsuario(int $usuarioId, int $limit = 100): array;
+    public function obtenerMensajePorMessageId(string $messageId, int $usuarioId): ?WhatsAppMessage;
+    public function actualizarEstadoMensaje(string $messageId, int $usuarioId, string $estado): bool;
     
-    /**
-     * Obtiene una conversación por WhatsApp ID
-     */
-    public function obtenerConversacionPorWhatsappId(string $whatsappId, int $usuarioId): ?Conversacion;
+    // Conversaciones (agrupadas por teléfono)
+    public function obtenerConversaciones(int $usuarioId, int $limit = 20): array;
+    public function contarMensajesNoLeidos(int $usuarioId): int;
+    public function marcarConversacionComoLeida(int $usuarioId, string $phoneNumber): bool;
     
-    /**
-     * Guarda o actualiza una conversación
-     */
-    public function guardarConversacion(Conversacion $conversacion): Conversacion;
-    
-    /**
-     * Cuenta conversaciones no leídas
-     */
-    public function contarNoLeidas(int $usuarioId): int;
-    
-    /**
-     * Obtiene estadísticas de mensajería
-     */
+    // Estadísticas
     public function obtenerEstadisticas(int $usuarioId): array;
 }

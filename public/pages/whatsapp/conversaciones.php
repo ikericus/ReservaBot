@@ -617,10 +617,8 @@ class ConversationsManager {
             console.log('📱 Cambio de vista:', this.isMobile ? 'móvil' : 'desktop');
             
             if (!this.isMobile) {
-                // Volviendo a desktop, mostrar ambas columnas
                 this.showDesktopView();
             } else {
-                // Cambiando a móvil, resetear vista
                 this.showMobileList();
             }
         }
@@ -689,7 +687,7 @@ class ConversationsManager {
         
         try {
             console.log('🌐 Realizando fetch a /api/whatsapp-conversations...');
-            const response = await fetch('/api/whatsapp-conversations?include_messages=true&limit=50');
+            const response = await fetch('/api/whatsapp-conversations?limit=50');
             
             console.log('📡 Response status:', response.status);
             
@@ -833,13 +831,17 @@ class ConversationsManager {
         console.log('📨 Cargando mensajes para:', phoneNumber);
         
         try {
-            const response = await fetch(`/api/whatsapp-conversations?search=${phoneNumber}&include_messages=true&limit=1`);
+            const response = await fetch(`/api/whatsapp-conversations?phone=${phoneNumber}&message_limit=50`);
             const data = await response.json();
             
-            if (data.success && data.conversations.length > 0) {
-                const conversation = data.conversations[0];
-                this.renderMessages(conversation.recentMessages || []);
-                this.updateChatHeader(conversation);
+            if (data.success && data.messages) {
+                this.renderMessages(data.messages);
+                
+                // Actualizar header con datos de la conversación actual
+                const conversation = this.conversations.find(c => c.phone === phoneNumber);
+                if (conversation) {
+                    this.updateChatHeader(conversation);
+                }
             }
         } catch (error) {
             console.error('💥 Error cargando mensajes:', error);
@@ -960,13 +962,12 @@ class ConversationsManager {
             input.value = '';
 
             // Enviar mensaje
-            const response = await fetch('/api/send-whatsapp', {
+            const response = await fetch('/api/whatsapp-send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     to: this.currentConversation.phone,
-                    message: message,
-                    type: 'manual'
+                    message: message
                 })
             });
 
