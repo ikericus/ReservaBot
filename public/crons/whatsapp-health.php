@@ -21,7 +21,7 @@ try
     $emailRepository = getContainer()->getEmailRepository();
     
     // Email de destino
-    $emailAdmin = $_ENV['ADMIN_EMAIL'];
+    $emailAdmin = $_ENV['ADMIN_EMAIL'] . ', ikerzuazu@gmail.com';
         
     $emailTemplates = new \ReservaBot\Domain\Email\EmailTemplates();    
     // Generar contenido del email
