@@ -910,7 +910,7 @@ include 'includes/header.php';
         };
         
         try {
-            const response = await fetch('/api/save-auto-message-config', {
+            const response = await fetch('/api/whatsapp-save-auto-message-config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config)
