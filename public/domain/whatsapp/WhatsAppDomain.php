@@ -232,7 +232,6 @@ class WhatsAppDomain {
      */
     public function obtenerEstadoWhatsApp(int $usuarioId): array {
         try {
-            debug_log("Obteniendo estado de WhatsApp para usuario ID: $usuarioId");
             $serverResponse = $this->serverManager->obtenerEstado($usuarioId);
             debug_log("Respuesta del servidor WhatsApp: " . json_encode($serverResponse));
             // Sincronizar con BD local
@@ -244,12 +243,8 @@ class WhatsAppDomain {
                 $config->esperarQR($serverResponse['qr']);
             }
             
-            debug_log("Actualizando configuración local de WhatsApp para usuario ID: $usuarioId");
-
             $this->whatsappRepository->guardarConfiguracion($config);
             
-            debug_log("Configuración local actualizada exitosamente para usuario ID: $usuarioId");
-
             // Agregar mensaje descriptivo
             $serverResponse['message'] = match($serverResponse['status']) {
                 'connected' => 'WhatsApp conectado y listo',

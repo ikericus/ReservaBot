@@ -379,12 +379,14 @@ include 'includes/header.php';
             this.bindEvents();
             this.updateUI();
             
-            // Auto-inicializar según estado
-            if (this.currentStatus === 'connecting') {
-                this.startStatusCheck();
-            } else if (this.currentStatus === 'connected' || this.currentStatus === 'ready') {
-                this.loadConnectedData();
-            }
+            this.checkStatus().then(() => {
+                // Ahora sí inicializar con el estado correcto
+                if (this.currentStatus === 'connecting' || this.currentStatus === 'waiting_qr') {
+                    this.startStatusCheck();
+                } else if (this.currentStatus === 'connected' || this.currentStatus === 'ready') {
+                    this.loadConnectedData();
+                }
+            });
             
             // Asegurar que la UI esté correcta desde el inicio
             this.updateLayout();

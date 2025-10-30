@@ -26,6 +26,9 @@ class WhatsAppRepository implements IWhatsAppRepository {
     }
     
     public function guardarConfiguracion(WhatsAppConfig $config): WhatsAppConfig {
+
+        debug_log("Actualizando configuración local de WhatsApp (usuario ID: " . $config->getUsuarioId() . "): " . json_encode($config->toArray()));
+
         $data = $config->toArray();
         
         $sql = "INSERT INTO whatsapp_config 

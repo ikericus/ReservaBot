@@ -1,48 +1,18 @@
-name: Test and deploy to FTP and VPS on push to ddd branch
+name: Deploy
 
 on:
   push:
-    branches:
-      - ddd
+    # Esto es para que el workflow se dispare solo si cambia algo en public/** o server/**
     paths:
       - 'public/**'
-      - 'server/server.js'
-      - 'tests/**'
+      - 'server/**'
 
 jobs:
-  # test:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Set up PHP
-  #       uses: shivammathur/setup-php@v2
-  #       with:
-  #         php-version: '8.2'
-  #     - name: Download PHPUnit
-  #       run: |
-  #         wget https://phar.phpunit.de/phpunit-10.phar -O phpunit
-  #         chmod +x phpunit
-  #     - name: Run tests
-  #       run: php phpunit --testdox
-  deploy:
-    name: Deploy to FTP and VPS
+  ftp-deploy:
     runs-on: ubuntu-latest
-
+    if: ${{ github.event_name == 'push' && (contains(join(github.event.commits.*.added, ''), 'public/') || contains(join(github.event.commits.*.modified, ''), 'public/') || contains(join(github.event.commits.*.removed, ''), 'public/')) }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Check which paths changed
-        id: check
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            public:
-              - 'public/**'
-            server:
-              - 'server/server.js'
-
-      # 🚀 FTP Deploy
+      - uses: actions/checkout@v3
       - name: Deploy public/ via FTP
         if: steps.check.outputs.public == 'true'
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -54,9 +24,12 @@ jobs:
           server-dir: /
           dangerous-clean-slate: false
 
-       # 🔐 SSH + scp + pm2
-      - name: Deploy server.js to VPS
-        if: steps.check.outputs.server == 'true'
+  server-deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && (contains(join(github.event.commits.*.added, ''), 'server/') || contains(join(github.event.commits.*.modified, ''), 'server/') || contains(join(github.event.commits.*.removed, ''), 'server/')) }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy server.js
         run: |
            echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
            chmod 600 private_key
