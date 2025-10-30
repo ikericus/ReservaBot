@@ -49,11 +49,8 @@ class Router {
         $this->addRoute('GET',      '/admin/usuarios',                  'pages/admin/usuarios.php',             ['auth', 'admin']);
         $this->addRoute('GET',      '/admin/reservas',                  'pages/admin/reservas.php',             ['auth', 'admin']);
         $this->addRoute('GET',      '/admin/whatsapp',                  'pages/admin/whatsapp.php',             ['auth', 'admin']);
-        $this->addRoute('GET',      '/admin/logs',                      'pages/admin/logs.php',                 ['auth', 'admin']);
-        $this->addRoute('POST',      '/api/admin/whatsapp-debug',        'api/admin/whatsapp-debug.php',         ['auth', 'admin']);
-        
-
-        $this->addRoute('GET',      '/test',                            'pages/test.php',             ['auth']);   
+        $this->addRoute('GET',      '/admin/logs',                      'pages/admin/logs.php',                 ['auth', 'admin']);        
+ 
 
         $this->addRoute('GET',      '/dia',                             'pages/calendario/dia.php',             ['auth']);        
         $this->addRoute('GET',      '/semana',                          'pages/calendario/semana.php',          ['auth']);        
