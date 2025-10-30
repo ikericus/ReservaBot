@@ -46,7 +46,16 @@ const logger = winston.createLogger({
                 winston.format.colorize(),
                 winston.format.simple()
             )
-        })
+        }),
+        // Solo mensajes "info" (no incluye warn ni error)
+        new winston.transports.File({
+            filename: './logs/info.log',
+            level: 'info',
+            // Este filtro evita que se incluyan mensajes de nivel superior (warn/error)
+            format: winston.format((info) => {
+                return info.level === 'info' ? info : false;
+            })()
+        }),
     ]
 });
 
@@ -91,6 +100,7 @@ const authenticateJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
     
     if (!authHeader) {
+        logger.error(`Token de autorización requerido`);
         return res.status(401).json({ error: 'Token de autorización requerido' });
     }
     
@@ -98,6 +108,7 @@ const authenticateJWT = (req, res, next) => {
     
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) {
+            logger.error(`Token inválido ${err.message}`);
             return res.status(403).json({ error: 'Token inválido', details: err.message });
         }
         req.userId = decoded.userId;
