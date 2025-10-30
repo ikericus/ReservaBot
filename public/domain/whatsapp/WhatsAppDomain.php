@@ -20,14 +20,25 @@ class WhatsAppDomain {
      * Obtiene configuración de WhatsApp
      */
     public function obtenerConfiguracion(int $usuarioId): WhatsAppConfig {
-        $config = $this->whatsappRepository->obtenerConfiguracion($usuarioId);
-        
-        if (!$config) {
-            $config = WhatsAppConfig::crear($usuarioId);
-            $config = $this->whatsappRepository->guardarConfiguracion($config);
+        try
+        {
+            debug_log("Obteniendo configuración de WhatsApp para usuario ID: $usuarioId");
+            $config = $this->whatsappRepository->obtenerConfiguracion($usuarioId);
+            
+            if (!$config) {
+                debug_log("No se encontró configuración, creando nueva para usuario ID: $usuarioId");
+                $config = WhatsAppConfig::crear($usuarioId);
+                $config = $this->whatsappRepository->guardarConfiguracion($config);
+            }
+            
+            debug_log("Configuración obtenida exitosamente para usuario ID: $usuarioId");
+
+            return $config;
         }
-        
-        return $config;
+        catch (\Exception $e) {
+            error_log('Error obteniendo configuración de WhatsApp: ' . $e->getMessage());
+            throw new \RuntimeException('Error obteniendo configuración de WhatsApp: ' . $e->getMessage());
+        }
     }
     
     /**
