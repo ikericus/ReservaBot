@@ -473,7 +473,7 @@ include 'includes/header.php';
             } else if (newStatus === 'disconnected') {
                 this.stopStatusCheck();
             }
-        }
+        } 
 
         updateUI(phoneNumber = null) {
             // Actualizar indicador visual
