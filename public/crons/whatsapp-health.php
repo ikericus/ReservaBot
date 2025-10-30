@@ -15,7 +15,7 @@ try
     $healthData = json_decode($health, true);
     echo "Estado de salud: " . $health . "\n";
     // Si el estado no es "healthy", enviamos un correo de alerta
-    if (json_decode($health, true)['status'] !== 'healthy') {
+    if ($health['status'] !== 'healthy') {
         echo "Enviando correo de alerta...\n";
         $emailRepository = getContainer()->getEmailRepository();
         
