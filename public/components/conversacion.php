@@ -631,7 +631,7 @@ class WhatsAppChatComponent {
             
             // Enviar mensaje
             const formattedPhone = this.formatPhoneNumber(this.clientPhone);
-            const response = await fetch('/api/send-whatsapp', {
+            const response = await fetch('/api/whatsapp-send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
