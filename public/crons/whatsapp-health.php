@@ -6,14 +6,17 @@ try
     // Definir raíz del proyecto (public/)
     define('PROJECT_ROOT', dirname(__DIR__));
 
+    echo PROJECT_ROOT . "\n";
     require_once PROJECT_ROOT . '/config/bootstrap.php';
-
+    echo "Bootstrap cargado\n";
     $serverManager = getContainer()->getWhatsAppServerManager();
     $health = $serverManager->verificarSalud();
-    
+    echo "Salud verificada\n";
+    $healthData = json_decode($health, true);
+    echo "Estado de salud: " . $health . "\n";
     // Si el estado no es "healthy", enviamos un correo de alerta
     if (json_decode($health, true)['status'] !== 'healthy') {
-
+        echo "Enviando correo de alerta...\n";
         $emailRepository = getContainer()->getEmailRepository();
         
         // Email de destino
@@ -29,6 +32,7 @@ try
             error_log('Error: No se pudo enviar el correo de alerta usando EmailRepository.');
         }
     }
+    echo "Cron finalizado\n";
 }
 catch (\Exception $e)
 {
