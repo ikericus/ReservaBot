@@ -355,9 +355,9 @@ class WhatsAppDomain {
     }
 
     /**
- * Obtiene un mensaje por su messageId
- */
-public function obtenerMensajePorMessageId(string $messageId, int $usuarioId): ?WhatsAppMessage {
-    return $this->whatsappRepository->obtenerMensajePorMessageId($messageId, $usuarioId);
-}
+     * Obtiene un mensaje por su messageId
+     */
+    public function obtenerMensajePorMessageId(string $messageId, int $usuarioId): ?WhatsAppMessage {
+        return $this->whatsappRepository->obtenerMensajePorMessageId($messageId, $usuarioId);
+    }
 }

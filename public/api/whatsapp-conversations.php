@@ -18,6 +18,44 @@ if (!$user) {
 
 $userId = $user['id'];
 
+// GET con parámetro 'phone': Obtener mensajes de una conversación específica
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['phone'])) {
+    try {
+        $phoneNumber = $_GET['phone'];
+        $limit = isset($_GET['message_limit']) ? max(1, min(100, (int)$_GET['message_limit'])) : 50;
+        
+        $whatsappDomain = getContainer()->getWhatsAppDomain();
+        $mensajes = $whatsappDomain->obtenerMensajesConversacion($userId, $phoneNumber, $limit);
+        
+        // Transformar mensajes para frontend
+        $mensajesArray = array_map(function($msg) {
+            return [
+                'messageId' => $msg->getMessageId(),
+                'content' => $msg->getMessageText(),
+                'direction' => $msg->getDirection(),
+                'isOutgoing' => $msg->isSaliente(),
+                'timestamp' => $msg->getTimestampReceived()->format('Y-m-d H:i:s'),
+                'status' => $msg->getStatus(),
+                'hasMedia' => $msg->hasMedia()
+            ];
+        }, $mensajes);
+        
+        echo json_encode([
+            'success' => true,
+            'messages' => $mensajesArray,
+            'phone' => $phoneNumber,
+            'total' => count($mensajesArray)
+        ]);
+        exit;
+        
+    } catch (\Exception $e) {
+        error_log('Error obteniendo mensajes: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Error obteniendo mensajes']);
+        exit;
+    }
+}
+
 // Manejar POST para acciones (marcar como leído)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = file_get_contents('php://input');
