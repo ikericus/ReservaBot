@@ -172,22 +172,27 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
 
         return $response;
     }
-    
+
+
     /**
      * Genera JWT para autenticación
      */
     private function generarJWT(int $usuarioId): string {
-        $header = base64_encode(json_encode(['typ' => 'JWT', 'alg' => 'HS256']));
-        $payload = base64_encode(json_encode([
+        $header = $this->base64url_encode(json_encode(['typ' => 'JWT','alg' => 'HS256']));
+        $payload = $this->base64url_encode(json_encode([
             'userId' => $usuarioId,
             'iat' => time(),
             'exp' => time() + 3600
         ]));
-        
+
         $signature = hash_hmac('sha256', "$header.$payload", $this->jwtSecret, true);
-        $signature = base64_encode($signature);
-        
+        $signature = $this->base64url_encode($signature);
+
         return "$header.$payload.$signature";
+    }    
+    
+    private function base64url_encode($data) {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
     
     /**
