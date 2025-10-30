@@ -1,10 +1,6 @@
 <?php
-// conversaciones.php
-// Página de conversaciones estilo WhatsApp
+// pages/whatsapp/conversaciones.php
 
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
 
 // Configurar la página actual
 $currentPage = 'conversaciones';
@@ -15,18 +11,21 @@ $pageScript = 'conversaciones';
 $currentUser = getAuthenticatedUser();
 $userId = $currentUser['id'];
 
-// Verificar estado de WhatsApp
-$whatsappConfig = null;
-try {
-    $stmt = getPDO()->prepare('SELECT status, phone_number FROM whatsapp_config WHERE usuario_id = ?');
-    $stmt->execute([$userId]);
-    $whatsappConfig = $stmt->fetch();
-} catch (PDOException $e) {
-    error_log('Error obteniendo configuración WhatsApp: ' . $e->getMessage());
-}
+// Verificar estado de WhatsApp usando la capa de dominio
+$whatsappConnected = false;
+$phoneNumber = null;
 
-$whatsappConnected = $whatsappConfig && in_array($whatsappConfig['status'], ['connected', 'ready']);
-$phoneNumber = $whatsappConfig['phone_number'] ?? null;
+try {
+    $whatsappDomain = getContainer()->getWhatsAppDomain();
+    $config = $whatsappDomain->obtenerConfiguracion($userId);
+    
+    $whatsappConnected = $config->estaConectado();
+    $phoneNumber = $config->getPhoneNumber();
+    
+} catch (\Exception $e) {
+    error_log('Error obteniendo configuración WhatsApp: ' . $e->getMessage());
+    setFlashError('Error al verificar estado de WhatsApp');
+}
 
 // Incluir la cabecera - RUTA CORREGIDA
 include dirname(__DIR__) . '/includes/header.php';
