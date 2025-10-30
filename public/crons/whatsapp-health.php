@@ -12,8 +12,7 @@ try
     $serverManager = getContainer()->getWhatsAppServerManager();
     $health = $serverManager->verificarSalud();
     echo "Salud verificada\n";
-    $healthData = json_decode($health, true);
-    echo "Estado de salud: " . $health . "\n";
+    
     // Si el estado no es "healthy", enviamos un correo de alerta
     if ($health['status'] !== 'healthy') {
         echo "Enviando correo de alerta...\n";
