@@ -108,7 +108,7 @@ const authenticateJWT = (req, res, next) => {
     
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) {
-            logger.error(`Token inválido ${err.message}`);
+            logger.error(`Token inválido. Error: "${err.message}". Token: ${token}`);
             return res.status(403).json({ error: 'Token inválido', details: err.message });
         }
         req.userId = decoded.userId;
