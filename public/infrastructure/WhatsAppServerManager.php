@@ -122,23 +122,10 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
         ];
     }
     
-    class ServerManager {
-    private string $serverUrl;
-
-    public function __construct(string $serverUrl) {
-        $this->serverUrl = rtrim($serverUrl, '/');
-    }
-
-    /**
-     * Devuelve true si el servidor responde
-     */
     public function estaDisponible(): bool {
         return $this->obtenerJson('/health') !== null;
     }
 
-    /**
-     * Devuelve la información completa del estado del servidor
-     */
     public function verificarSalud(): ?array {
         return $this->obtenerJson('/health');
     }
