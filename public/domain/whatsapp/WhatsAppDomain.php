@@ -45,6 +45,7 @@ class WhatsAppDomain {
      * Inicia proceso de conexión
      */
     public function iniciarConexion(int $usuarioId, string $qrCode): WhatsAppConfig {
+        debug_log("Iniciando conexión de WhatsApp para usuario ID: $usuarioId con QR Code");
         $config = $this->obtenerConfiguracion($usuarioId);
         $config->esperarQR($qrCode);
         
@@ -55,6 +56,7 @@ class WhatsAppDomain {
      * Confirma conexión exitosa
      */
     public function confirmarConexion(int $usuarioId, string $phoneNumber): WhatsAppConfig {
+        debug_log("Confirmando conexión de WhatsApp para usuario ID: $usuarioId con número: $phoneNumber");
         $config = $this->obtenerConfiguracion($usuarioId);
         $config->conectar($phoneNumber);
         
@@ -65,6 +67,7 @@ class WhatsAppDomain {
      * Desconecta WhatsApp
      */
     public function desconectar(int $usuarioId): WhatsAppConfig {
+        debug_log("Desconectando WhatsApp para usuario ID: $usuarioId");
         $config = $this->obtenerConfiguracion($usuarioId);
         $config->desconectar();
         
@@ -75,6 +78,7 @@ class WhatsAppDomain {
      * Actualiza actividad
      */
     public function actualizarActividad(int $usuarioId): void {
+        debug_log("Actualizando actividad de WhatsApp para usuario ID: $usuarioId");
         $config = $this->obtenerConfiguracion($usuarioId);
         $config->actualizarActividad();
         
@@ -90,6 +94,7 @@ class WhatsAppDomain {
         bool $recordatorio,
         bool $bienvenida
     ): WhatsAppConfig {
+        debug_log("Configurando mensajes automáticos para usuario ID: $usuarioId");
         $config = $this->obtenerConfiguracion($usuarioId);
         $config->configurarMensajesAutomaticos($confirmacion, $recordatorio, $bienvenida);
         
@@ -100,6 +105,7 @@ class WhatsAppDomain {
      * Obtiene conversaciones recientes
      */
     public function obtenerConversaciones(int $usuarioId, int $limit = 10): array {
+        debug_log("Obteniendo hasta $limit conversaciones para usuario ID: $usuarioId");
         return $this->whatsappRepository->obtenerConversaciones($usuarioId, $limit);
     }
     
@@ -113,6 +119,7 @@ class WhatsAppDomain {
         string $mensaje,
         ?string $nombre = null
     ): Conversacion {
+        debug_log("Registrando mensaje para conversación WhatsApp ID: $whatsappId del usuario ID: $usuarioId");
         $conversacion = $this->whatsappRepository->obtenerConversacionPorWhatsappId($whatsappId, $usuarioId);
         
         if (!$conversacion) {
@@ -128,6 +135,7 @@ class WhatsAppDomain {
      * Marca conversación como leída
      */
     public function marcarComoLeida(string $whatsappId, int $usuarioId): void {
+        debug_log("Marcando conversación WhatsApp ID: $whatsappId como leída para usuario ID: $usuarioId");
         $conversacion = $this->whatsappRepository->obtenerConversacionPorWhatsappId($whatsappId, $usuarioId);
         
         if ($conversacion) {
@@ -173,6 +181,7 @@ class WhatsAppDomain {
      */
     public function conectarWhatsApp(int $usuarioId): array {
         try {
+            debug_log("Conectando WhatsApp para usuario ID: $usuarioId");
             $serverResponse = $this->serverManager->conectar($usuarioId);
             
             $config = $this->obtenerConfiguracion($usuarioId);
@@ -185,12 +194,17 @@ class WhatsAppDomain {
             } else {
                 $config->esperarQR('');
             }
+
+            debug_log("Actualizando configuración local de WhatsApp para usuario ID: $usuarioId");
             
             $this->whatsappRepository->guardarConfiguracion($config);
             
+            debug_log("Configuración local actualizada exitosamente para usuario ID: $usuarioId");
+
             return $serverResponse;
             
         } catch (\RuntimeException $e) {
+            error_log('Error conectando WhatsApp: ' . $e->getMessage());
             throw new \DomainException('Error conectando WhatsApp: ' . $e->getMessage());
         }
     }
@@ -245,7 +259,7 @@ class WhatsAppDomain {
                 default => 'Estado desconocido'
             };
             
-            
+
             return $serverResponse;
             
         } catch (\RuntimeException $e) {
