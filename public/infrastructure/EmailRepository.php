@@ -10,7 +10,7 @@ class EmailRepository implements IEmailRepository {
     private string $fromName;
     
     public function __construct() {
-        $this->fromEmail = $_ENV['MAIL_FROM_ADDRESS'] ?? 'noreply@reservabot.com';
+        $this->fromEmail = $_ENV['MAIL_FROM_ADDRESS'] ?? 'noreply@reservabot.es';
         $this->fromName = $_ENV['MAIL_FROM_NAME'] ?? 'ReservaBot';
     }
     
