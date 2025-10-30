@@ -1,6 +1,6 @@
 <?php
-// public/crons/router.php
-
+// public/crons/whatsapp-health.php
+echo "Iniciando cron de verificación de salud de WhatsApp...\n";
 try
 {
     // Definir raíz del proyecto (public/)
