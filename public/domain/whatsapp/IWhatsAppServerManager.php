@@ -28,4 +28,9 @@ interface IWhatsAppServerManager {
      * Verifica si el servidor está disponible
      */
     public function estaDisponible(): bool;
+    
+    /**
+     * Devuelve la información completa del estado del servidor
+     */
+    public function verificarSalud(): ?array;
 }

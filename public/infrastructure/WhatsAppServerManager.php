@@ -122,19 +122,53 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
         ];
     }
     
+    class ServerManager {
+    private string $serverUrl;
+
+    public function __construct(string $serverUrl) {
+        $this->serverUrl = rtrim($serverUrl, '/');
+    }
+
+    /**
+     * Devuelve true si el servidor responde
+     */
     public function estaDisponible(): bool {
-        try {
-            $context = stream_context_create([
-                'http' => ['timeout' => 5, 'ignore_errors' => true]
-            ]);
-            
-            $result = @file_get_contents($this->serverUrl . '/health', false, $context);
-            return $result !== false;
-        } catch (\Exception $e) {
-            return false;
-        }
+        return $this->obtenerJson('/health') !== null;
+    }
+
+    /**
+     * Devuelve la información completa del estado del servidor
+     */
+    public function verificarSalud(): ?array {
+        return $this->obtenerJson('/health');
     }
     
+    /**
+     * Método privado que obtiene la respuesta de un endpoint en formato array
+     */
+    private function obtenerJson(string $endpoint, int $timeout = 5): ?array {
+        try {
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => $timeout,
+                    'ignore_errors' => true
+                ]
+            ]);
+
+            $result = @file_get_contents($this->serverUrl . $endpoint, false, $context);
+
+            if ($result === false) {
+                return null;
+            }
+
+            $data = json_decode($result, true);
+            return json_last_error() === JSON_ERROR_NONE ? $data : null;
+
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
     /**
      * Llama al API del servidor Node.js
      */
@@ -190,7 +224,7 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
 
         return "$header.$payload.$signature";
     }    
-    
+
     private function base64url_encode($data) {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
