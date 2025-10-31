@@ -1,6 +1,7 @@
 <?php
+// pages/reserva/mi-reserva.php
 // Página para que los clientes gestionen sus reservas mediante token
-require_once dirname(__DIR__) . '/includes/db-config.php';
+
 require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Configurar idioma español para fechas
@@ -8,33 +9,53 @@ setlocale(LC_TIME, 'es_ES.UTF-8', 'es_ES', 'spanish');
 
 $token = $_GET['token'] ?? '';
 $reserva = null;
+$formularioData = null;
 $error = '';
 $mensaje = '';
 $tipoMensaje = '';
 
-// Validar token
+// Validar token y obtener reserva usando dominio
 if (empty($token)) {
     $error = 'Token no válido';
 } else {
     try {
-        $stmt = getPDO()->prepare("
-            SELECT r.*, fp.nombre as formulario_nombre, fp.empresa_nombre, fp.empresa_logo, 
-                fp.color_primario, fp.color_secundario, fp.direccion, fp.telefono_contacto,
-                fp.email_contacto, fp.mensaje_bienvenida
-            FROM reservas r
-            LEFT JOIN formularios_publicos fp ON r.formulario_id = fp.id
-            WHERE r.access_token = ? 
-            AND r.token_expires > NOW() 
-            AND r.estado != 'cancelada'
-            LIMIT 1
-        ");
-        $stmt->execute([$token]);
-        $reserva = $stmt->fetch();
+        $reservaDomain = getContainer()->getReservaDomain();
         
-        if (!$reserva) {
-            $error = 'Enlace no válido o expirado';
+        // Obtener reserva por token
+        $reservaEntity = $reservaDomain->obtenerReservaPorToken($token);
+        $reserva = $reservaEntity->toArray();
+        
+        // Obtener datos del formulario si existe (para branding) usando dominio
+        if ($reserva['formulario_id']) {
+            try {
+                $formularioDomain = getContainer()->getFormularioDomain();
+                $formularioEntity = $formularioDomain->obtenerFormularioPorId(
+                    $reserva['formulario_id'], 
+                    $reserva['usuario_id']
+                );
+                
+                if ($formularioEntity) {
+                    $formularioData = $formularioEntity->toArray();
+                    
+                    // Mapear campos para compatibilidad con template
+                    $reserva['formulario_nombre'] = $formularioData['nombre'];
+                    $reserva['empresa_nombre'] = $formularioData['empresa_nombre'];
+                    $reserva['empresa_logo'] = $formularioData['empresa_logo'];
+                    $reserva['color_primario'] = $formularioData['color_primario'];
+                    $reserva['color_secundario'] = $formularioData['color_secundario'];
+                    $reserva['direccion'] = $formularioData['direccion'];
+                    $reserva['telefono_contacto'] = $formularioData['telefono_contacto'];
+                    $reserva['email_contacto'] = $formularioData['email_contacto'];
+                    $reserva['mensaje_bienvenida'] = $formularioData['mensaje_bienvenida'] ?? null;
+                }
+            } catch (\Exception $e) {
+                error_log('Error obteniendo formulario público: ' . $e->getMessage());
+            }
         }
-    } catch (Exception $e) {
+        
+    } catch (\DomainException $e) {
+        $error = $e->getMessage();
+    } catch (\Exception $e) {
         error_log('Error cargando reserva por token: ' . $e->getMessage());
         $error = 'Error al cargar la reserva';
     }
@@ -64,126 +85,98 @@ if ($reserva) {
     }
 }
 
-// Procesar acciones
+// Procesar acciones usando dominio
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $reserva) {
     $action = $_POST['action'] ?? '';
     
-    if ($action === 'cancelar' && $puedeModificar) {
-        try {
-            $stmt = getPDO()->prepare("UPDATE reservas SET estado = 'cancelada' WHERE id = ?");
-            $result = $stmt->execute([$reserva['id']]);
-            
-            if ($result) {
-                $mensaje = 'Tu reserva ha sido cancelada correctamente';
-                $tipoMensaje = 'success';
-                $reserva['estado'] = 'cancelada';
-                $puedeModificar = false;
-            } else {
-                $mensaje = 'Error al cancelar la reserva';
-                $tipoMensaje = 'error';
-            }
-        } catch (Exception $e) {
-            error_log('Error cancelando reserva: ' . $e->getMessage());
-            $mensaje = 'Error al cancelar la reserva';
-            $tipoMensaje = 'error';
-        }
-    }
-    
-    if ($action === 'modificar' && $puedeModificar) {
-        $nuevaFecha = $_POST['nueva_fecha'] ?? '';
-        $nuevaHora = $_POST['nueva_hora'] ?? '';
+    try {
+        $reservaDomain = getContainer()->getReservaDomain();
         
-        if (!empty($nuevaFecha) && !empty($nuevaHora)) {
-            try {
-                $stmt = getPDO()->prepare("UPDATE reservas SET fecha = ?, hora = ? WHERE id = ?");
-                $result = $stmt->execute([$nuevaFecha, $nuevaHora, $reserva['id']]);
+        if ($action === 'cancelar' && $puedeModificar) {
+            // Cancelar usando dominio
+            $reservaDomain->cancelarReservaPublica($reserva['id'], $token);
+            
+            $mensaje = 'Tu reserva ha sido cancelada correctamente';
+            $tipoMensaje = 'success';
+            $reserva['estado'] = 'cancelada';
+            $puedeModificar = false;
+            
+        } elseif ($action === 'modificar' && $puedeModificar) {
+            $nuevaFecha = $_POST['nueva_fecha'] ?? '';
+            $nuevaHora = $_POST['nueva_hora'] ?? '';
+            
+            if (!empty($nuevaFecha) && !empty($nuevaHora)) {
+                // Modificar usando dominio
+                $fechaObj = new DateTime($nuevaFecha);
+                $reservaDomain->modificarReservaPublica(
+                    $reserva['id'], 
+                    $token, 
+                    $fechaObj, 
+                    $nuevaHora
+                );
                 
-                if ($result) {
-                    $mensaje = 'Tu reserva ha sido modificada correctamente';
-                    $tipoMensaje = 'success';
-                    $reserva['fecha'] = $nuevaFecha;
-                    $reserva['hora'] = $nuevaHora;
-                    // Recalcular si puede modificar con la nueva fecha
-                    $fechaHoraReserva = new DateTime($reserva['fecha'] . ' ' . $reserva['hora']);
-                    $fechaLimite = clone $fechaHoraReserva;
-                    $fechaLimite->sub(new DateInterval('PT24H'));
-                    $ahora = new DateTime();
-                    $puedeModificar = $ahora < $fechaLimite && in_array($reserva['estado'], ['pendiente', 'confirmada']);
-                } else {
-                    $mensaje = 'Error al modificar la reserva';
-                    $tipoMensaje = 'error';
-                }
-            } catch (Exception $e) {
-                error_log('Error modificando reserva: ' . $e->getMessage());
-                $mensaje = 'Error al modificar la reserva';
+                $mensaje = 'Tu reserva ha sido modificada correctamente';
+                $tipoMensaje = 'success';
+                $reserva['fecha'] = $nuevaFecha;
+                $reserva['hora'] = $nuevaHora;
+                
+                // Recalcular si puede modificar con la nueva fecha
+                $fechaHoraReserva = new DateTime($reserva['fecha'] . ' ' . $reserva['hora']);
+                $fechaLimite = clone $fechaHoraReserva;
+                $fechaLimite->sub(new DateInterval('PT24H'));
+                $ahora = new DateTime();
+                $puedeModificar = $ahora < $fechaLimite && in_array($reserva['estado'], ['pendiente', 'confirmada']);
+            } else {
+                $mensaje = 'Debes seleccionar fecha y hora';
                 $tipoMensaje = 'error';
             }
-        } else {
-            $mensaje = 'Debes seleccionar fecha y hora';
-            $tipoMensaje = 'error';
         }
+        
+    } catch (\DomainException $e) {
+        $mensaje = $e->getMessage();
+        $tipoMensaje = 'error';
+    } catch (\Exception $e) {
+        error_log('Error procesando acción: ' . $e->getMessage());
+        $mensaje = 'Error al procesar la solicitud';
+        $tipoMensaje = 'error';
     }
 }
 
-// Obtener horarios disponibles para modificación
+// Obtener horarios disponibles para modificación usando dominio
 $horariosDisponibles = [];
 if ($reserva && $puedeModificar) {
     try {
-        // Obtener configuración de horarios del usuario
-        $stmt = getPDO()->prepare("SELECT clave, valor FROM configuraciones WHERE usuario_id = ? AND (clave LIKE 'horario_%' OR clave = 'intervalo_reservas')");
-        $stmt->execute([$reserva['usuario_id']]);
-        $configuraciones = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-        
-        $intervalo = intval($configuraciones['intervalo_reservas'] ?? 30);
+        $reservaDomain = getContainer()->getReservaDomain();
         
         // Generar próximos 14 días disponibles
         for ($i = 0; $i < 14; $i++) {
-            $fecha = date('Y-m-d', strtotime("+$i days"));
-            $diaSemana = date('w', strtotime($fecha));
-            $diasMap = [1 => 'lun', 2 => 'mar', 3 => 'mie', 4 => 'jue', 5 => 'vie', 6 => 'sab', 0 => 'dom'];
-            $diaConfig = $diasMap[$diaSemana];
+            $fechaStr = date('Y-m-d', strtotime("+$i days"));
+            $fechaObj = new DateTime($fechaStr);
             
-            $horarioConfig = $configuraciones["horario_{$diaConfig}"] ?? 'false|[]';
-            $parts = explode('|', $horarioConfig, 2);
-            $activo = $parts[0] === 'true';
-            
-            if ($activo && isset($parts[1])) {
-                // Obtener horas ocupadas para esta fecha
-                $stmt = getPDO()->prepare("
-                    SELECT TIME_FORMAT(hora, '%H:%i') as hora_ocupada 
-                    FROM reservas 
-                    WHERE usuario_id = ? AND fecha = ? AND estado IN ('pendiente', 'confirmada') AND id != ?
-                ");
-                $stmt->execute([$reserva['usuario_id'], $fecha, $reserva['id']]);
-                $horasOcupadas = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            try {
+                // Usar método del dominio que ya implementa toda la lógica
+                $disponibilidad = $reservaDomain->obtenerHorasDisponiblesConCapacidad(
+                    $fechaObj, 
+                    $reserva['usuario_id']
+                );
                 
-                // Generar horas disponibles
-                $ventanas = json_decode($parts[1], true) ?: [['inicio' => '09:00', 'fin' => '18:00']];
-                $horas = [];
-                
-                foreach ($ventanas as $ventana) {
-                    $inicio = strtotime($ventana['inicio']);
-                    $fin = strtotime($ventana['fin']);
-                    
-                    for ($h = $inicio; $h < $fin; $h += ($intervalo * 60)) {
-                        $hora = date('H:i', $h);
-                        if (!in_array($hora, $horasOcupadas)) {
-                            $horas[] = $hora;
-                        }
-                    }
-                }
-                
-                if (!empty($horas)) {
-                    $horariosDisponibles[$fecha] = [
-                        'fecha_formateada' => date('d/m/Y', strtotime($fecha)),
-                        'dia_semana' => ucfirst($diaConfig),
-                        'dia_completo' => formatearDiaCompleto($fecha),
-                        'horas' => $horas
+                // Si hay horas disponibles, agregar al array
+                if (!empty($disponibilidad['horas'])) {
+                    $horariosDisponibles[$fechaStr] = [
+                        'fecha_formateada' => date('d/m/Y', strtotime($fechaStr)),
+                        'dia_semana' => ucfirst($disponibilidad['dia_semana']),
+                        'dia_completo' => formatearDiaCompleto($fechaStr),
+                        'horas' => $disponibilidad['horas']
                     ];
                 }
+                
+            } catch (\DomainException $e) {
+                // Día no disponible, continuar con el siguiente
+                continue;
             }
         }
-    } catch (Exception $e) {
+        
+    } catch (\Exception $e) {
         error_log('Error obteniendo horarios disponibles: ' . $e->getMessage());
     }
 }
@@ -239,6 +232,8 @@ function formatearDiaCompleto($fecha) {
     
     return $dia_semana . ' ' . $dia . ' ' . $mes;
 }
+
+debug_log("mi-reserva.php: Acceso con token para reserva ID " . ($reserva['id'] ?? 'N/A'));
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -425,23 +420,23 @@ function formatearDiaCompleto($fecha) {
         
         <!-- Header -->
         <div class="gradient-bg">
-            <div class="max-w-4xl mx-auto px-4 py-4 sm:px-6 lg:px-8"> <!-- Reducido de py-8 a py-4 -->
+            <div class="max-w-4xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
                 <div class="text-center text-white fade-in">
                     <!-- Logo y nombre de empresa -->
-                    <div class="mb-3"> <!-- Reducido de mb-6 a mb-3 -->
+                    <div class="mb-3">
                         <?php if (!empty($reserva['empresa_logo'])): ?>
-                            <div class="flex justify-center mb-2"> <!-- Reducido de mb-4 a mb-2 -->
+                            <div class="flex justify-center mb-2">
                                 <img src="<?php echo htmlspecialchars($reserva['empresa_logo']); ?>" 
                                     alt="<?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre']); ?>"
-                                    class="h-12 w-auto object-contain bg-white bg-opacity-20 rounded-lg p-2"> <!-- Reducido de h-16 a h-12 -->
+                                    class="h-12 w-auto object-contain bg-white bg-opacity-20 rounded-lg p-2">
                             </div>
                         <?php endif; ?>
                         
-                        <h1 class="text-2xl font-bold sm:text-3xl"><?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre'] ?? 'Gestión de Reserva'); ?></h1> <!-- Reducido de text-3xl sm:text-4xl a text-2xl sm:text-3xl -->
+                        <h1 class="text-2xl font-bold sm:text-3xl"><?php echo htmlspecialchars($reserva['empresa_nombre'] ?? $reserva['formulario_nombre'] ?? 'Gestión de Reserva'); ?></h1>
 
                         <!-- Información de contacto -->
                         <?php if (!empty($reserva['direccion']) || !empty($reserva['telefono_contacto'])): ?>
-                            <div class="flex flex-wrap justify-center items-center gap-4 mt-2 text-sm text-white text-opacity-80"> <!-- Reducido de mt-4 a mt-2 -->
+                            <div class="flex flex-wrap justify-center items-center gap-4 mt-2 text-sm text-white text-opacity-80">
                                 <?php if (!empty($reserva['direccion'])): ?>
                                     <div class="flex items-center">
                                         <i class="ri-map-pin-line mr-2"></i>

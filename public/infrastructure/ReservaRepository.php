@@ -163,13 +163,30 @@ class ReservaRepository implements IReservaRepository {
         
         return $reservas;
     }
+
+    public function obtenerPorToken(string $token): ?Reserva {
+        $sql = "SELECT * FROM reservas 
+                WHERE access_token = ? 
+                AND token_expires > NOW()
+                AND estado IN (?, ?)";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            $token,
+            EstadoReserva::PENDIENTE->value,
+            EstadoReserva::CONFIRMADA->value
+        ]);
+        
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $data ? Reserva::fromDatabase($data) : null;
+    }
     
     public function existeReservaActiva(
         DateTime $fecha, 
         string $hora, 
         int $usuarioId, 
-        ?int $excluirId = null
-    ): bool {
+        ?int $excluirId = null ): bool {
         $sql = "SELECT COUNT(*) FROM reservas 
                 WHERE fecha = ? 
                 AND SUBSTR(hora, 1, 5) = ?
@@ -221,8 +238,7 @@ class ReservaRepository implements IReservaRepository {
     public function obtenerEstadisticas(
         int $usuarioId, 
         ?DateTime $desde = null, 
-        ?DateTime $hasta = null
-    ): array {
+        ?DateTime $hasta = null ): array {
         $sql = "SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN estado = ? THEN 1 ELSE 0 END) as confirmadas,
@@ -295,8 +311,7 @@ class ReservaRepository implements IReservaRepository {
         ?int $formularioId,
         string $origen,
         ?string $ipAddress,
-        ?string $userAgent
-    ): void {
+        ?string $userAgent ): void {
         try {
             $sql = "INSERT INTO origen_reservas (
                         reserva_id, formulario_id, origen, ip_address, user_agent, created_at

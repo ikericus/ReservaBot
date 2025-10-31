@@ -1,6 +1,5 @@
 <?php
-
-// pages/reservar.php
+// pages/reserva/reservar.php
 
 // Obtener el formulario por slug usando DDD
 $slug = $_GET['f'] ?? '';

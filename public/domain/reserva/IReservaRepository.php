@@ -37,6 +37,12 @@ interface IReservaRepository {
     public function obtenerPorRangoFechas(DateTime $desde, DateTime $hasta, int $usuarioId): array;
     
     /**
+     * Obtiene una reserva por su token de acceso
+     * Valida que el token no haya expirado y que la reserva esté activa
+     */
+    public function obtenerPorToken(string $token): ?Reserva;
+
+    /**
      * Verifica si existe una reserva en fecha y hora específica (solo activas)
      */
     public function existeReservaActiva(DateTime $fecha, string $hora, int $usuarioId, ?int $excluirId = null): bool;

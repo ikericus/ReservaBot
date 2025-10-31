@@ -1,8 +1,5 @@
 <?php
-// Incluir configuración y funciones
-require_once dirname(__DIR__) . '/includes/db-config.php';
-require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
+// pages/reserva/reserva.php
 
 // Configurar la página actual
 $currentPage = 'reserva';
@@ -22,34 +19,39 @@ if ($reservaId <= 0) {
     exit;
 }
 
-// Obtener la reserva
+// Obtener la reserva usando la capa de dominio
+$reserva = null;
 try {
-    $stmt = getPDO()->prepare('SELECT * FROM reservas WHERE id = ? AND usuario_id = ?');
-    $stmt->execute([$reservaId, $userId]);
-    $reserva = $stmt->fetch();
+    $reservaDomain = getContainer()->getReservaDomain();
+    $reservaEntity = $reservaDomain->obtenerReserva($reservaId, $userId);
     
-    if (!$reserva) {
-        // Si la reserva no existe o no pertenece al usuario, redirigir
-        header('Location: /mes');
-        exit;
-    }
-} catch (\PDOException $e) {
+    // Convertir entidad a array para la vista
+    $reserva = $reservaEntity->toArray();
+    
+} catch (\DomainException $e) {
+    // Reserva no encontrada o no pertenece al usuario
     error_log('Error obteniendo reserva: ' . $e->getMessage());
+    setFlashError('Reserva no encontrada');
+    header('Location: /mes');
+    exit;
+} catch (\Exception $e) {
+    error_log('Error inesperado obteniendo reserva: ' . $e->getMessage());
+    setFlashError('Error al obtener la reserva');
     header('Location: /mes');
     exit;
 }
 
-// Verificar estado de WhatsApp
-$whatsappConfig = null;
+// Verificar estado de WhatsApp usando dominio
 $whatsappConnected = false;
 try {
-    $stmt = getPDO()->prepare('SELECT status, phone_number FROM whatsapp_config WHERE usuario_id = ?');
-    $stmt->execute([$userId]);
-    $whatsappConfig = $stmt->fetch();
-    $whatsappConnected = $whatsappConfig && in_array($whatsappConfig['status'], ['connected', 'ready']);
-} catch (PDOException $e) {
-    error_log('Error obteniendo configuración WhatsApp: ' . $e->getMessage());
+    $whatsappDomain = getContainer()->getWhatsAppDomain();
+    $whatsappConnected = $whatsappDomain->puedeEnviarMensajes($userId);
+} catch (\Exception $e) {
+    error_log('Error obteniendo estado de WhatsApp: ' . $e->getMessage());
+    $whatsappConnected = false;
 }
+
+debug_log("reserva.php: Cargando detalle de reserva ID " . $reservaId . " para usuario ID " . $userId);
 
 // Incluir la cabecera
 include 'includes/header.php';

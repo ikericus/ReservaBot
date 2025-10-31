@@ -1,4 +1,5 @@
 <?php
+// pages/reserva/reserva-form.php
 
 // Configurar la página actual
 $currentPage = 'reserva-form';

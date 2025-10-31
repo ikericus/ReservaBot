@@ -67,8 +67,7 @@ class ReservaDomain {
         DateTime $fecha, 
         string $hora, 
         int $usuarioId,
-        ?int $excluirReservaId = null
-    ): bool {
+        ?int $excluirReservaId = null ): bool {
         // 1. Verificar si el horario está dentro de las horas de negocio
         if (!$this->disponibilidadRepository->estaDisponible($fecha, $hora, $usuarioId)) {
             return false;
@@ -130,8 +129,7 @@ class ReservaDomain {
         string $hora,
         int $usuarioId,
         string $mensaje = '',
-        ?string $notasInternas = null
-    ): Reserva {
+        ?string $notasInternas = null ): Reserva {
         // Verificar disponibilidad
         if (!$this->verificarDisponibilidad($fecha, $hora, $usuarioId)) {
             throw new \DomainException('El horario seleccionado no está disponible');
@@ -161,8 +159,7 @@ class ReservaDomain {
         string $telefono,
         DateTime $fecha,
         string $hora,
-        int $usuarioId
-    ): bool {
+        int $usuarioId ): bool {
         // Obtener reservas activas para esa fecha
         $reservasEnFecha = $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
         
@@ -199,8 +196,7 @@ class ReservaDomain {
         int $usuarioId,
         string $mensaje = '',
         ?int $formularioId = null,
-        bool $confirmacionAutomatica = false
-    ): Reserva {
+        bool $confirmacionAutomatica = false ): Reserva {
         // Validar email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new \InvalidArgumentException('Email no válido');
@@ -338,8 +334,7 @@ class ReservaDomain {
         int $usuarioId,
         DateTime $nuevaFecha,
         string $nuevaHora,
-        ?string $nuevoMensaje = null
-    ): Reserva {
+        ?string $nuevoMensaje = null ): Reserva {
         $reserva = $this->obtenerReserva($id, $usuarioId);
         
         // Verificar disponibilidad del nuevo horario (excluyendo esta reserva)
@@ -382,8 +377,7 @@ class ReservaDomain {
         int $reservaId,
         string $token,
         DateTime $nuevaFecha,
-        string $nuevaHora
-    ): Reserva {
+        string $nuevaHora ): Reserva {
         // Obtener reserva por ID y validar token
         $reserva = $this->reservaRepository->obtenerPorIdYToken($reservaId, $token);
         
@@ -619,5 +613,44 @@ class ReservaDomain {
             5 => 'vie', 6 => 'sab', 0 => 'dom'
         ];
         return $diasMap[(int)$fecha->format('w')];
+    }
+
+    /**
+     * Obtiene una reserva pública por su token de acceso único
+     * Valida que el token sea válido y no haya expirado
+     */
+    public function obtenerReservaPorToken(string $token): Reserva {
+        $reserva = $this->reservaRepository->obtenerPorToken($token);
+        
+        if (!$reserva) {
+            throw new \DomainException('Enlace no válido o expirado');
+        }
+        
+        return $reserva;
+    }
+
+    /**
+     * Obtiene reserva con datos del formulario público (para mi-reserva.php)
+     * Incluye información de marca/empresa del formulario
+     */
+    public function obtenerReservaPublicaConFormulario(string $token): array {
+        $reserva = $this->obtenerReservaPorToken($token);
+        
+        // Obtener datos del formulario si existe
+        $formularioData = null;
+        if ($reserva->getFormularioId()) {
+            try {
+                // Aquí podrías llamar a FormularioPublicoDomain si existe
+                // Por ahora retornamos null y se puede agregar después
+                $formularioData = null;
+            } catch (\Exception $e) {
+                error_log('Error obteniendo formulario público: ' . $e->getMessage());
+            }
+        }
+        
+        return [
+            'reserva' => $reserva->toArray(),
+            'formulario' => $formularioData
+        ];
     }
 }
