@@ -29,9 +29,9 @@ if (!$isEditMode) {
 // Obtener la reserva si estamos en modo edición
 $reserva = null;
 if ($isEditMode) {
-    try {
-        $reservaUseCases = getContainer()->getReservaUseCases();
-        $reservaObj = $reservaUseCases->obtenerReserva($id, $usuarioId);
+    try {        
+        $reservaDomain = getContainer()->getReservaDomain();
+        $reservaObj = $reservaDomain->obtenerReserva($id, $usuarioId);
         
         // Convertir a array para compatibilidad con el resto del código
         $reserva = [
