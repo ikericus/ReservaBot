@@ -26,6 +26,10 @@ if (!$isEditMode) {
     $fecha = null;
 }
 
+// Obtener usuario autenticado
+$currentUser = getAuthenticatedUser();
+$usuarioId = $currentUser['id'];
+
 // Obtener la reserva si estamos en modo edición
 $reserva = null;
 if ($isEditMode) {
