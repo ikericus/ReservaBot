@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
                      data-client='${JSON.stringify(cliente)}'>
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
-                            <div class="text-sm font-medium text-gray-900">${cliente.nombre}</div>
+                            <div class="text-sm font-medium text-gray-900">${cliente.ultimo_nombre}</div>
                             <div class="text-xs text-gray-500">${cliente.telefono}</div>
                             ${cliente.last_reserva ? `<div class="text-xs text-blue-600">Última reserva: ${cliente.last_reserva}</div>` : ''}
                         </div>
