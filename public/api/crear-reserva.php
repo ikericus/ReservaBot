@@ -62,6 +62,8 @@ try {
     
     $fecha = new DateTime($data['fecha']);
     $hora = $data['hora'];
+
+    debug_log("Creando reserva para usuario ID: {$userId} - Nombre: {$nombre}, Teléfono: {$telefono}, Fecha: {$data['fecha']}, Hora: {$hora}, Estado: {$estado}");
     
     // Crear reserva usando el dominio
     $reserva = $reservaDomain->crearReserva(
@@ -73,13 +75,15 @@ try {
         $mensaje,
         $notasInternas
     );
+
+    debug_log("Reserva creada con ID: {$reserva->getId()} en estado pendiente");
     
     // Si el estado no es pendiente, actualizarlo
-    if ($estado === 'confirmada' && isAdminUser()) {
+    if ($estado === 'confirmada') {
         $reserva = $reservaDomain->confirmarReserva($reserva->getId(), $userId);
     }
     
-    error_log("Reserva creada - ID: {$reserva->getId()}, Teléfono: {$telefono}");
+    debug_log("Reserva creada - ID: {$reserva->getId()}, Teléfono: {$telefono}");
     
     jsonResponse(true, [
         'reserva' => $reserva->toArray(),
