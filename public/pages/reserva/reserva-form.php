@@ -348,6 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = '';
         
         clientes.forEach(cliente => {
+            console.log('Cliente encontrado:', cliente);
             html += `
                 <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 client-result" 
                      data-client='${JSON.stringify(cliente)}'>
