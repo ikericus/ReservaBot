@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Llenar los campos
         telefonoInput.value = clientData.telefono;
-        nombreInput.value = clientData.nombre_completo;
+        nombreInput.value = clientData.ultimo_nombre;
         
         // Normalizar teléfono para WhatsApp
         const normalizedPhone = normalizePhoneForWhatsApp(clientData.telefono);
