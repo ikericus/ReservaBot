@@ -82,9 +82,20 @@ include 'includes/header.php';
 </div>
 <?php endif; ?>
 
+<!-- Contenedor de errores dinámicos -->
+<div id="dynamicErrors" class="mb-6 bg-red-50 border border-red-300 rounded-lg p-4 hidden">
+    <div class="flex items-start">
+        <i class="ri-error-warning-line text-red-500 mr-2 mt-0.5"></i>
+        <div class="flex-1">
+            <ul id="errorList" class="text-red-700 text-sm space-y-1 list-disc list-inside">
+            </ul>
+        </div>
+    </div>
+</div>
+
 <!-- Formulario -->
 <div class="bg-white rounded-lg shadow-sm p-6">
-    <form id="reservaForm" class="space-y-6" method="post" action="api/<?php echo $isEditMode ? 'actualizar-reserva' : 'crear-reserva'; ?>">
+    <form id="reservaForm" class="space-y-6">
         <?php if ($isEditMode): ?>
             <input type="hidden" name="id" value="<?php echo $reserva['id']; ?>">
         <?php endif; ?>
@@ -263,15 +274,62 @@ include 'includes/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('reservaForm');
     const telefonoInput = document.getElementById('telefono');
     const nombreInput = document.getElementById('nombre');
     const searchResults = document.getElementById('clientSearchResults');
     const searchIndicator = document.getElementById('searchIndicator');
     const clientInfoBadge = document.getElementById('clientInfoBadge');
     const whatsappHidden = document.getElementById('whatsapp_id_hidden');
+    const dynamicErrors = document.getElementById('dynamicErrors');
+    const errorList = document.getElementById('errorList');
+    const submitButton = form.querySelector('button[type="submit"]');
     
     let searchTimeout;
     let selectedClientData = null;
+    const isEditMode = <?php echo $isEditMode ? 'true' : 'false'; ?>;
+
+    // Función para mostrar errores
+    function showErrors(errors) {
+        errorList.innerHTML = '';
+        
+        if (Array.isArray(errors)) {
+            errors.forEach(error => {
+                const li = document.createElement('li');
+                li.textContent = error;
+                errorList.appendChild(li);
+            });
+        } else if (typeof errors === 'string') {
+            const li = document.createElement('li');
+            li.textContent = errors;
+            errorList.appendChild(li);
+        }
+        
+        dynamicErrors.classList.remove('hidden');
+        
+        // Scroll al contenedor de errores
+        dynamicErrors.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Función para ocultar errores
+    function hideErrors() {
+        dynamicErrors.classList.add('hidden');
+        errorList.innerHTML = '';
+    }
+
+    // Función para deshabilitar el botón de submit
+    function disableSubmitButton() {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="ri-loader-4-line mr-2 animate-spin"></i>Guardando...';
+        submitButton.classList.add('opacity-75', 'cursor-not-allowed');
+    }
+
+    // Función para habilitar el botón de submit
+    function enableSubmitButton() {
+        submitButton.disabled = false;
+        submitButton.innerHTML = `<i class="ri-save-line mr-2"></i>${isEditMode ? 'Guardar Cambios' : 'Crear Reserva'}`;
+        submitButton.classList.remove('opacity-75', 'cursor-not-allowed');
+    }
 
     // Función para normalizar teléfono al formato WhatsApp
     function normalizePhoneForWhatsApp(phone) {
@@ -317,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         showSearchIndicator();
 
-        fetch('api/buscar-clientes', {
+        fetch('/api/buscar-clientes', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -332,7 +390,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 showSearchResults(data.clientes);
             } else {
                 hideSearchResults();
-                // Limpiar datos de cliente existente si no se encuentra
                 clearSelectedClient();
             }
         })
@@ -348,7 +405,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = '';
         
         clientes.forEach(cliente => {
-            console.log('Cliente encontrado:', cliente);
             html += `
                 <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 client-result" 
                      data-client='${JSON.stringify(cliente)}'>
@@ -383,18 +439,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function selectClient(clientData) {
         selectedClientData = clientData;
         
-        // Llenar los campos
         telefonoInput.value = clientData.telefono;
         nombreInput.value = clientData.ultimo_nombre;
         
-        // Normalizar teléfono para WhatsApp
         const normalizedPhone = normalizePhoneForWhatsApp(clientData.telefono);
         whatsappHidden.value = normalizedPhone;
         
-        // Mostrar badge de cliente existente
         clientInfoBadge.classList.remove('hidden');
-        
-        // Ocultar resultados
         hideSearchResults();
     }
 
@@ -424,14 +475,11 @@ document.addEventListener('DOMContentLoaded', function() {
     telefonoInput.addEventListener('input', function() {
         const phoneNumber = this.value.trim();
         
-        // Normalizar teléfono para WhatsApp en tiempo real
         const normalizedPhone = normalizePhoneForWhatsApp(phoneNumber);
         whatsappHidden.value = normalizedPhone;
         
-        // Limpiar timeout anterior
         clearTimeout(searchTimeout);
         
-        // Si el campo está vacío, limpiar todo
         if (!phoneNumber) {
             hideSearchResults();
             hideSearchIndicator();
@@ -439,7 +487,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Búsqueda con debounce de 300ms
         searchTimeout = setTimeout(() => {
             searchClients(phoneNumber);
         }, 300);
@@ -447,7 +494,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event listener para cambios manuales en el nombre
     nombreInput.addEventListener('input', function() {
-        // Si el usuario cambia el nombre manualmente, limpiar el cliente seleccionado
         if (selectedClientData && this.value !== selectedClientData.nombre) {
             clearSelectedClient();
         }
@@ -460,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Prevenir que el formulario se cierre los resultados
+    // Prevenir que el formulario cierre los resultados
     searchResults.addEventListener('click', function(e) {
         e.stopPropagation();
     });
@@ -506,6 +552,61 @@ document.addEventListener('DOMContentLoaded', function() {
         const normalizedPhone = normalizePhoneForWhatsApp(telefonoInput.value);
         whatsappHidden.value = normalizedPhone;
     }
+
+    // Manejar el envío del formulario
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Ocultar errores previos
+        hideErrors();
+        
+        // Deshabilitar botón
+        disableSubmitButton();
+        
+        // Obtener datos del formulario
+        const formData = new FormData(form);
+        
+        // Convertir FormData a objeto
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Determinar la URL según el modo
+        const url = isEditMode ? '/api/actualizar-reserva' : '/api/crear-reserva';
+        
+        // Realizar la petición
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Redirigir a la página de detalle de la reserva
+                window.location.href = `/reserva?id=${data.id}`;
+            } else {
+                // Mostrar errores
+                enableSubmitButton();
+                
+                if (data.errors) {
+                    showErrors(data.errors);
+                } else if (data.message) {
+                    showErrors([data.message]);
+                } else {
+                    showErrors(['Ha ocurrido un error al procesar la reserva']);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            enableSubmitButton();
+            showErrors(['Error de conexión. Por favor, inténtalo de nuevo.']);
+        });
+    });
 });
 </script>
 
