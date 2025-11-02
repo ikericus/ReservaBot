@@ -4,6 +4,7 @@
 namespace ReservaBot\Infrastructure;
 
 use ReservaBot\Domain\Configuracion\IConfiguracionNegocioRepository;
+use DateTime;
 use PDO;
 
 class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository {
