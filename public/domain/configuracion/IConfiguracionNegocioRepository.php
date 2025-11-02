@@ -1,9 +1,9 @@
 <?php
 // domain/configuracion/IConfiguracionNegocioRepository.php
 
-use DateTime;
-
 namespace ReservaBot\Domain\Configuracion;
+
+use DateTime;
 
 interface IConfiguracionNegocioRepository {
     /**
