@@ -185,7 +185,7 @@ include 'includes/header.php';
         <div class="p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
-                    <i class="ri-message-line text-2xl text-purple-600"></i>
+                    <i class="ri-whatsapp-line text-2xl nav-icon mr-4 h-5 w-5 text-green-500"></i>
                 </div>
                 <div class="ml-5 w-0 flex-1">
                     <dl>
