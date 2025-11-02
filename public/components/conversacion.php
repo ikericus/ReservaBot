@@ -515,7 +515,8 @@ class WhatsAppChatComponent {
             console.log('Datos de mensajes recibidos:', data);
 
             if (data.success) {
-                if (data.messages.length > 0) {                    
+                if (data.messages.length > 0) {   
+                    this.messages = data.messages;                 
                     console.log('Mensajes cargados del servidor:', this.messages.length);
                 } else {
                     this.messages = [];
