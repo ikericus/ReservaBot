@@ -263,7 +263,7 @@ include 'includes/header.php';
                             <?php endif; ?>
                             
                             <p class="text-xs text-gray-500">
-                                Creada el <?php echo date('d/m/Y H:i', strtotime($reserva['created_at'])); ?>
+                                Creada el <?php echo date('d/m/Y H:i', strtotime($reserva['fecha'])); ?>
                             </p>
                         </div>
                         
