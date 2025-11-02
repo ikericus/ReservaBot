@@ -346,8 +346,8 @@ include 'includes/header.php';
 </div>
 
 <?php 
-// Incluir componente de conversación antes de los scripts
-include 'components/conversacion.php';
+    // Incluir componente de conversación antes de los scripts
+    include 'components/conversacion.php';
 ?>
 
 <script>

@@ -554,6 +554,11 @@ include 'includes/header.php';
     </div>
 </div>
 
+<?php 
+    // Incluir componente de conversación antes de los scripts
+    include 'components/conversacion.php';
+?>
+
 <!-- JavaScript para manejar las acciones -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -632,11 +637,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Función para abrir chat de WhatsApp (debe estar definida en el JavaScript global)
-function openWhatsAppChat(phone, name) {
-    console.log('Abrir WhatsApp:', phone, name);
-    // Aquí iría la lógica para abrir WhatsApp
-}
 </script>
 
 <?php 
