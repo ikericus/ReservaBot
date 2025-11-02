@@ -171,7 +171,6 @@ class WhatsAppDomain {
      * Obtiene conversaciones recientes
      */
     public function obtenerConversaciones(int $usuarioId, int $limit = 10): array {
-        debug_log("Obteniendo hasta $limit conversaciones para usuario ID: $usuarioId");
         return $this->whatsappRepository->obtenerConversaciones($usuarioId, $limit);
     }
     

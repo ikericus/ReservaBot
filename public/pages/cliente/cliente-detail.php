@@ -44,10 +44,11 @@ try {
 $whatsappConnected = false;
 try {
     $whatsappDomain = getContainer()->getWhatsAppDomain();
-    $config = $whatsappDomain->obtenerConfiguracion($userId);
-    $whatsappConnected = in_array($config['status'], ['connected', 'ready']);
+    $config = $whatsappDomain->obtenerConfiguracion($userId);    
+    $whatsappConnected = $config->estaConectado();
 } catch (\Exception $e) {
     // WhatsApp no configurado
+    error_log('No se pudo obtener configuración de WhatsApp: ' . $e->getMessage());
 }
 
 // Obtener mensajes de WhatsApp si existen
