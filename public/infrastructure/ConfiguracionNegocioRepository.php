@@ -62,7 +62,7 @@ class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository 
     }
      public function estaDisponible(DateTime $fecha, string $hora, int $usuarioId): bool {
         $horarioDia = $this->obtenerHorarioDiaInterno($fecha, $usuarioId);
-        
+        debug_log("Verificando disponibilidad para {$fecha->format('Y-m-d')} a las {$hora} - Horario del día: " . json_encode($horarioDia));
         if (!$horarioDia['activo']) {
             return false;
         }
