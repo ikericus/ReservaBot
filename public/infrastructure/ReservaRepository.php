@@ -313,7 +313,7 @@ class ReservaRepository implements IReservaRepository {
         ?string $ipAddress,
         ?string $userAgent ): void {
         try {
-            $sql = "INSERT INTO origen_reservas (
+            $sql = "INSERT INTO reservas_origen (
                         reserva_id, formulario_id, origen, ip_address, user_agent, created_at
                     ) VALUES (?, ?, ?, ?, ?, NOW())";
             

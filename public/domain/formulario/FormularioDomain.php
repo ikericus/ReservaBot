@@ -175,7 +175,7 @@ class FormularioDomain
     /**
      * Eliminar un formulario
      * 
-     * Elimina el formulario y sus referencias en origen_reservas.
+     * Elimina el formulario y sus referencias en reservas_origen.
      * Las reservas asociadas permanecen pero pierden la referencia al formulario.
      * 
      * @param int $id

@@ -201,8 +201,8 @@ class FormularioRepository implements IFormularioRepository
             // Iniciar transacción
             $this->pdo->beginTransaction();
 
-            // Eliminar referencias en origen_reservas (si existen)
-            $sqlOrigen = "DELETE FROM origen_reservas WHERE formulario_id = :formulario_id";
+            // Eliminar referencias en reservas_origen (si existen)
+            $sqlOrigen = "DELETE FROM reservas_origen WHERE formulario_id = :formulario_id";
             $stmtOrigen = $this->pdo->prepare($sqlOrigen);
             $stmtOrigen->execute([':formulario_id' => $id]);
 

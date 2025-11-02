@@ -38,7 +38,7 @@ class AdminRepository implements IAdminRepository {
     
     public function contarLoginsHoy(): int {
         $sql = "SELECT COUNT(DISTINCT usuario_id) 
-                FROM sesiones_usuario 
+                FROM usuarios_sesiones 
                 WHERE DATE(created_at) = CURDATE()";
         
         $stmt = $this->pdo->prepare($sql);
