@@ -509,29 +509,19 @@ class WhatsAppChatComponent {
         
         try {
             const formattedPhone = this.formatPhoneNumber(this.clientPhone);
-            const response = await fetch(`/api/whatsapp-conversations?search=${formattedPhone}&include_messages=true&limit=1`);
+            const response = await fetch(`/api/whatsapp-conversations?phone=${formattedPhone}&message_limit=50`);
             const data = await response.json();
             
-            if (data.success && data.conversations.length > 0) {
-                const conversation = data.conversations[0];
-                
-                if (conversation.recentMessages && conversation.recentMessages.length > 0) {
-                    this.messages = conversation.recentMessages.map(msg => ({
-                        messageId: msg.messageId,
-                        content: msg.content,
-                        direction: msg.direction || (msg.isOutgoing ? 'outgoing' : 'incoming'),
-                        isOutgoing: msg.isOutgoing,
-                        timestamp: msg.timestamp,
-                        status: msg.status || 'sent'
-                    }));
-                    
+            if (data.success) {
+                if (data.messages.length > 0) {                    
                     console.log('Mensajes cargados del servidor:', this.messages.length);
                 } else {
                     this.messages = [];
+                    console.log('No se existen mensajes para el cliente.');
                 }
             } else {
                 this.messages = [];
-                console.log('No se encontró conversación en el servidor');
+                console.log('Error al cargar mensajes:', data.error);
             }
             
             this.renderMessages();
