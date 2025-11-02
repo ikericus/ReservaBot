@@ -94,41 +94,6 @@ Gestión de formularios públicos de reservas.
 **Entity**: `Formulario` (personalización visual, info empresa, confirmación automática)
 **Tabla**: `formularios_publicos`
 
-## Uso en Páginas/APIs
-
-### Páginas migradas a DDD ✅
-- `pages/reservas.php` - ReservaDomain
-- `pages/whatsapp.php` - WhatsAppDomain
-- `pages/dia.php` - ReservaDomain
-- `pages/semana.php` - ReservaDomain
-- `pages/mes.php` - ReservaDomain
-- `pages/formularios.php` - FormularioDomain
-
-### APIs migradas a DDD ✅
-- `api/crear-reserva.php` - ReservaDomain
-- `api/actualizar-reserva.php` - ReservaDomain
-- `api/eliminar-reserva.php` - ReservaDomain
-- `api/actualizar-reserva-publica.php` - ReservaDomain (con token)
-- `api/horas-disponibles.php` - ReservaDomain
-- `api/whatsapp-connect.php` - WhatsAppDomain
-- `api/whatsapp-disconnect.php` - WhatsAppDomain
-- `api/whatsapp-status.php` - WhatsAppDomain
-- `api/whatsapp-send.php` - WhatsAppDomain
-- `api/whatsapp-conversations.php` - WhatsAppDomain
-- `api/whatsapp-stats.php` - WhatsAppDomain
-- `api/whatsapp-webhook.php` - WhatsAppWebhookHandler
-
-### APIs pendientes de migrar ⚠️
-- `api/buscar-clientes.php` - ClienteDomain
-- `api/actualizar-configuracion.php` - ConfiguracionDomain
-- `api/crear-reserva-publica.php` - FormularioDomain + ReservaDomain
-
-### Páginas Pendientes ⚠️
-- `pages/calendario.php` - Vista calendario → ReservaDomain
-- `pages/cliente-detail.php` - ClienteDomain
-- `pages/clientes.php` - ClienteDomain  
-- `pages/configuracion.php` - ConfiguracionDomain
-- `pages/reservar.php` - FormularioDomain (actualizar consulta slug)
 
 ## Patrón de Migración para APIs
 ```php

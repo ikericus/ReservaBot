@@ -1,5 +1,5 @@
 <?php
-// pages/cliente-detail.php
+// pages/cliente-detalle.php
 
 $currentPage = 'clientes';
 $pageTitle = 'ReservaBot - Detalle de Cliente';

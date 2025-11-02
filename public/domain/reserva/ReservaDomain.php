@@ -68,6 +68,7 @@ class ReservaDomain {
         string $hora, 
         int $usuarioId,
         ?int $excluirReservaId = null ): bool {
+            
         // 1. Verificar si el horario está dentro de las horas de negocio
         if (!$this->configuracionRepository->estaDisponible($fecha, $hora, $usuarioId)) {
             return false;
@@ -130,6 +131,7 @@ class ReservaDomain {
         int $usuarioId,
         string $mensaje = '',
         ?string $notasInternas = null ): Reserva {
+
         // Verificar disponibilidad
         if (!$this->verificarDisponibilidad($fecha, $hora, $usuarioId)) {
             throw new \DomainException('El horario seleccionado no está disponible');
