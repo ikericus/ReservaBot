@@ -7,19 +7,13 @@ header('Content-Type: application/json');
 $currentUser = getAuthenticatedUser();
 $userId = $currentUser['id'];
 
+// Obtener datos
+$data = json_decode(file_get_contents('php://input'), true);
+debug_log("Datos recibidos para crear reserva: " . json_encode($data));
+
 // Establecer estado según rol
 $estadoDefault = isAdminUser() ? 'confirmada' : 'pendiente';
 
-// Verificar método
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Método no permitido']);
-    exit;
-}
-
-// Obtener datos
-$data = $_POST;
-debug_log("Datos recibidos para crear reserva: " . json_encode($data));
 
 // Función de respuesta
 function jsonResponse($success, $data = [], $code = 200) {

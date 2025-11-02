@@ -21,8 +21,7 @@ class WhatsAppDomain {
      * Obtiene configuración de WhatsApp
      */
     public function obtenerConfiguracion(int $usuarioId): WhatsAppConfig {
-        try {
-            debug_log("Obteniendo configuración de WhatsApp para usuario ID: $usuarioId");
+        try {            
             $config = $this->whatsappRepository->obtenerConfiguracion($usuarioId);
             
             if (!$config) {
@@ -31,7 +30,6 @@ class WhatsAppDomain {
                 $config = $this->whatsappRepository->guardarConfiguracion($config);
             }
             
-            debug_log("Configuración obtenida exitosamente para usuario ID: $usuarioId");
             return $config;
         } catch (\Exception $e) {
             error_log('Error obteniendo configuración de WhatsApp: ' . $e->getMessage());
