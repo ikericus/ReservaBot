@@ -4,7 +4,7 @@
 use PHPUnit\Framework\TestCase;
 use ReservaBot\Domain\Reserva\ReservaDomain;
 use ReservaBot\Infrastructure\ReservaRepository;
-use ReservaBot\Infrastructure\DisponibilidadRepository;
+use ReservaBot\Infrastructure\ConfiguracionNegocioRepository;
 use DateTime;
 use PDO;
 
@@ -64,10 +64,10 @@ class ReservaRepositoryTest extends TestCase
         
         // 5. Crear los repositorios
         $reservaRepo = new ReservaRepository($this->db);
-        $disponibilidadRepo = new DisponibilidadRepository($this->db);
+        $configuracionRepo = new ConfiguracionNegocioRepository($this->db);
         
         // 6. Crear el Domain
-        $this->reservaDomain = new ReservaDomain($reservaRepo, $disponibilidadRepo);
+        $this->reservaDomain = new ReservaDomain($reservaRepo, $configuracionRepo);
     }
     
     public function testCrearReservaBasico()

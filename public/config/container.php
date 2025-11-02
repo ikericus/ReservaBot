@@ -12,7 +12,6 @@ use ReservaBot\Domain\Formulario\FormularioDomain;
 use ReservaBot\Domain\Usuario\UsuarioDomain;
 use ReservaBot\Infrastructure\ReservaRepository;
 use ReservaBot\Infrastructure\ClienteRepository;
-use ReservaBot\Infrastructure\DisponibilidadRepository;
 use ReservaBot\Infrastructure\ConfiguracionNegocioRepository;
 use ReservaBot\Infrastructure\WhatsAppRepository;
 use ReservaBot\Infrastructure\WhatsAppWebhookHandler;
@@ -57,7 +56,7 @@ class Container {
         if (!isset($this->services['reservaDomain'])) {
             $this->services['reservaDomain'] = new ReservaDomain(
                 $this->getReservaRepository(),
-                $this->getDisponibilidadRepository(),
+                $this->getConfiguracionNegocioRepository(),
                 $this->getEmailRepository()
             );
         }
@@ -131,13 +130,6 @@ class Container {
             $this->services['clienteRepository'] = new ClienteRepository($this->pdo);
         }
         return $this->services['clienteRepository'];
-    }
-    
-    private function getDisponibilidadRepository(): DisponibilidadRepository {
-        if (!isset($this->services['disponibilidadRepository'])) {
-            $this->services['disponibilidadRepository'] = new DisponibilidadRepository($this->pdo);
-        }
-        return $this->services['disponibilidadRepository'];
     }
     
     private function getConfiguracionNegocioRepository(): ConfiguracionNegocioRepository {

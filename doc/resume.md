@@ -16,13 +16,12 @@ public/ (PROJECT_ROOT)
 │   ├── reserva/         # ReservaDomain
 │   ├── cliente/         # ClienteDomain  
 │   ├── configuracion/   # ConfiguracionDomain
-│   ├── disponibilidad/  # IDisponibilidadRepository
 │   ├── whatsapp/        # WhatsAppDomain
 │   ├── formulario/      # FormularioDomain
 │   └── shared/
 ├── infrastructure/
 │   ├── ReservaRepository.php, ClienteRepository.php
-│   ├── ConfiguracionNegocioRepository.php, DisponibilidadRepository.php
+│   ├── ConfiguracionNegocioRepository.php
 │   ├── WhatsAppRepository.php, WhatsAppServerManager.php
 │   ├── WhatsAppWebhookHandler.php
 │   └── FormularioRepository.php
@@ -59,12 +58,9 @@ Estadísticas y listados de clientes.
 - `buscarPorTelefono()` - Autocompletado
 
 ### 3. ConfiguracionDomain
-Configuración del negocio.
+Configuración del negocio. Horarios de apertura (sin domain, solo repo).
 - `obtenerConfiguraciones()`, `actualizarConfiguracion()`
 - `actualizarMultiples()`, `actualizarConfiguracionesValidadas()` - Con validaciones
-
-### 4. DisponibilidadRepository
-Horarios de apertura (sin domain, solo repo).
 - `estaDisponible()`, `obtenerHorasDelDia()`, `obtenerIntervalo()`
 - `obtenerHorarioDia()` - Devuelve activo + ventanas con capacidad
 
@@ -113,7 +109,7 @@ Gestión de formularios públicos de reservas.
 - `api/actualizar-reserva.php` - ReservaDomain
 - `api/eliminar-reserva.php` - ReservaDomain
 - `api/actualizar-reserva-publica.php` - ReservaDomain (con token)
-- `api/horas-disponibles.php` - ReservaDomain + DisponibilidadRepository
+- `api/horas-disponibles.php` - ReservaDomain
 - `api/whatsapp-connect.php` - WhatsAppDomain
 - `api/whatsapp-disconnect.php` - WhatsAppDomain
 - `api/whatsapp-status.php` - WhatsAppDomain
