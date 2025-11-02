@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
             // Redirige a la vista de detalle donde se puede enviar un mensaje
-            window.location.href = `reserva-detail?id=${id}&action=message`;
+            window.location.href = `reserva-detalle?id=${id}&action=message`;
         });
     });
     

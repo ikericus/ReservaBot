@@ -450,7 +450,7 @@ include 'includes/header.php';
                                 <?php echo date('d/m/Y', strtotime($cliente['primer_contacto'])); ?>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="/cliente-detalle?telefono=<?php echo urlencode($cliente['telefono']); ?>" 
+                                <a href="/cliente?telefono=<?php echo urlencode($cliente['telefono']); ?>" 
                                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                     <i class="ri-eye-line mr-1"></i>
                                     Ver Detalle
@@ -508,7 +508,7 @@ include 'includes/header.php';
                             </div>
                         </div>
                         
-                        <a href="/cliente-detalle?telefono=<?php echo urlencode($cliente['telefono']); ?>" 
+                        <a href="/cliente?telefono=<?php echo urlencode($cliente['telefono']); ?>" 
                            class="client-action-btn">
                             <i class="ri-eye-line"></i>
                             Ver Detalle Completo

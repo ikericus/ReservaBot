@@ -1,9 +1,9 @@
 <?php
-// pages/cliente-detalle.php
+// pages/cliente.php
 
 $currentPage = 'clientes';
 $pageTitle = 'ReservaBot - Detalle de Cliente';
-$pageScript = 'cliente-detail';
+$pageScript = 'cliente';
 
 // Obtener teléfono de la URL
 $telefono = isset($_GET['telefono']) ? trim($_GET['telefono']) : '';
