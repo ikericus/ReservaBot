@@ -43,8 +43,6 @@ try {
     $reservasConfirmadas = [];
 }
 
-debug_log("reservas.php: Cargando página de reservas para el usuario ID " . $userId);
-
 // Mostrar mensaje de bienvenida si es un nuevo usuario
 $welcomeMessage = $_SESSION['welcome_message'] ?? '';
 unset($_SESSION['welcome_message']);

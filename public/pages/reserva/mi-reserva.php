@@ -233,7 +233,6 @@ function formatearDiaCompleto($fecha) {
     return $dia_semana . ' ' . $dia . ' ' . $mes;
 }
 
-debug_log("mi-reserva.php: Acceso con token para reserva ID " . ($reserva['id'] ?? 'N/A'));
 ?>
 <!DOCTYPE html>
 <html lang="es">

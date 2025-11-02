@@ -51,8 +51,6 @@ try {
     $whatsappConnected = false;
 }
 
-debug_log("reserva.php: Cargando detalle de reserva ID " . $reservaId . " para usuario ID " . $userId);
-
 // Incluir la cabecera
 include 'includes/header.php';
 ?>

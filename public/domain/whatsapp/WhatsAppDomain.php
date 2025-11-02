@@ -151,7 +151,6 @@ class WhatsAppDomain {
      * Obtiene mensajes de una conversación específica
      */
     public function obtenerMensajesConversacion(int $usuarioId, string $phoneNumber, int $limit = 50): array {
-        debug_log("Obteniendo mensajes de conversación para teléfono: $phoneNumber");
         return $this->whatsappRepository->obtenerMensajesPorTelefono($usuarioId, $phoneNumber, $limit);
     }
     
