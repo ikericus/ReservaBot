@@ -510,8 +510,10 @@ class WhatsAppChatComponent {
         try {
             const formattedPhone = this.formatPhoneNumber(this.clientPhone);
             const response = await fetch(`/api/whatsapp-conversations?phone=${formattedPhone}&message_limit=50`);
+            console.log('Repuesta del servidor recibida:', response);
             const data = await response.json();
-            
+            console.log('Datos de mensajes recibidos:', data);
+
             if (data.success) {
                 if (data.messages.length > 0) {                    
                     console.log('Mensajes cargados del servidor:', this.messages.length);
