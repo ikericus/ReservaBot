@@ -53,23 +53,10 @@ try {
 
 // Obtener mensajes de WhatsApp si existen
 try {
-    $conversaciones = $whatsappDomain->obtenerConversaciones($userId);
-    
-    // Formatear número para búsqueda
-    $telefonoFormateado = preg_replace('/[^\d]/', '', $telefono);
-    if (strlen($telefonoFormateado) === 9 && in_array(substr($telefonoFormateado, 0, 1), ['6', '7', '9'])) {
-        $telefonoFormateado = '34' . $telefonoFormateado;
-    }
-    
-    // Buscar conversación del cliente
-    foreach ($conversaciones as $conv) {
-        if ($conv['phone_number'] === $telefonoFormateado) {
-            $mensajes = $conv['mensajes'] ?? [];
-            break;
-        }
-    }
+    $mensajes = $whatsappDomain->obtenerMensajesConversacion($userId, $telefono, 50);
 } catch (\Exception $e) {
     // Si no hay WhatsApp, continuar sin mensajes
+    error_log('No se pudieron obtener mensajes de WhatsApp: ' . $e->getMessage());
 }
 
 // Definir variables para el componente de conversación
