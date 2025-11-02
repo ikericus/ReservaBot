@@ -95,7 +95,7 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
             'status' => $status,
             'qr' => $response['qr'] ?? null,
             'info' => $response['info'] ?? null,
-            'phoneNumber' => $response['info']['phoneNumber'] ?? null
+            'phoneNumber' => $response['info']['me']['user'] ?? null
         ];
     }
     
