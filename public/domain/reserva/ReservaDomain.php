@@ -3,24 +3,24 @@
 
 namespace ReservaBot\Domain\Reserva;
 
-use ReservaBot\Domain\Disponibilidad\IDisponibilidadRepository;
+use ReservaBot\Domain\Configuracion\IConfiguracionNegocioRepository;
 use ReservaBot\Domain\Email\IEmailRepository;
 use ReservaBot\Domain\Email\EmailTemplates;
 use DateTime;
 
 class ReservaDomain {
     private IReservaRepository $reservaRepository;
-    private IDisponibilidadRepository $disponibilidadRepository;
+    private IConfiguracionNegocioRepository $configuracionRepository;
     private ?IEmailRepository $emailRepository;
     private EmailTemplates $emailTemplates;
     
     public function __construct(
         IReservaRepository $reservaRepository,
-        IDisponibilidadRepository $disponibilidadRepository,
+        IConfiguracionNegocioRepository $configuracionRepository,
         ?IEmailRepository $emailRepository = null
     ) {
         $this->reservaRepository = $reservaRepository;
-        $this->disponibilidadRepository = $disponibilidadRepository;
+        $this->configuracionRepository = $configuracionRepository;
         $this->emailRepository = $emailRepository;
         $this->emailTemplates = new EmailTemplates();
     }
@@ -69,7 +69,7 @@ class ReservaDomain {
         int $usuarioId,
         ?int $excluirReservaId = null ): bool {
         // 1. Verificar si el horario está dentro de las horas de negocio
-        if (!$this->disponibilidadRepository->estaDisponible($fecha, $hora, $usuarioId)) {
+        if (!$this->configuracionRepository->estaDisponible($fecha, $hora, $usuarioId)) {
             return false;
         }
         
@@ -86,7 +86,7 @@ class ReservaDomain {
      * Verifica si un horario está dentro de las horas de negocio
      */
     public function verificarHorarioDisponible(DateTime $fecha, string $hora, int $usuarioId): bool {
-        return $this->disponibilidadRepository->estaDisponible($fecha, $hora, $usuarioId);
+        return $this->configuracionRepository->estaDisponible($fecha, $hora, $usuarioId);
     }
     
     /**
@@ -94,7 +94,7 @@ class ReservaDomain {
      */
     public function obtenerHorasDisponibles(DateTime $fecha, int $usuarioId): array {
         // Obtener todas las horas configuradas para ese día
-        $todasLasHoras = $this->disponibilidadRepository->obtenerHorasDelDia($fecha, $usuarioId);
+        $todasLasHoras = $this->configuracionRepository->obtenerHorasDelDia($fecha, $usuarioId);
         
         // Obtener reservas existentes para esa fecha
         $reservasExistentes = $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
@@ -116,7 +116,7 @@ class ReservaDomain {
      * Obtiene todas las horas del día según configuración
      */
     public function obtenerHorasDelDia(DateTime $fecha, int $usuarioId): array {
-        return $this->disponibilidadRepository->obtenerHorasDelDia($fecha, $usuarioId);
+        return $this->configuracionRepository->obtenerHorasDelDia($fecha, $usuarioId);
     }
     
     /**
@@ -452,7 +452,7 @@ class ReservaDomain {
      */
     public function obtenerHorasDisponiblesConCapacidad(DateTime $fecha, int $usuarioId): array {
         $diaSemana = $this->obtenerDiaSemana($fecha);
-        $horarioConfig = $this->disponibilidadRepository->obtenerHorarioDia($diaSemana, $usuarioId);
+        $horarioConfig = $this->configuracionRepository->obtenerHorarioDia($diaSemana, $usuarioId);
         
         // Asegurar que todas las ventanas tengan capacidad
         foreach ($horarioConfig['ventanas'] as &$ventana) {
@@ -472,7 +472,7 @@ class ReservaDomain {
         }
         
         // Obtener intervalo de reservas
-        $intervalo = $this->disponibilidadRepository->obtenerIntervalo($usuarioId);
+        $intervalo = $this->configuracionRepository->obtenerIntervalo($usuarioId);
         
         // Obtener todas las horas posibles del día
         $todasLasHoras = $this->generarHorasPorVentanas($ventanas, $intervalo);
