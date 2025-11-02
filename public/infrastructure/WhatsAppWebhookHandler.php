@@ -33,7 +33,7 @@ class WhatsAppWebhookHandler {
             throw new \InvalidArgumentException('Evento o userId inválido');
         }
         
-        error_log("Webhook recibido: {$event} para usuario {$userId}");
+        debug_log("Webhook recibido: {$event} para usuario {$userId}");
         
         switch ($event) {
             case 'qr_generated':
@@ -237,9 +237,9 @@ class WhatsAppWebhookHandler {
         $updated = $this->whatsappDomain->actualizarEstadoMensaje($messageId, $userId, $newStatus);
         
         if ($updated) {
-            error_log("Estado de mensaje {$messageId} actualizado a '{$newStatus}' (ACK: {$ack}) para usuario {$userId}");
+            debug_log("Estado de mensaje {$messageId} actualizado a '{$newStatus}' (ACK: {$ack}) para usuario {$userId}");
         } else {
-            error_log("No se pudo actualizar estado de mensaje {$messageId} para usuario {$userId}");
+            debug_log("No se pudo actualizar estado de mensaje {$messageId} para usuario {$userId}");
         }
         
         return [
