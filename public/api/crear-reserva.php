@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Obtener datos
 $data = $_POST;
+debug_log("Datos recibidos para crear reserva: " . json_encode($data));
 
 // Función de respuesta
 function jsonResponse($success, $data = [], $code = 200) {
