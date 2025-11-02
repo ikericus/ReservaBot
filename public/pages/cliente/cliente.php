@@ -55,8 +55,6 @@ try {
 try {
     $mensajesEntities = $whatsappDomain->obtenerMensajesConversacion($userId, $telefono, 50);
     $mensajes = array_map(fn($r) => $r->toArray(), $mensajesEntities);
-
-    toArray()
 } catch (\Exception $e) {
     // Si no hay WhatsApp, continuar sin mensajes
     error_log('No se pudieron obtener mensajes de WhatsApp: ' . $e->getMessage());
