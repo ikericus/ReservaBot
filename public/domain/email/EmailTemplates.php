@@ -48,10 +48,10 @@ class EmailTemplates {
      * Genera HTML base con header de negocio (personalizado por usuario/empresa)
      */
     private function wrapHtmlNegocio(string $titulo, string $contenido, int $usuarioId): string {
-        // Obtener configuración del negocio
-        $nombreNegocio = $this->appName; // Valor por defecto
-        $colorPrimario = '#667eea'; // Valor por defecto
-        $colorSecundario = '#764ba2'; // Valor por defecto
+        $nombreNegocio = $this->appName;
+        $colorPrimario = '#667eea';
+        $colorSecundario = '#764ba2';
+        $logoBase64 = null;
         
         if ($this->configuracionRepository) {
             try {
@@ -61,10 +61,16 @@ class EmailTemplates {
                     ?? '#667eea';
                 $colorSecundario = $this->configuracionRepository->obtenerValor('color_secundario', $usuarioId) 
                     ?? '#764ba2';
+                $logoBase64 = $this->configuracionRepository->obtenerValor('empresa_imagen', $usuarioId);
             } catch (\Exception $e) {
-                error_log("Error obteniendo configuración de negocio para usuario #{$usuarioId}: " . $e->getMessage());
+                error_log("Error obteniendo configuración: " . $e->getMessage());
             }
         }
+        
+        // Header con logo o texto
+        $headerContent = $logoBase64 
+            ? "<img src='{$logoBase64}' alt='{$nombreNegocio}' style='max-height: 64px; max-width: 200px;'>"
+            : "<h1 style='color: white; margin: 0; font-size: 28px;'>{$nombreNegocio}</h1>";
         
         return "
         <!DOCTYPE html>
@@ -77,7 +83,7 @@ class EmailTemplates {
         <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f8fafc;'>
             <div style='max-width: 600px; margin: 0 auto; background-color: white;'>
                 <div style='background: linear-gradient(135deg, {$colorPrimario} 0%, {$colorSecundario} 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;'>
-                    <h1 style='color: white; margin: 0; font-size: 28px;'>{$nombreNegocio}</h1>
+                    {$headerContent}
                 </div>
                 <div style='padding: 30px 20px;'>
                     {$contenido}

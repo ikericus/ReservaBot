@@ -75,19 +75,93 @@ document.addEventListener('DOMContentLoaded', function() {
     const imagenUrlInput = document.getElementById('imagen_negocio_url');
     
     if (imagenInput && imagePreview) {
-        imagenInput.addEventListener('change', (e) => {
+        // Procesar imagen al seleccionarla
+        imagenInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    imagePreview.innerHTML = `<img src="${event.target.result}" alt="Logo">`;
-                    imagePreview.classList.remove('empty');
-                    // Aquí podrías implementar upload a servidor
-                    imagenUrlInput.value = event.target.result;
-                };
-                reader.readAsDataURL(file);
+            if (!file) return;
+            
+            // Validar tipo
+            if (!file.type.startsWith('image/')) {
+                alert('Solo se permiten imágenes');
+                return;
+            }
+            
+            // Validar tamaño (ej: máx 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('La imagen no puede superar 5MB');
+                return;
+            }
+            
+            try {
+                // Redimensionar a 64x64 y convertir a base64
+                const base64 = await resizeAndEncodeImage(file, 64, 64);
+                
+                // Actualizar preview
+                imagePreview.innerHTML = `<img src="${base64}" alt="Logo">`;
+                imagePreview.classList.remove('empty');
+                
+                // Guardar en input hidden
+                imagenUrlInput.value = base64;
+                
+            } catch (error) {
+                console.error('Error procesando imagen:', error);
+                alert('Error al procesar la imagen');
             }
         });
+
+        // Función para redimensionar imagen
+        async function resizeAndEncodeImage(file, maxWidth, maxHeight) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        // Crear canvas
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Calcular dimensiones manteniendo aspect ratio
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height = (height * maxWidth) / width;
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width = (width * maxHeight) / height;
+                                height = maxHeight;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        // Dibujar imagen redimensionada
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Convertir a base64 (PNG para transparencia, o JPEG para menor tamaño)
+                        const base64 = canvas.toDataURL('image/png', 0.9);
+                        
+                        // Verificar tamaño del base64 (~4KB para 64x64)
+                        const sizeKB = Math.round((base64.length * 3) / 4 / 1024);
+                        console.log(`Imagen procesada: ${width}x${height}, ~${sizeKB}KB`);
+                        
+                        resolve(base64);
+                    };
+                    
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
     }
     
     // ========================================================================

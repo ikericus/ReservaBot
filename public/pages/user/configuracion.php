@@ -324,25 +324,28 @@ include 'includes/header.php';
                     <!-- Logo/Imagen -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Logo o imagen (opcional)
+                            Logo del negocio (opcional)
                         </label>
                         <div class="image-upload-wrapper">
                             <div class="image-preview <?php echo empty($imagenNegocio) ? 'empty' : ''; ?>" id="imagePreview">
                                 <?php if (!empty($imagenNegocio)): ?>
-                                    <img src="<?php echo htmlspecialchars($imagenNegocio); ?>" alt="Logo">
+                                    <img src="<?php echo htmlspecialchars($imagenNegocio); ?>" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                                 <?php else: ?>
-                                    <i class="ri-image-line text-4xl"></i>
-                                    <span class="text-sm">Sin imagen</span>
+                                    <i class="ri-image-line text-4xl text-gray-400"></i>
+                                    <span class="text-sm text-gray-500">Sin imagen</span>
                                 <?php endif; ?>
                             </div>
                             <input
                                 type="file"
                                 id="imagen_negocio"
-                                name="empresa_imagen"
                                 accept="image/*"
                                 class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                             >
-                            <input type="hidden" id="imagen_negocio_url" name="empresa_imagen_url" value="<?php echo htmlspecialchars($imagenNegocio); ?>">
+                            <input type="hidden" id="imagen_negocio_url" name="empresa_imagen" value="<?php echo htmlspecialchars($imagenNegocio); ?>">
+                            <p class="text-xs text-gray-500 mt-2">
+                                <i class="ri-information-line"></i>
+                                Se redimensionará automáticamente a 128x128px. Máximo 60KB.
+                            </p>
                         </div>
                     </div>
 
