@@ -38,13 +38,11 @@ try {
     // Delegar toda la validación y actualización al dominio
     $resultado = $configuracionDomain->actualizarMultiples($data, $userId);
     
-    error_log('Configuraciones actualizadas para usuario: ' . $userId);
+    debug_log('Configuraciones actualizadas para usuario: ' . $userId);
     
     echo json_encode([
         'success' => true,
-        'message' => 'Configuración actualizada correctamente',
-        'configuraciones_actualizadas' => $resultado['updated'],
-        'total' => count($resultado['updated'])
+        'message' => 'Configuración actualizada correctamente'
     ]);
     
 } catch (\InvalidArgumentException $e) {
