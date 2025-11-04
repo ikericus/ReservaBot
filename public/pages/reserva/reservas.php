@@ -371,7 +371,7 @@ include 'includes/header.php';
         </div>
     </div>
     
-    <!-- Historial de Cambios -->
+   <!-- Historial de Cambios -->
     <div id="historialContent" class="hidden">
         <h2 class="text-lg font-medium text-gray-900 mb-4 hidden sm:block">Historial de Cambios</h2>
         
@@ -383,60 +383,80 @@ include 'includes/header.php';
                     <p>No hay cambios registrados</p>
                 </div>
             <?php else: ?>
-                <div class="space-y-4">
-                    <?php foreach ($historialCambios as $cambio): ?>
-                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-gray-300 hover:shadow-md transition-shadow cursor-pointer" 
-                            onclick="window.location.href='/reserva?id=<?php echo $cambio['reserva_id']; ?>'">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-3">
-                                        <h3 class="font-medium text-gray-900">
-                                            <?php echo htmlspecialchars($cambio['nombre_cliente']); ?>
-                                        </h3>
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Fecha/Hora
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Acción
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Cliente
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Teléfono
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Fecha Reserva
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Hora
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Detalles
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <?php foreach ($historialCambios as $cambio): ?>
+                                <tr class="hover:bg-gray-50 cursor-pointer transition-colors" 
+                                    onclick="window.location.href='/reserva?id=<?php echo $cambio['reserva_id']; ?>'">
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        <?php 
+                                        $fecha = new DateTime($cambio['fecha_cambio']);
+                                        echo $fecha->format('d/m/Y H:i');
+                                        ?>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
                                             <?php 
-                                                echo match($cambio['accion']) {
-                                                    'creada' => 'bg-blue-100 text-blue-800',
-                                                    'confirmada' => 'bg-green-100 text-green-800',
-                                                    'rechazada' => 'bg-red-100 text-red-800',
-                                                    'cancelada' => 'bg-gray-100 text-gray-800',
-                                                    'modificada' => 'bg-amber-100 text-amber-800',
-                                                    default => 'bg-gray-100 text-gray-800'
-                                                };
-                                            ?>
+                                            echo match($cambio['accion']) {
+                                                'creada' => 'bg-blue-100 text-blue-800',
+                                                'confirmada' => 'bg-green-100 text-green-800',
+                                                'rechazada' => 'bg-red-100 text-red-800',
+                                                'cancelada' => 'bg-gray-100 text-gray-800',
+                                                'modificada' => 'bg-amber-100 text-amber-800',
+                                                default => 'bg-gray-100 text-gray-800'
+                                            };
+                                            ?>">
                                             <?php echo ucfirst($cambio['accion']); ?>
                                         </span>
-                                    </div>
-                                    
-                                    <p class="mt-1 text-sm text-gray-600">
+                                    </td>
+                                    <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                                        <?php echo htmlspecialchars($cambio['nombre_cliente']); ?>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                        <i class="ri-phone-line mr-1"></i>
+                                        <?php echo htmlspecialchars($cambio['telefono']); ?>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                        <i class="ri-calendar-line mr-1"></i>
+                                        <?php echo date('d/m/Y', strtotime($cambio['fecha_reserva'])); ?>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                        <i class="ri-time-line mr-1"></i>
+                                        <?php echo substr($cambio['hora_reserva'], 0, 5); ?>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">
                                         <?php echo htmlspecialchars($cambio['descripcion']); ?>
-                                    </p>
-                                    
-                                    <div class="mt-2 flex items-center gap-4 text-sm text-gray-500">
-                                        <span>
-                                            <i class="ri-calendar-line mr-1"></i>
-                                            <?php echo date('d/m/Y', strtotime($cambio['fecha_reserva'])); ?>
-                                        </span>
-                                        <span>
-                                            <i class="ri-time-line mr-1"></i>
-                                            <?php echo substr($cambio['hora_reserva'], 0, 5); ?>
-                                        </span>
-                                        <span>
-                                            <i class="ri-phone-line mr-1"></i>
-                                            <?php echo htmlspecialchars($cambio['telefono']); ?>
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div class="text-right text-xs text-gray-400">
-                                    <?php 
-                                    $fecha = new DateTime($cambio['fecha_cambio']);
-                                    echo $fecha->format('d/m/Y H:i');
-                                    ?>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
             <?php endif; ?>
         </div>
@@ -453,14 +473,21 @@ include 'includes/header.php';
                     <?php foreach ($historialCambios as $cambio): ?>
                         <div class="bg-white p-4 mobile-card border-l-4 border-gray-300 fade-in-mobile"
                             onclick="window.location.href='/reserva?id=<?php echo $cambio['reserva_id']; ?>'">
-                            <div class="mobile-card-header">
-                                <h3 class="mobile-card-title"><?php echo htmlspecialchars($cambio['nombre_cliente']); ?></h3>
-                                <span class="mobile-card-status inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                            
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs text-gray-500">
+                                    <?php 
+                                    $fecha = new DateTime($cambio['fecha_cambio']);
+                                    echo $fecha->format('d/m/Y H:i');
+                                    ?>
+                                </span>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
                                     <?php 
                                     echo match($cambio['accion']) {
                                         'creada' => 'bg-blue-100 text-blue-800',
                                         'confirmada' => 'bg-green-100 text-green-800',
-                                        'cancelada' => 'bg-red-100 text-red-800',
+                                        'rechazada' => 'bg-red-100 text-red-800',
+                                        'cancelada' => 'bg-gray-100 text-gray-800',
                                         'modificada' => 'bg-amber-100 text-amber-800',
                                         default => 'bg-gray-100 text-gray-800'
                                     };
@@ -469,11 +496,15 @@ include 'includes/header.php';
                                 </span>
                             </div>
                             
+                            <h3 class="font-medium text-gray-900 mb-1">
+                                <?php echo htmlspecialchars($cambio['nombre_cliente']); ?>
+                            </h3>
+                            
                             <p class="text-sm text-gray-600 mb-2">
                                 <?php echo htmlspecialchars($cambio['descripcion']); ?>
                             </p>
                             
-                            <div class="mobile-card-content">
+                            <div class="space-y-1">
                                 <div class="mobile-card-info">
                                     <i class="ri-calendar-line"></i>
                                     <span><?php echo date('d/m/Y', strtotime($cambio['fecha_reserva'])); ?></span>
@@ -487,19 +518,12 @@ include 'includes/header.php';
                                     <span><?php echo htmlspecialchars($cambio['telefono']); ?></span>
                                 </div>
                             </div>
-                            
-                            <div class="text-right text-xs text-gray-400 mt-2">
-                                <?php 
-                                $fecha = new DateTime($cambio['fecha_cambio']);
-                                echo $fecha->format('d/m/Y H:i');
-                                ?>
-                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
         </div>
-    </div>  
+    </div> 
 </div>
 
 <?php 
@@ -604,7 +628,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         window.location.reload();
                     } else {
-                        alert('Error al reachazar la reserva: ' + data.message);
+                        alert('Error al cancelar la reserva: ' + data.message);
                     }
                 })
                 .catch(error => {
