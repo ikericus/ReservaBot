@@ -22,7 +22,7 @@ class ReservaDomain {
         $this->reservaRepository = $reservaRepository;
         $this->configuracionRepository = $configuracionRepository;
         $this->emailRepository = $emailRepository;
-        $this->emailTemplates = new EmailTemplates();
+        $this->emailTemplates = new EmailTemplates($configuracionRepository);
     }
     
     /**

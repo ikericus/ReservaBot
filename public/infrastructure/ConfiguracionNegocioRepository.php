@@ -38,6 +38,13 @@ class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository 
         return $valor !== false ? $valor : null;
     }
     
+    /**
+     * Alias de obtener() para mayor claridad en EmailTemplates
+     */
+    public function obtenerValor(string $clave, int $usuarioId): ?string {
+        return $this->obtener($clave, $usuarioId);
+    }
+    
     public function actualizar(string $clave, string $valor, int $usuarioId): void {
         $sql = "INSERT INTO configuraciones_usuario (usuario_id, clave, valor) 
                 VALUES (?, ?, ?) 
@@ -83,19 +90,41 @@ class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository 
     }
     
     public function obtenerHorarioDia(string $dia, int $usuarioId): array {
-        $clave = "horario_{$dia}";
+        // Primero intentar obtener el mapeo de semana y tipos de día
+        $mapeoSemanaJson = $this->obtener('mapeo_semana', $usuarioId);
+        $tiposDiaJson = $this->obtener('tipos_dia', $usuarioId);
         
-        $stmt = $this->pdo->prepare(
-            "SELECT valor FROM configuraciones_usuario WHERE clave = ? AND usuario_id = ?"
-        );
-        $stmt->execute([$clave, $usuarioId]);
-        $valor = $stmt->fetchColumn();
+        if ($mapeoSemanaJson && $tiposDiaJson) {
+            $mapeoSemana = json_decode($mapeoSemanaJson, true);
+            $tiposDia = json_decode($tiposDiaJson, true);
+            
+            if (isset($mapeoSemana[$dia]) && isset($tiposDia[$mapeoSemana[$dia]])) {
+                $tipoDia = $tiposDia[$mapeoSemana[$dia]];
+                $ventanas = $tipoDia['ventanas'] ?? [];
+                
+                // Asegurar que todas las ventanas tengan capacidad
+                foreach ($ventanas as &$ventana) {
+                    if (!isset($ventana['capacidad'])) {
+                        $ventana['capacidad'] = 1;
+                    }
+                }
+                
+                return [
+                    'activo' => !empty($ventanas),
+                    'ventanas' => $ventanas
+                ];
+            }
+        }
+        
+        // Fallback al sistema antiguo
+        $clave = "horario_{$dia}";
+        $valor = $this->obtener($clave, $usuarioId);
         
         if (!$valor) {
             $esFinDeSemana = in_array($dia, ['sab', 'dom']);
             $valor = $esFinDeSemana 
                 ? 'false|[]' 
-                : 'true|[{"inicio":"09:00","fin":"18:00"}]';
+                : 'true|[{"inicio":"09:00","fin":"18:00","capacidad":1}]';
         }
         
         return $this->parseHorarioConfig($valor);
@@ -103,7 +132,7 @@ class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository 
     
     public function obtenerIntervalo(int $usuarioId): int {
         $stmt = $this->pdo->prepare(
-            "SELECT valor FROM configuraciones_usuario WHERE clave = 'intervalo' AND usuario_id = ?"
+            "SELECT valor FROM configuraciones_usuario WHERE clave = 'intervalo_reservas' AND usuario_id = ?"
         );
         $stmt->execute([$usuarioId]);
         $valor = $stmt->fetchColumn();
@@ -137,14 +166,21 @@ class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository 
                 $tiempos = explode('|', $parts[1]);
                 if (count($tiempos) >= 2) {
                     $ventanas = [
-                        ['inicio' => $tiempos[0], 'fin' => $tiempos[1]]
+                        ['inicio' => $tiempos[0], 'fin' => $tiempos[1], 'capacidad' => 1]
                     ];
                 }
             }
         }
         
         if (empty($ventanas)) {
-            $ventanas = [['inicio' => '09:00', 'fin' => '18:00']];
+            $ventanas = [['inicio' => '09:00', 'fin' => '18:00', 'capacidad' => 1]];
+        }
+        
+        // Asegurar que todas las ventanas tengan capacidad
+        foreach ($ventanas as &$ventana) {
+            if (!isset($ventana['capacidad'])) {
+                $ventana['capacidad'] = 1;
+            }
         }
         
         return [
