@@ -3,12 +3,13 @@ function showTab(tabName) {
     // Ocultar todos los contenidos
     document.getElementById('pendientesContent').classList.add('hidden');
     document.getElementById('confirmadasContent').classList.add('hidden');
+    document.getElementById('historialContent').classList.add('hidden');
     
     // Mostrar el contenido seleccionado
     document.getElementById(tabName + 'Content').classList.remove('hidden');
     
     // Actualizar estilos de tabs
-    const tabs = ['pendientes', 'confirmadas'];
+    const tabs = ['pendientes', 'confirmadas', 'historial'];
     tabs.forEach(tab => {
         const tabButton = document.getElementById(tab + 'Tab');
         if (tab === tabName) {
@@ -21,48 +22,58 @@ function showTab(tabName) {
 
 // Funciones para aceptar/rechazar reservas
 document.addEventListener('DOMContentLoaded', function() {
-    // Referencias a elementos del DOM - Solo para reservas
+    // Referencias a elementos del DOM
     const pendientesTab = document.getElementById('pendientesTab');
     const confirmadasTab = document.getElementById('confirmadasTab');
+    const historialTab = document.getElementById('historialTab');
     const pendientesContent = document.getElementById('pendientesContent');
     const confirmadasContent = document.getElementById('confirmadasContent');
+    const historialContent = document.getElementById('historialContent');
     
     // Funcionalidad de tabs - Solo si existen los elementos
-    if (pendientesTab && confirmadasTab && pendientesContent && confirmadasContent) {
-        // Cambiar entre tabs
+    if (pendientesTab && confirmadasTab && historialTab && pendientesContent && confirmadasContent && historialContent) {
+        // Tab Pendientes
         pendientesTab.addEventListener('click', function() {
-            pendientesTab.classList.add('border-blue-500', 'text-blue-600');
-            pendientesTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            
-            confirmadasTab.classList.remove('border-blue-500', 'text-blue-600');
-            confirmadasTab.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            
-            pendientesContent.classList.remove('hidden');
-            pendientesContent.classList.add('block');
-            
-            confirmadasContent.classList.remove('block');
-            confirmadasContent.classList.add('hidden');
+            showTab('pendientes');
         });
         
+        // Tab Confirmadas
         confirmadasTab.addEventListener('click', function() {
-            confirmadasTab.classList.add('border-blue-500', 'text-blue-600');
-            confirmadasTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            
-            pendientesTab.classList.remove('border-blue-500', 'text-blue-600');
-            pendientesTab.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            
-            confirmadasContent.classList.remove('hidden');
-            confirmadasContent.classList.add('block');
-            
-            pendientesContent.classList.remove('block');
-            pendientesContent.classList.add('hidden');
+            showTab('confirmadas');
+        });
+        
+        // Tab Historial
+        historialTab.addEventListener('click', function() {
+            showTab('historial');
         });
     }
+    
+    // Hacer las tarjetas clickeables para navegar al detalle
+    // Solo las de pendientes y confirmadas (no los botones)
+    document.querySelectorAll('#pendientesContent .mobile-card, #pendientesContent .desktop-view > div, #confirmadasContent .mobile-card, #confirmadasContent .desktop-view > div').forEach(card => {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', function(e) {
+            // No navegar si se clickeó un botón
+            if (e.target.closest('button')) {
+                return;
+            }
+            const reservaId = this.dataset.id;
+            if (reservaId) {
+                window.location.href = `/reserva?id=${reservaId}`;
+            }
+        });
+    });
+    
+    // Las tarjetas del historial ya tienen onclick en el HTML, pero agregamos estilo
+    document.querySelectorAll('#historialContent .mobile-card, #historialContent .desktop-view > div').forEach(card => {
+        card.style.cursor = 'pointer';
+    });
         
     // Botones de aceptar reservas
     document.querySelectorAll('.btn-aceptar').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation(); // Evitar que el click llegue al card
             const id = this.getAttribute('data-id');
             
             fetch('api/actualizar-reserva', {
@@ -92,6 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.btn-rechazar, .btn-cancelar').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation(); // Evitar que el click llegue al card
             const id = this.getAttribute('data-id');
             
             if (confirm('¿Estás seguro de eliminar esta reserva?')) {
@@ -118,4 +130,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-}); 
+});

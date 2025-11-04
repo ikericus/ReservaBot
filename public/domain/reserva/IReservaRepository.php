@@ -82,4 +82,21 @@ interface IReservaRepository {
         ?string $ipAddress,
         ?string $userAgent
     ): void;
+
+    /**
+     * Obtiene el historial de auditoría de reservas del usuario
+     */
+    public function obtenerHistorialAuditoria(int $usuarioId, ?int $limite = 50): array;
+
+    /**
+     * Registra un evento de auditoría
+     */
+    public function registrarAuditoria(
+        int $reservaId,
+        int $usuarioId,
+        string $accion,
+        ?string $campoModificado = null,
+        ?string $valorAnterior = null,
+        ?string $valorNuevo = null
+    ): void;
 }

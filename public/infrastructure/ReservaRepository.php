@@ -48,10 +48,21 @@ class ReservaRepository implements IReservaRepository {
         
         $id = (int)$this->pdo->lastInsertId();
         
+        // Registrar en auditoría
+        $this->registrarAuditoria(
+            $id,
+            $reserva->getUsuarioId(),
+            'creada'
+        );        
+
         return $this->obtenerPorId($id, $reserva->getUsuarioId());
     }
     
     private function actualizar(Reserva $reserva): Reserva {
+        
+        // Obtener versión anterior
+        $reservaAnterior = $this->obtenerPorId($reserva->getId(), $reserva->getUsuarioId());
+    
         $sql = "UPDATE reservas 
                 SET nombre = ?, 
                     telefono = ?, 
@@ -84,6 +95,40 @@ class ReservaRepository implements IReservaRepository {
             $reserva->getId(),
             $reserva->getUsuarioId()
         ]);
+        
+         // Detectar y registrar cambios
+        if ($reservaAnterior->getFecha()->format('Y-m-d') !== $reserva->getFecha()->format('Y-m-d')) {
+            $this->registrarAuditoria(
+                $reserva->getId(),
+                $reserva->getUsuarioId(),
+                'modificada',
+                'fecha',
+                $reservaAnterior->getFecha()->format('d/m/Y'),
+                $reserva->getFecha()->format('d/m/Y')
+            );
+        }
+        
+        if ($reservaAnterior->getHora() !== $reserva->getHora()) {
+            $this->registrarAuditoria(
+                $reserva->getId(),
+                $reserva->getUsuarioId(),
+                'modificada',
+                'hora',
+                $reservaAnterior->getHora(),
+                $reserva->getHora()
+            );
+        }
+        
+        if ($reservaAnterior->getEstado() !== $reserva->getEstado()) {
+            $this->registrarAuditoria(
+                $reserva->getId(),
+                $reserva->getUsuarioId(),
+                $reserva->getEstado()->value === 'confirmada' ? 'confirmada' : 'cancelada',
+                'estado',
+                $reservaAnterior->getEstado()->value,
+                $reserva->getEstado()->value
+            );
+        }
         
         return $reserva;
     }
@@ -328,6 +373,49 @@ class ReservaRepository implements IReservaRepository {
         } catch (\PDOException $e) {
             // No es crítico si falla el registro del origen
             error_log("Error al registrar origen de reserva: " . $e->getMessage());
+        }
+    }
+
+    public function obtenerHistorialAuditoria(int $usuarioId, ?int $limite = 50): array {
+        $sql = "SELECT a.*, r.nombre, r.telefono, r.fecha, r.hora, r.estado
+                FROM reservas_auditoria a
+                INNER JOIN reservas r ON a.reserva_id = r.id
+                WHERE a.usuario_id = ?
+                ORDER BY a.created_at DESC
+                LIMIT ?";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$usuarioId, $limite]);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function registrarAuditoria(
+        int $reservaId,
+        int $usuarioId,
+        string $accion,
+        ?string $campoModificado = null,
+        ?string $valorAnterior = null,
+        ?string $valorNuevo = null
+    ): void {
+        try {
+            $sql = "INSERT INTO reservas_auditoria 
+                    (reserva_id, usuario_id, accion, campo_modificado, valor_anterior, valor_nuevo, ip_address, user_agent)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                $reservaId,
+                $usuarioId,
+                $accion,
+                $campoModificado,
+                $valorAnterior,
+                $valorNuevo,
+                $_SERVER['REMOTE_ADDR'] ?? null,
+                $_SERVER['HTTP_USER_AGENT'] ?? null
+            ]);
+        } catch (\PDOException $e) {
+            error_log("Error al registrar auditoría: " . $e->getMessage());
         }
     }
 }

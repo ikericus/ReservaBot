@@ -32,7 +32,8 @@ try {
     
     $reservasPendientes = $reservaDomain->obtenerReservasPendientes($userId);
     $reservasConfirmadas = $reservaDomain->obtenerReservasConfirmadas($userId);
-    
+    $historialCambios = $reservaDomain->obtenerHistorialCambios($userId, 100);
+   
     // Convertir objetos Reserva a arrays para la vista
     $reservasPendientes = array_map(fn($r) => $r->toArray(), $reservasPendientes);
     $reservasConfirmadas = array_map(fn($r) => $r->toArray(), $reservasConfirmadas);
@@ -41,6 +42,7 @@ try {
     setFlashError('Error obteniendo reservas: ' . $e->getMessage());
     $reservasPendientes = [];
     $reservasConfirmadas = [];
+    $historialCambios = [];
 }
 
 // Mostrar mensaje de bienvenida si es un nuevo usuario
@@ -241,7 +243,7 @@ include 'includes/header.php';
 
 <!-- Tabs de navegación -->
 <div class="border-b border-gray-200">
-    <nav class="-mb-px flex space-x-8">
+    <nav class="-mb-px flex space-x-8 overflow-x-auto">
         <button 
             id="pendientesTab" 
             class="border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center"
@@ -255,16 +257,13 @@ include 'includes/header.php';
             </span>
         </button>
         <button 
-            id="confirmadasTab" 
+            id="historialTab" 
             class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center"
-            onclick="showTab('confirmadas')"
+            onclick="showTab('historial')"
         >
-            <i class="ri-check-line mr-2"></i>
-            <span class="hidden sm:inline">Reservas Confirmadas</span>
-            <span class="sm:hidden">Confirmadas</span>
-            <span id="confirmadasCount" class="bg-green-100 text-green-800 text-xs font-medium ml-2 px-2.5 py-0.5 rounded-full mobile-tab-counter">
-                <?php echo count($reservasConfirmadas); ?>
-            </span>
+            <i class="ri-history-line mr-2"></i>
+            <span class="hidden sm:inline">Historial de cambios en reservas</span>
+            <span class="sm:hidden">Historial</span>
         </button>
     </nav>
 </div>
@@ -372,92 +371,134 @@ include 'includes/header.php';
         </div>
     </div>
     
-    <!-- Reservas Confirmadas -->
-    <div id="confirmadasContent" class="hidden">
-        <h2 class="text-lg font-medium text-gray-900 mb-4 hidden sm:block">Reservas Confirmadas</h2>
+    <!-- Historial de Cambios -->
+    <div id="historialContent" class="hidden">
+        <h2 class="text-lg font-medium text-gray-900 mb-4 hidden sm:block">Historial de Cambios</h2>
         
         <!-- Vista Desktop -->
         <div class="desktop-view">
-            <?php if (empty($reservasConfirmadas)): ?>
+            <?php if (empty($historialCambios)): ?>
                 <div class="text-center py-8 text-gray-500">
-                    <i class="ri-check-double-line text-4xl text-gray-400 mb-2"></i>
-                    <p>No hay reservas confirmadas</p>
+                    <i class="ri-history-line text-4xl text-gray-400 mb-2"></i>
+                    <p>No hay cambios registrados</p>
                 </div>
             <?php else: ?>
-                <?php foreach ($reservasConfirmadas as $reserva): ?>
-                    <div class="bg-white p-4 rounded-lg shadow-sm mb-4 border-l-4 border-green-500">
-                        <div class="flex justify-between">
-                            <div>
-                                <h3 class="font-medium text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></h3>
-                                <div class="mt-1 flex items-center text-sm text-gray-500">
-                                    <i class="ri-calendar-line mr-1"></i>
-                                    <?php echo date('d/m/Y', strtotime($reserva['fecha'])); ?> - <?php echo substr($reserva['hora'], 0, 5); ?>
-                                </div>
-                                <div class="mt-1 flex items-center text-sm text-gray-500">
-                                    <i class="ri-phone-line mr-1"></i>
-                                    <?php echo htmlspecialchars($reserva['telefono']); ?>
-                                </div>
-                                <?php if (!empty($reserva['mensaje'])): ?>
-                                    <p class="mt-2 text-sm text-gray-600 italic">"<?php echo htmlspecialchars($reserva['mensaje']); ?>"</p>
-                                <?php endif; ?>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    <i class="ri-check-line mr-1"></i>
-                                    Confirmada
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-        
-        <!-- Vista Mobile -->
-        <div class="mobile-view">
-            <?php if (empty($reservasConfirmadas)): ?>
-                <div class="text-center py-8 text-gray-500">
-                    <i class="ri-check-double-line text-4xl text-gray-400 mb-2"></i>
-                    <p class="text-sm">No hay reservas confirmadas</p>
-                </div>
-            <?php else: ?>
-                <div class="space-y-3">
-                    <?php foreach ($reservasConfirmadas as $reserva): ?>
-                        <div class="bg-white p-4 mobile-card border-l-4 border-green-500 fade-in-mobile">
-                            <div class="mobile-card-header">
-                                <h3 class="mobile-card-title"><?php echo htmlspecialchars($reserva['nombre']); ?></h3>
-                                <span class="mobile-card-status inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    Confirmada
-                                </span>
-                            </div>
-                            
-                            <div class="mobile-card-content">
-                                <div class="mobile-card-info">
-                                    <i class="ri-calendar-line"></i>
-                                    <span><?php echo date('d/m/Y', strtotime($reserva['fecha'])); ?></span>
-                                </div>
-                                <div class="mobile-card-info">
-                                    <i class="ri-time-line"></i>
-                                    <span><?php echo substr($reserva['hora'], 0, 5); ?></span>
-                                </div>
-                                <div class="mobile-card-info">
-                                    <i class="ri-phone-line"></i>
-                                    <span><?php echo htmlspecialchars($reserva['telefono']); ?>
+                <div class="space-y-4">
+                    <?php foreach ($historialCambios as $cambio): ?>
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-gray-300 hover:shadow-md transition-shadow cursor-pointer" 
+                            onclick="window.location.href='/reserva?id=<?php echo $cambio['reserva_id']; ?>'">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3">
+                                        <h3 class="font-medium text-gray-900">
+                                            <?php echo htmlspecialchars($cambio['nombre_cliente']); ?>
+                                        </h3>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                            <?php 
+                                            echo match($cambio['accion']) {
+                                                'creada' => 'bg-blue-100 text-blue-800',
+                                                'confirmada' => 'bg-green-100 text-green-800',
+                                                'cancelada' => 'bg-red-100 text-red-800',
+                                                'modificada' => 'bg-amber-100 text-amber-800',
+                                                default => 'bg-gray-100 text-gray-800'
+                                            };
+                                            ?>">
+                                            <?php echo ucfirst($cambio['accion']); ?>
+                                        </span>
+                                    </div>
+                                    
+                                    <p class="mt-1 text-sm text-gray-600">
+                                        <?php echo htmlspecialchars($cambio['descripcion']); ?>
+                                    </p>
+                                    
+                                    <div class="mt-2 flex items-center gap-4 text-sm text-gray-500">
+                                        <span>
+                                            <i class="ri-calendar-line mr-1"></i>
+                                            <?php echo date('d/m/Y', strtotime($cambio['fecha_reserva'])); ?>
+                                        </span>
+                                        <span>
+                                            <i class="ri-time-line mr-1"></i>
+                                            <?php echo substr($cambio['hora_reserva'], 0, 5); ?>
+                                        </span>
+                                        <span>
+                                            <i class="ri-phone-line mr-1"></i>
+                                            <?php echo htmlspecialchars($cambio['telefono']); ?>
+                                        </span>
+                                    </div>
                                 </div>
                                 
-                                <?php if (!empty($reserva['mensaje'])): ?>
-                                    <div class="mobile-card-message">
-                                        <i class="ri-chat-1-line mr-1"></i>
-                                        <?php echo htmlspecialchars($reserva['mensaje']); ?>
-                                    </div>
-                                <?php endif; ?>
+                                <div class="text-right text-xs text-gray-400">
+                                    <?php 
+                                    $fecha = new DateTime($cambio['fecha_cambio']);
+                                    echo $fecha->format('d/m/Y H:i');
+                                    ?>
+                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
         </div>
-    </div>
+        
+        <!-- Vista Mobile -->
+        <div class="mobile-view">
+            <?php if (empty($historialCambios)): ?>
+                <div class="text-center py-8 text-gray-500">
+                    <i class="ri-history-line text-4xl text-gray-400 mb-2"></i>
+                    <p class="text-sm">No hay cambios registrados</p>
+                </div>
+            <?php else: ?>
+                <div class="space-y-3">
+                    <?php foreach ($historialCambios as $cambio): ?>
+                        <div class="bg-white p-4 mobile-card border-l-4 border-gray-300 fade-in-mobile"
+                            onclick="window.location.href='/reserva?id=<?php echo $cambio['reserva_id']; ?>'">
+                            <div class="mobile-card-header">
+                                <h3 class="mobile-card-title"><?php echo htmlspecialchars($cambio['nombre_cliente']); ?></h3>
+                                <span class="mobile-card-status inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                    <?php 
+                                    echo match($cambio['accion']) {
+                                        'creada' => 'bg-blue-100 text-blue-800',
+                                        'confirmada' => 'bg-green-100 text-green-800',
+                                        'cancelada' => 'bg-red-100 text-red-800',
+                                        'modificada' => 'bg-amber-100 text-amber-800',
+                                        default => 'bg-gray-100 text-gray-800'
+                                    };
+                                    ?>">
+                                    <?php echo ucfirst($cambio['accion']); ?>
+                                </span>
+                            </div>
+                            
+                            <p class="text-sm text-gray-600 mb-2">
+                                <?php echo htmlspecialchars($cambio['descripcion']); ?>
+                            </p>
+                            
+                            <div class="mobile-card-content">
+                                <div class="mobile-card-info">
+                                    <i class="ri-calendar-line"></i>
+                                    <span><?php echo date('d/m/Y', strtotime($cambio['fecha_reserva'])); ?></span>
+                                </div>
+                                <div class="mobile-card-info">
+                                    <i class="ri-time-line"></i>
+                                    <span><?php echo substr($cambio['hora_reserva'], 0, 5); ?></span>
+                                </div>
+                                <div class="mobile-card-info">
+                                    <i class="ri-phone-line"></i>
+                                    <span><?php echo htmlspecialchars($cambio['telefono']); ?></span>
+                                </div>
+                            </div>
+                            
+                            <div class="text-right text-xs text-gray-400 mt-2">
+                                <?php 
+                                $fecha = new DateTime($cambio['fecha_cambio']);
+                                echo $fecha->format('d/m/Y H:i');
+                                ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>  
 </div>
 
 <?php 

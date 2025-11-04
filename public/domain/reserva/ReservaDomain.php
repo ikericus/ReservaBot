@@ -655,4 +655,47 @@ class ReservaDomain {
             'formulario' => $formularioData
         ];
     }
+
+    /**
+    * Obtiene el historial de cambios de reservas
+    */
+    public function obtenerHistorialCambios(int $usuarioId, ?int $limite = 50): array {
+        $auditoria = $this->reservaRepository->obtenerHistorialAuditoria($usuarioId, $limite);
+        
+        // Formatear para vista
+        return array_map(function($registro) {
+            $descripcion = $this->generarDescripcionCambio($registro);
+            
+            return [
+                'id' => $registro['id'],
+                'reserva_id' => $registro['reserva_id'],
+                'nombre_cliente' => $registro['nombre'],
+                'telefono' => $registro['telefono'],
+                'fecha_reserva' => $registro['fecha'],
+                'hora_reserva' => $registro['hora'],
+                'accion' => $registro['accion'],
+                'descripcion' => $descripcion,
+                'fecha_cambio' => $registro['created_at'],
+                'estado_actual' => $registro['estado']
+            ];
+        }, $auditoria);
+    }
+
+    private function generarDescripcionCambio(array $registro): string {
+        switch ($registro['accion']) {
+            case 'creada':
+                return 'Reserva creada';
+            case 'confirmada':
+                return 'Reserva confirmada';
+            case 'cancelada':
+                return 'Reserva cancelada';
+            case 'modificada':
+                $campo = $registro['campo_modificado'];
+                $anterior = $registro['valor_anterior'];
+                $nuevo = $registro['valor_nuevo'];
+                return "Cambio de {$campo}: {$anterior} → {$nuevo}";
+            default:
+                return $registro['accion'];
+        }
+    }
 }
