@@ -307,69 +307,70 @@ include 'includes/header.php';
     </div>
     <?php endif; ?>
 
-</div>
 
-<!-- Acciones -->
-<div class="bg-white rounded-lg shadow-sm p-6">
-    <h3 class="text-lg font-medium text-gray-900 mb-4">Acciones</h3>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        <?php if ($reserva['estado'] === 'pendiente'): ?>
-            <!-- Aceptar -->
-            <button id="confirmarBtn" 
-                    class="inline-flex items-center justify-center px-4 py-3 border border-green-300 shadow-sm text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                <i class="ri-check-line mr-2"></i>
-                Aceptar
-            </button>
-            
-            <!-- Rechazar -->
-            <button id="rechazarBtn" 
-                    class="inline-flex items-center justify-center px-4 py-3 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                <i class="ri-close-line mr-2"></i>
-                Rechazar
-            </button>
-            
-            <!-- Editar -->
-            <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" 
-               class="inline-flex items-center justify-center px-4 py-3 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                <i class="ri-edit-line mr-2"></i>
-                Editar
-            </a>
-            
-        <?php elseif ($reserva['estado'] === 'confirmada'): ?>
-            <!-- Cancelar -->
-            <button id="cancelarBtn" 
-                    class="inline-flex items-center justify-center px-4 py-3 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                <i class="ri-close-circle-line mr-2"></i>
-                Cancelar
-            </button>
-            
-            <!-- Editar -->
-            <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" 
-               class="inline-flex items-center justify-center px-4 py-3 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                <i class="ri-edit-line mr-2"></i>
-                Editar
-            </a>
-            
-        <?php endif; ?>
+    <!-- Acciones -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Acciones</h3>
         
-        <!-- WhatsApp (siempre disponible) -->
-        <button 
-            onclick="openWhatsAppChat('<?php echo addslashes($reserva['telefono']); ?>', '<?php echo addslashes($reserva['nombre']); ?>')"
-            class="whatsapp-button inline-flex items-center justify-center px-4 py-3 border border-green-300 shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 <?php echo !$whatsappConnected ? 'opacity-50 cursor-not-allowed' : ''; ?>"
-            <?php echo !$whatsappConnected ? 'disabled title="WhatsApp no está conectado"' : ''; ?>
-        >
-            <i class="ri-whatsapp-line mr-2"></i>
-            WhatsApp
-        </button>
-        
-        <!-- Ver Cliente -->
-        <a href="/cliente?telefono=<?php echo urlencode($reserva['telefono']); ?>" 
-           class="inline-flex items-center justify-center px-4 py-3 border border-purple-300 shadow-sm text-sm font-medium rounded-md text-purple-700 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
-            <i class="ri-user-line mr-2"></i>
-            Ver Cliente
-        </a>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <?php if ($reserva['estado'] === 'pendiente'): ?>
+                <!-- Aceptar -->
+                <button id="confirmarBtn" 
+                        class="inline-flex items-center justify-center px-4 py-3 border border-green-300 shadow-sm text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                    <i class="ri-check-line mr-2"></i>
+                    Aceptar
+                </button>
+                
+                <!-- Rechazar -->
+                <button id="rechazarBtn" 
+                        class="inline-flex items-center justify-center px-4 py-3 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                    <i class="ri-close-line mr-2"></i>
+                    Rechazar
+                </button>
+                
+                <!-- Editar -->
+                <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" 
+                class="inline-flex items-center justify-center px-4 py-3 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    <i class="ri-edit-line mr-2"></i>
+                    Editar
+                </a>
+                
+            <?php elseif ($reserva['estado'] === 'confirmada'): ?>
+                <!-- Cancelar -->
+                <button id="cancelarBtn" 
+                        class="inline-flex items-center justify-center px-4 py-3 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                    <i class="ri-close-circle-line mr-2"></i>
+                    Cancelar
+                </button>
+                
+                <!-- Editar -->
+                <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" 
+                class="inline-flex items-center justify-center px-4 py-3 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    <i class="ri-edit-line mr-2"></i>
+                    Editar
+                </a>
+                
+            <?php endif; ?>
+            
+            <!-- WhatsApp (siempre disponible) -->
+            <button 
+                onclick="openWhatsAppChat('<?php echo addslashes($reserva['telefono']); ?>', '<?php echo addslashes($reserva['nombre']); ?>')"
+                class="whatsapp-button inline-flex items-center justify-center px-4 py-3 border border-green-300 shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 <?php echo !$whatsappConnected ? 'opacity-50 cursor-not-allowed' : ''; ?>"
+                <?php echo !$whatsappConnected ? 'disabled title="WhatsApp no está conectado"' : ''; ?>
+            >
+                <i class="ri-whatsapp-line mr-2"></i>
+                WhatsApp
+            </button>
+            
+            <!-- Ver Cliente -->
+            <a href="/cliente?telefono=<?php echo urlencode($reserva['telefono']); ?>" 
+            class="inline-flex items-center justify-center px-4 py-3 border border-purple-300 shadow-sm text-sm font-medium rounded-md text-purple-700 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
+                <i class="ri-user-line mr-2"></i>
+                Ver Cliente
+            </a>
+        </div>
     </div>
+
 </div>
 
 <!-- Modal de confirmación para rechazar -->
