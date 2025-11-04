@@ -53,6 +53,11 @@ include 'includes/header.php';
 ?>
 
 <style>
+.container-max-width {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
 .whatsapp-button {
     background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
     box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
@@ -175,130 +180,134 @@ include 'includes/header.php';
 }
 </style>
 
-<!-- Botón de volver -->
-<div class="flex items-center mb-6">
-    <a href="javascript:history.back()" class="mr-4 p-2 rounded-full hover:bg-gray-100">
-        <i class="ri-arrow-left-line text-gray-600 text-xl"></i>
-    </a>
-    <h1 class="text-2xl font-bold text-gray-900">Detalle de Reserva</h1>
-</div>
+<div class="container-max-width">
 
-<!-- Información de la reserva -->
-<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-    <div class="flex items-start justify-between mb-6">
-        <div class="flex items-center">
-            <div class="flex-shrink-0 h-16 w-16">
-                <div class="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
-                    <i class="ri-calendar-check-line text-blue-600 text-2xl"></i>
+    <!-- Botón de volver -->
+    <!-- <div class="flex items-center mb-6">
+        <a href="javascript:history.back()" class="mr-4 p-2 rounded-full hover:bg-gray-100">
+            <i class="ri-arrow-left-line text-gray-600 text-xl"></i>
+        </a>
+        <h1 class="text-2xl font-bold text-gray-900">Detalle de Reserva</h1>
+    </div> -->
+
+    <!-- Información de la reserva -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 h-16 w-16">
+                    <div class="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
+                        <i class="ri-calendar-check-line text-blue-600 text-2xl"></i>
+                    </div>
+                </div>
+                <div class="ml-6">
+                    <h2 class="text-xl font-bold text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></h2>
+                    <p class="text-gray-600 flex items-center mt-1">
+                        <i class="ri-phone-line mr-1"></i>
+                        <?php echo htmlspecialchars($reserva['telefono']); ?>
+                    </p>
+                    <?php if (!empty($reserva['email'])): ?>
+                    <p class="text-gray-600 flex items-center mt-1">
+                        <i class="ri-mail-line mr-1"></i>
+                        <?php echo htmlspecialchars($reserva['email']); ?>
+                    </p>
+                    <?php endif; ?>
                 </div>
             </div>
-            <div class="ml-6">
-                <h2 class="text-xl font-bold text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></h2>
-                <p class="text-gray-600 flex items-center mt-1">
-                    <i class="ri-phone-line mr-1"></i>
-                    <?php echo htmlspecialchars($reserva['telefono']); ?>
-                </p>
-                <?php if (!empty($reserva['email'])): ?>
-                <p class="text-gray-600 flex items-center mt-1">
-                    <i class="ri-mail-line mr-1"></i>
-                    <?php echo htmlspecialchars($reserva['email']); ?>
-                </p>
-                <?php endif; ?>
-            </div>
-        </div>
-        
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-            <?php 
-            echo match($reserva['estado']) {
-                'confirmada' => 'bg-green-100 text-green-800',
-                'pendiente' => 'bg-amber-100 text-amber-800',
-                'rechazada' => 'bg-red-100 text-red-800',
-                'cancelada' => 'bg-gray-100 text-gray-800',
-                default => 'bg-gray-100 text-gray-800'
-            };
-            ?>">
-            <i class="ri-<?php 
+            
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                <?php 
                 echo match($reserva['estado']) {
-                    'confirmada' => 'check-line',
-                    'pendiente' => 'time-line',
-                    'rechazada' => 'close-line',
-                    'cancelada' => 'close-circle-line',
-                    default => 'question-line'
+                    'confirmada' => 'bg-green-100 text-green-800',
+                    'pendiente' => 'bg-amber-100 text-amber-800',
+                    'rechazada' => 'bg-red-100 text-red-800',
+                    'cancelada' => 'bg-gray-100 text-gray-800',
+                    default => 'bg-gray-100 text-gray-800'
                 };
-            ?> mr-1"></i>
-            <?php 
-                echo match($reserva['estado']) {
-                    'confirmada' => 'Confirmada',
-                    'pendiente' => 'Pendiente',
-                    'rechazada' => 'Rechazada',
-                    'cancelada' => 'Cancelada',
-                    default => ucfirst($reserva['estado'])
-                };
-            ?>
-        </span>
-    </div>
-    
-    <!-- Información de fecha y hora -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-        <div>
-            <div class="flex items-center text-sm text-gray-500 mb-1">
-                <i class="ri-calendar-line mr-2"></i>
-                <span class="font-medium">Fecha de la reserva</span>
-            </div>
-            <div class="text-lg font-semibold text-gray-900 ml-6">
-                <?php echo formatearFecha($reserva['fecha']); ?>
-            </div>
+                ?>">
+                <i class="ri-<?php 
+                    echo match($reserva['estado']) {
+                        'confirmada' => 'check-line',
+                        'pendiente' => 'time-line',
+                        'rechazada' => 'close-line',
+                        'cancelada' => 'close-circle-line',
+                        default => 'question-line'
+                    };
+                ?> mr-1"></i>
+                <?php 
+                    echo match($reserva['estado']) {
+                        'confirmada' => 'Confirmada',
+                        'pendiente' => 'Pendiente',
+                        'rechazada' => 'Rechazada',
+                        'cancelada' => 'Cancelada',
+                        default => ucfirst($reserva['estado'])
+                    };
+                ?>
+            </span>
         </div>
         
-        <div>
-            <div class="flex items-center text-sm text-gray-500 mb-1">
-                <i class="ri-time-line mr-2"></i>
-                <span class="font-medium">Hora de la reserva</span>
+        <!-- Información de fecha y hora -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+            <div>
+                <div class="flex items-center text-sm text-gray-500 mb-1">
+                    <i class="ri-calendar-line mr-2"></i>
+                    <span class="font-medium">Fecha de la reserva</span>
+                </div>
+                <div class="text-lg font-semibold text-gray-900 ml-6">
+                    <?php echo formatearFecha($reserva['fecha']); ?>
+                </div>
             </div>
-            <div class="text-lg font-semibold text-gray-900 ml-6">
-                <?php echo substr($reserva['hora'], 0, 5); ?>
+            
+            <div>
+                <div class="flex items-center text-sm text-gray-500 mb-1">
+                    <i class="ri-time-line mr-2"></i>
+                    <span class="font-medium">Hora de la reserva</span>
+                </div>
+                <div class="text-lg font-semibold text-gray-900 ml-6">
+                    <?php echo substr($reserva['hora'], 0, 5); ?>
+                </div>
             </div>
+            
+            <?php if (isset($reserva['created_at']) && $reserva['created_at']): ?>
+            <div>
+                <div class="flex items-center text-sm text-gray-500 mb-1">
+                    <i class="ri-history-line mr-2"></i>
+                    <span class="font-medium">Solicitud creada</span>
+                </div>
+                <div class="text-sm text-gray-700 ml-6">
+                    <?php echo date('d/m/Y H:i', strtotime($reserva['created_at'])); ?>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
-        
-        <?php if (isset($reserva['created_at']) && $reserva['created_at']): ?>
-        <div>
-            <div class="flex items-center text-sm text-gray-500 mb-1">
-                <i class="ri-history-line mr-2"></i>
-                <span class="font-medium">Solicitud creada</span>
-            </div>
-            <div class="text-sm text-gray-700 ml-6">
-                <?php echo date('d/m/Y H:i', strtotime($reserva['created_at'])); ?>
-            </div>
+    </div>
+
+    <!-- Mensaje de la reserva -->
+    <?php if (!empty($reserva['mensaje'])): ?>
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
+            <i class="ri-message-2-line mr-2 text-blue-600"></i>
+            Mensaje
+        </h3>
+        <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-400">
+            <p class="text-gray-700 italic"><?php echo nl2br(htmlspecialchars($reserva['mensaje'])); ?></p>
         </div>
-        <?php endif; ?>
     </div>
-</div>
+    <?php endif; ?>
 
-<!-- Mensaje de la reserva -->
-<?php if (!empty($reserva['mensaje'])): ?>
-<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-    <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
-        <i class="ri-message-2-line mr-2 text-blue-600"></i>
-        Mensaje
-    </h3>
-    <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-400">
-        <p class="text-gray-700 italic"><?php echo nl2br(htmlspecialchars($reserva['mensaje'])); ?></p>
+    <!-- Notas internas -->
+    <?php if (!empty($reserva['notas_internas'])): ?>
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
+            <i class="ri-sticky-note-line mr-2 text-amber-600"></i>
+            Notas Internas
+        </h3>
+        <div class="bg-amber-50 rounded-lg p-4 border-l-4 border-amber-400">
+            <p class="text-gray-700"><?php echo nl2br(htmlspecialchars($reserva['notas_internas'])); ?></p>
+        </div>
     </div>
-</div>
-<?php endif; ?>
+    <?php endif; ?>
 
-<!-- Notas internas -->
-<?php if (!empty($reserva['notas_internas'])): ?>
-<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-    <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
-        <i class="ri-sticky-note-line mr-2 text-amber-600"></i>
-        Notas Internas
-    </h3>
-    <div class="bg-amber-50 rounded-lg p-4 border-l-4 border-amber-400">
-        <p class="text-gray-700"><?php echo nl2br(htmlspecialchars($reserva['notas_internas'])); ?></p>
-    </div>
 </div>
-<?php endif; ?>
 
 <!-- Acciones -->
 <div class="bg-white rounded-lg shadow-sm p-6">

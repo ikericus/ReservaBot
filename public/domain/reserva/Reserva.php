@@ -260,7 +260,8 @@ class Reserva {
             'email' => $this->email,
             'access_token' => $this->accessToken,
             'token_expires' => $this->tokenExpires?->format('Y-m-d H:i:s'),
-            'formulario_id' => $this->formularioId
+            'formulario_id' => $this->formularioId,
+            'created_at' => $this->creadaEn->format('Y-m-d H:i:s')
         ];
     }
 }

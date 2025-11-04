@@ -271,8 +271,7 @@ include 'includes/header.php';
 <div class="mt-6">
     <!-- Solicitudes Pendientes -->
     <div id="pendientesContent" class="block">
-        <h2 class="text-lg font-medium text-gray-900 mb-4 hidden sm:block">Solicitudes de Reserva Pendientes</h2>
-        
+
         <!-- Vista Desktop -->
         <div class="desktop-view" id="pendientesList">
             <?php if (empty($reservasPendientes)): ?>
@@ -373,7 +372,6 @@ include 'includes/header.php';
     
    <!-- Historial de Cambios -->
     <div id="historialContent" class="hidden">
-        <h2 class="text-lg font-medium text-gray-900 mb-4 hidden sm:block">Historial de Cambios</h2>
         
         <!-- Vista Desktop -->
         <div class="desktop-view">

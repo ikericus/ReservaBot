@@ -88,12 +88,12 @@ include 'includes/header.php';
 }
 </style>
 
-<div class="flex items-center mb-6">
+<!-- <div class="flex items-center mb-6">
     <a href="/clientes" class="mr-4 p-2 rounded-full hover:bg-gray-100">
         <i class="ri-arrow-left-line text-gray-600 text-xl"></i>
     </a>
     <h1 class="text-2xl font-bold text-gray-900">Detalle de Cliente</h1>
-</div>
+</div> -->
 
 <!-- Información del cliente -->
 <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
