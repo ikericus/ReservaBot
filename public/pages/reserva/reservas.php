@@ -591,8 +591,8 @@ document.addEventListener('DOMContentLoaded', function() {
             e.stopPropagation();
             const id = this.getAttribute('data-id');
             
-            if (confirm('¿Estás seguro de cancelar esta reserva?')) {
-                fetch('api/eliminar-reserva', {
+            if (confirm('¿Estás seguro de rechazar esta reserva?')) {
+                fetch('api/rechazar-reserva', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -604,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         window.location.reload();
                     } else {
-                        alert('Error al cancelar la reserva: ' + data.message);
+                        alert('Error al reachazar la reserva: ' + data.message);
                     }
                 })
                 .catch(error => {

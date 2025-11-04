@@ -37,13 +37,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Eliminar reserva
+    // Cancelar reserva
     document.querySelectorAll('.btn-eliminar').forEach(button => {
         button.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
             
-            if (confirm('¿Estás seguro de eliminar esta reserva? Esta acción no se puede deshacer.')) {
-                fetch('api/eliminar-reserva', {
+            if (confirm('¿Estás seguro de cancelar esta reserva? Esta acción no se puede deshacer.')) {
+                fetch('api/cancelar-reserva', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         window.location.reload();
                     } else {
-                        alert('Error al eliminar la reserva: ' + data.message);
+                        alert('Error al cancelar la reserva: ' + data.message);
                     }
                 })
                 .catch(error => {
