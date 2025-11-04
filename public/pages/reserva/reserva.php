@@ -427,8 +427,25 @@ include 'includes/header.php';
         <div class="reservation-header">
             <h1 class="reservation-title"><?php echo htmlspecialchars($reserva['nombre']); ?></h1>
             <div class="reservation-status-badge">
-                <i class="ri-<?php echo $reserva['estado'] === 'confirmada' ? 'check-line' : 'time-line'; ?>"></i>
-                <?php echo $reserva['estado'] === 'confirmada' ? 'Confirmada' : 'Pendiente'; ?>
+                <?php
+                $iconoEstado = match($reserva['estado']) {
+                    'confirmada' => 'check-line',
+                    'pendiente' => 'time-line',
+                    'rechazada' => 'close-line',
+                    'cancelada' => 'close-circle-line',
+                    default => 'question-line'
+                };
+                
+                $labelEstado = match($reserva['estado']) {
+                    'confirmada' => 'Confirmada',
+                    'pendiente' => 'Pendiente',
+                    'rechazada' => 'Rechazada',
+                    'cancelada' => 'Cancelada',
+                    default => ucfirst($reserva['estado'])
+                };
+                ?>
+                <i class="ri-<?php echo $iconoEstado; ?>"></i>
+                <?php echo $labelEstado; ?>
             </div>
         </div>
         
@@ -495,21 +512,48 @@ include 'includes/header.php';
         <div class="actions-section">
             <h3 class="actions-title">Acciones</h3>
             <div class="actions-grid">
-                <!-- Editar reserva -->
-                <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" class="action-btn btn-primary">
-                    <i class="ri-edit-line"></i>
-                    Editar
-                </a>
-                
-                <!-- Confirmar reserva (solo si está pendiente) -->
                 <?php if ($reserva['estado'] === 'pendiente'): ?>
-                <button id="confirmarBtn" class="action-btn btn-success">
-                    <i class="ri-check-line"></i>
-                    Confirmar
-                </button>
+                    <!-- Acciones para reservas PENDIENTES -->
+                    
+                    <!-- Confirmar/Aceptar reserva -->
+                    <button id="confirmarBtn" class="action-btn btn-success">
+                        <i class="ri-check-line"></i>
+                        Aceptar
+                    </button>
+                    
+                    <!-- Rechazar reserva -->
+                    <button id="rechazarBtn" class="action-btn btn-danger">
+                        <i class="ri-close-line"></i>
+                        Rechazar
+                    </button>
+                    
+                    <!-- Editar reserva -->
+                    <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" class="action-btn btn-primary">
+                        <i class="ri-edit-line"></i>
+                        Editar
+                    </a>
+                    
+                <?php elseif ($reserva['estado'] === 'confirmada'): ?>
+                    <!-- Acciones para reservas CONFIRMADAS -->
+                    
+                    <!-- Cancelar reserva -->
+                    <button id="cancelarBtn" class="action-btn btn-danger">
+                        <i class="ri-close-circle-line"></i>
+                        Cancelar
+                    </button>
+                    
+                    <!-- Editar reserva -->
+                    <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" class="action-btn btn-primary">
+                        <i class="ri-edit-line"></i>
+                        Editar
+                    </a>
+                    
+                <?php else: ?>
+                    <!-- Acciones para reservas RECHAZADAS o CANCELADAS -->
+                    <p class="text-gray-500 text-sm">Esta reserva no permite acciones adicionales.</p>
                 <?php endif; ?>
                 
-                <!-- WhatsApp -->
+                <!-- WhatsApp (disponible para todos los estados) -->
                 <button 
                     onclick="openWhatsAppChat('<?php echo addslashes($reserva['telefono']); ?>', '<?php echo addslashes($reserva['nombre']); ?>')" 
                     class="action-btn btn-whatsapp"
@@ -518,35 +562,52 @@ include 'includes/header.php';
                     <i class="ri-whatsapp-line"></i>
                     WhatsApp
                 </button>
-                
-                <!-- Eliminar reserva -->
-                <button id="eliminarBtn" class="action-btn btn-danger">
-                    <i class="ri-delete-bin-line"></i>
-                    Eliminar
-                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal de confirmación para eliminar -->
-<div id="deleteModal" class="modal-overlay">
+<!-- Modal de confirmación para rechazar -->
+<div id="rechazarModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
             <div class="modal-icon">
-                <i class="ri-delete-bin-line"></i>
+                <i class="ri-close-line"></i>
             </div>
-            <h3 class="modal-title">Eliminar Reserva</h3>
+            <h3 class="modal-title">Rechazar Reserva</h3>
             <p class="modal-message">
-                ¿Estás seguro de que deseas eliminar esta reserva? Esta acción no se puede deshacer.
+                ¿Estás seguro de que deseas rechazar esta solicitud de reserva?
             </p>
         </div>
         <div class="modal-actions">
-            <button type="button" id="cancelDeleteBtn" class="modal-btn modal-btn-cancel">
+            <button type="button" class="modal-btn modal-btn-cancel" onclick="closeModal('rechazarModal')">
                 Cancelar
             </button>
-            <button type="button" id="confirmDeleteBtn" class="modal-btn modal-btn-confirm">
-                Eliminar
+            <button type="button" id="confirmRechazarBtn" class="modal-btn modal-btn-confirm">
+                Rechazar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para cancelar -->
+<div id="cancelarModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="ri-close-circle-line"></i>
+            </div>
+            <h3 class="modal-title">Cancelar Reserva</h3>
+            <p class="modal-message">
+                ¿Estás seguro de que deseas cancelar esta reserva confirmada?
+            </p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-cancel" onclick="closeModal('cancelarModal')">
+                No, mantener
+            </button>
+            <button type="button" id="confirmCancelarBtn" class="modal-btn modal-btn-confirm">
+                Sí, cancelar
             </button>
         </div>
     </div>
@@ -561,80 +622,125 @@ include 'includes/header.php';
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const confirmarBtn = document.getElementById('confirmarBtn');
-    const eliminarBtn = document.getElementById('eliminarBtn');
-    const deleteModal = document.getElementById('deleteModal');
-    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const rechazarBtn = document.getElementById('rechazarBtn');
+    const cancelarBtn = document.getElementById('cancelarBtn');
     
-    // Confirmar reserva
+    // Confirmar/Aceptar reserva
     if (confirmarBtn) {
         confirmarBtn.addEventListener('click', function() {
-            if (confirm('¿Confirmar esta reserva?')) {
-                // Crear formulario para enviar la confirmación
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/api/confirmar-reserva';
-                
-                const idInput = document.createElement('input');
-                idInput.type = 'hidden';
-                idInput.name = 'id';
-                idInput.value = '<?php echo $reserva['id']; ?>';
-                
-                form.appendChild(idInput);
-                document.body.appendChild(form);
-                form.submit();
+            if (confirm('¿Aceptar esta solicitud de reserva?')) {
+                fetch('/api/actualizar-reserva', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        id: <?php echo $reserva['id']; ?>, 
+                        estado: 'confirmada' 
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error al confirmar la reserva: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al procesar la solicitud');
+                });
             }
         });
     }
     
-    // Mostrar modal de eliminación
-    if (eliminarBtn) {
-        eliminarBtn.addEventListener('click', function() {
-            deleteModal.classList.add('show');
+    // Rechazar reserva
+    if (rechazarBtn) {
+        rechazarBtn.addEventListener('click', function() {
+            openModal('rechazarModal');
+        });
+        
+        document.getElementById('confirmRechazarBtn').addEventListener('click', function() {
+            fetch('/api/rechazar-reserva', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    id: <?php echo $reserva['id']; ?>
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/reservas';
+                } else {
+                    alert('Error al rechazar la reserva: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al procesar la solicitud');
+            });
         });
     }
     
-    // Cancelar eliminación
-    if (cancelDeleteBtn) {
-        cancelDeleteBtn.addEventListener('click', function() {
-            deleteModal.classList.remove('show');
+    // Cancelar reserva
+    if (cancelarBtn) {
+        cancelarBtn.addEventListener('click', function() {
+            openModal('cancelarModal');
+        });
+        
+        document.getElementById('confirmCancelarBtn').addEventListener('click', function() {
+            fetch('/api/cancelar-reserva', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    id: <?php echo $reserva['id']; ?>
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Error al cancelar la reserva: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al procesar la solicitud');
+            });
         });
     }
-    
-    // Confirmar eliminación
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', function() {
-            // Crear formulario para enviar la eliminación
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/api/cancelar-reserva';
-            
-            const idInput = document.createElement('input');
-            idInput.type = 'hidden';
-            idInput.name = 'id';
-            idInput.value = '<?php echo $reserva['id']; ?>';
-            
-            form.appendChild(idInput);
-            document.body.appendChild(form);
-            form.submit();
-        });
-    }
-    
-    // Cerrar modal al hacer clic fuera
-    deleteModal.addEventListener('click', function(e) {
-        if (e.target === deleteModal) {
-            deleteModal.classList.remove('show');
-        }
-    });
     
     // Cerrar modal con ESC
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && deleteModal.classList.contains('show')) {
-            deleteModal.classList.remove('show');
+        if (e.key === 'Escape') {
+            closeModal('rechazarModal');
+            closeModal('cancelarModal');
         }
     });
 });
 
+// Funciones de modal
+function openModal(modalId) {
+    document.getElementById(modalId).classList.add('show');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+
+// Cerrar modal al hacer clic fuera
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+        e.target.classList.remove('show');
+    }
+});
 </script>
 
 <?php 
