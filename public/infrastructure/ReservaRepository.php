@@ -59,10 +59,9 @@ class ReservaRepository implements IReservaRepository {
     }
     
     private function actualizar(Reserva $reserva): Reserva {
-        
         // Obtener versión anterior
         $reservaAnterior = $this->obtenerPorId($reserva->getId(), $reserva->getUsuarioId());
-    
+        
         $sql = "UPDATE reservas 
                 SET nombre = ?, 
                     telefono = ?, 
@@ -96,7 +95,7 @@ class ReservaRepository implements IReservaRepository {
             $reserva->getUsuarioId()
         ]);
         
-         // Detectar y registrar cambios
+        // Detectar y registrar cambios
         if ($reservaAnterior->getFecha()->format('Y-m-d') !== $reserva->getFecha()->format('Y-m-d')) {
             $this->registrarAuditoria(
                 $reserva->getId(),
@@ -120,10 +119,17 @@ class ReservaRepository implements IReservaRepository {
         }
         
         if ($reservaAnterior->getEstado() !== $reserva->getEstado()) {
+            $accion = match($reserva->getEstado()->value) {
+                'confirmada' => 'confirmada',
+                'rechazada' => 'rechazada',
+                'cancelada' => 'cancelada',
+                default => 'modificada'
+            };
+            
             $this->registrarAuditoria(
                 $reserva->getId(),
                 $reserva->getUsuarioId(),
-                $reserva->getEstado()->value === 'confirmada' ? 'confirmada' : 'cancelada',
+                $accion,
                 'estado',
                 $reservaAnterior->getEstado()->value,
                 $reserva->getEstado()->value

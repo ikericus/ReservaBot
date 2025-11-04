@@ -6,6 +6,7 @@ namespace ReservaBot\Domain\Reserva;
 enum EstadoReserva: string {
     case PENDIENTE = 'pendiente';
     case CONFIRMADA = 'confirmada';
+    case RECHAZADA = 'rechazada';
     case CANCELADA = 'cancelada';
     case COMPLETADA = 'completada';
     
@@ -17,7 +18,8 @@ enum EstadoReserva: string {
         return match($this) {
             self::PENDIENTE => 'amber',
             self::CONFIRMADA => 'green',
-            self::CANCELADA => 'red',
+            self::RECHAZADA => 'red',
+            self::CANCELADA => 'gray',
             self::COMPLETADA => 'gray'
         };
     }
@@ -26,6 +28,7 @@ enum EstadoReserva: string {
         return match($this) {
             self::PENDIENTE => 'Pendiente',
             self::CONFIRMADA => 'Confirmada',
+            self::RECHAZADA => 'Rechazada',
             self::CANCELADA => 'Cancelada',
             self::COMPLETADA => 'Completada'
         };

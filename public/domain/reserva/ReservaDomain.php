@@ -361,6 +361,17 @@ class ReservaDomain {
         
         return $reserva;
     }
+
+    /**
+     * Rechaza una reserva pendiente
+     */
+    public function rechazarReserva(int $id, int $usuarioId): Reserva {
+        $reserva = $this->obtenerReserva($id, $usuarioId);
+        
+        $reserva->rechazar();
+        
+        return $this->reservaRepository->guardar($reserva);
+    }
     
     /**
      * Elimina una reserva
@@ -687,6 +698,8 @@ class ReservaDomain {
                 return 'Reserva creada';
             case 'confirmada':
                 return 'Reserva confirmada';
+            case 'rechazada':
+                return 'Reserva rechazada';
             case 'cancelada':
                 return 'Reserva cancelada';
             case 'modificada':

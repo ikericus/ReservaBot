@@ -161,6 +161,13 @@ class Reserva {
         }
         $this->estado = EstadoReserva::CONFIRMADA;
     }
+
+    public function rechazar(): void {
+        if ($this->estado !== EstadoReserva::PENDIENTE) {
+            throw new \DomainException('Solo se pueden rechazar reservas pendientes');
+        }
+        $this->estado = EstadoReserva::RECHAZADA;
+    }
     
     public function cancelar(): void {
         $this->estado = EstadoReserva::CANCELADA;

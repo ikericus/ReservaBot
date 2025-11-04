@@ -395,14 +395,15 @@ include 'includes/header.php';
                                         </h3>
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
                                             <?php 
-                                            echo match($cambio['accion']) {
-                                                'creada' => 'bg-blue-100 text-blue-800',
-                                                'confirmada' => 'bg-green-100 text-green-800',
-                                                'cancelada' => 'bg-red-100 text-red-800',
-                                                'modificada' => 'bg-amber-100 text-amber-800',
-                                                default => 'bg-gray-100 text-gray-800'
-                                            };
-                                            ?>">
+                                                echo match($cambio['accion']) {
+                                                    'creada' => 'bg-blue-100 text-blue-800',
+                                                    'confirmada' => 'bg-green-100 text-green-800',
+                                                    'rechazada' => 'bg-red-100 text-red-800',
+                                                    'cancelada' => 'bg-gray-100 text-gray-800',
+                                                    'modificada' => 'bg-amber-100 text-amber-800',
+                                                    default => 'bg-gray-100 text-gray-800'
+                                                };
+                                            ?>
                                             <?php echo ucfirst($cambio['accion']); ?>
                                         </span>
                                     </div>
@@ -587,10 +588,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.btn-rechazar, .btn-cancelar').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
-            e.stopPropagation(); // Evitar que el click llegue al card
+            e.stopPropagation();
             const id = this.getAttribute('data-id');
             
-            if (confirm('¿Estás seguro de eliminar esta reserva?')) {
+            if (confirm('¿Estás seguro de cancelar esta reserva?')) {
                 fetch('api/eliminar-reserva', {
                     method: 'POST',
                     headers: {
@@ -601,10 +602,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Recargar la página para ver los cambios
                         window.location.reload();
                     } else {
-                        alert('Error al eliminar la reserva: ' + data.message);
+                        alert('Error al cancelar la reserva: ' + data.message);
                     }
                 })
                 .catch(error => {

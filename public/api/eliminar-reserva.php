@@ -28,15 +28,20 @@ if (!isset($data['id'])) {
 
 try {
     $reservaDomain = getContainer()->getReservaDomain();
-    $reservaDomain->eliminarReserva((int)$data['id'], $userId);
     
-    echo json_encode(['success' => true]);
+    // Rechazar reserva pendiente (cambia estado a "rechazada")
+    $reserva = $reservaDomain->rechazarReserva((int)$data['id'], $userId);
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Reserva rechazada correctamente'
+    ]);
     
 } catch (\DomainException $e) {
     http_response_code(404);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 } catch (\Exception $e) {
-    error_log('Error eliminando reserva: ' . $e->getMessage());
+    error_log('Error rechazando reserva: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
 }
