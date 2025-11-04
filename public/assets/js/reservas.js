@@ -2,55 +2,30 @@
 function showTab(tabName) {
     // Ocultar todos los contenidos
     document.getElementById('pendientesContent').classList.add('hidden');
-    document.getElementById('confirmadasContent').classList.add('hidden');
     document.getElementById('historialContent').classList.add('hidden');
     
     // Mostrar el contenido seleccionado
     document.getElementById(tabName + 'Content').classList.remove('hidden');
     
     // Actualizar estilos de tabs
-    const tabs = ['pendientes', 'confirmadas', 'historial'];
+    const tabs = ['pendientes', 'historial'];
     tabs.forEach(tab => {
         const tabButton = document.getElementById(tab + 'Tab');
         if (tab === tabName) {
-            tabButton.className = 'border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center';
+            tabButton.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            tabButton.classList.add('border-blue-500', 'text-blue-600');
         } else {
-            tabButton.className = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center';
+            tabButton.classList.remove('border-blue-500', 'text-blue-600');
+            tabButton.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
         }
     });
 }
 
 // Funciones para aceptar/rechazar reservas
 document.addEventListener('DOMContentLoaded', function() {
-    // Referencias a elementos del DOM
-    const pendientesTab = document.getElementById('pendientesTab');
-    const confirmadasTab = document.getElementById('confirmadasTab');
-    const historialTab = document.getElementById('historialTab');
-    const pendientesContent = document.getElementById('pendientesContent');
-    const confirmadasContent = document.getElementById('confirmadasContent');
-    const historialContent = document.getElementById('historialContent');
-    
-    // Funcionalidad de tabs - Solo si existen los elementos
-    if (pendientesTab && confirmadasTab && historialTab && pendientesContent && confirmadasContent && historialContent) {
-        // Tab Pendientes
-        pendientesTab.addEventListener('click', function() {
-            showTab('pendientes');
-        });
-        
-        // Tab Confirmadas
-        confirmadasTab.addEventListener('click', function() {
-            showTab('confirmadas');
-        });
-        
-        // Tab Historial
-        historialTab.addEventListener('click', function() {
-            showTab('historial');
-        });
-    }
-    
     // Hacer las tarjetas clickeables para navegar al detalle
-    // Solo las de pendientes y confirmadas (no los botones)
-    document.querySelectorAll('#pendientesContent .mobile-card, #pendientesContent .desktop-view > div, #confirmadasContent .mobile-card, #confirmadasContent .desktop-view > div').forEach(card => {
+    // Solo las de pendientes (no los botones)
+    document.querySelectorAll('#pendientesContent .mobile-card, #pendientesContent .desktop-view > div').forEach(card => {
         card.style.cursor = 'pointer';
         card.addEventListener('click', function(e) {
             // No navegar si se clickeó un botón
@@ -120,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Recargar la página para ver los cambios
                         window.location.reload();
                     } else {
-                        alert('Error al eliminar la reserva: ' + data.message);
+                        alert('Error al eliminar la reserva: ' + data.message');
                     }
                 })
                 .catch(error => {
