@@ -14,7 +14,6 @@ $userId = $currentUser['id'];
 $reservaId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($reservaId <= 0) {
-    // Si no hay ID válido, redirigir al calendario
     header('Location: /mes');
     exit;
 }
@@ -29,7 +28,6 @@ try {
     $reserva = $reservaEntity->toArray();
     
 } catch (\DomainException $e) {
-    // Reserva no encontrada o no pertenece al usuario
     error_log('Error obteniendo reserva: ' . $e->getMessage());
     setFlashError('Reserva no encontrada');
     header('Location: /mes');
@@ -51,230 +49,26 @@ try {
     $whatsappConnected = false;
 }
 
-// Incluir la cabecera
 include 'includes/header.php';
 ?>
 
 <style>
-/* Estilos específicos para la página de reserva */
-.reservation-container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.back-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    color: #6b7280;
-    text-decoration: none;
-    border-radius: 0.5rem;
-    transition: all 0.2s ease;
-    margin-bottom: 1.5rem;
-    font-weight: 500;
-}
-
-.back-button:hover {
-    background: #f3f4f6;
-    color: #374151;
-    text-decoration: none;
-}
-
-.reservation-card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-}
-
-.reservation-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 2rem;
-    color: white;
-    text-align: center;
-}
-
-.reservation-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-}
-
-.reservation-status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 1rem;
-    border-radius: 2rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-}
-
-.reservation-content {
-    padding: 2rem;
-}
-
-.info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.info-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-}
-
-.info-icon {
-    flex-shrink: 0;
-    width: 2.5rem;
-    height: 2.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.125rem;
-}
-
-.info-content h3 {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin: 0 0 0.25rem 0;
-}
-
-.info-content p {
-    font-size: 1rem;
-    font-weight: 500;
-    color: #1f2937;
-    margin: 0;
-}
-
-.message-section {
-    background: #f8fafc;
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.message-section h3 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #374151;
-    margin: 0 0 0.75rem 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.message-content {
-    color: #6b7280;
-    font-size: 0.875rem;
-    line-height: 1.5;
-    font-style: italic;
-}
-
-.actions-section {
-    border-top: 1px solid #e5e7eb;
-    padding: 1.5rem 2rem;
-    background: #fafafa;
-}
-
-.actions-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0 0 1rem 0;
-}
-
-.actions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.75rem;
-}
-
-.action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    border: none;
-    cursor: pointer;
-}
-
-.action-btn:hover {
-    text-decoration: none;
-    transform: translateY(-1px);
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.btn-primary:hover {
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    color: white;
-}
-
-.btn-success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.btn-success:hover {
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-    color: white;
-}
-
-.btn-whatsapp {
+.whatsapp-button {
     background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
-    color: white;
     box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+    transition: all 0.3s ease;
 }
 
-.btn-whatsapp:hover {
+.whatsapp-button:hover {
+    transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
-    color: white;
 }
 
-.btn-whatsapp:disabled {
+.whatsapp-button:disabled {
     background: #9ca3af;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
-    opacity: 0.6;
-}
-
-.btn-danger {
-    background: white;
-    color: #dc2626;
-    border: 1px solid #fecaca;
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
-}
-
-.btn-danger:hover {
-    background: #fef2f2;
-    color: #b91c1c;
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
 
 /* Modal de confirmación */
@@ -379,191 +173,203 @@ include 'includes/header.php';
 .modal-btn-confirm:hover {
     background: #b91c1c;
 }
-
-/* Responsive */
-@media (max-width: 768px) {
-    .reservation-container {
-        margin: 0;
-        padding: 0 1rem;
-    }
-    
-    .reservation-header {
-        padding: 1.5rem;
-    }
-    
-    .reservation-title {
-        font-size: 1.25rem;
-    }
-    
-    .reservation-content {
-        padding: 1.5rem;
-    }
-    
-    .info-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .actions-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .actions-section {
-        padding: 1.5rem;
-    }
-}
 </style>
 
-<div class="reservation-container">
-    <!-- Botón de retroceso -->
-    <a href="javascript:history.back()" class="back-button">
-        <i class="ri-arrow-left-line"></i>
-        Volver
+<!-- Botón de volver -->
+<div class="flex items-center mb-6">
+    <a href="javascript:history.back()" class="mr-4 p-2 rounded-full hover:bg-gray-100">
+        <i class="ri-arrow-left-line text-gray-600 text-xl"></i>
     </a>
-    
-    <!-- Tarjeta principal de la reserva -->
-    <div class="reservation-card">
-        <!-- Header con información principal -->
-        <div class="reservation-header">
-            <h1 class="reservation-title"><?php echo htmlspecialchars($reserva['nombre']); ?></h1>
-            <div class="reservation-status-badge">
-                <?php
-                $iconoEstado = match($reserva['estado']) {
+    <h1 class="text-2xl font-bold text-gray-900">Detalle de Reserva</h1>
+</div>
+
+<!-- Información de la reserva -->
+<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div class="flex items-start justify-between">
+        <div class="flex items-center">
+            <div class="flex-shrink-0 h-16 w-16">
+                <div class="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
+                    <i class="ri-calendar-check-line text-blue-600 text-2xl"></i>
+                </div>
+            </div>
+            <div class="ml-6">
+                <h2 class="text-xl font-bold text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></h2>
+                <p class="text-gray-600"><?php echo htmlspecialchars($reserva['telefono']); ?></p>
+                <p class="text-sm text-gray-500 mt-1">
+                    Creada el <?php echo date('d/m/Y H:i', strtotime($reserva['created_at'])); ?>
+                </p>
+            </div>
+        </div>
+        
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+            <?php 
+            echo match($reserva['estado']) {
+                'confirmada' => 'bg-green-100 text-green-800',
+                'pendiente' => 'bg-amber-100 text-amber-800',
+                'rechazada' => 'bg-red-100 text-red-800',
+                'cancelada' => 'bg-gray-100 text-gray-800',
+                default => 'bg-gray-100 text-gray-800'
+            };
+            ?>">
+            <i class="ri-<?php 
+                echo match($reserva['estado']) {
                     'confirmada' => 'check-line',
                     'pendiente' => 'time-line',
                     'rechazada' => 'close-line',
                     'cancelada' => 'close-circle-line',
                     default => 'question-line'
                 };
-                
-                $labelEstado = match($reserva['estado']) {
+            ?> mr-1"></i>
+            <?php 
+                echo match($reserva['estado']) {
                     'confirmada' => 'Confirmada',
                     'pendiente' => 'Pendiente',
                     'rechazada' => 'Rechazada',
                     'cancelada' => 'Cancelada',
                     default => ucfirst($reserva['estado'])
                 };
-                ?>
-                <i class="ri-<?php echo $iconoEstado; ?>"></i>
-                <?php echo $labelEstado; ?>
+            ?>
+        </span>
+    </div>
+</div>
+
+<!-- Detalles de la reserva -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="ri-calendar-line text-2xl text-blue-600"></i>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Fecha</dt>
+                        <dd class="text-lg font-medium text-gray-900"><?php echo formatearFecha($reserva['fecha']); ?></dd>
+                    </dl>
+                </div>
             </div>
         </div>
-        
-        <!-- Contenido principal -->
-        <div class="reservation-content">
-            <!-- Grid de información -->
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="info-icon">
-                        <i class="ri-calendar-line"></i>
-                    </div>
-                    <div class="info-content">
-                        <h3>Fecha</h3>
-                        <p><?php echo formatearFecha($reserva['fecha']); ?></p>
-                    </div>
+    </div>
+    
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="ri-time-line text-2xl text-green-600"></i>
                 </div>
-                
-                <div class="info-item">
-                    <div class="info-icon">
-                        <i class="ri-time-line"></i>
-                    </div>
-                    <div class="info-content">
-                        <h3>Hora</h3>
-                        <p><?php echo substr($reserva['hora'], 0, 5); ?></p>
-                    </div>
-                </div>
-                
-                <div class="info-item">
-                    <div class="info-icon">
-                        <i class="ri-phone-line"></i>
-                    </div>
-                    <div class="info-content">
-                        <h3>Teléfono</h3>
-                        <p><?php echo htmlspecialchars($reserva['telefono']); ?></p>
-                    </div>
-                </div>
-                
-                <div class="info-item">
-                    <div class="info-icon">
-                        <i class="ri-user-line"></i>
-                    </div>
-                    <div class="info-content">
-                        <h3>Cliente</h3>
-                        <p><?php echo htmlspecialchars($reserva['nombre']); ?></p>
-                    </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Hora</dt>
+                        <dd class="text-lg font-medium text-gray-900"><?php echo substr($reserva['hora'], 0, 5); ?></dd>
+                    </dl>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="ri-user-line text-2xl text-purple-600"></i>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Cliente</dt>
+                        <dd class="text-lg font-medium text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mensaje de la reserva -->
+<?php if (!empty($reserva['mensaje'])): ?>
+<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
+        <i class="ri-message-2-line mr-2 text-blue-600"></i>
+        Mensaje
+    </h3>
+    <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-400">
+        <p class="text-gray-700 italic"><?php echo nl2br(htmlspecialchars($reserva['mensaje'])); ?></p>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- Notas internas -->
+<?php if (!empty($reserva['notas_internas'])): ?>
+<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
+        <i class="ri-sticky-note-line mr-2 text-amber-600"></i>
+        Notas Internas
+    </h3>
+    <div class="bg-amber-50 rounded-lg p-4 border-l-4 border-amber-400">
+        <p class="text-gray-700"><?php echo nl2br(htmlspecialchars($reserva['notas_internas'])); ?></p>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- Acciones -->
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Acciones</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <?php if ($reserva['estado'] === 'pendiente'): ?>
+            <!-- Aceptar -->
+            <button id="confirmarBtn" 
+                    class="inline-flex items-center justify-center px-4 py-3 border border-green-300 shadow-sm text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                <i class="ri-check-line mr-2"></i>
+                Aceptar
+            </button>
             
-            <!-- Sección de mensaje -->
-            <?php if (!empty($reserva['mensaje'])): ?>
-            <div class="message-section">
-                <h3>
-                    <i class="ri-message-2-line"></i>
-                    Mensaje o notas
-                </h3>
-                <div class="message-content">
-                    <?php echo nl2br(htmlspecialchars($reserva['mensaje'])); ?>
-                </div>
-            </div>
-            <?php endif; ?>
-        </div>
+            <!-- Rechazar -->
+            <button id="rechazarBtn" 
+                    class="inline-flex items-center justify-center px-4 py-3 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                <i class="ri-close-line mr-2"></i>
+                Rechazar
+            </button>
+            
+            <!-- Editar -->
+            <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" 
+               class="inline-flex items-center justify-center px-4 py-3 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <i class="ri-edit-line mr-2"></i>
+                Editar
+            </a>
+            
+        <?php elseif ($reserva['estado'] === 'confirmada'): ?>
+            <!-- Cancelar -->
+            <button id="cancelarBtn" 
+                    class="inline-flex items-center justify-center px-4 py-3 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                <i class="ri-close-circle-line mr-2"></i>
+                Cancelar
+            </button>
+            
+            <!-- Editar -->
+            <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" 
+               class="inline-flex items-center justify-center px-4 py-3 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <i class="ri-edit-line mr-2"></i>
+                Editar
+            </a>
+            
+        <?php endif; ?>
         
-        <!-- Sección de acciones -->
-        <div class="actions-section">
-            <h3 class="actions-title">Acciones</h3>
-            <div class="actions-grid">
-                <?php if ($reserva['estado'] === 'pendiente'): ?>
-                    <!-- Acciones para reservas PENDIENTES -->
-                    
-                    <!-- Confirmar/Aceptar reserva -->
-                    <button id="confirmarBtn" class="action-btn btn-success">
-                        <i class="ri-check-line"></i>
-                        Aceptar
-                    </button>
-                    
-                    <!-- Rechazar reserva -->
-                    <button id="rechazarBtn" class="action-btn btn-danger">
-                        <i class="ri-close-line"></i>
-                        Rechazar
-                    </button>
-                    
-                    <!-- Editar reserva -->
-                    <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" class="action-btn btn-primary">
-                        <i class="ri-edit-line"></i>
-                        Editar
-                    </a>
-                    
-                <?php elseif ($reserva['estado'] === 'confirmada'): ?>
-                    <!-- Acciones para reservas CONFIRMADAS -->
-                    
-                    <!-- Cancelar reserva -->
-                    <button id="cancelarBtn" class="action-btn btn-danger">
-                        <i class="ri-close-circle-line"></i>
-                        Cancelar
-                    </button>
-                    
-                    <!-- Editar reserva -->
-                    <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" class="action-btn btn-primary">
-                        <i class="ri-edit-line"></i>
-                        Editar
-                    </a>
-                    
-                <?php else: ?>
-                    <!-- Acciones para reservas RECHAZADAS o CANCELADAS -->
-                    <p class="text-gray-500 text-sm">Esta reserva no permite acciones adicionales.</p>
-                <?php endif; ?>
-                
-                <!-- WhatsApp (disponible para todos los estados) -->
-                <button 
-                    onclick="openWhatsAppChat('<?php echo addslashes($reserva['telefono']); ?>', '<?php echo addslashes($reserva['nombre']); ?>')" 
-                    class="action-btn btn-whatsapp"
-                    <?php echo !$whatsappConnected ? 'disabled title="WhatsApp no está conectado"' : ''; ?>
-                >
-                    <i class="ri-whatsapp-line"></i>
-                    WhatsApp
-                </button>
-            </div>
-        </div>
+        <!-- WhatsApp (siempre disponible) -->
+        <button 
+            onclick="openWhatsAppChat('<?php echo addslashes($reserva['telefono']); ?>', '<?php echo addslashes($reserva['nombre']); ?>')"
+            class="whatsapp-button inline-flex items-center justify-center px-4 py-3 border border-green-300 shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 <?php echo !$whatsappConnected ? 'opacity-50 cursor-not-allowed' : ''; ?>"
+            <?php echo !$whatsappConnected ? 'disabled title="WhatsApp no está conectado"' : ''; ?>
+        >
+            <i class="ri-whatsapp-line mr-2"></i>
+            WhatsApp
+        </button>
+        
+        <!-- Ver Cliente -->
+        <a href="/cliente?telefono=<?php echo urlencode($reserva['telefono']); ?>" 
+           class="inline-flex items-center justify-center px-4 py-3 border border-purple-300 shadow-sm text-sm font-medium rounded-md text-purple-700 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
+            <i class="ri-user-line mr-2"></i>
+            Ver Cliente
+        </a>
     </div>
 </div>
 
@@ -618,7 +424,6 @@ include 'includes/header.php';
     include 'components/conversacion.php';
 ?>
 
-<!-- JavaScript para manejar las acciones -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const confirmarBtn = document.getElementById('confirmarBtn');
@@ -744,6 +549,5 @@ document.addEventListener('click', function(e) {
 </script>
 
 <?php 
-// Incluir el pie de página
 include 'includes/footer.php'; 
 ?>
