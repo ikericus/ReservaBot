@@ -1,8 +1,7 @@
 <?php
 // pages/reserva/mi-reserva.php
-// Página para que los clientes gestionen sus reservas mediante token
 
-require_once dirname(__DIR__) . '/includes/functions.php';
+// Página para que los clientes gestionen sus reservas mediante token
 
 // Configurar idioma español para fechas
 setlocale(LC_TIME, 'es_ES.UTF-8', 'es_ES', 'spanish');
