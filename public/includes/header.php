@@ -312,7 +312,8 @@
                                         'configuracion' => 'Configuración',
                                         'conversaciones' => 'Conversaciones',
                                         'admin-dashboard' => 'Panel de Administración',
-                                        'perfil' => 'Mi perfil'
+                                        'perfil' => 'Mi perfil',
+                                        'reserva' => 'Detalle de Reserva'
                                     ];
                                     echo $pageNames[$currentPage] ?? '';
                                     ?>

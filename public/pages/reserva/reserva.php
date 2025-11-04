@@ -185,7 +185,7 @@ include 'includes/header.php';
 
 <!-- Información de la reserva -->
 <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-    <div class="flex items-start justify-between">
+    <div class="flex items-start justify-between mb-6">
         <div class="flex items-center">
             <div class="flex-shrink-0 h-16 w-16">
                 <div class="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
@@ -194,10 +194,16 @@ include 'includes/header.php';
             </div>
             <div class="ml-6">
                 <h2 class="text-xl font-bold text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></h2>
-                <p class="text-gray-600"><?php echo htmlspecialchars($reserva['telefono']); ?></p>
-                <p class="text-sm text-gray-500 mt-1">
-                    Creada el <?php echo date('d/m/Y H:i', strtotime($reserva['created_at'])); ?>
+                <p class="text-gray-600 flex items-center mt-1">
+                    <i class="ri-phone-line mr-1"></i>
+                    <?php echo htmlspecialchars($reserva['telefono']); ?>
                 </p>
+                <?php if (!empty($reserva['email'])): ?>
+                <p class="text-gray-600 flex items-center mt-1">
+                    <i class="ri-mail-line mr-1"></i>
+                    <?php echo htmlspecialchars($reserva['email']); ?>
+                </p>
+                <?php endif; ?>
             </div>
         </div>
         
@@ -231,56 +237,40 @@ include 'includes/header.php';
             ?>
         </span>
     </div>
-</div>
-
-<!-- Detalles de la reserva -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <i class="ri-calendar-line text-2xl text-blue-600"></i>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">Fecha</dt>
-                        <dd class="text-lg font-medium text-gray-900"><?php echo formatearFecha($reserva['fecha']); ?></dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    </div>
     
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <i class="ri-time-line text-2xl text-green-600"></i>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">Hora</dt>
-                        <dd class="text-lg font-medium text-gray-900"><?php echo substr($reserva['hora'], 0, 5); ?></dd>
-                    </dl>
-                </div>
+    <!-- Información de fecha y hora -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+        <div>
+            <div class="flex items-center text-sm text-gray-500 mb-1">
+                <i class="ri-calendar-line mr-2"></i>
+                <span class="font-medium">Fecha de la reserva</span>
+            </div>
+            <div class="text-lg font-semibold text-gray-900 ml-6">
+                <?php echo formatearFecha($reserva['fecha']); ?>
             </div>
         </div>
-    </div>
-    
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <i class="ri-user-line text-2xl text-purple-600"></i>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">Cliente</dt>
-                        <dd class="text-lg font-medium text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></dd>
-                    </dl>
-                </div>
+        
+        <div>
+            <div class="flex items-center text-sm text-gray-500 mb-1">
+                <i class="ri-time-line mr-2"></i>
+                <span class="font-medium">Hora de la reserva</span>
+            </div>
+            <div class="text-lg font-semibold text-gray-900 ml-6">
+                <?php echo substr($reserva['hora'], 0, 5); ?>
             </div>
         </div>
+        
+        <?php if (isset($reserva['created_at']) && $reserva['created_at']): ?>
+        <div>
+            <div class="flex items-center text-sm text-gray-500 mb-1">
+                <i class="ri-history-line mr-2"></i>
+                <span class="font-medium">Solicitud creada</span>
+            </div>
+            <div class="text-sm text-gray-700 ml-6">
+                <?php echo date('d/m/Y H:i', strtotime($reserva['created_at'])); ?>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
