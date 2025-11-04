@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Confirmar eliminación
     confirmDeleteBtn.addEventListener('click', function() {
-        fetch('api/eliminar-reserva', {
+        fetch('api/rechazar-reserva', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

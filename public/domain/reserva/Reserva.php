@@ -170,6 +170,9 @@ class Reserva {
     }
     
     public function cancelar(): void {
+        if ($this->estado !== EstadoReserva::CONFIRMADA) {
+            throw new \DomainException('Solo se pueden cancelar reservas confirmadas');
+        }
         $this->estado = EstadoReserva::CANCELADA;
     }
     

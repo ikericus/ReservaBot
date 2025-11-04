@@ -585,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Botones de rechazar/cancelar reservas
-    document.querySelectorAll('.btn-rechazar, .btn-cancelar').forEach(button => {
+    document.querySelectorAll('.btn-rechazar').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -593,6 +593,37 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (confirm('¿Estás seguro de cancelar esta reserva?')) {
                 fetch('api/eliminar-reserva', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: id })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error al cancelar la reserva: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al procesar la solicitud');
+                });
+            }
+        });
+    });
+
+    // Botones de cancelar reservas (confirmadas)
+    document.querySelectorAll('.btn-cancelar').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = this.getAttribute('data-id');
+            
+            if (confirm('¿Estás seguro de cancelar esta reserva?')) {
+                fetch('api/cancelar-reserva', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
