@@ -607,7 +607,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Crear formulario para enviar la eliminación
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '/api/eliminar-reserva';
+            form.action = '/api/cancelar-reserva';
             
             const idInput = document.createElement('input');
             idInput.type = 'hidden';
