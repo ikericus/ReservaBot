@@ -149,7 +149,12 @@ class ReservaDomain {
         );
         
         // Persistir
-        return $this->reservaRepository->guardar($reserva);
+        $reserva = $this->reservaRepository->guardar($reserva);
+        
+        // Enviar email si la reserva tiene email
+        $this->enviarEmailReserva($reserva);
+        
+        return $reserva;
     }
     
     /**
@@ -251,32 +256,36 @@ class ReservaDomain {
         }
         
         // Enviar email de confirmación
-        $this->enviarEmailConfirmacion($reserva);
+        $this->enviarEmailReserva($reserva);
         
         return $reserva;
     }
     
     /**
-     * Envía email de confirmación de reserva
+     * Envía email al cliente según el estado de la reserva
+     * Método genérico que detecta automáticamente qué email enviar
      */
-    private function enviarEmailConfirmacion(Reserva $reserva): bool {
+    private function enviarEmailReserva(Reserva $reserva): bool {
         // Si no hay repositorio de email configurado, log y retornar
         if (!$this->emailRepository) {
-            error_log("EmailRepository no configurado. No se puede enviar email de confirmación para reserva #{$reserva->getId()}");
+            error_log("EmailRepository no configurado. No se puede enviar email para reserva #{$reserva->getId()}");
             return false;
         }
         
         // Verificar que la reserva tiene email
         if (!$reserva->getEmail()) {
-            error_log("Reserva #{$reserva->getId()} no tiene email. No se puede enviar confirmación.");
+            // No es un error, simplemente no hay email (reservas del admin)
             return false;
         }
         
         try {
-            // Generar URL de gestión usando el token
-            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
-            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-            $gestionUrl = $protocol . $host . '/mi-reserva?token=' . $reserva->getAccessToken();
+            // Generar URL de gestión usando el token (si existe)
+            $gestionUrl = null;
+            if ($reserva->getAccessToken()) {
+                $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                $gestionUrl = $protocol . $host . '/mi-reserva?token=' . $reserva->getAccessToken();
+            }
             
             // Generar contenido del email usando templates
             $emailData = $this->emailTemplates->confirmacionReserva(
@@ -293,15 +302,15 @@ class ReservaDomain {
             );
             
             if ($enviado) {
-                error_log("Email de confirmación enviado exitosamente para reserva #{$reserva->getId()}");
+                error_log("Email enviado exitosamente para reserva #{$reserva->getId()} - Estado: {$reserva->getEstado()->value}");
             } else {
-                error_log("Error al enviar email de confirmación para reserva #{$reserva->getId()}");
+                error_log("Error al enviar email para reserva #{$reserva->getId()}");
             }
             
             return $enviado;
             
         } catch (\Exception $e) {
-            error_log("Excepción al enviar email de confirmación: " . $e->getMessage());
+            error_log("Excepción al enviar email para reserva #{$reserva->getId()}: " . $e->getMessage());
             return false;
         }
     }
@@ -314,7 +323,12 @@ class ReservaDomain {
         
         $reserva->confirmar();
         
-        return $this->reservaRepository->guardar($reserva);
+        $reserva = $this->reservaRepository->guardar($reserva);
+        
+        // Enviar email de confirmación
+        $this->enviarEmailReserva($reserva);
+        
+        return $reserva;
     }
     
     /**
@@ -325,7 +339,12 @@ class ReservaDomain {
         
         $reserva->cancelar();
         
-        return $this->reservaRepository->guardar($reserva);
+        $reserva = $this->reservaRepository->guardar($reserva);
+        
+        // Enviar email de cancelación
+        $this->enviarEmailReserva($reserva);
+        
+        return $reserva;
     }
     
     /**
@@ -346,7 +365,12 @@ class ReservaDomain {
         
         $reserva->modificar($nuevaFecha, $nuevaHora, $nuevoMensaje);
         
-        return $this->reservaRepository->guardar($reserva);
+        $reserva = $this->reservaRepository->guardar($reserva);
+        
+        // Enviar email de modificación
+        $this->enviarEmailReserva($reserva);
+        
+        return $reserva;
     }
     
     /**
@@ -370,7 +394,12 @@ class ReservaDomain {
         
         $reserva->rechazar();
         
-        return $this->reservaRepository->guardar($reserva);
+        $reserva = $this->reservaRepository->guardar($reserva);
+        
+        // Enviar email de rechazo
+        $this->enviarEmailReserva($reserva);
+        
+        return $reserva;
     }
     
     /**
@@ -424,7 +453,12 @@ class ReservaDomain {
         
         $reserva->modificar($nuevaFecha, $nuevaHora);
         
-        return $this->reservaRepository->guardar($reserva);
+        $reserva = $this->reservaRepository->guardar($reserva);
+        
+        // Enviar email de modificación
+        $this->enviarEmailReserva($reserva);
+        
+        return $reserva;
     }
 
     /**
@@ -457,7 +491,12 @@ class ReservaDomain {
         
         $reserva->cancelar();
         
-        return $this->reservaRepository->guardar($reserva);
+        $reserva = $this->reservaRepository->guardar($reserva);
+        
+        // Enviar email de cancelación
+        $this->enviarEmailReserva($reserva);
+        
+        return $reserva;
     }
 
     /**

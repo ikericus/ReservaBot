@@ -174,7 +174,7 @@ class EmailTemplates {
         
         $contenidoHtml = "
             <h2 style='color: #1f2937; margin-top: 0;'>Hola {$reserva['nombre']},</h2>
-            <p>Tu reserva ha sido <strong style='color: {$estadoColor};'>{$estadoTexto}</strong>.</p>
+            <p>Tu reserva se encuentra <strong style='color: {$estadoColor};'>{$estadoTexto}</strong>.</p>
             
             <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid {$estadoColor};'>
                 <h3 style='margin-top: 0; color: #374151;'>📅 Detalles de tu cita:</h3>
