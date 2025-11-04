@@ -36,7 +36,7 @@ try {
     $configuracionDomain = getContainer()->getConfiguracionDomain();
     
     // Delegar toda la validación y actualización al dominio
-    $resultado = $configuracionDomain->actualizarConfiguracionesValidadas($userId, $data);
+    $resultado = $configuracionDomain->actualizarMultiples($data, $userId);
     
     error_log('Configuraciones actualizadas para usuario: ' . $userId);
     
