@@ -543,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const reservaId = this.dataset.id;
             if (reservaId) {
-                window.location.href = `/reserva?id=${reservaId}`;
+                window.location.href = '/reserva?id=' + reservaId;
             }
         });
     });
@@ -604,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Recargar la página para ver los cambios
                         window.location.reload();
                     } else {
-                        alert('Error al eliminar la reserva: ' + data.message');
+                        alert('Error al eliminar la reserva: ' + data.message);
                     }
                 })
                 .catch(error => {
