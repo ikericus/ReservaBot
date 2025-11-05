@@ -356,13 +356,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($accion === 'actualizar_info') {
             $nombre = trim($_POST['nombre'] ?? '');
                        
-            // Usar el método del dominio (manteniendo email, teléfono y negocio actuales)
+            // Usar el método del dominio (sin negocio)
             $usuarioDomain->actualizarPerfil(
                 $usuarioEntity->getId(),
                 $nombre,
                 $usuarioEntity->getEmail(),
-                $usuarioEntity->getTelefono(),
-                $usuarioEntity->getNegocio()
+                $usuarioEntity->getTelefono()
             );
             
             // Actualizar la sesión
@@ -611,13 +610,6 @@ include 'includes/header.php';
                         <a href="/perfil?tab=plan" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
                             Cambiar plan →
                         </a>
-                    </dd>
-                </div>
-                
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Negocio</dt>
-                    <dd class="text-sm text-gray-900 mt-1">
-                        <?php echo htmlspecialchars($usuarioEntity->getNegocio()); ?>
                     </dd>
                 </div>
                 
