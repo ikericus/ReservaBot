@@ -84,8 +84,8 @@ class Router {
         $this->addRoute('POST',     '/api/whatsapp-disconnect',                 'api/whatsapp-disconnect.php',              ['auth']);
         $this->addRoute('POST',     '/api/whatsapp-stats',                      'api/whatsapp-stats.php',                    ['auth']);
         $this->addRoute('POST',     '/api/whatsapp-save-auto-message-config',   'api/whatsapp-save-auto-message-config.php', ['auth']);
-        //$this->addRoute('POST',     '/api/send-whatsapp',               'api/whatsapp-send.php',                ['auth']);
         $this->addRoute('GET',      '/api/whatsapp-conversations',              'api/whatsapp-conversations.php',           ['auth']);
+        $this->addRoute('GET',      '/api/whatsapp-conversations-2',              'api/whatsapp-conversations-2.php',           ['auth']);
         $this->addRoute('POST',     '/api/buscar-clientes',                     'api/buscar-clientes.php',                  ['auth']);
         
         
