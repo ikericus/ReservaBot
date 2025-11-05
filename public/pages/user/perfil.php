@@ -508,23 +508,6 @@ include 'includes/header.php';
                     </p>
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Nombre del negocio
-                    </label>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-md">
-                        <span class="text-sm text-gray-900"><?php echo htmlspecialchars($usuarioEntity->getNegocio()); ?></span>
-                        <a href="/configuracion" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center">
-                            <i class="ri-settings-3-line mr-1"></i>
-                            Modificar en Configuración
-                        </a>
-                    </div>
-                    <p class="mt-1 text-xs text-gray-500">
-                        <i class="ri-information-line"></i>
-                        El nombre del negocio se configura desde la página de Configuración
-                    </p>
-                </div>
-                
                 <div class="flex justify-end">
                     <button
                         type="submit"
@@ -710,8 +693,8 @@ include 'includes/header.php';
                             <p class="text-xs text-gray-500">
                                 Integración con WhatsApp, recordatorios automáticos, etc.
                             </p>
-                            <p class="text-xs text-red-600 font-medium mt-1">
-                                🎉 Gratis durante la beta
+                            <p class="text-xs text-green-600 font-medium mt-1">
+                                Gratis durante la beta 🎉 
                             </p>
                         </div>
                     </label>
@@ -734,10 +717,12 @@ include 'includes/header.php';
                             </div>
                             <p class="text-xs text-gray-500 mt-1">
                                 Gestión de reservas automáticas, respuestas inteligentes, etc.
-                            </p>
-                            <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-semibold">
-                                Próximamente
-                            </span>                            
+                            </p>   
+                            <p class="mt-1">
+                                <span class="text-xs bg-red-100 text-red-800 px-2 my-1 rounded-full font-semibold">
+                                    Próximamente
+                                </span>
+                            </p>                       
                         </div>
                     </div>
                 </div>
