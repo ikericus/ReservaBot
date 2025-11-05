@@ -3,23 +3,34 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // ========================================================================
-    // TABS NAVIGATION
+    // TABS NAVIGATION - CORREGIDO
     // ========================================================================
     
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
     
     tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const tab = button.dataset.tab;
+        button.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevenir comportamiento por defecto
+            e.stopPropagation(); // Detener propagación
+            
+            const tab = this.getAttribute('data-tab'); // Usar getAttribute en lugar de dataset
+            
+            console.log('Tab clicked:', tab); // Debug
             
             // Remove active from all
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
             
             // Add active to clicked
-            button.classList.add('active');
-            document.querySelector(`[data-tab-content="${tab}"]`).classList.add('active');
+            this.classList.add('active');
+            const targetContent = document.querySelector(`[data-tab-content="${tab}"]`);
+            if (targetContent) {
+                targetContent.classList.add('active');
+                console.log('Tab activated:', tab); // Debug
+            } else {
+                console.error('Tab content not found for:', tab); // Debug
+            }
         });
     });
     
@@ -173,7 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Botón añadir nuevo tipo de día
     const btnAddTipoDia = document.getElementById('btnAddTipoDia');
     if (btnAddTipoDia) {
-        btnAddTipoDia.addEventListener('click', () => {
+        btnAddTipoDia.addEventListener('click', function(e) {
+            e.preventDefault();
             addTipoDia();
         });
     }
@@ -199,7 +211,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Botón eliminar tipo
         const btnDeleteTipo = element.querySelector('.btn-delete-tipo');
         if (btnDeleteTipo) {
-            btnDeleteTipo.addEventListener('click', function() {
+            btnDeleteTipo.addEventListener('click', function(e) {
+                e.preventDefault();
                 if (confirm('¿Eliminar este tipo de horario?')) {
                     this.closest('.tipo-dia-card').remove();
                 }
@@ -209,14 +222,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Botón añadir ventana
         const btnAddVentana = element.querySelector('.btn-add-ventana');
         if (btnAddVentana) {
-            btnAddVentana.addEventListener('click', function() {
+            btnAddVentana.addEventListener('click', function(e) {
+                e.preventDefault();
                 addVentanaHoraria(this.closest('.tipo-dia-card'));
             });
         }
         
         // Botones eliminar ventanas existentes
         element.querySelectorAll('.btn-delete-ventana').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
                 deleteVentanaHoraria(this);
             });
         });
@@ -235,7 +250,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Setup delete button
         const btnDelete = clone.querySelector('.btn-delete-ventana');
-        btnDelete.addEventListener('click', function() {
+        btnDelete.addEventListener('click', function(e) {
+            e.preventDefault();
             deleteVentanaHoraria(this);
         });
         
@@ -265,7 +281,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const btnCargarFestivos = document.getElementById('btnCargarFestivos');
     if (btnCargarFestivos) {
-        btnCargarFestivos.addEventListener('click', async () => {
+        btnCargarFestivos.addEventListener('click', function(e) {
+            e.preventDefault();
+            
             if (!confirm('¿Cargar festivos nacionales de España? Esto marcará los días como "Cerrado"')) {
                 return;
             }
@@ -274,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const year = new Date().getFullYear();
                 const festivos = getFestivosEspana(year);
                 
-                alert(`Se cargarán ${festivos.length} festivos nacionales.\\n\\nNota: Aún no está implementado el calendario interactivo.`);
+                alert(`Se cargarán ${festivos.length} festivos nacionales.\n\nNota: Aún no está implementado el calendario interactivo.`);
                 
                 // TODO: Implementar cuando tengamos el calendario interactivo
                 

@@ -79,15 +79,21 @@ include 'includes/header.php';
 /* Tabs Styling */
 .tabs {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.25rem;
     border-bottom: 2px solid #e5e7eb;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .tab-button {
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1rem;
     background: transparent;
     border: none;
     border-bottom: 3px solid transparent;
@@ -99,6 +105,7 @@ include 'includes/header.php';
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .tab-button:hover {
@@ -140,6 +147,7 @@ include 'includes/header.php';
     border: 2px solid #e5e7eb;
     cursor: pointer;
     transition: transform 0.2s;
+    flex-shrink: 0;
 }
 
 .color-preview:hover {
@@ -162,7 +170,8 @@ include 'includes/header.php';
 }
 
 .image-preview {
-    width: 200px;
+    width: 100%;
+    max-width: 200px;
     height: 200px;
     border: 2px dashed #e5e7eb;
     border-radius: 0.75rem;
@@ -188,7 +197,7 @@ include 'includes/header.php';
 .tipo-dia-card {
     border: 2px solid #e5e7eb;
     border-radius: 0.75rem;
-    padding: 1.5rem;
+    padding: 1rem;
     background: white;
     transition: all 0.2s;
 }
@@ -242,13 +251,46 @@ include 'includes/header.php';
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+    body {
+        overflow-x: hidden;
+    }
+    
+    .max-w-6xl {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+    
     .tabs {
         gap: 0.25rem;
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+        padding: 0 0.75rem;
     }
     
     .tab-button {
-        padding: 0.5rem 1rem;
+        padding: 0.625rem 0.75rem;
         font-size: 0.875rem;
+        gap: 0.375rem;
+    }
+    
+    .tab-button i {
+        font-size: 1rem;
+    }
+    
+    .tab-button span {
+        font-size: 0.8125rem;
+    }
+    
+    .bg-white {
+        border-radius: 0.5rem;
+    }
+    
+    .bg-white.p-6 {
+        padding: 1rem;
+    }
+    
+    h2.text-lg {
+        font-size: 1rem;
     }
     
     .calendar-grid {
@@ -264,11 +306,93 @@ include 'includes/header.php';
     .color-picker-wrapper {
         flex-direction: column;
         align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .color-preview {
+        width: 100%;
+        max-width: 120px;
+        height: 50px;
+        align-self: center;
     }
     
     .image-preview {
+        max-width: 100%;
+        height: 150px;
+    }
+    
+    .grid.md\\:grid-cols-2 {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .grid.grid-cols-2.md\\:grid-cols-4.lg\\:grid-cols-7 {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .ventana-horaria .grid-cols-3 {
+        grid-template-columns: 1fr 1fr auto;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .ventana-horaria {
+        padding: 0.75rem;
+    }
+    
+    .tipo-dia-card {
+        padding: 0.75rem;
+    }
+    
+    .tipo-dia-nombre {
+        font-size: 1rem;
+    }
+    
+    input[type="time"],
+    input[type="number"],
+    select {
+        font-size: 0.875rem;
+        padding: 0.5rem;
+    }
+    
+    label {
+        font-size: 0.875rem;
+    }
+    
+    .space-y-6 > * + * {
+        margin-top: 1.25rem;
+    }
+    
+    button[type="submit"] {
         width: 100%;
-        height: 200px;
+        justify-content: center;
+    }
+    
+    .gradient-preview {
+        height: 60px;
+    }
+}
+
+@media (max-width: 640px) {
+    .tab-button span {
+        display: none;
+    }
+    
+    .tab-button {
+        justify-content: center;
+        min-width: 3rem;
+    }
+    
+    .ventana-horaria .grid-cols-3 {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .ventana-horaria .btn-delete-ventana {
+        position: static;
+        width: 100%;
+        margin-top: 0.5rem;
     }
 }
 </style>
@@ -276,19 +400,19 @@ include 'includes/header.php';
 <div class="max-w-6xl mx-auto px-4">
     <!-- Tabs Navigation -->
     <div class="tabs">
-        <button class="tab-button active" data-tab="basica">
+        <button class="tab-button active" data-tab="basica" type="button">
             <i class="ri-building-line"></i>
             <span>Información Básica</span>
         </button>
-        <button class="tab-button" data-tab="reservas">
+        <button class="tab-button" data-tab="reservas" type="button">
             <i class="ri-calendar-check-line"></i>
             <span>Reservas</span>
         </button>
-        <button class="tab-button" data-tab="horarios">
+        <button class="tab-button" data-tab="horarios" type="button">
             <i class="ri-time-line"></i>
             <span>Tipos de Horario</span>
         </button>
-        <button class="tab-button" data-tab="calendario">
+        <button class="tab-button" data-tab="calendario" type="button">
             <i class="ri-calendar-2-line"></i>
             <span>Calendario</span>
         </button>
