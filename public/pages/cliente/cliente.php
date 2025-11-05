@@ -73,6 +73,7 @@ include 'includes/header.php';
     margin: 0 auto;
     padding: 0 1rem;
 }
+
 /* Estilos para el botón de WhatsApp */
 .whatsapp-button {
     background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
@@ -91,39 +92,86 @@ include 'includes/header.php';
     transform: none;
     box-shadow: none;
 }
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .container-max-width {
+        padding: 0 0.75rem;
+    }
+    
+    /* Eliminar scroll horizontal */
+    body {
+        overflow-x: hidden;
+    }
+    
+    /* Ajustar tabs para mobile */
+    .tabs-mobile {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+    }
+    
+    .tabs-mobile::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+    
+    .tabs-mobile nav {
+        min-width: min-content;
+    }
+    
+    .tabs-mobile button {
+        white-space: nowrap;
+        font-size: 0.875rem;
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+@media (max-width: 640px) {
+    /* Hacer el texto más pequeño en pantallas muy pequeñas */
+    .text-responsive {
+        font-size: 0.875rem;
+    }
+    
+    /* Iconos más pequeños */
+    .icon-responsive {
+        font-size: 1.25rem !important;
+    }
+}
 </style>
 
 <div class="container-max-width">
 
     <!-- Información del cliente -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div class="flex items-start justify-between">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 h-16 w-16">
-                    <div class="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
-                        <i class="ri-user-line text-blue-600 text-2xl"></i>
+    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6">
+        <div class="flex flex-col md:flex-row items-start md:items-start justify-between gap-4">
+            <div class="flex items-center w-full md:w-auto">
+                <div class="flex-shrink-0 h-12 w-12 md:h-16 md:w-16">
+                    <div class="h-12 w-12 md:h-16 md:w-16 rounded-full bg-blue-100 flex items-center justify-center">
+                        <i class="ri-user-line text-blue-600 text-xl md:text-2xl"></i>
                     </div>
                 </div>
-                <div class="ml-6">
-                    <h2 class="text-xl font-bold text-gray-900"><?php echo htmlspecialchars($cliente['ultimo_nombre']); ?></h2>
-                    <p class="text-gray-600"><?php echo htmlspecialchars($cliente['telefono']); ?></p>
-                    <p class="text-sm text-gray-500 mt-1">
+                <div class="ml-4 md:ml-6 flex-1 min-w-0">
+                    <h2 class="text-lg md:text-xl font-bold text-gray-900 truncate"><?php echo htmlspecialchars($cliente['ultimo_nombre']); ?></h2>
+                    <p class="text-sm md:text-base text-gray-600 truncate"><?php echo htmlspecialchars($cliente['telefono']); ?></p>
+                    <p class="text-xs md:text-sm text-gray-500 mt-1">
                         Cliente desde <?php echo date('d/m/Y', strtotime($cliente['primer_contacto'])); ?>
                     </p>
                 </div>
             </div>
             
-            <div class="flex space-x-2">
+            <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                 <button 
                     onclick="openWhatsAppChat('<?php echo addslashes($cliente['telefono']); ?>', '<?php echo addslashes($cliente['ultimo_nombre']); ?>')"
-                    class="whatsapp-button inline-flex items-center px-3 py-2 border border-green-300 shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 <?php echo !$whatsappConnected ? 'opacity-50 cursor-not-allowed' : ''; ?>"
+                    class="whatsapp-button inline-flex items-center justify-center px-3 py-2 border border-green-300 shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 w-full sm:w-auto <?php echo !$whatsappConnected ? 'opacity-50 cursor-not-allowed' : ''; ?>"
                     <?php echo !$whatsappConnected ? 'disabled title="WhatsApp no está conectado"' : ''; ?>
                 >
                     <i class="ri-whatsapp-line mr-2"></i>
-                    Abrir Chat WhatsApp
+                    <span class="hidden sm:inline">Abrir Chat WhatsApp</span>
+                    <span class="sm:hidden">Chat WhatsApp</span>
                 </button>
                 <a href="/reserva-form?telefono=<?php echo urlencode($cliente['telefono']); ?>&nombre=<?php echo urlencode($cliente['ultimo_nombre']); ?>" 
-                class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                   class="inline-flex items-center justify-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full sm:w-auto">
                     <i class="ri-add-line mr-2"></i>
                     Nueva Reserva
                 </a>
@@ -132,17 +180,17 @@ include 'includes/header.php';
     </div>
 
     <!-- Estadísticas del cliente -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
         <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
+            <div class="p-4 md:p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <i class="ri-calendar-line text-2xl text-blue-600"></i>
+                        <i class="ri-calendar-line text-xl md:text-2xl text-blue-600"></i>
                     </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="ml-3 md:ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Total Reservas</dt>
-                            <dd class="text-lg font-medium text-gray-900"><?php echo $cliente['total_reservas']; ?></dd>
+                            <dt class="text-xs md:text-sm font-medium text-gray-500 truncate">Total Reservas</dt>
+                            <dd class="text-base md:text-lg font-medium text-gray-900"><?php echo $cliente['total_reservas']; ?></dd>
                         </dl>
                     </div>
                 </div>
@@ -150,15 +198,15 @@ include 'includes/header.php';
         </div>
         
         <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
+            <div class="p-4 md:p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <i class="ri-check-line text-2xl text-green-600"></i>
+                        <i class="ri-check-line text-xl md:text-2xl text-green-600"></i>
                     </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="ml-3 md:ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Confirmadas</dt>
-                            <dd class="text-lg font-medium text-gray-900"><?php echo $cliente['reservas_confirmadas']; ?></dd>
+                            <dt class="text-xs md:text-sm font-medium text-gray-500 truncate">Confirmadas</dt>
+                            <dd class="text-base md:text-lg font-medium text-gray-900"><?php echo $cliente['reservas_confirmadas']; ?></dd>
                         </dl>
                     </div>
                 </div>
@@ -166,15 +214,15 @@ include 'includes/header.php';
         </div>
         
         <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
+            <div class="p-4 md:p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <i class="ri-time-line text-2xl text-amber-600"></i>
+                        <i class="ri-time-line text-xl md:text-2xl text-amber-600"></i>
                     </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="ml-3 md:ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Pendientes</dt>
-                            <dd class="text-lg font-medium text-gray-900"><?php echo $cliente['reservas_pendientes']; ?></dd>
+                            <dt class="text-xs md:text-sm font-medium text-gray-500 truncate">Pendientes</dt>
+                            <dd class="text-base md:text-lg font-medium text-gray-900"><?php echo $cliente['reservas_pendientes']; ?></dd>
                         </dl>
                     </div>
                 </div>
@@ -182,15 +230,15 @@ include 'includes/header.php';
         </div>
         
         <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
+            <div class="p-4 md:p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <i class="ri-whatsapp-line text-2xl nav-icon mr-4 h-5 w-5 text-green-500"></i>
+                        <i class="ri-whatsapp-line text-xl md:text-2xl nav-icon h-5 w-5 text-green-500"></i>
                     </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="ml-3 md:ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Mensajes</dt>
-                            <dd class="text-lg font-medium text-gray-900"><?php echo count($mensajes); ?></dd>
+                            <dt class="text-xs md:text-sm font-medium text-gray-500 truncate">Mensajes</dt>
+                            <dd class="text-base md:text-lg font-medium text-gray-900"><?php echo count($mensajes); ?></dd>
                         </dl>
                     </div>
                 </div>
@@ -199,44 +247,48 @@ include 'includes/header.php';
     </div>
 
     <!-- Tabs para historial -->
-    <div class="border-b border-gray-200 mb-6">
-        <nav class="-mb-px flex space-x-8">
+    <div class="border-b border-gray-200 mb-4 md:mb-6 tabs-mobile">
+        <nav class="-mb-px flex space-x-4 md:space-x-8">
             <button 
                 id="reservasTab" 
-                class="border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                class="border-blue-500 text-blue-600 whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm"
             >
-                <i class="ri-calendar-line mr-2"></i>
-                Historial de Reservas (<?php echo count($reservas); ?>)
+                <i class="ri-calendar-line mr-1 md:mr-2"></i>
+                <span class="hidden sm:inline">Historial de Reservas</span>
+                <span class="sm:hidden">Reservas</span>
+                (<?php echo count($reservas); ?>)
             </button>
             
             <button 
                 id="mensajesTab" 
-                class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm"
             >
-                <i class="ri-message-line mr-2"></i>
-                Mensajes WhatsApp (<?php echo count($mensajes); ?>)
+                <i class="ri-message-line mr-1 md:mr-2"></i>
+                <span class="hidden sm:inline">Mensajes WhatsApp</span>
+                <span class="sm:hidden">Mensajes</span>
+                (<?php echo count($mensajes); ?>)
             </button>
         </nav>
     </div>
 
     <!-- Contenido de reservas -->
-    <div id="reservasContent" class="space-y-4">
+    <div id="reservasContent" class="space-y-3 md:space-y-4">
         <?php if (empty($reservas)): ?>
-            <div class="bg-white rounded-lg shadow-sm p-6 text-center">
-                <i class="ri-calendar-line text-gray-400 text-4xl"></i>
-                <p class="mt-2 text-gray-500">No hay reservas para este cliente</p>
+            <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 text-center">
+                <i class="ri-calendar-line text-gray-400 text-3xl md:text-4xl"></i>
+                <p class="mt-2 text-sm md:text-base text-gray-500">No hay reservas para este cliente</p>
             </div>
         <?php else: ?>
             <?php foreach ($reservas as $reserva): ?>
                 <div class="bg-white rounded-lg shadow-sm border-l-4 <?php echo $reserva['estado'] === 'confirmada' ? 'border-green-500' : ($reserva['estado'] === 'pendiente' ? 'border-amber-500' : 'border-red-500'); ?>">
-                    <div class="p-4">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <div class="flex items-center mb-2">
-                                    <h3 class="text-lg font-medium text-gray-900">
+                    <div class="p-3 md:p-4">
+                        <div class="flex flex-col md:flex-row justify-between md:items-start gap-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2 mb-2">
+                                    <h3 class="text-base md:text-lg font-medium text-gray-900">
                                         <?php echo date('d/m/Y', strtotime($reserva['fecha'])); ?> - <?php echo substr($reserva['hora'], 0, 5); ?>
                                     </h3>
-                                    <span class="ml-3 px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium 
                                         <?php echo $reserva['estado'] === 'confirmada' ? 'bg-green-100 text-green-800' : 
                                                 ($reserva['estado'] === 'pendiente' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'); ?>">
                                         <?php echo ucfirst($reserva['estado']); ?>
@@ -244,7 +296,7 @@ include 'includes/header.php';
                                 </div>
                                 
                                 <?php if (!empty($reserva['mensaje'])): ?>
-                                    <p class="text-sm text-gray-600 mb-2">
+                                    <p class="text-xs md:text-sm text-gray-600 mb-2 break-words">
                                         <i class="ri-message-2-line mr-1"></i>
                                         <?php echo htmlspecialchars($reserva['mensaje']); ?>
                                     </p>
@@ -255,13 +307,13 @@ include 'includes/header.php';
                                 </p>
                             </div>
                             
-                            <div class="flex space-x-2">
+                            <div class="flex gap-2 justify-end md:justify-start">
                                 <a href="/reserva?id=<?php echo $reserva['id']; ?>" 
-                                class="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                   class="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                     <i class="ri-eye-line"></i>
                                 </a>
                                 <a href="/reserva-form?id=<?php echo $reserva['id']; ?>" 
-                                class="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                   class="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                     <i class="ri-edit-line"></i>
                                 </a>
                             </div>
@@ -274,35 +326,35 @@ include 'includes/header.php';
 
     <!-- Contenido de mensajes WhatsApp -->
     <div id="mensajesContent" class="hidden">
-        <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
             <?php if (empty($mensajes)): ?>
-                <div class="text-center py-8">
-                    <i class="ri-chat-3-line text-gray-400 text-4xl mb-4"></i>
-                    <h3 class="text-lg font-medium text-gray-700 mb-2">No hay mensajes</h3>
-                    <p class="text-gray-500 mb-4">Aún no hay conversación con este cliente por WhatsApp</p>
+                <div class="text-center py-6 md:py-8">
+                    <i class="ri-chat-3-line text-gray-400 text-3xl md:text-4xl mb-3 md:mb-4"></i>
+                    <h3 class="text-base md:text-lg font-medium text-gray-700 mb-2">No hay mensajes</h3>
+                    <p class="text-sm md:text-base text-gray-500 mb-3 md:mb-4">Aún no hay conversación con este cliente por WhatsApp</p>
                     <?php if ($whatsappConnected): ?>
                         <button 
                             onclick="openWhatsAppChat('<?php echo addslashes($cliente['telefono']); ?>', '<?php echo addslashes($cliente['ultimo_nombre']); ?>')"
-                            class="whatsapp-button text-white px-4 py-2 rounded-lg font-medium inline-flex items-center"
+                            class="whatsapp-button text-white px-4 py-2 rounded-lg font-medium inline-flex items-center text-sm md:text-base"
                         >
                             <i class="ri-whatsapp-line mr-2"></i>
                             Iniciar Conversación
                         </button>
                     <?php else: ?>
-                        <a href="/whatsapp" class="text-blue-600 hover:text-blue-700 font-medium">
+                        <a href="/whatsapp" class="text-blue-600 hover:text-blue-700 font-medium text-sm md:text-base">
                             Conectar WhatsApp primero →
                         </a>
                     <?php endif; ?>
                 </div>
             <?php else: ?>
                 <div class="mb-4 text-center">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Conversación WhatsApp</h3>
-                    <p class="text-sm text-gray-600">
+                    <h3 class="text-base md:text-lg font-medium text-gray-900 mb-2">Conversación WhatsApp</h3>
+                    <p class="text-xs md:text-sm text-gray-600">
                         <?php echo count($mensajes); ?> mensajes intercambiados
                     </p>
                     <button 
                         onclick="openWhatsAppChat('<?php echo addslashes($cliente['telefono']); ?>', '<?php echo addslashes($cliente['ultimo_nombre']); ?>')"
-                        class="mt-3 whatsapp-button text-white px-4 py-2 rounded-lg font-medium inline-flex items-center"
+                        class="mt-3 whatsapp-button text-white px-3 md:px-4 py-2 rounded-lg font-medium inline-flex items-center text-sm md:text-base"
                     >
                         <i class="ri-whatsapp-line mr-2"></i>
                         Abrir Chat Completo
@@ -313,12 +365,12 @@ include 'includes/header.php';
                 <div class="space-y-3 max-h-96 overflow-y-auto">
                     <?php foreach (array_slice($mensajes, 0, 10) as $mensaje): ?>
                         <div class="flex <?php echo $mensaje['direction'] === 'outgoing' ? 'justify-end' : 'justify-start'; ?>">
-                            <div class="max-w-xs lg:max-w-md">
+                            <div class="max-w-[85%] sm:max-w-xs lg:max-w-md">
                                 <div class="<?php echo $mensaje['direction'] === 'outgoing' 
                                     ? 'bg-green-100 text-green-800 rounded-br-none' 
-                                    : 'bg-gray-100 text-gray-800 rounded-bl-none'; ?> rounded-lg px-4 py-2">
+                                    : 'bg-gray-100 text-gray-800 rounded-bl-none'; ?> rounded-lg px-3 md:px-4 py-2">
                                     
-                                    <p class="text-sm"><?php echo nl2br(htmlspecialchars($mensaje['message_text'])); ?></p>
+                                    <p class="text-xs md:text-sm break-words"><?php echo nl2br(htmlspecialchars($mensaje['message_text'])); ?></p>
                                 </div>
                                 
                                 <p class="text-xs text-gray-500 mt-1 <?php echo $mensaje['direction'] === 'outgoing' ? 'text-right' : 'text-left'; ?>">
@@ -330,12 +382,12 @@ include 'includes/header.php';
                     
                     <?php if (count($mensajes) > 10): ?>
                         <div class="text-center py-3 border-t">
-                            <p class="text-sm text-gray-500">
+                            <p class="text-xs md:text-sm text-gray-500">
                                 +<?php echo count($mensajes) - 10; ?> mensajes más
                             </p>
                             <button 
                                 onclick="openWhatsAppChat('<?php echo addslashes($cliente['telefono']); ?>', '<?php echo addslashes($cliente['ultimo_nombre']); ?>')"
-                                class="text-green-600 hover:text-green-700 text-sm font-medium"
+                                class="text-green-600 hover:text-green-700 text-xs md:text-sm font-medium"
                             >
                                 Ver conversación completa →
                             </button>
