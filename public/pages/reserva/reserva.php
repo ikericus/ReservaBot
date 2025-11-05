@@ -343,8 +343,8 @@ include 'includes/header.php';
     </div>
     <?php endif; ?>
 
-        <!-- Acciones -->
-    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
+    <!-- Acciones -->
+    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6">
         <h3 class="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4">Acciones</h3>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
@@ -408,7 +408,7 @@ include 'includes/header.php';
 
     <!-- Historial de cambios de esta reserva -->
     <?php if (!empty($historialReserva)): ?>
-        <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6">
+        <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
             <h3 class="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4 flex items-center">
                 <i class="ri-history-line mr-2 text-purple-600"></i>
                 Historial de Cambios
