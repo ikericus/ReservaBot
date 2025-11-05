@@ -302,7 +302,7 @@ class ReservaDomain {
             );
             
             if ($enviado) {
-                error_log("Email enviado exitosamente para reserva #{$reserva->getId()} - Estado: {$reserva->getEstado()->value}");
+                debug_log("Email enviado exitosamente para reserva #{$reserva->getId()} - Estado: {$reserva->getEstado()->value}");
             } else {
                 error_log("Error al enviar email para reserva #{$reserva->getId()}");
             }

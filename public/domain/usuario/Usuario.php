@@ -8,7 +8,6 @@ class Usuario {
     private string $nombre;
     private string $email;
     private string $telefono;
-    private string $negocio;
     private string $plan;
     private string $passwordHash;
     private ?string $apiKey;
@@ -24,7 +23,6 @@ class Usuario {
         string $nombre,
         string $email,
         string $telefono,
-        string $negocio,
         string $plan,
         string $passwordHash,
         ?string $apiKey = null,
@@ -39,7 +37,6 @@ class Usuario {
         $this->nombre = $nombre;
         $this->email = $email;
         $this->telefono = $telefono;
-        $this->negocio = $negocio;
         $this->plan = $plan;
         $this->passwordHash = $passwordHash;
         $this->apiKey = $apiKey;
@@ -56,7 +53,6 @@ class Usuario {
     public function getNombre(): string { return $this->nombre; }
     public function getEmail(): string { return $this->email; }
     public function getTelefono(): string { return $this->telefono; }
-    public function getNegocio(): string { return $this->negocio; }
     public function getPlan(): string { return $this->plan; }
     public function getPasswordHash(): string { return $this->passwordHash; }
     public function getApiKey(): ?string { return $this->apiKey; }
@@ -96,7 +92,6 @@ class Usuario {
             'nombre' => $this->nombre,
             'email' => $this->email,
             'telefono' => $this->telefono,
-            'negocio' => $this->negocio,
             'plan' => $this->plan,
             'activo' => $this->activo,
             'api_key' => $this->apiKey,

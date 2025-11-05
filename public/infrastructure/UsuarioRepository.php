@@ -48,22 +48,20 @@ class UsuarioRepository implements IUsuarioRepository {
         string $nombre,
         string $email,
         string $telefono,
-        string $negocio,
         string $passwordHash,
         string $plan = 'gratis'
     ): Usuario {
         $apiKey = bin2hex(random_bytes(32));
         
         $sql = "INSERT INTO usuarios 
-                (nombre, email, telefono, negocio, password_hash, plan, api_key, created_at, activo) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 1)";
+                (nombre, email, telefono, password_hash, plan, api_key, created_at, activo) 
+                VALUES (?, ?, ?, ?, ?, ?, NOW(), 1)";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             $nombre,
             $email,
             $telefono,
-            $negocio,
             $passwordHash,
             $plan,
             $apiKey
@@ -198,7 +196,6 @@ class UsuarioRepository implements IUsuarioRepository {
             $row['nombre'],
             $row['email'],
             $row['telefono'] ?? '',
-            $row['negocio'] ?? '',
             $row['plan'] ?? 'gratis',
             $row['password_hash'],
             $row['api_key'] ?? null,

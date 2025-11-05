@@ -84,18 +84,17 @@ class UsuarioDomain {
             throw new \DomainException('Ya existe una cuenta con este email');
         }
         
-        // Crear usuario
+        // Crear usuario (sin campo negocio)
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         $usuario = $this->repository->crear(
             $nombre,
             $email,
             $telefono,
-            $negocio,
             $passwordHash,
             $plan
         );
         
-        // Crear configuraciones iniciales
+        // Crear configuraciones iniciales (incluyendo empresa_nombre)
         $this->crearConfiguracionesIniciales($usuario->getId(), $negocio, $telefono);
         
         return $usuario;
@@ -103,20 +102,19 @@ class UsuarioDomain {
     
     /**
      * Actualiza perfil de usuario
+     * Nota: El nombre del negocio se actualiza en ConfiguracionDomain, no aquí
      */
     public function actualizarPerfil(
         int $id,
         string $nombre,
         string $email,
-        string $telefono,
-        string $negocio
+        string $telefono
     ): void {
         $nombre = trim($nombre);
         $email = trim(strtolower($email));
         $telefono = trim($telefono);
-        $negocio = trim($negocio);
         
-        if (empty($nombre) || empty($email) || empty($telefono) || empty($negocio)) {
+        if (empty($nombre) || empty($email) || empty($telefono)) {
             throw new \InvalidArgumentException('Todos los campos son obligatorios');
         }
         
@@ -132,8 +130,7 @@ class UsuarioDomain {
         $this->repository->actualizar($id, [
             'nombre' => $nombre,
             'email' => $email,
-            'telefono' => $telefono,
-            'negocio' => $negocio
+            'telefono' => $telefono
         ]);
     }
     
