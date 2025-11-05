@@ -331,22 +331,42 @@ include 'includes/header.php';
         gap: 0.75rem;
     }
     
-    .ventana-horaria .grid-cols-3 {
-        grid-template-columns: 1fr 1fr auto;
-        gap: 0.5rem;
-        font-size: 0.875rem;
-    }
-    
+    /* Fix para scroll horizontal en ventanas horarias */
     .ventana-horaria {
         padding: 0.75rem;
+        overflow: hidden;
+    }
+    
+    .ventana-horaria .flex {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .ventana-horaria .grid-cols-3 {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    
+    .ventana-horaria .grid-cols-3 > div {
+        width: 100%;
     }
     
     .tipo-dia-card {
         padding: 0.75rem;
+        overflow: hidden;
+    }
+    
+    .tipo-dia-card .flex {
+        flex-wrap: wrap;
     }
     
     .tipo-dia-nombre {
         font-size: 1rem;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
     }
     
     input[type="time"],
@@ -354,6 +374,8 @@ include 'includes/header.php';
     select {
         font-size: 0.875rem;
         padding: 0.5rem;
+        min-width: 0;
+        width: 100%;
     }
     
     label {
@@ -372,6 +394,18 @@ include 'includes/header.php';
     .gradient-preview {
         height: 60px;
     }
+    
+    /* Asegurar que los botones no causen overflow */
+    #btnAddTipoDia {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+        white-space: nowrap;
+    }
+    
+    .btn-add-ventana,
+    .btn-delete-tipo {
+        font-size: 0.875rem;
+    }
 }
 
 @media (max-width: 640px) {
@@ -384,15 +418,13 @@ include 'includes/header.php';
         min-width: 3rem;
     }
     
-    .ventana-horaria .grid-cols-3 {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
+    /* Botón añadir tipo más compacto */
+    #btnAddTipoDia span {
+        display: none;
     }
     
-    .ventana-horaria .btn-delete-ventana {
-        position: static;
-        width: 100%;
-        margin-top: 0.5rem;
+    #btnAddTipoDia i {
+        margin-right: 0;
     }
 }
 </style>
