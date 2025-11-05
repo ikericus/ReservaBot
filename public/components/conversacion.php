@@ -22,8 +22,8 @@ $userId = $userId ?? 0;
 ?>
 
 <!-- Modal de chat WhatsApp -->
-<div id="whatsappChatModal" class="whatsapp-chat-modal fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-auto chat-modal-container">
+<div id="whatsappChatModal" class="whatsapp-chat-modal fixed inset-0 z-50 hidden p-3 sm:p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl chat-modal-container">
         <div class="chat-container rounded-2xl overflow-hidden">
             
             <!-- Header del chat -->
@@ -98,6 +98,9 @@ $userId = $userId ?? 0;
 .whatsapp-chat-modal {
     background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .chat-modal-container {
