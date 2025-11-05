@@ -337,8 +337,6 @@ $usuarioDomain = getContainer()->getUsuarioDomain();
 $usuarioAuth = getAuthenticatedUser();
 $usuarioEntity = $usuarioDomain->obtenerPorId($usuarioAuth['id']);
 
-debug_log('usuarioEntity: ' . print_r($usuarioEntity, true));
-
 if (!$usuarioEntity) {
     header('Location: /logout');
     exit;
