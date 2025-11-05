@@ -1,32 +1,34 @@
 <?php
 // pages/whatsapp/conversaciones.php
 
-// Configurar la página actual
-$currentPage = 'conversaciones';
-$pageTitle = 'ReservaBot - Conversaciones WhatsApp';
-$pageScript = 'conversaciones';
-
-// Obtener usuario actual
-$currentUser = getAuthenticatedUser();
-$userId = $currentUser['id'];
-
-// Verificar estado de WhatsApp usando la capa de dominio
-$whatsappConnected = false;
-$phoneNumber = null;
-
-try {
-    $whatsappDomain = getContainer()->getWhatsAppDomain();
-    $config = $whatsappDomain->obtenerConfiguracion($userId);
+// Solo configurar si no estamos siendo incluidos desde whatsapp.php
+if (!isset($conversationsPageContent)) {
+    $currentPage = 'conversaciones';
+    $pageTitle = 'ReservaBot - Conversaciones WhatsApp';
+    $pageScript = 'conversaciones';
     
-    $whatsappConnected = $config->estaConectado();
-    $phoneNumber = $config->getPhoneNumber();
+    // Obtener usuario actual
+    $currentUser = getAuthenticatedUser();
+    $userId = $currentUser['id'];
     
-} catch (\Exception $e) {
-    error_log('Error obteniendo configuración WhatsApp: ' . $e->getMessage());
-    setFlashError('Error al verificar estado de WhatsApp');
+    // Verificar estado de WhatsApp usando la capa de dominio
+    $whatsappConnected = false;
+    $phoneNumber = null;
+    
+    try {
+        $whatsappDomain = getContainer()->getWhatsAppDomain();
+        $config = $whatsappDomain->obtenerConfiguracion($userId);
+        
+        $whatsappConnected = $config->estaConectado();
+        $phoneNumber = $config->getPhoneNumber();
+        
+    } catch (\Exception $e) {
+        error_log('Error obteniendo configuración WhatsApp: ' . $e->getMessage());
+        setFlashError('Error al verificar estado de WhatsApp');
+    }
+    
+    include 'includes/header.php';
 }
-
-// include 'includes/header.php';
 ?>
 
 <style>
@@ -206,17 +208,6 @@ try {
     text-align: center;
 }
 
-.typing-indicator {
-    display: none;
-    padding: 12px 16px;
-    color: #6b7280;
-    font-style: italic;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 12px;
-    margin: 8px 0;
-    animation: pulse 2s infinite;
-}
-
 .search-box {
     padding: 16px;
     border-bottom: 1px solid #e5e7eb;
@@ -246,29 +237,6 @@ try {
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-.connection-status {
-    background: #fef3c7;
-    border: 1px solid #f59e0b;
-    color: #92400e;
-    padding: 12px 16px;
-    text-align: center;
-    font-size: 14px;
-    border-radius: 0.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.connection-status.connected {
-    background: #d1fae5;
-    border-color: #10b981;
-    color: #065f46;
-}
-
-.connection-status.disconnected {
-    background: #fee2e2;
-    border-color: #ef4444;
-    color: #991b1b;
 }
 
 .chat-header {
@@ -445,11 +413,6 @@ try {
                 </div>
             </div>
             
-            <!-- Indicador de escritura -->
-            <div class="typing-indicator" id="typingIndicator">
-                <i class="ri-more-line"></i> El cliente está escribiendo...
-            </div>
-            
             <!-- Área de entrada de mensaje -->
             <div class="chat-input-area" id="chatInputArea" style="display: none;">
                 <div class="flex items-end space-x-3">
@@ -489,7 +452,7 @@ try {
 <script>
 class ConversationsManager {
     constructor() {
-        console.log('🚀 ConversationsManager constructor iniciado');
+        console.log('🚀 ConversationsManager iniciado');
         
         this.conversations = [];
         this.currentConversation = null;
@@ -499,63 +462,38 @@ class ConversationsManager {
         this.whatsappConnected = <?php echo $whatsappConnected ? 'true' : 'false'; ?>;
         this.isMobile = window.innerWidth < 768;
         
-        console.log('🔗 WhatsApp conectado:', this.whatsappConnected);
-        console.log('📱 Es móvil:', this.isMobile);
-        
         this.init();
     }
 
     init() {
-        console.log('⚡ Iniciando ConversationsManager...');
-        
         this.bindEvents();
         this.loadConversations();
         this.setupAutoRefresh();
         this.setupTextareaAutoResize();
         this.handleResize();
-        
-        console.log('✅ ConversationsManager inicializado correctamente');
     }
 
     bindEvents() {
-        console.log('🎯 Vinculando eventos...');
-        
-        // Búsqueda
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
-                console.log('🔍 Búsqueda:', e.target.value);
                 this.searchTerm = e.target.value.toLowerCase();
                 this.filterConversations();
             });
-            console.log('✅ Evento de búsqueda vinculado');
         }
 
-        // Enter para enviar mensaje
         const messageInput = document.getElementById('messageInput');
         if (messageInput) {
             messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
-                    console.log('⌨️ Enter presionado en mensaje');
                     e.preventDefault();
                     this.sendMessage();
                 }
             });
-            console.log('✅ Evento Enter vinculado');
         }
 
-        // Resize para detectar cambios móvil/desktop
-        window.addEventListener('resize', () => {
-            this.handleResize();
-        });
-
-        // Cleanup al salir
-        window.addEventListener('beforeunload', () => {
-            console.log('🧹 Limpiando antes de salir...');
-            this.cleanup();
-        });
-        
-        console.log('✅ Todos los eventos vinculados');
+        window.addEventListener('resize', () => this.handleResize());
+        window.addEventListener('beforeunload', () => this.cleanup());
     }
 
     handleResize() {
@@ -563,8 +501,6 @@ class ConversationsManager {
         this.isMobile = window.innerWidth < 768;
         
         if (wasMobile !== this.isMobile) {
-            console.log('📱 Cambio de vista:', this.isMobile ? 'móvil' : 'desktop');
-            
             if (!this.isMobile) {
                 this.showDesktopView();
             } else {
@@ -574,117 +510,70 @@ class ConversationsManager {
     }
 
     showDesktopView() {
-        console.log('🖥️ Mostrando vista desktop');
-        
         const sidebar = document.getElementById('conversationsSidebar');
         const chatArea = document.getElementById('chatArea');
         
-        if (sidebar) {
-            sidebar.classList.remove('mobile-hidden');
-        }
-        
-        if (chatArea) {
-            chatArea.classList.remove('mobile-active');
-        }
+        sidebar?.classList.remove('mobile-hidden');
+        chatArea?.classList.remove('mobile-active');
     }
 
     showMobileList() {
-        console.log('📱 Mostrando lista móvil');
-        
         const sidebar = document.getElementById('conversationsSidebar');
         const chatArea = document.getElementById('chatArea');
         
-        if (sidebar) {
-            sidebar.classList.remove('mobile-hidden');
-        }
-        
-        if (chatArea) {
-            chatArea.classList.remove('mobile-active');
-        }
+        sidebar?.classList.remove('mobile-hidden');
+        chatArea?.classList.remove('mobile-active');
     }
 
     showMobileChat() {
-        console.log('📱 Mostrando chat móvil');
-        
         const sidebar = document.getElementById('conversationsSidebar');
         const chatArea = document.getElementById('chatArea');
         
-        if (sidebar) {
-            sidebar.classList.add('mobile-hidden');
-        }
-        
-        if (chatArea) {
-            chatArea.classList.add('mobile-active');
-        }
+        sidebar?.classList.add('mobile-hidden');
+        chatArea?.classList.add('mobile-active');
     }
 
     closeMobileChat() {
-        console.log('📱 Cerrando chat móvil');
         this.showMobileList();
     }
 
     async loadConversations() {
-        console.log('📥 Iniciando carga de conversaciones...');
+        console.log('📥 Cargando conversaciones con nombres de clientes...');
         
-        if (this.isLoading) {
-            console.log('⏳ Ya hay una carga en progreso, saltando...');
-            return;
-        }
+        if (this.isLoading) return;
         
         this.isLoading = true;
-        console.log('🔄 Estado de carga: true');
         
         try {
-            console.log('🌐 Realizando fetch a /api/whatsapp-conversations...');
-            const response = await fetch('/api/whatsapp-conversations?limit=50');
-            
-            console.log('📡 Response status:', response.status);
+            const response = await fetch('/api/whatsapp-conversations-2?limit=50');
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
             const data = await response.json();
-            console.log('📊 Datos recibidos:', data);
+            console.log('📊 Conversaciones recibidas (enriquecidas):', data);
             
-            if (data.success) {
-                console.log('✅ API devolvió success=true');
-                console.log('📝 Número de conversaciones:', data.conversations ? data.conversations.length : 'undefined');
-                
-                if (data.conversations) {
-                    this.conversations = data.conversations;
-                    console.log('💾 Conversaciones guardadas en this.conversations:', this.conversations);
-                    this.renderConversations();
-                } else {
-                    console.warn('⚠️ data.conversations es undefined');
-                    this.conversations = [];
-                    this.renderConversations();
-                }
+            if (data.success && data.conversations) {
+                this.conversations = data.conversations;
+                console.log('✅ Conversaciones con nombres de clientes cargadas:', this.conversations);
+                this.renderConversations();
             } else {
-                console.error('❌ API devolvió success=false:', data.error);
                 this.showError('Error cargando conversaciones: ' + (data.error || 'Error desconocido'));
             }
         } catch (error) {
             console.error('💥 Error en loadConversations:', error);
-            this.showError('Error de conexión al cargar conversaciones: ' + error.message);
+            this.showError('Error de conexión: ' + error.message);
         } finally {
             this.isLoading = false;
-            console.log('🔄 Estado de carga: false');
         }
     }
 
     renderConversations() {
-        console.log('🎨 Iniciando renderizado de conversaciones...');
-        console.log('📊 Conversaciones a renderizar:', this.conversations.length);
-        
         const container = document.getElementById('conversationsList');
-        if (!container) {
-            console.error('❌ No se encontró el contenedor conversationsList');
-            return;
-        }
+        if (!container) return;
         
         if (this.conversations.length === 0) {
-            console.log('📭 No hay conversaciones, mostrando estado vacío');
             container.innerHTML = `
                 <div class="no-conversations">
                     <i class="ri-chat-3-line text-6xl text-gray-300 mb-4"></i>
@@ -692,10 +581,6 @@ class ConversationsManager {
                     <p class="text-center text-gray-500 px-4">
                         Las conversaciones aparecerán aquí cuando recibas mensajes de WhatsApp.
                     </p>
-                    <a href="/whatsapp" class="mt-4 inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                        <i class="ri-whatsapp-line mr-2"></i>
-                        Configurar WhatsApp
-                    </a>
                 </div>
             `;
             return;
@@ -703,7 +588,6 @@ class ConversationsManager {
 
         const html = this.conversations.map(conv => this.renderConversationItem(conv)).join('');
         container.innerHTML = html;
-        console.log('✅ Conversaciones renderizadas');
     }
 
     renderConversationItem(conversation) {
@@ -723,7 +607,7 @@ class ConversationsManager {
                     
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center justify-between mb-1">
-                            <h4 class="font-medium text-gray-900 truncate">${conversation.name}</h4>
+                            <h4 class="font-medium text-gray-900 truncate">${this.escapeHtml(conversation.name)}</h4>
                             <span class="text-xs text-gray-500 flex-shrink-0 ml-2">${conversation.lastMessageTime || ''}</span>
                         </div>
                         
@@ -738,55 +622,38 @@ class ConversationsManager {
     }
 
     async selectConversation(phoneNumber) {
-        console.log('📞 Seleccionando conversación:', phoneNumber);
-        
         const conversation = this.conversations.find(c => c.phone === phoneNumber);
-        if (!conversation) {
-            console.error('❌ Conversación no encontrada:', phoneNumber);
-            return;
-        }
+        if (!conversation) return;
 
-        // Marcar conversación anterior como inactiva
         document.querySelectorAll('.conversation-item').forEach(item => {
             item.classList.remove('active');
         });
 
-        // Marcar nueva conversación como activa
         const conversationElement = document.querySelector(`[data-phone="${phoneNumber}"]`);
-        if (conversationElement) {
-            conversationElement.classList.add('active');
-        }
+        conversationElement?.classList.add('active');
 
         this.currentConversation = conversation;
         
-        // Cargar mensajes de la conversación
         await this.loadMessages(phoneNumber);
-        
-        // Mostrar área de chat
         this.showChatArea();
         
-        // Marcar conversación como leída
         if (conversation.unreadCount > 0) {
             this.markAsRead(phoneNumber);
         }
 
-        // En móvil, mostrar chat
         if (this.isMobile) {
             this.showMobileChat();
         }
     }
 
     async loadMessages(phoneNumber) {
-        console.log('📨 Cargando mensajes para:', phoneNumber);
-        
         try {
-            const response = await fetch(`/api/whatsapp-conversations?phone=${phoneNumber}&message_limit=50`);
+            const response = await fetch(`/api/whatsapp-conversations-enriched?phone=${phoneNumber}&message_limit=50`);
             const data = await response.json();
             
             if (data.success && data.messages) {
                 this.renderMessages(data.messages);
                 
-                // Actualizar header con datos de la conversación actual
                 const conversation = this.conversations.find(c => c.phone === phoneNumber);
                 if (conversation) {
                     this.updateChatHeader(conversation);
@@ -798,8 +665,6 @@ class ConversationsManager {
     }
 
     renderMessages(messages) {
-        console.log('💬 Renderizando mensajes:', messages.length);
-        
         const container = document.getElementById('messagesContainer');
         if (!container) return;
         
@@ -816,7 +681,6 @@ class ConversationsManager {
         }
 
         const html = messages.map(message => this.renderMessage(message)).join('');
-        
         container.innerHTML = html;
         this.scrollToBottom();
     }
@@ -838,66 +702,40 @@ class ConversationsManager {
     }
 
     updateChatHeader(conversation) {
-        console.log('📋 Actualizando header del chat:', conversation);
-        
-        const name = conversation.name;
-        const phone = conversation.phone;
-        const initials = this.getContactInitials(name);
-
         const chatName = document.getElementById('chatName');
         const chatPhone = document.getElementById('chatPhone');
         const chatAvatar = document.getElementById('chatAvatar');
         
-        if (chatName) chatName.textContent = name;
-        if (chatPhone) chatPhone.textContent = phone;
-        if (chatAvatar) chatAvatar.textContent = initials;
+        if (chatName) chatName.textContent = conversation.name;
+        if (chatPhone) chatPhone.textContent = conversation.phone;
+        if (chatAvatar) chatAvatar.textContent = this.getContactInitials(conversation.name);
     }
 
     showChatArea() {
-        console.log('🖼️ Mostrando área de chat...');
-        
         const chatHeader = document.getElementById('chatHeader');
         const chatInputArea = document.getElementById('chatInputArea');
         
-        if (chatHeader) {
-            chatHeader.style.display = 'flex';
-        }
-        
-        if (chatInputArea) {
-            chatInputArea.style.display = 'block';
-        }
+        if (chatHeader) chatHeader.style.display = 'flex';
+        if (chatInputArea) chatInputArea.style.display = 'block';
         
         const emptyChat = document.querySelector('.empty-chat');
-        if (emptyChat) {
-            emptyChat.style.display = 'none';
-        }
+        if (emptyChat) emptyChat.style.display = 'none';
     }
 
     async sendMessage() {
-        console.log('📤 Enviando mensaje');
-        
-        if (!this.currentConversation || !this.whatsappConnected) {
-            console.log('❌ No se puede enviar mensaje');
-            return;
-        }
+        if (!this.currentConversation || !this.whatsappConnected) return;
 
         const input = document.getElementById('messageInput');
         const button = document.getElementById('sendButton');
         
         const message = input.value.trim();
-        console.log('📝 Mensaje a enviar:', message);
-        
-        if (!message) {
-            return;
-        }
+        if (!message) return;
 
-        // Deshabilitar input y botón
         input.disabled = true;
         button.disabled = true;
         button.innerHTML = '<div class="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>';
 
         try {
-            // Añadir mensaje temporal a la UI
             const tempMessage = {
                 messageId: 'temp_' + Date.now(),
                 content: message,
@@ -910,7 +748,6 @@ class ConversationsManager {
             this.addMessageToUI(tempMessage);
             input.value = '';
 
-            // Enviar mensaje
             const response = await fetch('/api/whatsapp-send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -923,27 +760,20 @@ class ConversationsManager {
             const data = await response.json();
 
             if (data.success) {
-                // Actualizar mensaje temporal con datos reales
                 this.updateMessageInUI(tempMessage.messageId, {
                     messageId: data.messageId,
                     status: 'sent'
                 });
-                
                 this.showNotification('Mensaje enviado', 'success');
             } else {
-                // Marcar mensaje como fallido
-                this.updateMessageInUI(tempMessage.messageId, {
-                    status: 'failed'
-                });
-                
-                this.showNotification('Error enviando mensaje: ' + data.error, 'error');
+                this.updateMessageInUI(tempMessage.messageId, { status: 'failed' });
+                this.showNotification('Error: ' + data.error, 'error');
             }
 
         } catch (error) {
             console.error('💥 Error en sendMessage:', error);
             this.showNotification('Error de conexión', 'error');
         } finally {
-            // Rehabilitar input y botón
             input.disabled = false;
             button.disabled = false;
             button.innerHTML = '<i class="ri-send-plane-fill text-xl"></i>';
@@ -952,16 +782,11 @@ class ConversationsManager {
     }
 
     addMessageToUI(message) {
-        console.log('➕ Añadiendo mensaje a UI:', message);
-        
         const container = document.getElementById('messagesContainer');
         if (!container) return;
 
-        // Remover empty chat si existe
         const emptyChat = container.querySelector('.empty-chat');
-        if (emptyChat) {
-            emptyChat.remove();
-        }
+        if (emptyChat) emptyChat.remove();
 
         const messageHtml = this.renderMessage(message);
         container.insertAdjacentHTML('beforeend', messageHtml);
@@ -969,8 +794,6 @@ class ConversationsManager {
     }
 
     updateMessageInUI(tempMessageId, updates) {
-        console.log('🔄 Actualizando mensaje en UI:', tempMessageId, updates);
-        
         const messageElements = document.querySelectorAll(`[data-message-id="${tempMessageId}"]`);
         
         messageElements.forEach(element => {
@@ -985,7 +808,6 @@ class ConversationsManager {
                     statusSpan.innerHTML = this.getStatusIcon(updates.status);
                 }
                 
-                // Añadir clase visual según estado
                 element.classList.remove('sending', 'failed');
                 if (updates.status === 'failed') {
                     element.classList.add('failed');
@@ -995,8 +817,6 @@ class ConversationsManager {
     }
 
     async markAsRead(phoneNumber) {
-        console.log('📖 Marcando como leído:', phoneNumber);
-        
         try {
             await fetch('/api/whatsapp-conversations', {
                 method: 'POST',
@@ -1007,15 +827,12 @@ class ConversationsManager {
                 })
             });
 
-            // Actualizar UI
             const conversation = this.conversations.find(c => c.phone === phoneNumber);
             if (conversation) {
                 conversation.unreadCount = 0;
                 const element = document.querySelector(`[data-phone="${phoneNumber}"]`);
-                if (element) {
-                    const badge = element.querySelector('.unread-badge');
-                    if (badge) badge.remove();
-                }
+                const badge = element?.querySelector('.unread-badge');
+                if (badge) badge.remove();
             }
         } catch (error) {
             console.error('💥 Error marcando como leído:', error);
@@ -1023,8 +840,6 @@ class ConversationsManager {
     }
 
     filterConversations() {
-        console.log('🔍 Filtrando conversaciones con término:', this.searchTerm);
-        
         const filtered = this.conversations.filter(conv => {
             return conv.name.toLowerCase().includes(this.searchTerm) ||
                    conv.phone.includes(this.searchTerm) ||
@@ -1039,16 +854,12 @@ class ConversationsManager {
     }
 
     setupAutoRefresh() {
-        console.log('🔄 Configurando auto-refresh...');
-        // Refrescar conversaciones cada 30 segundos
         this.refreshInterval = setInterval(() => {
             this.loadConversations();
         }, 30000);
     }
 
     setupTextareaAutoResize() {
-        console.log('📏 Configurando auto-resize de textarea...');
-        
         const textarea = document.getElementById('messageInput');
         if (textarea) {
             textarea.addEventListener('input', () => {
@@ -1119,9 +930,6 @@ class ConversationsManager {
     }
 
     showNotification(message, type = 'info') {
-        console.log('🔔 Mostrando notificación:', type, message);
-        
-        // Crear notificación temporal
         const notification = document.createElement('div');
         notification.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 text-white ${
             type === 'success' ? 'bg-green-600' : 
@@ -1130,15 +938,10 @@ class ConversationsManager {
         notification.textContent = message;
         
         document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
+        setTimeout(() => notification.remove(), 3000);
     }
 
     showError(message) {
-        console.log('❌ Mostrando error:', message);
-        
         const container = document.getElementById('conversationsList');
         if (!container) return;
         
@@ -1156,8 +959,6 @@ class ConversationsManager {
     }
 
     cleanup() {
-        console.log('🧹 Limpiando recursos...');
-        
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
         }
@@ -1166,16 +967,22 @@ class ConversationsManager {
 
 // Funciones globales
 window.sendMessage = function() {
-    window.conversationsManager.sendMessage();
+    window.conversationsManager?.sendMessage();
 };
 
 window.closeMobileChat = function() {
-    window.conversationsManager.closeMobileChat();
+    window.conversationsManager?.closeMobileChat();
 };
 
-// Inicializar cuando el DOM esté listo
+// Inicializar
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 DOM listo, inicializando ConversationsManager...');
+    console.log('🚀 Inicializando ConversationsManager con nombres de clientes...');
     window.conversationsManager = new ConversationsManager();
 });
 </script>
+
+<?php
+if (!isset($conversationsPageContent)) {
+    include 'includes/footer.php';
+}
+?>
