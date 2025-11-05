@@ -67,6 +67,7 @@ include 'includes/header.php';
     margin: 0 auto;
     padding: 0 1rem;
 }
+
 .whatsapp-button {
     background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
     box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
@@ -187,27 +188,65 @@ include 'includes/header.php';
 .modal-btn-confirm:hover {
     background: #b91c1c;
 }
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .container-max-width {
+        padding: 0 0.75rem;
+    }
+    
+    /* Eliminar scroll horizontal */
+    body {
+        overflow-x: hidden;
+    }
+    
+    /* Modal más pequeño en mobile */
+    .modal-content {
+        max-width: 90%;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+    
+    .modal-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    /* Ajustar tamaños de texto */
+    .modal-title {
+        font-size: 1rem;
+    }
+    
+    .modal-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1.25rem;
+    }
+}
 </style>
 
 <div class="container-max-width">
 
     <!-- Información de la reserva -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div class="flex items-start justify-between mb-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 h-16 w-16">
-                    <div class="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
-                        <i class="ri-calendar-check-line text-blue-600 text-2xl"></i>
+    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6">
+        <div class="flex flex-col md:flex-row items-start justify-between gap-4 mb-4 md:mb-6">
+            <div class="flex items-center w-full md:w-auto">
+                <div class="flex-shrink-0 h-12 w-12 md:h-16 md:w-16">
+                    <div class="h-12 w-12 md:h-16 md:w-16 rounded-full bg-blue-100 flex items-center justify-center">
+                        <i class="ri-calendar-check-line text-blue-600 text-xl md:text-2xl"></i>
                     </div>
                 </div>
-                <div class="ml-6">
-                    <h2 class="text-xl font-bold text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></h2>
-                    <p class="text-gray-600 flex items-center mt-1">
+                <div class="ml-4 md:ml-6 flex-1 min-w-0">
+                    <h2 class="text-lg md:text-xl font-bold text-gray-900 truncate"><?php echo htmlspecialchars($reserva['nombre']); ?></h2>
+                    <p class="text-sm md:text-base text-gray-600 flex items-center mt-1 truncate">
                         <i class="ri-phone-line mr-1"></i>
                         <?php echo htmlspecialchars($reserva['telefono']); ?>
                     </p>
                     <?php if (!empty($reserva['email'])): ?>
-                    <p class="text-gray-600 flex items-center mt-1">
+                    <p class="text-sm md:text-base text-gray-600 flex items-center mt-1 truncate">
                         <i class="ri-mail-line mr-1"></i>
                         <?php echo htmlspecialchars($reserva['email']); ?>
                     </p>
@@ -215,8 +254,8 @@ include 'includes/header.php';
                 </div>
             </div>
             
-            <div class="text-right">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mb-2
+            <div class="w-full md:w-auto md:text-right">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs md:text-sm font-medium mb-2
                     <?php 
                     echo match($reserva['estado']) {
                         'confirmada' => 'bg-green-100 text-green-800',
@@ -255,23 +294,23 @@ include 'includes/header.php';
         </div>
         
         <!-- Información de fecha y hora -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4 border-t border-gray-200">
             <div>
-                <div class="flex items-center text-sm text-gray-500 mb-1">
+                <div class="flex items-center text-xs md:text-sm text-gray-500 mb-1">
                     <i class="ri-calendar-line mr-2"></i>
                     <span class="font-medium">Fecha de la reserva</span>
                 </div>
-                <div class="text-lg font-semibold text-gray-900 ml-6">
+                <div class="text-base md:text-lg font-semibold text-gray-900 ml-5 md:ml-6">
                     <?php echo formatearFecha($reserva['fecha']); ?>
                 </div>
             </div>
             
             <div>
-                <div class="flex items-center text-sm text-gray-500 mb-1">
+                <div class="flex items-center text-xs md:text-sm text-gray-500 mb-1">
                     <i class="ri-time-line mr-2"></i>
                     <span class="font-medium">Hora de la reserva</span>
                 </div>
-                <div class="text-lg font-semibold text-gray-900 ml-6">
+                <div class="text-base md:text-lg font-semibold text-gray-900 ml-5 md:ml-6">
                     <?php echo substr($reserva['hora'], 0, 5); ?>
                 </div>
             </div>
@@ -279,13 +318,13 @@ include 'includes/header.php';
         
         <!-- Mensaje de la reserva -->
         <?php if (!empty($reserva['mensaje'])): ?>
-        <div class="mt-4 pt-4 border-t border-gray-200">
-            <div class="flex items-center text-sm text-gray-500 mb-2">
+        <div class="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-gray-200">
+            <div class="flex items-center text-xs md:text-sm text-gray-500 mb-2">
                 <i class="ri-message-2-line mr-2 text-blue-600"></i>
                 <span class="font-medium">Mensaje</span>
             </div>
-            <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-400 ml-6">
-                <p class="text-gray-700 italic text-sm"><?php echo nl2br(htmlspecialchars($reserva['mensaje'])); ?></p>
+            <div class="bg-gray-50 rounded-lg p-3 md:p-4 border-l-4 border-blue-400 ml-0 md:ml-6">
+                <p class="text-sm md:text-base text-gray-700 italic break-words"><?php echo nl2br(htmlspecialchars($reserva['mensaje'])); ?></p>
             </div>
         </div>
         <?php endif; ?>
@@ -293,28 +332,28 @@ include 'includes/header.php';
 
     <!-- Notas internas -->
     <?php if (!empty($reserva['notas_internas'])): ?>
-    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
+    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6">
+        <h3 class="text-base md:text-lg font-medium text-gray-900 mb-3 flex items-center">
             <i class="ri-sticky-note-line mr-2 text-amber-600"></i>
             Notas Internas
         </h3>
-        <div class="bg-amber-50 rounded-lg p-4 border-l-4 border-amber-400">
-            <p class="text-gray-700"><?php echo nl2br(htmlspecialchars($reserva['notas_internas'])); ?></p>
+        <div class="bg-amber-50 rounded-lg p-3 md:p-4 border-l-4 border-amber-400">
+            <p class="text-sm md:text-base text-gray-700 break-words"><?php echo nl2br(htmlspecialchars($reserva['notas_internas'])); ?></p>
         </div>
     </div>
     <?php endif; ?>
 
     <!-- Historial de cambios de esta reserva -->
     <?php if (!empty($historialReserva)): ?>
-    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6">
+        <h3 class="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4 flex items-center">
             <i class="ri-history-line mr-2 text-purple-600"></i>
             Historial de Cambios
         </h3>
         
-        <div class="space-y-3">
+        <div class="space-y-2 md:space-y-3">
             <?php foreach ($historialReserva as $cambio): ?>
-                <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border-l-4 
+                <div class="flex flex-col sm:flex-row items-start gap-2 sm:gap-3 p-3 bg-gray-50 rounded-lg border-l-4 
                     <?php 
                     echo match($cambio['accion']) {
                         'creada' => 'border-blue-400',
@@ -326,7 +365,7 @@ include 'includes/header.php';
                     };
                     ?>">
                     
-                    <div class="flex-shrink-0 mt-1">
+                    <div class="flex-shrink-0">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
                             <?php 
                             echo match($cambio['accion']) {
@@ -343,7 +382,7 @@ include 'includes/header.php';
                     </div>
                     
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm text-gray-900 font-medium">
+                        <p class="text-xs md:text-sm text-gray-900 font-medium break-words">
                             <?php echo htmlspecialchars($cambio['descripcion']); ?>
                         </p>
                         <p class="text-xs text-gray-500 mt-1">
@@ -361,10 +400,10 @@ include 'includes/header.php';
     <?php endif; ?>
 
     <!-- Acciones -->
-    <div class="bg-white rounded-lg shadow-sm p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Acciones</h3>
+    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
+        <h3 class="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4">Acciones</h3>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
             <?php if ($reserva['estado'] === 'pendiente'): ?>
                 <!-- Aceptar -->
                 <button id="confirmarBtn" 
