@@ -5,6 +5,13 @@ $currentPage = 'perfil';
 $pageTitle = 'ReservaBot - Mi Perfil';
 $pageScript = 'perfil';
 
+// Obtener el tab activo desde la URL
+$tabActivo = isset($_GET['tab']) ? $_GET['tab'] : 'info';
+$tabsValidos = ['info', 'password', 'cuenta', 'plan'];
+if (!in_array($tabActivo, $tabsValidos)) {
+    $tabActivo = 'info';
+}
+
 ?>
 <style>
 /* Estilos responsivos para perfil - Mobile First */
@@ -17,32 +24,93 @@ main {
     overflow-x: hidden;
 }
 
+/* Tabs Styling */
+.tabs {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-button {
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6b7280;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    text-decoration: none;
+}
+
+.tab-button:hover {
+    color: #374151;
+    background: #f9fafb;
+}
+
+.tab-button.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    background: linear-gradient(to bottom, rgba(102, 126, 234, 0.05), transparent);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 768px) {
     /* Contenedor principal móvil */
-    main .max-w-6xl {
+    main .max-w-4xl {
         max-width: 100%;
         margin: 0;
-        padding: 0 1rem;
+        padding: 0 0.75rem;
     }
     
-    /* Grid de columnas - stack en móvil */
-    main .grid.grid-cols-1.lg\\:grid-cols-3 {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
+    .tabs {
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+        padding: 0 0.75rem;
+        gap: 0.25rem;
+    }
+    
+    .tab-button {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.875rem;
+        gap: 0.375rem;
     }
     
     /* Tarjetas de sección mejoradas */
     main .bg-white.rounded-lg.shadow-sm {
-        border-radius: 1rem;
-        padding: 1.5rem;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
         margin-bottom: 1rem;
         width: 100%;
         max-width: 100%;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     }
     
     /* Títulos de sección */
@@ -85,9 +153,9 @@ main {
     main input[type="password"] {
         width: 100%;
         max-width: 100%;
-        padding: 0.875rem;
-        border-radius: 0.75rem;
-        border: 2px solid #e5e7eb;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
         font-size: 1rem;
         transition: all 0.2s ease;
         background: white;
@@ -110,13 +178,13 @@ main {
     }
     
     /* Grid de inputs - stack en móvil */
-    main .grid.grid-cols-1.md\\:grid-cols-2 {
+    main .grid.grid-cols-2 {
         display: flex;
         flex-direction: column;
         gap: 1rem;
     }
     
-    main .grid.grid-cols-1.md\\:grid-cols-2 > div {
+    main .grid.grid-cols-2 > div {
         width: 100%;
     }
     
@@ -132,8 +200,8 @@ main {
     main button[type="submit"] {
         width: 100%;
         max-width: 100%;
-        padding: 1rem;
-        border-radius: 0.75rem;
+        padding: 0.875rem;
+        border-radius: 0.5rem;
         font-size: 1rem;
         font-weight: 600;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -148,23 +216,17 @@ main {
         margin-top: 1rem;
     }
     
-    main button[type="submit"]:hover {
-        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-    
-    main .flex.justify-end {
-        justify-content: stretch;
-        width: 100%;
+    main button[type="submit"]:active {
+        transform: scale(0.98);
     }
     
     /* Sección de información de cuenta */
     main dl.space-y-3 > div {
         padding: 0.75rem;
-        background: rgba(102, 126, 234, 0.03);
+        background: #f9fafb;
         border-radius: 0.5rem;
         margin-bottom: 0.5rem;
+        border: 1px solid #e5e7eb;
     }
     
     main dl dt {
@@ -175,7 +237,7 @@ main {
     }
     
     main dl dd {
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         color: #1f2937;
         font-weight: 500;
     }
@@ -195,6 +257,7 @@ main {
         border-radius: 0.75rem;
         margin-bottom: 0.75rem;
         transition: all 0.2s ease;
+        overflow: hidden;
     }
     
     main label.relative.flex input[type="radio"] {
@@ -211,12 +274,13 @@ main {
     }
     
     main label.relative.flex .text-sm {
-        font-size: 0.9375rem;
+        font-size: 0.875rem;
     }
     
     main label.relative.flex .text-xs {
         font-size: 0.8125rem;
         line-height: 1.4;
+        word-wrap: break-word;
     }
     
     main label.relative.flex .text-lg {
@@ -226,7 +290,7 @@ main {
     /* Nota informativa mejorada */
     main .p-3.bg-blue-50 {
         padding: 0.875rem;
-        border-radius: 0.75rem;
+        border-radius: 0.5rem;
         margin-top: 1rem;
     }
     
@@ -235,20 +299,11 @@ main {
         line-height: 1.4;
     }
     
-    /* Espaciado de secciones */
-    main .space-y-6 > * {
-        margin-bottom: 1rem;
-    }
-    
-    main .space-y-3 > * {
-        margin-bottom: 0.75rem;
-    }
-    
     /* Mensaje de alerta/éxito mejorado */
     main .mb-6.p-4.rounded-md {
         margin-bottom: 1rem;
         padding: 1rem;
-        border-radius: 0.75rem;
+        border-radius: 0.5rem;
         word-wrap: break-word;
     }
     
@@ -261,49 +316,17 @@ main {
         overflow-wrap: break-word;
         max-width: 100%;
     }
+}
+
+@media (max-width: 640px) {
+    .tab-button span {
+        display: none;
+    }
     
-    /* Pantallas muy pequeñas */
-    @media (max-width: 380px) {
-        main .max-w-6xl {
-            padding: 0 0.75rem;
-        }
-        
-        main .bg-white.rounded-lg.shadow-sm {
-            padding: 1rem;
-        }
-        
-        main input[type="text"],
-        main input[type="email"],
-        main input[type="password"] {
-            font-size: 0.9375rem;
-            padding: 0.75rem;
-        }
-        
-        main button[type="submit"] {
-            font-size: 0.9375rem;
-            padding: 0.875rem;
-        }
-        
-        main label.relative.flex {
-            padding: 0.875rem;
-        }
+    .tab-button {
+        justify-content: center;
+        min-width: 3rem;
     }
-}
-
-/* Animaciones */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-main .bg-white.rounded-lg.shadow-sm {
-    animation: fadeIn 0.3s ease-out;
 }
 </style>
 <?php
@@ -330,20 +353,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // ACTUALIZAR INFORMACIÓN PERSONAL
         if ($accion === 'actualizar_info') {
             $nombre = trim($_POST['nombre'] ?? '');
-            $negocio = trim($_POST['negocio'] ?? '');
             
-            // Usar el método del dominio (necesitamos el email aunque no se edite)
+            // Usar el método del dominio (manteniendo email, teléfono y negocio actuales)
             $usuarioDomain->actualizarPerfil(
                 $usuarioEntity->getId(),
                 $nombre,
-                $usuarioEntity->getEmail(), // Email no cambia
-                $usuarioEntity->getTelefono(), // Teléfono no cambia
-                $negocio
+                $usuarioEntity->getEmail(),
+                $usuarioEntity->getTelefono(),
+                $usuarioEntity->getNegocio()
             );
             
             // Actualizar la sesión
             $_SESSION['user_name'] = $nombre;
-            $_SESSION['user_negocio'] = $negocio;
             
             $mensaje = 'Información actualizada correctamente';
             $tipoMensaje = 'success';
@@ -416,299 +437,329 @@ include 'includes/header.php';
             </div>
             <div class="ml-3">
                 <p class="text-sm <?php echo $tipoMensaje === 'success' ? 'text-green-800' : 'text-red-800'; ?>">
-                    <?php echo $mensaje; ?>
+                    <?php echo htmlspecialchars($mensaje); ?>
                 </p>
             </div>
         </div>
     </div>
 <?php endif; ?>
 
-<div class="max-w-6xl mx-auto">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Columna Principal (2/3) -->
-        <div class="lg:col-span-2 space-y-6">
+<div class="max-w-4xl mx-auto px-4">
+    
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+        <a href="/perfil?tab=info" class="tab-button <?php echo $tabActivo === 'info' ? 'active' : ''; ?>">
+            <i class="ri-user-line"></i>
+            <span>Información Personal</span>
+        </a>
+        <a href="/perfil?tab=password" class="tab-button <?php echo $tabActivo === 'password' ? 'active' : ''; ?>">
+            <i class="ri-lock-password-line"></i>
+            <span>Cambiar Contraseña</span>
+        </a>
+        <a href="/perfil?tab=cuenta" class="tab-button <?php echo $tabActivo === 'cuenta' ? 'active' : ''; ?>">
+            <i class="ri-information-line"></i>
+            <span>Información de Cuenta</span>
+        </a>
+        <a href="/perfil?tab=plan" class="tab-button <?php echo $tabActivo === 'plan' ? 'active' : ''; ?>">
+            <i class="ri-vip-crown-line"></i>
+            <span>Cambiar Plan</span>
+        </a>
+    </div>
+
+    <!-- TAB 1: Información Personal -->
+    <div class="tab-content <?php echo $tabActivo === 'info' ? 'active' : ''; ?>">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6 flex items-center">
+                <i class="ri-user-line mr-2 text-blue-600"></i>
+                Información Personal
+            </h2>
             
-            <!-- Información Personal -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-lg font-medium text-gray-900 mb-6 flex items-center">
-                    <i class="ri-user-line mr-2 text-blue-600"></i>
-                    Información Personal
-                </h2>
+            <form method="POST" class="space-y-6">
+                <input type="hidden" name="accion" value="actualizar_info">
                 
-                <form method="POST" class="space-y-6">
-                    <input type="hidden" name="accion" value="actualizar_info">
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">
-                                Nombre completo
-                            </label>
-                            <input
-                                type="text"
-                                id="nombre"
-                                name="nombre"
-                                required
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                value="<?php echo htmlspecialchars($usuarioEntity->getNombre()); ?>"
-                            >
-                        </div>
-                        
-                        <div>
-                            <label for="negocio" class="block text-sm font-medium text-gray-700 mb-1">
-                                Nombre del negocio
-                            </label>
-                            <input
-                                type="text"
-                                id="negocio"
-                                name="negocio"
-                                required
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                value="<?php echo htmlspecialchars($usuarioEntity->getNegocio()); ?>"
-                            >
-                        </div>
+                <div>
+                    <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre completo *
+                    </label>
+                    <input
+                        type="text"
+                        id="nombre"
+                        name="nombre"
+                        required
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        value="<?php echo htmlspecialchars($usuarioEntity->getNombre()); ?>"
+                    >
+                </div>
+                
+                <div>
+                    <label for="email_display" class="block text-sm font-medium text-gray-700 mb-2">
+                        Email
+                    </label>
+                    <input
+                        type="email"
+                        id="email_display"
+                        disabled
+                        class="block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm cursor-not-allowed"
+                        value="<?php echo htmlspecialchars($usuarioEntity->getEmail()); ?>"
+                    >
+                    <p class="mt-1 text-xs text-gray-500">
+                        <i class="ri-information-line"></i>
+                        El email no se puede modificar
+                    </p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre del negocio
+                    </label>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-md">
+                        <span class="text-sm text-gray-900"><?php echo htmlspecialchars($usuarioEntity->getNegocio()); ?></span>
+                        <a href="/configuracion" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center">
+                            <i class="ri-settings-3-line mr-1"></i>
+                            Modificar en Configuración
+                        </a>
                     </div>
-                    
-                    <div>
-                        <label for="email_display" class="block text-sm font-medium text-gray-700 mb-1">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            id="email_display"
-                            disabled
-                            class="block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm cursor-not-allowed"
-                            value="<?php echo htmlspecialchars($usuarioEntity->getEmail()); ?>"
-                        >
-                        <p class="mt-1 text-xs text-gray-500">
-                            <i class="ri-information-line"></i>
-                            El email no se puede modificar
-                        </p>
-                    </div>
-                    
-                    <div class="flex justify-end">
-                        <button
-                            type="submit"
-                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                            <i class="ri-save-line mr-2"></i>
-                            Guardar Cambios
-                        </button>
-                    </div>
-                </form>
-            </div>
+                    <p class="mt-1 text-xs text-gray-500">
+                        <i class="ri-information-line"></i>
+                        El nombre del negocio se configura desde la página de Configuración
+                    </p>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button
+                        type="submit"
+                        class="inline-flex items-center px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        <i class="ri-save-line mr-2"></i>
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TAB 2: Cambiar Contraseña -->
+    <div class="tab-content <?php echo $tabActivo === 'password' ? 'active' : ''; ?>">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6 flex items-center">
+                <i class="ri-lock-password-line mr-2 text-blue-600"></i>
+                Cambiar Contraseña
+            </h2>
             
-            <!-- Cambio de Contraseña -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-lg font-medium text-gray-900 mb-6 flex items-center">
-                    <i class="ri-lock-password-line mr-2 text-blue-600"></i>
-                    Cambiar Contraseña
-                </h2>
+            <form method="POST" class="space-y-6">
+                <input type="hidden" name="accion" value="cambiar_password">
                 
-                <form method="POST" class="space-y-6">
-                    <input type="hidden" name="accion" value="cambiar_password">
-                    
+                <div>
+                    <label for="current_password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Contraseña actual *
+                    </label>
+                    <input
+                        type="password"
+                        id="current_password"
+                        name="current_password"
+                        required
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Ingresa tu contraseña actual"
+                    >
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="current_password" class="block text-sm font-medium text-gray-700 mb-1">
-                            Contraseña actual
+                        <label for="new_password" class="block text-sm font-medium text-gray-700 mb-2">
+                            Nueva contraseña *
                         </label>
                         <input
                             type="password"
-                            id="current_password"
-                            name="current_password"
+                            id="new_password"
+                            name="new_password"
                             required
-                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                            placeholder="Ingresa tu contraseña actual"
+                            minlength="6"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            placeholder="Mínimo 6 caracteres"
                         >
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">
-                                Nueva contraseña
-                            </label>
-                            <input
-                                type="password"
-                                id="new_password"
-                                name="new_password"
-                                required
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                placeholder="Mínimo 6 caracteres"
-                            >
-                        </div>
-                        
-                        <div>
-                            <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-1">
-                                Confirmar nueva contraseña
-                            </label>
-                            <input
-                                type="password"
-                                id="confirm_password"
-                                name="confirm_password"
-                                required
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                placeholder="Repite la nueva contraseña"
-                            >
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-end">
-                        <button
-                            type="submit"
-                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    <div>
+                        <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">
+                            Confirmar nueva contraseña *
+                        </label>
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            required
+                            minlength="6"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            placeholder="Repite la nueva contraseña"
                         >
-                            <i class="ri-lock-unlock-line mr-2"></i>
-                            Cambiar Contraseña
-                        </button>
                     </div>
-                </form>
-            </div>
-            
-        </div>
-        
-        <!-- Columna Lateral (1/3) -->
-        <div class="space-y-6">
-            
-            <!-- Información de la cuenta -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-base font-medium text-gray-900 mb-4 flex items-center">
-                    <i class="ri-information-line mr-2 text-blue-600"></i>
-                    Información de la Cuenta
-                </h3>
+                </div>
                 
-                <dl class="space-y-3">
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Plan actual</dt>
-                        <dd class="text-sm text-gray-900 mt-1">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'; ?>">
-                                <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'Profesional' : 'Básico'; ?>
-                            </span>
-                        </dd>
-                    </div>
-                    
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Miembro desde</dt>
-                        <dd class="text-sm text-gray-900">
-                            <?php echo $usuarioEntity->getCreatedAt()->format('d/m/Y'); ?>
-                        </dd>
-                    </div>
-                    
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Estado</dt>
-                        <dd class="text-sm text-gray-900">
-                            <span class="inline-flex items-center">
-                                <span class="h-2 w-2 bg-green-400 rounded-full mr-2"></span>
-                                Activo
-                            </span>
-                        </dd>
-                    </div>
-                </dl>
-            </div>
-            
-            <!-- Gestión de Plan -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-base font-medium text-gray-900 mb-4 flex items-center">
-                    <i class="ri-vip-crown-line mr-2 text-blue-600"></i>
-                    Cambiar Plan
-                </h3>
-                
-                <form method="POST">
-                    <input type="hidden" name="accion" value="cambiar_plan">
-                    
-                    <div class="space-y-3">
-                        <!-- Plan Básico -->
-                        <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuarioEntity->getPlan() === 'gratis' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
-                            <input 
-                                type="radio" 
-                                name="plan" 
-                                value="gratis" 
-                                class="mt-1"
-                                <?php echo $usuarioEntity->getPlan() === 'gratis' ? 'checked' : ''; ?>
-                            >
-                            <div class="ml-3 flex-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm font-semibold text-gray-900">Básico</span>
-                                    <span class="text-lg font-bold text-gray-900">0€</span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">
-                                    Reservas por formulario web, calendario básico
-                                </p>
-                            </div>
-                        </label>
-                        
-                        <!-- Plan Profesional -->
-                        <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
-                            <input 
-                                type="radio" 
-                                name="plan" 
-                                value="estandar" 
-                                class="mt-1"
-                                <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'checked' : ''; ?>
-                            >
-                            <div class="ml-3 flex-1">
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="flex items-center">
-                                        <span class="text-sm font-semibold text-gray-900">Profesional</span>
-                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                            Recomendado
-                                        </span>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="text-xs line-through text-gray-400">9€</span>
-                                        <span class="ml-1 text-lg font-bold text-green-600">GRATIS</span>
-                                    </div>
-                                </div>
-                                <p class="text-xs text-gray-500">
-                                    WhatsApp, agenda completa, recordatorios automáticos
-                                </p>
-                                <p class="text-xs text-red-600 font-medium mt-1">
-                                    🎉 Gratis durante la beta
-                                </p>
-                            </div>
-                        </label>
-                        
-                        <!-- Plan Premium (Deshabilitado) -->
-                        <div class="relative flex items-start p-4 border-2 border-gray-200 rounded-lg opacity-60 cursor-not-allowed">
-                            <input 
-                                type="radio" 
-                                name="plan" 
-                                value="premium" 
-                                disabled
-                                class="mt-1"
-                            >
-                            <div class="ml-3 flex-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm font-semibold text-gray-900">Automático</span>
-                                    <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-semibold">
-                                        Próximamente
-                                    </span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">
-                                    IA automática, respuestas inteligentes, analytics avanzados
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    
+                <div class="flex justify-end">
                     <button
                         type="submit"
-                        class="w-full mt-4 inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        class="inline-flex items-center px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
-                        <i class="ri-refresh-line mr-2"></i>
-                        Cambiar Plan
+                        <i class="ri-lock-unlock-line mr-2"></i>
+                        Cambiar Contraseña
                     </button>
-                </form>
-                
-                <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <p class="text-xs text-blue-800 flex items-start">
-                        <i class="ri-information-line mr-1 mt-0.5 flex-shrink-0"></i>
-                        <span>Durante la fase beta, todos los planes están disponibles de forma gratuita.</span>
-                    </p>
                 </div>
-            </div>
-            
+            </form>
         </div>
     </div>
+
+    <!-- TAB 3: Información de Cuenta -->
+    <div class="tab-content <?php echo $tabActivo === 'cuenta' ? 'active' : ''; ?>">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6 flex items-center">
+                <i class="ri-information-line mr-2 text-blue-600"></i>
+                Información de la Cuenta
+            </h2>
+            
+            <dl class="space-y-3">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Plan actual</dt>
+                    <dd class="text-sm text-gray-900 mt-1 flex items-center justify-between">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'; ?>">
+                            <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'Profesional' : 'Básico'; ?>
+                        </span>
+                        <a href="/perfil?tab=plan" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                            Cambiar plan →
+                        </a>
+                    </dd>
+                </div>
+                
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Negocio</dt>
+                    <dd class="text-sm text-gray-900 mt-1">
+                        <?php echo htmlspecialchars($usuarioEntity->getNegocio()); ?>
+                    </dd>
+                </div>
+                
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Miembro desde</dt>
+                    <dd class="text-sm text-gray-900 mt-1">
+                        <?php echo $usuarioEntity->getCreatedAt()->format('d/m/Y'); ?>
+                    </dd>
+                </div>
+                
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Estado</dt>
+                    <dd class="text-sm text-gray-900 mt-1">
+                        <span class="inline-flex items-center">
+                            <span class="h-2 w-2 bg-green-400 rounded-full mr-2"></span>
+                            Activo
+                        </span>
+                    </dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- TAB 4: Cambiar Plan -->
+    <div class="tab-content <?php echo $tabActivo === 'plan' ? 'active' : ''; ?>">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6 flex items-center">
+                <i class="ri-vip-crown-line mr-2 text-blue-600"></i>
+                Cambiar Plan
+            </h2>
+            
+            <form method="POST">
+                <input type="hidden" name="accion" value="cambiar_plan">
+                
+                <div class="space-y-3">
+                    <!-- Plan Básico -->
+                    <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuarioEntity->getPlan() === 'gratis' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
+                        <input 
+                            type="radio" 
+                            name="plan" 
+                            value="gratis" 
+                            class="mt-1"
+                            <?php echo $usuarioEntity->getPlan() === 'gratis' ? 'checked' : ''; ?>
+                        >
+                        <div class="ml-3 flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-semibold text-gray-900">Básico</span>
+                                <span class="text-lg font-bold text-gray-900">0€</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Reservas por formulario web, calendario básico
+                            </p>
+                        </div>
+                    </label>
+                    
+                    <!-- Plan Profesional -->
+                    <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
+                        <input 
+                            type="radio" 
+                            name="plan" 
+                            value="estandar" 
+                            class="mt-1"
+                            <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'checked' : ''; ?>
+                        >
+                        <div class="ml-3 flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="flex items-center flex-wrap gap-2">
+                                    <span class="text-sm font-semibold text-gray-900">Profesional</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                        Recomendado
+                                    </span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs line-through text-gray-400">9€</span>
+                                    <span class="ml-1 text-lg font-bold text-green-600">GRATIS</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500">
+                                WhatsApp, agenda completa, recordatorios automáticos
+                            </p>
+                            <p class="text-xs text-red-600 font-medium mt-1">
+                                🎉 Gratis durante la beta
+                            </p>
+                        </div>
+                    </label>
+                    
+                    <!-- Plan Premium (Deshabilitado) -->
+                    <div class="relative flex items-start p-4 border-2 border-gray-200 rounded-lg opacity-60 cursor-not-allowed">
+                        <input 
+                            type="radio" 
+                            name="plan" 
+                            value="premium" 
+                            disabled
+                            class="mt-1"
+                        >
+                        <div class="ml-3 flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-semibold text-gray-900">Automático</span>
+                                <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-semibold">
+                                    Próximamente
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                IA automática, respuestas inteligentes, analytics avanzados
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button
+                    type="submit"
+                    class="w-full mt-4 inline-flex justify-center items-center px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                    <i class="ri-refresh-line mr-2"></i>
+                    Cambiar Plan
+                </button>
+            </form>
+            
+            <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p class="text-xs text-blue-800 flex items-start">
+                    <i class="ri-information-line mr-1 mt-0.5 flex-shrink-0"></i>
+                    <span>Durante la fase beta, todos los planes están disponibles de forma gratuita.</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
