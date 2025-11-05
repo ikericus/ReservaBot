@@ -114,7 +114,7 @@ class UsuarioDomain {
         $email = trim(strtolower($email));
         $telefono = trim($telefono);
         
-        if (empty($nombre) || empty($email) || empty($telefono)) {
+        if (empty($nombre) || empty($email)) {
             throw new \InvalidArgumentException('Todos los campos son obligatorios');
         }
         
