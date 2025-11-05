@@ -40,28 +40,31 @@ include 'includes/header.php';
 /* Estilos específicos para móvil - Clientes */
 @media (max-width: 768px) {
     .client-mobile-card {
-        margin: 0.75rem 0;
-        border-radius: 1rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        margin: 0 0 0.75rem 0;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+        background: white;
+        border: 1px solid #e5e7eb;
+        text-decoration: none;
+        display: block;
     }
     
-    .client-mobile-card:hover {
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-        transform: translateY(-2px);
+    .client-mobile-card:active {
+        background: #f9fafb;
+        transform: scale(0.98);
     }
     
-    .client-card-header {
+    .client-card-content {
         display: flex;
         align-items: center;
-        margin-bottom: 1rem;
+        padding: 1rem;
+        gap: 0.75rem;
     }
     
     .client-avatar {
-        width: 3rem;
-        height: 3rem;
+        width: 2.75rem;
+        height: 2.75rem;
         border-radius: 50%;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         display: flex;
@@ -69,10 +72,8 @@ include 'includes/header.php';
         justify-content: center;
         color: white;
         font-weight: 600;
-        font-size: 1.2rem;
-        margin-right: 0.75rem;
+        font-size: 1.1rem;
         flex-shrink: 0;
-        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
     }
     
     .client-info {
@@ -81,124 +82,73 @@ include 'includes/header.php';
     }
     
     .client-name {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
         color: #1f2937;
         margin: 0 0 0.25rem 0;
         line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     
     .client-phone {
         font-size: 0.875rem;
         color: #6b7280;
-        margin: 0;
+        margin: 0 0 0.375rem 0;
         display: flex;
         align-items: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     
     .client-phone i {
         margin-right: 0.375rem;
         color: #9ca3af;
+        flex-shrink: 0;
     }
     
-    .client-stats {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+    .client-stats-inline {
+        display: flex;
+        align-items: center;
         gap: 0.75rem;
-        margin: 1rem 0;
+        font-size: 0.8125rem;
     }
     
-    .client-stat {
-        background: rgba(102, 126, 234, 0.05);
-        padding: 0.75rem;
-        border-radius: 0.75rem;
-        text-align: center;
-        border: 1px solid rgba(102, 126, 234, 0.1);
+    .client-stat-inline {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: #6b7280;
+    }
+    
+    .client-stat-inline i {
+        font-size: 0.875rem;
+        color: #9ca3af;
     }
     
     .client-stat-number {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #667eea;
-        margin: 0;
-        line-height: 1;
-    }
-    
-    .client-stat-label {
-        font-size: 0.75rem;
-        color: #6b7280;
-        margin: 0.25rem 0 0 0;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 500;
-    }
-    
-    .client-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin: 1rem 0;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.06);
-    }
-    
-    .client-meta-item {
-        font-size: 0.75rem;
-        color: #6b7280;
-        display: flex;
-        align-items: center;
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .client-meta-item i {
-        margin-bottom: 0.25rem;
-        color: #9ca3af;
-        font-size: 1rem;
-    }
-    
-    .client-meta-value {
-        font-weight: 500;
+        font-weight: 600;
         color: #374151;
-        margin-top: 0.125rem;
     }
     
-    .client-action-btn {
-        width: 100%;
-        padding: 0.75rem;
-        border-radius: 0.75rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        text-align: center;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        text-decoration: none;
-        margin-top: 1rem;
-    }
-    
-    .client-action-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        color: white;
-        text-decoration: none;
+    .client-arrow {
+        color: #9ca3af;
+        font-size: 1.25rem;
+        flex-shrink: 0;
     }
     
     .mobile-search {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
     }
     
     .mobile-search-input {
         width: 100%;
-        padding: 0.875rem 3rem 0.875rem 2.5rem;
-        border-radius: 1rem;
-        border: 2px solid #e5e7eb;
-        font-size: 1rem;
+        padding: 0.75rem 2.5rem 0.75rem 2.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid #e5e7eb;
+        font-size: 0.9375rem;
         transition: all 0.2s ease;
         background: white;
     }
@@ -215,7 +165,7 @@ include 'includes/header.php';
         top: 50%;
         transform: translateY(-50%);
         color: #9ca3af;
-        font-size: 1.125rem;
+        font-size: 1rem;
     }
     
     .mobile-search-btn {
@@ -226,9 +176,10 @@ include 'includes/header.php';
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        border-radius: 0.625rem;
-        padding: 0.5rem 0.875rem;
-        font-size: 0.875rem;
+        border-radius: 0.5rem;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8125rem;
+        font-weight: 500;
     }
     
     .mobile-pagination {
@@ -236,7 +187,7 @@ include 'includes/header.php';
         justify-content: center;
         align-items: center;
         gap: 0.5rem;
-        margin-top: 1.5rem;
+        margin-top: 1rem;
         flex-wrap: wrap;
     }
     
@@ -269,20 +220,20 @@ include 'includes/header.php';
     }
     
     .mobile-page-info {
-        font-size: 0.875rem;
+        font-size: 0.8125rem;
         color: #6b7280;
         text-align: center;
-        margin: 1rem 0;
+        margin: 0.75rem 0;
     }
     
     .fade-in-mobile {
-        animation: fadeInMobile 0.4s ease-out;
+        animation: fadeInMobile 0.3s ease-out;
     }
     
     @keyframes fadeInMobile {
         from {
             opacity: 0;
-            transform: translateY(15px);
+            transform: translateY(10px);
         }
         to {
             opacity: 1;
@@ -340,7 +291,7 @@ include 'includes/header.php';
             </button>
             
             <?php if (!empty($search)): ?>
-                
+                <a
                     href="/clientes"
                     class="ml-2 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
@@ -353,7 +304,7 @@ include 'includes/header.php';
 </div>
 
 <!-- Búsqueda - Vista Mobile -->
-<div class="mobile-view mobile-search">
+<div class="mobile-view mobile-search px-4">
     <form method="GET" class="relative">
         <i class="ri-search-line mobile-search-icon"></i>
         <input
@@ -462,12 +413,13 @@ include 'includes/header.php';
             </table>
         </div>
         
-        <!-- Vista Mobile - Tarjetas -->
+        <!-- Vista Mobile - Tarjetas Simplificadas -->
         <div class="mobile-view p-4">
-            <div class="space-y-4">
+            <div>
                 <?php foreach ($clientes as $cliente): ?>
-                    <div class="client-mobile-card p-4 fade-in-mobile">
-                        <div class="client-card-header">
+                    <a href="/cliente?telefono=<?php echo urlencode($cliente['telefono']); ?>" 
+                       class="client-mobile-card fade-in-mobile">
+                        <div class="client-card-content">
                             <div class="client-avatar">
                                 <?php echo strtoupper(substr($cliente['ultimo_nombre'], 0, 1)); ?>
                             </div>
@@ -477,43 +429,24 @@ include 'includes/header.php';
                                     <i class="ri-phone-line"></i>
                                     <?php echo htmlspecialchars($cliente['telefono']); ?>
                                 </p>
-                            </div>
-                        </div>
-                        
-                        <div class="client-stats">
-                            <div class="client-stat">
-                                <div class="client-stat-number"><?php echo $cliente['total_reservas']; ?></div>
-                                <div class="client-stat-label">Total</div>
-                            </div>
-                            <div class="client-stat">
-                                <div class="client-stat-number text-green-600"><?php echo $cliente['reservas_confirmadas']; ?></div>
-                                <div class="client-stat-label">Confirmadas</div>
-                            </div>
-                        </div>
-                        
-                        <div class="client-meta">
-                            <div class="client-meta-item">
-                                <i class="ri-calendar-line"></i>
-                                <span>Última reserva</span>
-                                <div class="client-meta-value">
-                                    <?php echo $cliente['ultima_reserva'] ? date('d/m/Y', strtotime($cliente['ultima_reserva'])) : 'N/A'; ?>
+                                <div class="client-stats-inline">
+                                    <div class="client-stat-inline">
+                                        <i class="ri-calendar-line"></i>
+                                        <span class="client-stat-number"><?php echo $cliente['total_reservas']; ?></span>
+                                        <span>reservas</span>
+                                    </div>
+                                    <?php if ($cliente['reservas_pendientes'] > 0): ?>
+                                        <div class="client-stat-inline">
+                                            <i class="ri-time-line"></i>
+                                            <span class="client-stat-number text-amber-600"><?php echo $cliente['reservas_pendientes']; ?></span>
+                                            <span>pendientes</span>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
-                            <div class="client-meta-item">
-                                <i class="ri-user-add-line"></i>
-                                <span>Cliente desde</span>
-                                <div class="client-meta-value">
-                                    <?php echo date('d/m/Y', strtotime($cliente['primer_contacto'])); ?>
-                                </div>
-                            </div>
+                            <i class="ri-arrow-right-s-line client-arrow"></i>
                         </div>
-                        
-                        <a href="/cliente?telefono=<?php echo urlencode($cliente['telefono']); ?>" 
-                           class="client-action-btn">
-                            <i class="ri-eye-line"></i>
-                            Ver Detalle Completo
-                        </a>
-                    </div>
+                    </a>
                 <?php endforeach; ?>
             </div>
         </div>
