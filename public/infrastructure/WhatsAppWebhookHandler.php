@@ -75,7 +75,7 @@ class WhatsAppWebhookHandler {
         
         $this->whatsappDomain->iniciarConexion($userId, $qrCode);
         
-        error_log("QR generado para usuario {$userId}");
+        debug_log("QR generado para usuario {$userId}");
         
         return ['processed' => true, 'event' => 'qr_generated'];
     }
@@ -88,7 +88,7 @@ class WhatsAppWebhookHandler {
         
         $this->whatsappDomain->confirmarConexion($userId, $phoneNumber);
         
-        error_log("Usuario {$userId} conectado como {$phoneNumber}");
+        debug_log("Usuario {$userId} conectado como {$phoneNumber}");
         
         return ['processed' => true, 'event' => 'connected'];
     }
@@ -101,7 +101,7 @@ class WhatsAppWebhookHandler {
         
         $this->whatsappDomain->desconectar($userId);
         
-        error_log("Usuario {$userId} desconectado: {$reason}");
+        debug_log("Usuario {$userId} desconectado: {$reason}");
         
         return ['processed' => true, 'event' => 'disconnected'];
     }
@@ -239,7 +239,7 @@ class WhatsAppWebhookHandler {
         if ($updated) {
             debug_log("Estado de mensaje {$messageId} actualizado a '{$newStatus}' (ACK: {$ack}) para usuario {$userId}");
         } else {
-            debug_log("No se pudo actualizar estado de mensaje {$messageId} para usuario {$userId}");
+            error_log("No se pudo actualizar estado de mensaje {$messageId} para usuario {$userId}");
         }
         
         return [
