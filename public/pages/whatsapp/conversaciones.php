@@ -26,7 +26,7 @@ try {
     setFlashError('Error al verificar estado de WhatsApp');
 }
 
-include 'includes/header.php';
+// include 'includes/header.php';
 ?>
 
 <style>
@@ -1197,5 +1197,3 @@ document.addEventListener('DOMContentLoaded', function() {
     window.conversationsManager = new ConversationsManager();
 });
 </script>
-
-<?php include 'includes/footer.php'; ?>
