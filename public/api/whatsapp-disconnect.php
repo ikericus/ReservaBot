@@ -21,7 +21,7 @@ $userId = $user['id'];
 try {
     $whatsappDomain = getContainer()->getWhatsAppDomain();
     
-    $resultado = $whatsappDomain->desconectarDeServidor($userId);
+    $resultado = $whatsappDomain->desconectarWhatsApp($userId);
     
     echo json_encode($resultado);
     
