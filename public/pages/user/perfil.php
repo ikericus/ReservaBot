@@ -337,6 +337,8 @@ $usuarioDomain = getContainer()->getUsuarioDomain();
 $usuarioAuth = getAuthenticatedUser();
 $usuarioEntity = $usuarioDomain->obtenerPorId($usuarioAuth['id']);
 
+debug_log('usuarioEntity: ' . print_r($usuarioEntity, true));
+
 if (!$usuarioEntity) {
     header('Location: /logout');
     exit;
@@ -353,7 +355,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // ACTUALIZAR INFORMACIÓN PERSONAL
         if ($accion === 'actualizar_info') {
             $nombre = trim($_POST['nombre'] ?? '');
-            
+                       
             // Usar el método del dominio (manteniendo email, teléfono y negocio actuales)
             $usuarioDomain->actualizarPerfil(
                 $usuarioEntity->getId(),
