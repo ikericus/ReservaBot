@@ -22,16 +22,12 @@ $userId = $userId ?? 0;
 ?>
 
 <!-- Modal de chat WhatsApp -->
-<div id="whatsappChatModal" class="whatsapp-chat-modal fixed inset-0 z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl mx-auto">
-        <div class="chat-container rounded-lg overflow-hidden">
+<div id="whatsappChatModal" class="whatsapp-chat-modal fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-auto chat-modal-container">
+        <div class="chat-container rounded-2xl overflow-hidden">
             
             <!-- Header del chat -->
             <div class="chat-header">
-                <button onclick="closeWhatsAppChat()" class="p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors">
-                    <i class="ri-arrow-left-line text-xl"></i>
-                </button>
-                
                 <div class="chat-avatar" id="chatAvatar">
                     ?
                 </div>
@@ -41,11 +37,9 @@ $userId = $userId ?? 0;
                     <p class="text-sm opacity-90" id="chatClientPhone"><?php echo htmlspecialchars($clientPhone); ?></p>
                 </div>
                 
-                <div class="flex items-center space-x-2">
-                    <button onclick="refreshChatMessages()" class="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors" title="Actualizar mensajes">
-                        <i class="ri-refresh-line"></i>
-                    </button>
-                </div>
+                <button onclick="closeWhatsAppChat()" class="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors" title="Cerrar">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
             </div>
             
             <!-- Área de mensajes -->
@@ -106,12 +100,31 @@ $userId = $userId ?? 0;
     backdrop-filter: blur(4px);
 }
 
+.chat-modal-container {
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 640px) {
+    .chat-modal-container {
+        max-height: 90vh;
+    }
+}
+
 .chat-container {
     background: #efeae2;
     background-image: url("data:image/svg+xml,%3csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='none' fill-rule='evenodd'%3e%3cg fill='%23d1fae5' fill-opacity='0.1'%3e%3cpath d='m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e");
-    height: 500px;
     display: flex;
     flex-direction: column;
+    height: 500px;
+    max-height: calc(85vh - 1.5rem);
+}
+
+@media (min-width: 640px) {
+    .chat-container {
+        max-height: calc(90vh - 2rem);
+    }
 }
 
 .chat-header {
@@ -121,6 +134,7 @@ $userId = $userId ?? 0;
     display: flex;
     align-items: center;
     gap: 1rem;
+    flex-shrink: 0;
 }
 
 .chat-avatar {
@@ -134,6 +148,7 @@ $userId = $userId ?? 0;
     color: white;
     font-weight: 600;
     font-size: 16px;
+    flex-shrink: 0;
 }
 
 .messages-area {
@@ -143,6 +158,7 @@ $userId = $userId ?? 0;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    min-height: 0; /* Importante para que funcione flex correctamente */
 }
 
 .message-bubble {
@@ -194,6 +210,7 @@ $userId = $userId ?? 0;
     background: white;
     border-top: 1px solid #e0e0e0;
     padding: 1rem;
+    flex-shrink: 0;
 }
 
 .chat-input {
@@ -225,6 +242,7 @@ $userId = $userId ?? 0;
     transition: all 0.2s ease;
     border: none;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 .send-button:hover:not(:disabled) {
@@ -322,16 +340,130 @@ $userId = $userId ?? 0;
     border-left: 3px solid #f44336;
 }
 
-/* Responsive */
+/* Responsive - Mobile con diseño flotante */
 @media (max-width: 768px) {
-    .whatsapp-chat-modal .fixed {
-        inset: 0;
-        margin: 0;
+    .whatsapp-chat-modal {
+        padding: 0.75rem;
+        align-items: flex-end;
+    }
+    
+    .chat-modal-container {
+        max-width: 100%;
+        max-height: 95vh;
+        width: 100%;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(100px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     .chat-container {
-        height: 100vh;
-        border-radius: 0;
+        height: 85vh;
+        max-height: 85vh;
+        border-radius: 1rem;
+    }
+    
+    .messages-area {
+        flex: 1;
+        min-height: 0;
+        padding: 0.75rem;
+    }
+    
+    .chat-header {
+        border-radius: 1rem 1rem 0 0;
+    }
+}
+
+/* Para dispositivos muy pequeños o con pantallas cortas */
+@media (max-width: 640px) and (max-height: 667px) {
+    .whatsapp-chat-modal {
+        padding: 0.5rem;
+    }
+    
+    .chat-modal-container {
+        max-height: 92vh;
+    }
+    
+    .chat-container {
+        height: 80vh;
+        max-height: 80vh;
+    }
+    
+    .chat-input-area {
+        padding: 0.75rem;
+    }
+    
+    .chat-header {
+        padding: 0.75rem;
+    }
+    
+    .chat-input {
+        padding: 10px 16px;
+        min-height: 40px;
+    }
+    
+    .send-button {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .messages-area {
+        padding: 0.5rem;
+    }
+}
+
+/* Para pantallas muy cortas (landscape mode en móviles) */
+@media (max-height: 500px) {
+    .whatsapp-chat-modal {
+        padding: 0.5rem;
+    }
+    
+    .chat-modal-container {
+        max-height: 95vh;
+    }
+    
+    .chat-container {
+        height: 90vh;
+        max-height: 90vh;
+    }
+    
+    .chat-header {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .chat-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .messages-area {
+        padding: 0.5rem;
+    }
+    
+    .chat-input-area {
+        padding: 0.5rem;
+    }
+    
+    .chat-input {
+        padding: 8px 14px;
+        min-height: 36px;
+    }
+    
+    .send-button {
+        width: 36px;
+        height: 36px;
     }
 }
 </style>
@@ -368,17 +500,10 @@ window.sendChatMessage = function() {
     }
 };
 
-window.refreshChatMessages = function() {
-    if (window.whatsappChat) {
-        window.whatsappChat.refreshMessages();
-    }
-};
-
 // También crear alias en el scope global para compatibilidad
 var openWhatsAppChat = window.openWhatsAppChat;
 var closeWhatsAppChat = window.closeWhatsAppChat;
 var sendChatMessage = window.sendChatMessage;
-var refreshChatMessages = window.refreshChatMessages;
 
 class WhatsAppChatComponent {
     constructor(options = {}) {
@@ -388,6 +513,8 @@ class WhatsAppChatComponent {
         this.userId = options.userId || <?php echo $userId; ?>;
         this.messages = [];
         this.isLoading = false;
+        this.refreshInterval = null;
+        this.isOpen = false;
         
         console.log('Inicializando chat para:', this.clientPhone, this.clientName);
         
@@ -414,7 +541,7 @@ class WhatsAppChatComponent {
 
         // Cerrar modal con Escape
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
+            if (e.key === 'Escape' && this.isOpen) {
                 this.closeChat();
             }
         });
@@ -423,7 +550,7 @@ class WhatsAppChatComponent {
         const modal = document.getElementById('whatsappChatModal');
         if (modal) {
             modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
+                if (e.target === modal && this.isOpen) {
                     this.closeChat();
                 }
             });
@@ -477,6 +604,7 @@ class WhatsAppChatComponent {
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            this.isOpen = true;
             
             // Focus en el input si WhatsApp está conectado
             if (this.whatsappConnected) {
@@ -488,6 +616,9 @@ class WhatsAppChatComponent {
             
             // Cargar mensajes
             this.loadMessagesFromServer();
+            
+            // Iniciar auto-refresh cada 10 segundos
+            this.startAutoRefresh();
         }
     }
 
@@ -498,52 +629,95 @@ class WhatsAppChatComponent {
         if (modal) {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            this.isOpen = false;
+            
+            // Detener auto-refresh
+            this.stopAutoRefresh();
         }
     }
 
-    async loadMessagesFromServer() {
+    startAutoRefresh() {
+        // Limpiar intervalo existente si lo hay
+        this.stopAutoRefresh();
+        
+        // Refrescar cada 10 segundos
+        this.refreshInterval = setInterval(() => {
+            if (this.isOpen && !this.isLoading) {
+                console.log('Auto-refresh de mensajes...');
+                this.loadMessagesFromServer(true); // true = silencioso, sin mostrar loading
+            }
+        }, 10000); // 10 segundos
+        
+        console.log('Auto-refresh iniciado');
+    }
+
+    stopAutoRefresh() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+            console.log('Auto-refresh detenido');
+        }
+    }
+
+    async loadMessagesFromServer(silent = false) {
         if (this.isLoading || !this.clientPhone) return;
         
-        console.log('Cargando mensajes del servidor...');
+        if (!silent) {
+            console.log('Cargando mensajes del servidor...');
+        }
         this.isLoading = true;
         
         try {
             const formattedPhone = this.formatPhoneNumber(this.clientPhone);
             const response = await fetch(`/api/whatsapp-conversations?phone=${formattedPhone}&message_limit=50`);
-            console.log('Repuesta del servidor recibida:', response);
             const data = await response.json();
-            console.log('Datos de mensajes recibidos:', data);
 
             if (data.success) {
+                const oldMessagesCount = this.messages.length;
                 if (data.messages.length > 0) {   
-                    this.messages = data.messages;                 
-                    console.log('Mensajes cargados del servidor:', this.messages.length);
+                    this.messages = data.messages;
+                    
+                    if (!silent) {
+                        console.log('Mensajes cargados del servidor:', this.messages.length);
+                    }
+                    
+                    // Solo scroll si hay mensajes nuevos
+                    const shouldScroll = data.messages.length > oldMessagesCount;
+                    this.renderMessages(shouldScroll);
                 } else {
                     this.messages = [];
-                    console.log('No se existen mensajes para el cliente.');
+                    if (!silent) {
+                        console.log('No existen mensajes para el cliente.');
+                    }
+                    this.renderMessages(false);
                 }
             } else {
                 this.messages = [];
-                console.log('Error al cargar mensajes:', data.error);
+                if (!silent) {
+                    console.log('Error al cargar mensajes:', data.error);
+                }
+                this.renderMessages(false);
             }
             
-            this.renderMessages();
         } catch (error) {
-            console.error('Error cargando mensajes del servidor:', error);
-            this.renderMessages(); // Renderizar vacío en caso de error
+            if (!silent) {
+                console.error('Error cargando mensajes del servidor:', error);
+            }
+            this.renderMessages(false);
         } finally {
             this.isLoading = false;
         }
     }
 
-    renderMessages() {
-        console.log('Renderizando mensajes:', this.messages.length);
-        
+    renderMessages(autoScroll = true) {
         const container = document.getElementById('chatMessagesArea');
         if (!container) {
             console.error('No se encontró el contenedor de mensajes');
             return;
         }
+        
+        // Guardar posición de scroll antes de renderizar
+        const wasAtBottom = this.isScrolledToBottom(container);
         
         if (this.messages.length === 0) {
             container.innerHTML = `
@@ -561,8 +735,16 @@ class WhatsAppChatComponent {
         const html = this.messages.map(message => this.renderMessage(message)).join('');
         container.innerHTML = html;
         
-        // Scroll al final
-        this.scrollToBottom();
+        // Solo hacer scroll automático si estábamos en el fondo o es la primera carga
+        if (autoScroll || wasAtBottom) {
+            this.scrollToBottom();
+        }
+    }
+
+    isScrolledToBottom(container) {
+        if (!container) return true;
+        const threshold = 50; // píxeles de tolerancia
+        return container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
     }
 
     renderMessage(message) {
@@ -729,11 +911,6 @@ class WhatsAppChatComponent {
                 messageElement.classList.add('sending');
             }
         }
-    }
-
-    async refreshMessages() {
-        console.log('Refrescando mensajes...');
-        await this.loadMessagesFromServer();
     }
 
     scrollToBottom() {
