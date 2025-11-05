@@ -343,63 +343,7 @@ include 'includes/header.php';
     </div>
     <?php endif; ?>
 
-    <!-- Historial de cambios de esta reserva -->
-    <?php if (!empty($historialReserva)): ?>
-    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6">
-        <h3 class="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4 flex items-center">
-            <i class="ri-history-line mr-2 text-purple-600"></i>
-            Historial de Cambios
-        </h3>
-        
-        <div class="space-y-2 md:space-y-3">
-            <?php foreach ($historialReserva as $cambio): ?>
-                <div class="flex flex-col sm:flex-row items-start gap-2 sm:gap-3 p-3 bg-gray-50 rounded-lg border-l-4 
-                    <?php 
-                    echo match($cambio['accion']) {
-                        'creada' => 'border-blue-400',
-                        'confirmada' => 'border-green-400',
-                        'rechazada' => 'border-red-400',
-                        'cancelada' => 'border-gray-400',
-                        'modificada' => 'border-amber-400',
-                        default => 'border-gray-300'
-                    };
-                    ?>">
-                    
-                    <div class="flex-shrink-0">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                            <?php 
-                            echo match($cambio['accion']) {
-                                'creada' => 'bg-blue-100 text-blue-800',
-                                'confirmada' => 'bg-green-100 text-green-800',
-                                'rechazada' => 'bg-red-100 text-red-800',
-                                'cancelada' => 'bg-gray-100 text-gray-800',
-                                'modificada' => 'bg-amber-100 text-amber-800',
-                                default => 'bg-gray-100 text-gray-800'
-                            };
-                            ?>">
-                            <?php echo ucfirst($cambio['accion']); ?>
-                        </span>
-                    </div>
-                    
-                    <div class="flex-1 min-w-0">
-                        <p class="text-xs md:text-sm text-gray-900 font-medium break-words">
-                            <?php echo htmlspecialchars($cambio['descripcion']); ?>
-                        </p>
-                        <p class="text-xs text-gray-500 mt-1">
-                            <i class="ri-time-line mr-1"></i>
-                            <?php 
-                            $fecha = new DateTime($cambio['fecha_cambio']);
-                            echo $fecha->format('d/m/Y H:i');
-                            ?>
-                        </p>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-    <?php endif; ?>
-
-    <!-- Acciones -->
+        <!-- Acciones -->
     <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
         <h3 class="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4">Acciones</h3>
         
@@ -461,6 +405,62 @@ include 'includes/header.php';
             </a>
         </div>
     </div>
+
+    <!-- Historial de cambios de esta reserva -->
+    <?php if (!empty($historialReserva)): ?>
+        <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6">
+            <h3 class="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4 flex items-center">
+                <i class="ri-history-line mr-2 text-purple-600"></i>
+                Historial de Cambios
+            </h3>
+            
+            <div class="space-y-2 md:space-y-3">
+                <?php foreach ($historialReserva as $cambio): ?>
+                    <div class="flex flex-col sm:flex-row items-start gap-2 sm:gap-3 p-3 bg-gray-50 rounded-lg border-l-4 
+                        <?php 
+                        echo match($cambio['accion']) {
+                            'creada' => 'border-blue-400',
+                            'confirmada' => 'border-green-400',
+                            'rechazada' => 'border-red-400',
+                            'cancelada' => 'border-gray-400',
+                            'modificada' => 'border-amber-400',
+                            default => 'border-gray-300'
+                        };
+                        ?>">
+                        
+                        <div class="flex-shrink-0">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                <?php 
+                                echo match($cambio['accion']) {
+                                    'creada' => 'bg-blue-100 text-blue-800',
+                                    'confirmada' => 'bg-green-100 text-green-800',
+                                    'rechazada' => 'bg-red-100 text-red-800',
+                                    'cancelada' => 'bg-gray-100 text-gray-800',
+                                    'modificada' => 'bg-amber-100 text-amber-800',
+                                    default => 'bg-gray-100 text-gray-800'
+                                };
+                                ?>">
+                                <?php echo ucfirst($cambio['accion']); ?>
+                            </span>
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs md:text-sm text-gray-900 font-medium break-words">
+                                <?php echo htmlspecialchars($cambio['descripcion']); ?>
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="ri-time-line mr-1"></i>
+                                <?php 
+                                $fecha = new DateTime($cambio['fecha_cambio']);
+                                echo $fecha->format('d/m/Y H:i');
+                                ?>
+                            </p>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
 
 </div>
 
