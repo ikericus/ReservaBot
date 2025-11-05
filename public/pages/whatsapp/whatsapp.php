@@ -9,13 +9,6 @@ $pageScript = 'whatsapp';
 $currentUser = getAuthenticatedUser();
 $userId = $currentUser['id'];
 
-// Obtener tab activo desde la URL
-$tabActivo = isset($_GET['tab']) ? $_GET['tab'] : 'conversaciones';
-$tabsValidos = ['conversaciones', 'configuracion'];
-if (!in_array($tabActivo, $tabsValidos)) {
-    $tabActivo = 'conversaciones';
-}
-
 // Obtener plan del usuario
 $usuarioDomain = getContainer()->getUsuarioDomain();
 $usuarioEntity = $usuarioDomain->obtenerPorId($userId);
@@ -29,6 +22,7 @@ $whatsappConfig = null;
 $connectionStatus = 'disconnected';
 $phoneNumber = null;
 $lastActivity = null;
+$whatsappConectado = false;
 
 if ($tieneAccesoWhatsApp) {
     try {
@@ -39,9 +33,25 @@ if ($tieneAccesoWhatsApp) {
         $connectionStatus = $config->getStatus();
         $phoneNumber = $config->getPhoneNumber();
         $lastActivity = $config->getLastActivity();
+        
+        // Verificar si WhatsApp está realmente conectado
+        $whatsappConectado = ($connectionStatus === 'connected' || $connectionStatus === 'ready');
     } catch (Exception $e) {
         setFlashError('Error al cargar configuración de WhatsApp: ' . $e->getMessage());
     }
+}
+
+// Determinar tab activo según estado de conexión
+// Si WhatsApp no está conectado, forzar tab de configuración
+$tabActivo = isset($_GET['tab']) ? $_GET['tab'] : ($whatsappConectado ? 'conversaciones' : 'configuracion');
+$tabsValidos = ['conversaciones', 'configuracion'];
+if (!in_array($tabActivo, $tabsValidos)) {
+    $tabActivo = $whatsappConectado ? 'conversaciones' : 'configuracion';
+}
+
+// Si no está conectado y intenta acceder a conversaciones, redirigir a configuración
+if (!$whatsappConectado && $tabActivo === 'conversaciones') {
+    $tabActivo = 'configuracion';
 }
 
 include 'includes/header.php';
@@ -359,10 +369,12 @@ include 'includes/header.php';
     <div class="max-w-6xl mx-auto px-4">
         <!-- Tabs Navigation -->
         <div class="tabs">
-            <a href="/whatsapp?tab=conversaciones" class="tab-button <?php echo $tabActivo === 'conversaciones' ? 'active' : ''; ?>">
-                <i class="ri-chat-history-line"></i>
-                <span>Conversaciones</span>
-            </a>
+            <?php if ($whatsappConectado): ?>
+                <a href="/whatsapp?tab=conversaciones" class="tab-button <?php echo $tabActivo === 'conversaciones' ? 'active' : ''; ?>">
+                    <i class="ri-chat-history-line"></i>
+                    <span>Conversaciones</span>
+                </a>
+            <?php endif; ?>
             <a href="/whatsapp?tab=configuracion" class="tab-button <?php echo $tabActivo === 'configuracion' ? 'active' : ''; ?>">
                 <i class="ri-settings-3-line"></i>
                 <span class="hide-mobile">Configuración</span>
@@ -370,17 +382,36 @@ include 'includes/header.php';
             </a>
         </div>
 
-        <!-- TAB 1: Conversaciones -->
-        <div class="tab-content <?php echo $tabActivo === 'conversaciones' ? 'active' : ''; ?>">
-            <?php
-            // Incluir el contenido de la página de conversaciones
-            $conversationsPageContent = true; // Flag para saber que estamos incluyendo
-            include __DIR__ . '/conversaciones.php';
-            ?>
-        </div>
+        <?php if ($whatsappConectado): ?>
+            <!-- TAB 1: Conversaciones (solo visible si está conectado) -->
+            <div class="tab-content <?php echo $tabActivo === 'conversaciones' ? 'active' : ''; ?>">
+                <?php
+                // Incluir el contenido de la página de conversaciones
+                $conversationsPageContent = true; // Flag para saber que estamos incluyendo
+                include __DIR__ . '/conversaciones.php';
+                ?>
+            </div>
+        <?php endif; ?>
 
         <!-- TAB 2: Configuración -->
         <div class="tab-content <?php echo $tabActivo === 'configuracion' ? 'active' : ''; ?>">
+            <?php if (!$whatsappConectado): ?>
+                <!-- Mensaje informativo cuando no está conectado -->
+                <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="ri-information-line text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-900">Conecta WhatsApp para empezar</h3>
+                            <p class="mt-1 text-sm text-blue-700">
+                                Una vez conectado, podrás acceder a las conversaciones y gestionar todos los mensajes con tus clientes desde aquí.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+            
             <div class="grid gap-6 md:grid-cols-2">
                 
                 <!-- Card de estado de conexión -->
