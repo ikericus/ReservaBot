@@ -381,24 +381,6 @@ try {
 }
 </style>
 
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900 flex items-center">
-            <i class="ri-chat-history-line text-green-500 mr-3 text-3xl"></i>
-            Conversaciones WhatsApp
-        </h1>
-        <p class="text-gray-600 mt-1">Gestiona todas tus conversaciones de WhatsApp</p>
-    </div>
-    
-    <?php if ($whatsappConnected && $phoneNumber): ?>
-    <div class="connection-status connected">
-        <i class="ri-whatsapp-line mr-2"></i>
-        Conectado
-        <span class="hidden sm:inline ml-2">(<?php echo htmlspecialchars($phoneNumber); ?>)</span>
-    </div>
-    <?php endif; ?>
-</div>
-
 <!-- Contenedor principal de conversaciones -->
 <div class="conversations-container">
     <div class="flex h-full">
