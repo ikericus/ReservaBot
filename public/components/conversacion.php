@@ -22,9 +22,9 @@ $userId = $userId ?? 0;
 ?>
 
 <!-- Modal de chat WhatsApp -->
-<div id="whatsappChatModal" class="whatsapp-chat-modal fixed inset-0 z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl mx-auto chat-modal-container">
-        <div class="chat-container rounded-lg overflow-hidden">
+<div id="whatsappChatModal" class="whatsapp-chat-modal fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-auto chat-modal-container">
+        <div class="chat-container rounded-2xl overflow-hidden">
             
             <!-- Header del chat -->
             <div class="chat-header">
@@ -101,9 +101,15 @@ $userId = $userId ?? 0;
 }
 
 .chat-modal-container {
-    max-height: 90vh;
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
+}
+
+@media (min-width: 640px) {
+    .chat-modal-container {
+        max-height: 90vh;
+    }
 }
 
 .chat-container {
@@ -112,7 +118,13 @@ $userId = $userId ?? 0;
     display: flex;
     flex-direction: column;
     height: 500px;
-    max-height: calc(90vh - 2rem);
+    max-height: calc(85vh - 1.5rem);
+}
+
+@media (min-width: 640px) {
+    .chat-container {
+        max-height: calc(90vh - 2rem);
+    }
 }
 
 .chat-header {
@@ -328,35 +340,66 @@ $userId = $userId ?? 0;
     border-left: 3px solid #f44336;
 }
 
-/* Responsive - Mobile adaptable */
+/* Responsive - Mobile con diseño flotante */
 @media (max-width: 768px) {
     .whatsapp-chat-modal {
-        padding: 0;
+        padding: 0.75rem;
+        align-items: flex-end;
     }
     
     .chat-modal-container {
         max-width: 100%;
-        max-height: 100vh;
-        height: 100vh;
-        margin: 0;
-        border-radius: 0;
+        max-height: 95vh;
+        width: 100%;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(100px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     .chat-container {
-        height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
+        height: 85vh;
+        max-height: 85vh;
+        border-radius: 1rem;
     }
     
     .messages-area {
-        /* En mobile, el área de mensajes se ajusta automáticamente */
         flex: 1;
         min-height: 0;
+        padding: 0.75rem;
+    }
+    
+    .chat-header {
+        border-radius: 1rem 1rem 0 0;
     }
 }
 
-/* Para dispositivos muy pequeños */
+/* Para dispositivos muy pequeños o con pantallas cortas */
 @media (max-width: 640px) and (max-height: 667px) {
+    .whatsapp-chat-modal {
+        padding: 0.5rem;
+    }
+    
+    .chat-modal-container {
+        max-height: 92vh;
+    }
+    
+    .chat-container {
+        height: 80vh;
+        max-height: 80vh;
+    }
+    
     .chat-input-area {
         padding: 0.75rem;
     }
@@ -373,6 +416,54 @@ $userId = $userId ?? 0;
     .send-button {
         width: 40px;
         height: 40px;
+    }
+    
+    .messages-area {
+        padding: 0.5rem;
+    }
+}
+
+/* Para pantallas muy cortas (landscape mode en móviles) */
+@media (max-height: 500px) {
+    .whatsapp-chat-modal {
+        padding: 0.5rem;
+    }
+    
+    .chat-modal-container {
+        max-height: 95vh;
+    }
+    
+    .chat-container {
+        height: 90vh;
+        max-height: 90vh;
+    }
+    
+    .chat-header {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .chat-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .messages-area {
+        padding: 0.5rem;
+    }
+    
+    .chat-input-area {
+        padding: 0.5rem;
+    }
+    
+    .chat-input {
+        padding: 8px 14px;
+        min-height: 36px;
+    }
+    
+    .send-button {
+        width: 36px;
+        height: 36px;
     }
 }
 </style>
