@@ -20,7 +20,6 @@ $userId = $currentUser['id'];
 // Obtener datos del cliente usando domain
 $cliente = null;
 $reservas = [];
-$mensajes = [];
 
 try {
     $clienteDomain = getContainer()->getClienteDomain();
@@ -49,15 +48,6 @@ try {
 } catch (\Exception $e) {
     // WhatsApp no configurado
     error_log('No se pudo obtener configuración de WhatsApp: ' . $e->getMessage());
-}
-
-// Obtener mensajes de WhatsApp si existen
-try {
-    $mensajesEntities = $whatsappDomain->obtenerMensajesConversacion($userId, $telefono, 50);
-    $mensajes = array_map(fn($r) => $r->toArray(), $mensajesEntities);
-} catch (\Exception $e) {
-    // Si no hay WhatsApp, continuar sin mensajes
-    error_log('No se pudieron obtener mensajes de WhatsApp: ' . $e->getMessage());
 }
 
 // Definir variables para el componente de conversación
@@ -102,28 +92,6 @@ include 'includes/header.php';
     /* Eliminar scroll horizontal */
     body {
         overflow-x: hidden;
-    }
-    
-    /* Ajustar tabs para mobile */
-    .tabs-mobile {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE/Edge */
-    }
-    
-    .tabs-mobile::-webkit-scrollbar {
-        display: none; /* Chrome/Safari */
-    }
-    
-    .tabs-mobile nav {
-        min-width: min-content;
-    }
-    
-    .tabs-mobile button {
-        white-space: nowrap;
-        font-size: 0.875rem;
-        padding: 0.75rem 0.5rem;
     }
 }
 
@@ -180,7 +148,7 @@ include 'includes/header.php';
     </div>
 
     <!-- Estadísticas del cliente -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-4 md:p-5">
                 <div class="flex items-center">
@@ -228,51 +196,19 @@ include 'includes/header.php';
                 </div>
             </div>
         </div>
-        
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-4 md:p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="ri-whatsapp-line text-xl md:text-2xl nav-icon h-5 w-5 text-green-500"></i>
-                    </div>
-                    <div class="ml-3 md:ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-xs md:text-sm font-medium text-gray-500 truncate">Mensajes</dt>
-                            <dd class="text-base md:text-lg font-medium text-gray-900"><?php echo count($mensajes); ?></dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
-    <!-- Tabs para historial -->
-    <div class="border-b border-gray-200 mb-4 md:mb-6 tabs-mobile">
-        <nav class="-mb-px flex space-x-4 md:space-x-8">
-            <button 
-                id="reservasTab" 
-                class="border-blue-500 text-blue-600 whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm"
-            >
-                <i class="ri-calendar-line mr-1 md:mr-2"></i>
-                <span class="hidden sm:inline">Historial de Reservas</span>
-                <span class="sm:hidden">Reservas</span>
-                (<?php echo count($reservas); ?>)
-            </button>
-            
-            <button 
-                id="mensajesTab" 
-                class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm"
-            >
-                <i class="ri-message-line mr-1 md:mr-2"></i>
-                <span class="hidden sm:inline">Mensajes WhatsApp</span>
-                <span class="sm:hidden">Mensajes</span>
-                (<?php echo count($mensajes); ?>)
-            </button>
-        </nav>
+    <!-- Encabezado de historial -->
+    <div class="mb-4 md:mb-6">
+        <h3 class="text-lg md:text-xl font-semibold text-gray-900 flex items-center">
+            <i class="ri-calendar-line mr-2"></i>
+            <span>Historial de Reservas</span>
+            <span class="ml-2 text-sm font-normal text-gray-500">(<?php echo count($reservas); ?>)</span>
+        </h3>
     </div>
 
     <!-- Contenido de reservas -->
-    <div id="reservasContent" class="space-y-3 md:space-y-4">
+    <div class="space-y-3 md:space-y-4">
         <?php if (empty($reservas)): ?>
             <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 text-center">
                 <i class="ri-calendar-line text-gray-400 text-3xl md:text-4xl"></i>
@@ -324,119 +260,11 @@ include 'includes/header.php';
         <?php endif; ?>
     </div>
 
-    <!-- Contenido de mensajes WhatsApp -->
-    <div id="mensajesContent" class="hidden">
-        <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
-            <?php if (empty($mensajes)): ?>
-                <div class="text-center py-6 md:py-8">
-                    <i class="ri-chat-3-line text-gray-400 text-3xl md:text-4xl mb-3 md:mb-4"></i>
-                    <h3 class="text-base md:text-lg font-medium text-gray-700 mb-2">No hay mensajes</h3>
-                    <p class="text-sm md:text-base text-gray-500 mb-3 md:mb-4">Aún no hay conversación con este cliente por WhatsApp</p>
-                    <?php if ($whatsappConnected): ?>
-                        <button 
-                            onclick="openWhatsAppChat('<?php echo addslashes($cliente['telefono']); ?>', '<?php echo addslashes($cliente['ultimo_nombre']); ?>')"
-                            class="whatsapp-button text-white px-4 py-2 rounded-lg font-medium inline-flex items-center text-sm md:text-base"
-                        >
-                            <i class="ri-whatsapp-line mr-2"></i>
-                            Iniciar Conversación
-                        </button>
-                    <?php else: ?>
-                        <a href="/whatsapp" class="text-blue-600 hover:text-blue-700 font-medium text-sm md:text-base">
-                            Conectar WhatsApp primero →
-                        </a>
-                    <?php endif; ?>
-                </div>
-            <?php else: ?>
-                <div class="mb-4 text-center">
-                    <h3 class="text-base md:text-lg font-medium text-gray-900 mb-2">Conversación WhatsApp</h3>
-                    <p class="text-xs md:text-sm text-gray-600">
-                        <?php echo count($mensajes); ?> mensajes intercambiados
-                    </p>
-                    <button 
-                        onclick="openWhatsAppChat('<?php echo addslashes($cliente['telefono']); ?>', '<?php echo addslashes($cliente['ultimo_nombre']); ?>')"
-                        class="mt-3 whatsapp-button text-white px-3 md:px-4 py-2 rounded-lg font-medium inline-flex items-center text-sm md:text-base"
-                    >
-                        <i class="ri-whatsapp-line mr-2"></i>
-                        Abrir Chat Completo
-                    </button>
-                </div>
-                
-                <!-- Vista previa de mensajes recientes -->
-                <div class="space-y-3 max-h-96 overflow-y-auto">
-                    <?php foreach (array_slice($mensajes, 0, 10) as $mensaje): ?>
-                        <div class="flex <?php echo $mensaje['direction'] === 'outgoing' ? 'justify-end' : 'justify-start'; ?>">
-                            <div class="max-w-[85%] sm:max-w-xs lg:max-w-md">
-                                <div class="<?php echo $mensaje['direction'] === 'outgoing' 
-                                    ? 'bg-green-100 text-green-800 rounded-br-none' 
-                                    : 'bg-gray-100 text-gray-800 rounded-bl-none'; ?> rounded-lg px-3 md:px-4 py-2">
-                                    
-                                    <p class="text-xs md:text-sm break-words"><?php echo nl2br(htmlspecialchars($mensaje['message_text'])); ?></p>
-                                </div>
-                                
-                                <p class="text-xs text-gray-500 mt-1 <?php echo $mensaje['direction'] === 'outgoing' ? 'text-right' : 'text-left'; ?>">
-                                    <?php echo date('d/m/Y H:i', strtotime($mensaje['timestamp_received'])); ?>
-                                </p>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                    
-                    <?php if (count($mensajes) > 10): ?>
-                        <div class="text-center py-3 border-t">
-                            <p class="text-xs md:text-sm text-gray-500">
-                                +<?php echo count($mensajes) - 10; ?> mensajes más
-                            </p>
-                            <button 
-                                onclick="openWhatsAppChat('<?php echo addslashes($cliente['telefono']); ?>', '<?php echo addslashes($cliente['ultimo_nombre']); ?>')"
-                                class="text-green-600 hover:text-green-700 text-xs md:text-sm font-medium"
-                            >
-                                Ver conversación completa →
-                            </button>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-
 </div>
 
 <?php 
     // Incluir componente de conversación antes de los scripts
     include 'components/conversacion.php';
 ?>
-
-<script>
-// JavaScript para los tabs
-document.addEventListener('DOMContentLoaded', function() {
-    const reservasTab = document.getElementById('reservasTab');
-    const mensajesTab = document.getElementById('mensajesTab');
-    const reservasContent = document.getElementById('reservasContent');
-    const mensajesContent = document.getElementById('mensajesContent');
-    
-    if (reservasTab && mensajesTab) {
-        reservasTab.addEventListener('click', function() {
-            reservasTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            reservasTab.classList.add('border-blue-500', 'text-blue-600');
-            
-            mensajesTab.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            mensajesTab.classList.remove('border-blue-500', 'text-blue-600');
-            
-            reservasContent.classList.remove('hidden');
-            if (mensajesContent) mensajesContent.classList.add('hidden');
-        });
-        
-        mensajesTab.addEventListener('click', function() {
-            mensajesTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            mensajesTab.classList.add('border-blue-500', 'text-blue-600');
-            
-            reservasTab.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            reservasTab.classList.remove('border-blue-500', 'text-blue-600');
-            
-            if (mensajesContent) mensajesContent.classList.remove('hidden');
-            reservasContent.classList.add('hidden');
-        });
-    }
-});
-</script>
 
 <?php include 'includes/footer.php'; ?>
