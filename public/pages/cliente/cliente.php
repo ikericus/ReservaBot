@@ -374,7 +374,7 @@ include 'includes/header.php';
                                 </div>
                                 
                                 <p class="text-xs text-gray-500 mt-1 <?php echo $mensaje['direction'] === 'outgoing' ? 'text-right' : 'text-left'; ?>">
-                                    <?php echo date('d/m/Y H:i', strtotime($mensaje['timestamp_sent'])); ?>
+                                    <?php echo date('d/m/Y H:i', strtotime($mensaje['timestamp_received'])); ?>
                                 </p>
                             </div>
                         </div>
