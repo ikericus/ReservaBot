@@ -683,7 +683,7 @@ include 'includes/header.php';
                                 <span class="text-lg font-bold text-gray-900">0€</span>
                             </div>
                             <p class="text-xs text-gray-500 mt-1">
-                                Reservas por formulario web, calendario básico
+                                Calendario, Reservas por formulario web, Clientes, etc.
                             </p>
                         </div>
                     </label>
@@ -701,9 +701,6 @@ include 'includes/header.php';
                             <div class="flex items-center justify-between mb-1">
                                 <div class="flex items-center flex-wrap gap-2">
                                     <span class="text-sm font-semibold text-gray-900">Profesional</span>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                        Recomendado
-                                    </span>
                                 </div>
                                 <div class="text-right">
                                     <span class="text-xs line-through text-gray-400">9€</span>
@@ -711,7 +708,7 @@ include 'includes/header.php';
                                 </div>
                             </div>
                             <p class="text-xs text-gray-500">
-                                WhatsApp, agenda completa, recordatorios automáticos
+                                Integración con WhatsApp, recordatorios automáticos, etc.
                             </p>
                             <p class="text-xs text-red-600 font-medium mt-1">
                                 🎉 Gratis durante la beta
@@ -730,14 +727,17 @@ include 'includes/header.php';
                         >
                         <div class="ml-3 flex-1">
                             <div class="flex items-center justify-between">
-                                <span class="text-sm font-semibold text-gray-900">Automático</span>
-                                <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-semibold">
-                                    Próximamente
-                                </span>
+                                <span class="text-sm font-semibold text-gray-900">Avanzado</span>                  
+                                <div class="text-right">
+                                    <span class="text-xs line-through text-gray-400">19€</span>
+                                </div>
                             </div>
                             <p class="text-xs text-gray-500 mt-1">
-                                IA automática, respuestas inteligentes, analytics avanzados
+                                Gestión de reservas automáticas, respuestas inteligentes, etc.
                             </p>
+                            <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-semibold">
+                                Próximamente
+                            </span>                            
                         </div>
                     </div>
                 </div>
