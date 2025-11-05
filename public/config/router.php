@@ -66,6 +66,7 @@ class Router {
         $this->addRoute('POST',     '/formularios',                     'pages/formulario/formularios.php',     ['auth']); 
         $this->addRoute('GET',      '/configuracion',                   'pages/user/configuracion.php',         ['auth']);
         $this->addRoute('GET',      '/perfil',                          'pages/user/perfil.php',                ['auth']);  
+        $this->addRoute('POST',     '/perfil',                          'pages/user/perfil.php',                ['auth']);  
         $this->addRoute('GET',      '/whatsapp',                        'pages/whatsapp/whatsapp.php',          ['auth']);          
         $this->addRoute('GET',      '/conversaciones',                  'pages/whatsapp/conversaciones.php',    ['auth']);  
 
