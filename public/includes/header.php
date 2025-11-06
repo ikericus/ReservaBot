@@ -13,9 +13,19 @@
     <!-- Estilos personalizados -->
     <link rel="stylesheet" href="assets/css/styles.css">
     
-    <link rel="icon" type="image/png" sizes="16x16"  href="/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="16x16"  href="/icons/favicon-16x16.png">
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="theme-color" content="#ffffff">
+
+    <!-- PWA Service Worker -->
+    <link rel="manifest" href="/manifest.json">
+    <script defer>
+        if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/service-worker.js")
+            .then(() => console.log("Service Worker registrado"))
+            .catch(err => console.log("Error al registrar SW:", err));
+        }
+    </script>
 
     <style>
         body {

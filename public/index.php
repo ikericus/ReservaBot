@@ -40,11 +40,3 @@ require_once  __DIR__ . '/config/router.php';
 // Ejecutar
 $router = new Router();
 $router->resolve();
-?>
-
-<script>
-    if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js")
-            .then(() => console.log("Service Worker registrado"));
-    }
-</script>
