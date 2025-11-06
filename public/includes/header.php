@@ -228,9 +228,8 @@
                                     <i class="ri-calendar-line text-white text-lg"></i>
                                 </div>
                                 <div>
-                                    <?php $user = getAuthenticatedUser(); ?>
-                                    <div class="font-bold gradient-text"><?php echo htmlspecialchars($user['negocio'] ?? 'Mi Negocio'); ?></div>
-                                    <div class="text-xs text-gray-500"><?php echo htmlspecialchars($user['nombre'] ?? 'Usuario'); ?></div>
+                                    <div class="font-bold gradient-text"><?php echo htmlspecialchars($configuraciones['empresa_nombre'] ?? 'Error empresa_nombre'); ?></div>
+                                    <div class="text-xs text-gray-500"><?php echo htmlspecialchars($usuarioEntity->getNombre() ?? 'Error nombre usuario'); ?></div>
                                 </div>
                             </div>
                             <button id="closeMobileMenu" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
