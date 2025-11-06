@@ -63,8 +63,9 @@ class EmailRepository implements IEmailRepository {
             if (!empty($opciones['bcc'])) {
                 $mail->addBCC($opciones['bcc']);
             }
-
-            // Contenido
+            
+            $mail->CharSet = 'UTF-8';
+            $mail->Encoding = 'base64';
             $mail->Subject = $asunto;
 
             if ($cuerpoHtml) {
@@ -72,6 +73,7 @@ class EmailRepository implements IEmailRepository {
                 $mail->Body    = $cuerpoHtml;
                 $mail->AltBody = $cuerpoTexto;
             } else {
+                $mail->isHTML(false);
                 $mail->Body = $cuerpoTexto;
             }
 

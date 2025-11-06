@@ -70,7 +70,7 @@ class EmailTemplates {
         // Header con logo o texto
         $headerContent = $logoBase64 
             ? "<img src='{$logoBase64}' alt='{$nombreNegocio}' style='max-height: 64px; max-width: 200px;'>"
-            : "<h1 style='color: white; margin: 0; font-size: 28px;'>{$nombreNegocio}</h1>";
+            : "<h1 style='color: white; margin: 0;'>{$nombreNegocio}</h1>";
         
         return "
         <!DOCTYPE html>
@@ -89,7 +89,6 @@ class EmailTemplates {
                     {$contenido}
                 </div>
                 <div style='text-align: center; padding: 20px; color: #666; font-size: 12px; border-top: 1px solid #e5e7eb;'>
-                    <p>&copy; " . date('Y') . " {$nombreNegocio}. Todos los derechos reservados.</p>
                     <p style='margin: 5px 0 0 0; font-size: 11px; color: #999;'>Powered by {$this->appName}</p>
                 </div>
             </div>
@@ -460,7 +459,7 @@ class EmailTemplates {
         $notaPrueba = "
             <div style='background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin-bottom: 20px; border-radius: 8px;'>
                 <p style='margin: 0; color: #1e40af; font-size: 14px;'>
-                    <strong>📧 Email de Prueba</strong><br>
+                    <strong>Email de Prueba</strong><br>
                     Este es un email de ejemplo para que visualices cómo se mostrarán los colores, logo y datos de tu negocio en los emails enviados a tus clientes. 
                     Los datos de la reserva son ficticios.
                 </p>
@@ -507,7 +506,7 @@ class EmailTemplates {
         $contenidoTexto .= "Saludos,\n{$nombreNegocio}";
         
         return [
-            'asunto' => "🎨 [PRUEBA] ✅ Tu reserva en {$nombreNegocio}",
+            'asunto' => "[PRUEBA] ✅ Tu reserva en {$nombreNegocio}",
             'cuerpo_texto' => $contenidoTexto,
             'cuerpo_html' => $this->wrapHtmlNegocio('Email de Prueba', $contenidoHtml, $usuarioId)
         ];
