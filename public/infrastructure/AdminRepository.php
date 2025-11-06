@@ -130,9 +130,9 @@ class AdminRepository implements IAdminRepository {
                 GROUP BY plan
                 ORDER BY 
                     CASE plan
-                        WHEN 'premium' THEN 1
-                        WHEN 'estandar' THEN 2
-                        WHEN 'gratis' THEN 3
+                        WHEN 'avanzado' THEN 1
+                        WHEN 'profesional' THEN 2
+                        WHEN 'basico' THEN 3
                     END";
         
         $stmt = $this->pdo->prepare($sql);

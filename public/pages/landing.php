@@ -468,7 +468,7 @@
             </div>
             
             <div class="grid lg:grid-cols-3 gap-8">
-                <!-- Plan Gratis -->
+                <!-- Plan basico -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg border-2 border-gray-100">
                     <div class="text-center">
                         <h3 class="text-2xl font-bold text-gray-900 mb-2">Básico</h3>
@@ -506,12 +506,12 @@
                         </li>
                     </ul>
                     
-                    <a href="/signup?plan=gratis" class="w-full block text-center py-3 px-6 border-2 border-gray-300 rounded-full font-semibold text-gray-700 hover:border-gray-400 transition-all">
+                    <a href="/signup?plan=profesional" class="w-full block text-center py-3 px-6 border-2 border-gray-300 rounded-full font-semibold text-gray-700 hover:border-gray-400 transition-all">
                         Empezar Gratis
                     </a>
                 </div>
                 
-                <!-- Plan Estándar -->
+                <!-- Plan Profesional -->
                 <div class="bg-white rounded-2xl p-8 shadow-xl border-2 border-blue-500 relative transform scale-105">
                     <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
                         <span class="bg-blue-500 text-white px-6 py-2 rounded-full text-sm font-semibold">
@@ -562,15 +562,15 @@
                         </li>
                     </ul>
                     
-                    <a href="/signup?plan=estandar" class="btn-shine w-full block text-center py-3 px-6 gradient-bg text-white rounded-full font-semibold hover:shadow-lg transition-all">
+                    <a href="/signup?plan=profesional" class="btn-shine w-full block text-center py-3 px-6 gradient-bg text-white rounded-full font-semibold hover:shadow-lg transition-all">
                         Empezar Beta Gratis
                     </a>
                 </div>
                 
-                <!-- Plan Premium -->
+                <!-- Plan Avanzado -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg border-2 border-gray-100">
                     <div class="text-center">
-                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Automático</h3>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Avanzado</h3>
                         <p class="text-gray-600 mb-6">Automatización completa con IA</p>
                         <div class="mb-8">
                             <div class="flex items-center justify-center gap-2 mb-2">

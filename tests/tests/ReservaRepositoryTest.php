@@ -53,7 +53,7 @@ class ReservaRepositoryTest extends TestCase
         ");
         
         // 3. Insertar usuario test
-        $this->db->exec("INSERT INTO usuarios (id, nombre, email, plan) VALUES (1, 'Test', 'test@test.com', 'premium')");
+        $this->db->exec("INSERT INTO usuarios (id, nombre, email, plan) VALUES (1, 'Test', 'test@test.com', 'avanzado')");
         
         // 4. Configurar horario (lunes 9-18)
         $this->db->exec("

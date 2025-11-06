@@ -298,9 +298,9 @@ include PROJECT_ROOT . '/includes/headerAdmin.php';
     text-transform: uppercase;
 }
 
-.badge.premium { background: #fed7d7; color: #742a2a; }
-.badge.basico { background: #bee3f8; color: #2c5282; }
-.badge.gratis { background: #c6f6d5; color: #22543d; }
+.badge.avanzado { background: #fed7d7; color: #742a2a; }
+.badge.profesional { background: #bee3f8; color: #2c5282; }
+.badge.basico { background: #c6f6d5; color: #22543d; }
 
 .stat-badge {
     display: inline-flex;

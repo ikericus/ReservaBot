@@ -12,10 +12,10 @@ $userId = $currentUser['id'];
 // Obtener plan del usuario
 $usuarioDomain = getContainer()->getUsuarioDomain();
 $usuarioEntity = $usuarioDomain->obtenerPorId($userId);
-$planUsuario = $usuarioEntity ? $usuarioEntity->getPlan() : 'gratis';
+$planUsuario = $usuarioEntity ? $usuarioEntity->getPlan() : 'basico';
 
-// Verificar si tiene acceso a WhatsApp (plan profesional o premium)
-$tieneAccesoWhatsApp = in_array($planUsuario, ['estandar', 'premium']);
+// Verificar si tiene acceso a WhatsApp (plan profesional o avanzado)
+$tieneAccesoWhatsApp = in_array($planUsuario, ['profesional', 'avanzado']);
 
 // Si tiene acceso, obtener configuración WhatsApp
 $whatsappConfig = null;

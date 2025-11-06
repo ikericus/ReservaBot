@@ -602,8 +602,8 @@ include 'includes/header.php';
                 <div>
                     <dt class="text-sm font-medium text-gray-500">Plan actual</dt>
                     <dd class="text-sm text-gray-900 mt-1 flex items-center justify-between">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'; ?>">
-                            <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'Profesional' : 'Básico'; ?>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $usuarioEntity->getPlan() === 'profesional' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'; ?>">
+                            <?php echo $usuarioEntity->getPlan() ?>
                         </span>
                         <a href="/perfil?tab=plan" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
                             Cambiar plan →
@@ -644,13 +644,13 @@ include 'includes/header.php';
                 
                 <div class="space-y-3">
                     <!-- Plan Básico -->
-                    <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuarioEntity->getPlan() === 'gratis' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
+                    <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuarioEntity->getPlan() === 'basico' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
                         <input 
                             type="radio" 
                             name="plan" 
-                            value="gratis" 
+                            value="basico" 
                             class="mt-1"
-                            <?php echo $usuarioEntity->getPlan() === 'gratis' ? 'checked' : ''; ?>
+                            <?php echo $usuarioEntity->getPlan() === 'basico' ? 'checked' : ''; ?>
                         >
                         <div class="ml-3 flex-1">
                             <div class="flex items-center justify-between">
@@ -664,13 +664,13 @@ include 'includes/header.php';
                     </label>
                     
                     <!-- Plan Profesional -->
-                    <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
+                    <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors <?php echo $usuarioEntity->getPlan() === 'profesional' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'; ?>">
                         <input 
                             type="radio" 
                             name="plan" 
-                            value="estandar" 
+                            value="profesional" 
                             class="mt-1"
-                            <?php echo $usuarioEntity->getPlan() === 'estandar' ? 'checked' : ''; ?>
+                            <?php echo $usuarioEntity->getPlan() === 'profesional' ? 'checked' : ''; ?>
                         >
                         <div class="ml-3 flex-1">
                             <div class="flex items-center justify-between mb-1">
@@ -691,12 +691,12 @@ include 'includes/header.php';
                         </div>
                     </label>
                     
-                    <!-- Plan Premium (Deshabilitado) -->
+                    <!-- Plan Avanzado (Deshabilitado) -->
                     <div class="relative flex items-start p-4 border-2 border-gray-200 rounded-lg opacity-60 cursor-not-allowed">
                         <input 
                             type="radio" 
                             name="plan" 
-                            value="premium" 
+                            value="avanzado" 
                             disabled
                             class="mt-1"
                         >

@@ -293,27 +293,27 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                         </label>
                         <div class="grid md:grid-cols-3 gap-4">
                             
-                            <!-- Plan Gratis -->
-                            <div class="plan-card border-2 border-gray-200 rounded-xl p-4 selected" data-plan="gratis">
-                                <input type="radio" name="plan" value="gratis" id="plan-gratis" class="hidden" checked>
+                            <!-- Plan basico -->
+                            <div class="plan-card border-2 border-gray-200 rounded-xl p-4 selected" data-plan="basico">
+                                <input type="radio" name="plan" value="basico" id="plan-basico" class="hidden" checked>
                                 <div class="text-center">
                                     <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                         <i class="ri-gift-line text-gray-600"></i>
                                     </div>
-                                    <h3 class="font-semibold text-gray-900">Gratis</h3>
+                                    <h3 class="font-semibold text-gray-900">Básico</h3>
                                     <p class="text-2xl font-bold text-gray-900 mt-1">0€</p>
-                                    <p class="text-sm text-gray-500">Básico</p>
+                                    <!-- <p class="text-sm text-gray-500">Básico</p> -->
                                 </div>
                             </div>
                             
-                            <!-- Plan Estándar -->
-                            <div class="plan-card border-2 border-gray-200 rounded-xl p-4" data-plan="estandar">
-                                <input type="radio" name="plan" value="estandar" id="plan-estandar" class="hidden">
+                            <!-- Plan Profesional -->
+                            <div class="plan-card border-2 border-gray-200 rounded-xl p-4" data-plan="profesional">
+                                <input type="radio" name="plan" value="profesional" id="plan-profesional" class="hidden">
                                 <div class="text-center">
                                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                         <i class="ri-star-line text-blue-600"></i>
                                     </div>
-                                    <h3 class="font-semibold text-gray-900">Estándar</h3>
+                                    <h3 class="font-semibold text-gray-900">Profesional</h3>
                                     <div class="mt-1">
                                         <span class="text-lg font-bold text-gray-400 line-through">9€</span>
                                         <span class="block text-sm font-bold text-red-600 mt-1">GRATIS EN BETA</span>
@@ -322,13 +322,13 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                                 </div>
                             </div>
                             
-                            <!-- Plan Premium -->
-                            <div class="plan-card border-2 border-gray-300 rounded-xl p-4 opacity-75 cursor-not-allowed" data-plan="premium">
+                            <!-- Plan Avanzado -->
+                            <div class="plan-card border-2 border-gray-300 rounded-xl p-4 opacity-75 cursor-not-allowed" data-plan="avanzado">
                                 <div class="text-center">
                                     <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
                                         <i class="ri-vip-crown-line text-purple-600"></i>
                                     </div>
-                                    <h3 class="font-semibold text-gray-900">Premium</h3>
+                                    <h3 class="font-semibold text-gray-900">Avanzado</h3>
                                     <div class="mt-1">
                                         <span class="text-lg font-bold text-gray-400 line-through">19€</span>
                                     </div>
@@ -512,12 +512,12 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
             card.addEventListener('click', function() {
                 const planValue = this.dataset.plan;
                 
-                if (planValue === 'gratis' || planValue === 'estandar') {
+                if (planValue === 'basico' || planValue === 'profesional') {
                     document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
                     this.classList.add('selected');
                     document.querySelector(`input[value="${planValue}"]`).checked = true;
                 } else {
-                    alert('El plan Premium estará disponible próximamente.');
+                    alert('El plan Avanzado estará disponible próximamente.');
                 }
             });
         });

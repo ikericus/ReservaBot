@@ -49,7 +49,7 @@ class UsuarioRepository implements IUsuarioRepository {
         string $email,
         string $telefono,
         string $passwordHash,
-        string $plan = 'gratis'
+        string $plan = 'basico'
     ): Usuario {
         $apiKey = bin2hex(random_bytes(32));
         
@@ -196,7 +196,7 @@ class UsuarioRepository implements IUsuarioRepository {
             $row['nombre'],
             $row['email'],
             $row['telefono'] ?? '',
-            $row['plan'] ?? 'gratis',
+            $row['plan'] ?? 'basico',
             $row['password_hash'],
             $row['api_key'] ?? null,
             (bool) $row['activo'],

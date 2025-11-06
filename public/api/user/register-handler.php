@@ -14,7 +14,7 @@ $telefono = trim($_POST['telefono'] ?? '');
 $negocio = trim($_POST['negocio'] ?? '');
 $password = $_POST['password'] ?? '';
 $confirmPassword = $_POST['confirm_password'] ?? '';
-$plan = $_POST['plan'] ?? 'gratis';
+$plan = $_POST['plan'] ?? 'basico';
 $terminos = isset($_POST['terminos']);
 
 // Validaciones

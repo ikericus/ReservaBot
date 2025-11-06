@@ -332,9 +332,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Colores dinámicos según el plan
         const planColors = planLabels.map(label => {
             switch(label.toLowerCase()) {
-                case 'premium': return '#667eea';
-                case 'estandar': return '#764ba2';
-                case 'gratis': return '#f093fb';
+                case 'avanzado': return '#667eea';
+                case 'profesional': return '#764ba2';
+                case 'basico': return '#f093fb';
                 default: return '#a0aec0';
             }
         });

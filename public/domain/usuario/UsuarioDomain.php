@@ -56,7 +56,7 @@ class UsuarioDomain {
         string $telefono,
         string $negocio,
         string $password,
-        string $plan = 'gratis'
+        string $plan = 'basico'
     ): Usuario {
         // Validaciones
         $nombre = trim($nombre);
@@ -316,7 +316,7 @@ class UsuarioDomain {
      */
     public function actualizarPlan(int $id, string $plan): void {
         // Validar que el plan sea válido
-        $planesValidos = ['gratis', 'estandar', 'premium'];
+        $planesValidos = ['basico', 'profesional', 'avanzado'];
         if (!in_array($plan, $planesValidos)) {
             throw new \InvalidArgumentException('Plan no válido');
         }

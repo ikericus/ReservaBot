@@ -293,7 +293,7 @@
                             <div class="mt-3 text-center">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800">
                                     <i class="ri-vip-crown-line mr-1"></i>
-                                    Plan <?php echo ucfirst($user['plan'] ?? 'Gratis'); ?>
+                                    Plan <?php echo ucfirst($user['plan'] ?? 'Básico'); ?>
                                 </span>
                             </div>
                         </div>

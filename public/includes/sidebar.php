@@ -3,7 +3,12 @@
 $user = getAuthenticatedUser();
 $userId = $user['id'];
 
+$usuarioDomain = getContainer()->getUsuarioDomain();
 $usuarioEntity = $usuarioDomain->obtenerPorId($userId);
+
+
+$configuracionDomain = getContainer()->getConfiguracionDomain();
+$configuraciones = $configuracionDomain->obtenerConfiguraciones($userId);
 
 // Inicializar estadísticas
 $estadisticas = [
@@ -232,14 +237,11 @@ try {
             <!-- Usuario principal -->
             <div id="userMenuTrigger" class="flex items-center group cursor-pointer p-3 rounded-xl hover:bg-white hover:shadow-md transition-all duration-300">
                 <div class="user-avatar h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold mr-3">
-                    <?php 
-                    $user = getAuthenticatedUser();
-                    echo strtoupper(substr($user['nombre'] ?? 'U', 0, 1));
-                    ?>
+                    <?php echo strtoupper(substr(htmlspecialchars($usuarioEntity->getNombre()), 0, 1)); ?>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-gray-900 truncate"><?php echo htmlspecialchars($user['negocio'] ?? 'Mi Negocio'); ?></p>
-                    <p class="text-xs text-gray-500 truncate"><?php echo htmlspecialchars($user['nombre'] ?? 'Usuario'); ?></p>
+                    <p class="text-sm font-semibold text-gray-900 truncate"><?php echo htmlspecialchars($configuraciones['empresa_nombre'] ?? 'Error empresa_nombre'); ?></p>
+                    <p class="text-xs text-gray-500 truncate"><?php echo htmlspecialchars($usuarioEntity->getNombre() ?? 'Error nombre usuario'); ?></p>
                 </div>
                 <div class="flex items-center">
                     <i class="ri-arrow-up-s-line text-gray-400 transition-transform group-hover:rotate-180" id="userMenuIcon"></i>
@@ -277,7 +279,7 @@ try {
         <!-- Indicador de plan - Ahora es un enlace -->
         <div class="mt-3 text-center">
             <a href="/perfil?tab=plan" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 hover:from-purple-200 hover:to-blue-200 transition-all duration-300 hover:shadow-md group">
-                <i class="ri-vip-crown-line mr-1"></i>
+                <!-- <i class="ri-vip-crown-line mr-1"></i> -->
                 Plan <?php echo $usuarioEntity->getPlan() ?>
                 <i class="ri-arrow-right-s-line ml-1 text-purple-600 group-hover:translate-x-0.5 transition-transform"></i>
             </a>

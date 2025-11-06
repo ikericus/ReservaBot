@@ -137,7 +137,7 @@ CREATE TABLE usuarios (
   telefono varchar(25) DEFAULT NULL,
   negocio varchar(255) DEFAULT NULL,
   password_hash varchar(255) NOT NULL,
-  plan enum('gratis','estandar','premium') DEFAULT 'gratis',
+  plan enum('basico','profesional','avanzado') DEFAULT 'basico',
   api_key varchar(64) DEFAULT NULL,
   activo tinyint(1) DEFAULT 1,
   intentos_login int(11) DEFAULT 0,

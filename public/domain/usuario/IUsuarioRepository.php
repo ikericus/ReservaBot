@@ -27,7 +27,7 @@ interface IUsuarioRepository {
     /**
      * Crea nuevo usuario
      */
-    public function crear(string $nombre, string $email, string $telefono, string $passwordHash, string $plan = 'gratis'): Usuario;
+    public function crear(string $nombre, string $email, string $telefono, string $passwordHash, string $plan = 'basico'): Usuario;
     
     /**
      * Actualiza datos del usuario
