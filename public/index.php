@@ -40,6 +40,7 @@ require_once  __DIR__ . '/config/router.php';
 // Ejecutar
 $router = new Router();
 $router->resolve();
+?>
 
 <script>
     if ("serviceWorker" in navigator) {
