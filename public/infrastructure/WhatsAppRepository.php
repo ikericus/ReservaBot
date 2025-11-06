@@ -6,6 +6,7 @@ namespace ReservaBot\Infrastructure;
 use ReservaBot\Domain\WhatsApp\IWhatsAppRepository;
 use ReservaBot\Domain\WhatsApp\WhatsAppConfig;
 use ReservaBot\Domain\WhatsApp\WhatsAppMessage;
+use ReservaBot\Domain\WhatsApp\WhatsAppMessageTemplate;
 use PDO;
 
 class WhatsAppRepository implements IWhatsAppRepository {
@@ -280,5 +281,80 @@ class WhatsAppRepository implements IWhatsAppRepository {
             'total_conversaciones' => (int)$totalConversaciones,
             'conversaciones_activas' => (int)$conversacionesActivas
         ];
+    }
+    
+    // ==================== PLANTILLAS DE MENSAJES ====================
+    
+    /**
+     * Obtiene una plantilla específica
+     */
+    public function obtenerTemplate(int $usuarioId, string $tipoMensaje): ?WhatsAppMessageTemplate {
+        $sql = "SELECT * FROM whatsapp_automessage_templates 
+                WHERE usuario_id = ? AND tipo_mensaje = ?";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$usuarioId, $tipoMensaje]);
+        
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $data ? WhatsAppMessageTemplate::fromDatabase($data) : null;
+    }
+    
+    /**
+     * Obtiene todas las plantillas de un usuario
+     */
+    public function obtenerTemplates(int $usuarioId): array {
+        $sql = "SELECT * FROM whatsapp_automessage_templates 
+                WHERE usuario_id = ?
+                ORDER BY tipo_mensaje";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$usuarioId]);
+        
+        $templates = [];
+        while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $templates[$data['tipo_mensaje']] = WhatsAppMessageTemplate::fromDatabase($data);
+        }
+        
+        return $templates;
+    }
+    
+    /**
+     * Guarda o actualiza una plantilla
+     */
+    public function guardarTemplate(WhatsAppMessageTemplate $template): WhatsAppMessageTemplate {
+        $data = $template->toArray();
+        
+        $sql = "INSERT INTO whatsapp_automessage_templates 
+                (usuario_id, tipo_mensaje, mensaje)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    mensaje = VALUES(mensaje),
+                    updated_at = CURRENT_TIMESTAMP";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            $data['usuario_id'],
+            $data['tipo_mensaje'],
+            $data['mensaje']
+        ]);
+        
+        // Si es nuevo, obtener el ID
+        if ($template->getId() === null) {
+            return $this->obtenerTemplate($data['usuario_id'], $data['tipo_mensaje']);
+        }
+        
+        return $template;
+    }
+    
+    /**
+     * Elimina una plantilla
+     */
+    public function eliminarTemplate(int $usuarioId, string $tipoMensaje): bool {
+        $sql = "DELETE FROM whatsapp_automessage_templates 
+                WHERE usuario_id = ? AND tipo_mensaje = ?";
+        
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$usuarioId, $tipoMensaje]);
     }
 }

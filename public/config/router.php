@@ -71,22 +71,24 @@ class Router {
         $this->addRoute('GET',      '/conversaciones',                  'pages/whatsapp/conversaciones.php',    ['auth']);  
 
         // API protegida        
-        $this->addRoute('POST',     '/api/crear-reserva',                       'api/crear-reserva.php',                    ['auth']);
-        $this->addRoute('POST',     '/api/actualizar-reserva',                  'api/actualizar-reserva.php',               ['auth']);    
-        $this->addRoute('POST',     '/api/rechazar-reserva',                    'api/rechazar-reserva.php',                 ['auth']);
-        $this->addRoute('POST',     '/api/cancelar-reserva',                    'api/cancelar-reserva.php',                 ['auth']);    
-        $this->addRoute('POST',     '/api/crear-reserva-publica',               'api/crear-reserva-publica.php',            ['auth']);
-        $this->addRoute('POST',     '/api/horas-disponibles',                   'api/horas-disponibles.php',                ['auth']);
-        $this->addRoute('POST',     '/api/actualizar-configuracion',            'api/actualizar-configuracion.php',         ['auth']);
-        $this->addRoute('POST',     '/api/whatsapp-send',                       'api/whatsapp-send.php',                    ['auth']);
-        $this->addRoute('POST',     '/api/whatsapp-connect',                    'api/whatsapp-connect.php',                 ['auth']);
-        $this->addRoute('GET',      '/api/whatsapp-status',                     'api/whatsapp-status.php',                  ['auth']);
-        $this->addRoute('POST',     '/api/whatsapp-disconnect',                 'api/whatsapp-disconnect.php',              ['auth']);
+        $this->addRoute('POST',     '/api/crear-reserva',                       'api/crear-reserva.php',                     ['auth']);
+        $this->addRoute('POST',     '/api/actualizar-reserva',                  'api/actualizar-reserva.php',                ['auth']);    
+        $this->addRoute('POST',     '/api/rechazar-reserva',                    'api/rechazar-reserva.php',                  ['auth']);
+        $this->addRoute('POST',     '/api/cancelar-reserva',                    'api/cancelar-reserva.php',                  ['auth']);    
+        $this->addRoute('POST',     '/api/crear-reserva-publica',               'api/crear-reserva-publica.php',             ['auth']);
+        $this->addRoute('POST',     '/api/horas-disponibles',                   'api/horas-disponibles.php',                 ['auth']);
+        $this->addRoute('POST',     '/api/actualizar-configuracion',            'api/actualizar-configuracion.php',          ['auth']);
+        $this->addRoute('POST',     '/api/whatsapp-send',                       'api/whatsapp-send.php',                     ['auth']);
+        $this->addRoute('POST',     '/api/whatsapp-connect',                    'api/whatsapp-connect.php',                  ['auth']);
+        $this->addRoute('GET',      '/api/whatsapp-status',                     'api/whatsapp-status.php',                   ['auth']);
+        $this->addRoute('POST',     '/api/whatsapp-disconnect',                 'api/whatsapp-disconnect.php',               ['auth']);
         $this->addRoute('POST',     '/api/whatsapp-stats',                      'api/whatsapp-stats.php',                    ['auth']);
         $this->addRoute('POST',     '/api/whatsapp-save-auto-message-config',   'api/whatsapp-save-auto-message-config.php', ['auth']);
-        $this->addRoute('GET',      '/api/whatsapp-conversations',              'api/whatsapp-conversations.php',           ['auth']);
-        $this->addRoute('GET',      '/api/whatsapp-conversations-2',              'api/whatsapp-conversations-2.php',           ['auth']);
-        $this->addRoute('POST',     '/api/buscar-clientes',                     'api/buscar-clientes.php',                  ['auth']);
+        $this->addRoute('GET',      '/api/whatsapp-get-templates',              'api/whatsapp-get-templates.php',            ['auth']);
+        $this->addRoute('POST',     '/api/whatsapp-save-template',              'api/whatsapp-save-template.php',            ['auth']);
+        $this->addRoute('POST',     '/api/whatsapp-restore-template',           'api/whatsapp-restore-template.php',         ['auth']);
+        $this->addRoute('GET',      '/api/whatsapp-conversations',              'api/whatsapp-conversations.php',            ['auth']);
+        $this->addRoute('POST',     '/api/buscar-clientes',                     'api/buscar-clientes.php',                   ['auth']);
         
         
         // Webhook para WhatsApp

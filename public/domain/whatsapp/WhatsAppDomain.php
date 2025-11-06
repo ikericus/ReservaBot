@@ -94,6 +94,22 @@ class WhatsAppDomain {
         $config = $this->obtenerConfiguracion($usuarioId);
         $config->configurarMensajesAutomaticos($confirmacion, $recordatorio, $bienvenida);
         
+        // Crear plantillas por defecto si se activa una opción y no existe
+        if ($confirmacion && !$this->whatsappRepository->obtenerTemplate($usuarioId, 'confirmacion')) {
+            $template = WhatsAppMessageTemplate::crear($usuarioId, 'confirmacion');
+            $this->whatsappRepository->guardarTemplate($template);
+        }
+        
+        if ($recordatorio && !$this->whatsappRepository->obtenerTemplate($usuarioId, 'recordatorio')) {
+            $template = WhatsAppMessageTemplate::crear($usuarioId, 'recordatorio');
+            $this->whatsappRepository->guardarTemplate($template);
+        }
+        
+        if ($bienvenida && !$this->whatsappRepository->obtenerTemplate($usuarioId, 'bienvenida')) {
+            $template = WhatsAppMessageTemplate::crear($usuarioId, 'bienvenida');
+            $this->whatsappRepository->guardarTemplate($template);
+        }
+        
         return $this->whatsappRepository->guardarConfiguracion($config);
     }
     
@@ -355,5 +371,72 @@ class WhatsAppDomain {
      */
     public function obtenerMensajePorMessageId(string $messageId, int $usuarioId): ?WhatsAppMessage {
         return $this->whatsappRepository->obtenerMensajePorMessageId($messageId, $usuarioId);
+    }
+    
+    // ==================== PLANTILLAS DE MENSAJES ====================
+    
+    /**
+     * Obtiene una plantilla específica o crea una por defecto
+     */
+    public function obtenerTemplate(int $usuarioId, string $tipoMensaje): WhatsAppMessageTemplate {
+        $template = $this->whatsappRepository->obtenerTemplate($usuarioId, $tipoMensaje);
+        
+        if (!$template) {
+            // Crear plantilla por defecto
+            $template = WhatsAppMessageTemplate::crear($usuarioId, $tipoMensaje);
+            $template = $this->whatsappRepository->guardarTemplate($template);
+        }
+        
+        return $template;
+    }
+    
+    /**
+     * Obtiene todas las plantillas de un usuario
+     */
+    public function obtenerTemplates(int $usuarioId): array {
+        return $this->whatsappRepository->obtenerTemplates($usuarioId);
+    }
+    
+    /**
+     * Guarda o actualiza una plantilla
+     */
+    public function guardarTemplate(int $usuarioId, string $tipoMensaje, string $mensaje): WhatsAppMessageTemplate {
+        $template = $this->whatsappRepository->obtenerTemplate($usuarioId, $tipoMensaje);
+        
+        if ($template) {
+            $template->actualizarMensaje($mensaje);
+        } else {
+            $template = WhatsAppMessageTemplate::crear($usuarioId, $tipoMensaje, $mensaje);
+        }
+        
+        return $this->whatsappRepository->guardarTemplate($template);
+    }
+    
+    /**
+     * Restaura una plantilla a su mensaje por defecto
+     */
+    public function restaurarTemplateDefault(int $usuarioId, string $tipoMensaje): WhatsAppMessageTemplate {
+        $mensajeDefault = WhatsAppMessageTemplate::getMensajeDefault($tipoMensaje);
+        
+        if (!$mensajeDefault) {
+            throw new \InvalidArgumentException('Tipo de mensaje inválido');
+        }
+        
+        return $this->guardarTemplate($usuarioId, $tipoMensaje, $mensajeDefault);
+    }
+    
+    /**
+     * Procesa y envía un mensaje automático usando la plantilla
+     */
+    public function enviarMensajeAutomatico(
+        int $usuarioId,
+        string $tipoMensaje,
+        string $telefono,
+        array $datos
+    ): array {
+        $template = $this->obtenerTemplate($usuarioId, $tipoMensaje);
+        $mensajeProcesado = $template->procesarMensaje($datos);
+        
+        return $this->enviarMensajeWhatsApp($usuarioId, $telefono, $mensajeProcesado);
     }
 }
