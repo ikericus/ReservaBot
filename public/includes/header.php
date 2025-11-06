@@ -273,8 +273,8 @@
                                     <?php echo strtoupper(substr($user['nombre'] ?? 'U', 0, 1)); ?>
                                 </div>
                                 <div class="flex-1">
-                                    <p class="text-sm font-semibold text-gray-900"><?php echo htmlspecialchars($user['negocio'] ?? 'Mi Negocio'); ?></p>
-                                    <p class="text-xs text-gray-500"><?php echo htmlspecialchars($user['nombre'] ?? 'Usuario'); ?></p>
+                                    <p class="text-sm font-semibold text-gray-900"><?php echo htmlspecialchars($configuraciones['empresa_nombre'] ?? 'Error empresa_nombre'); ?></p>
+                                    <p class="text-xs text-gray-500"><?php echo htmlspecialchars($usuarioEntity->getNombre() ?? 'Error nombre usuario'); ?></p>
                                 </div>
                             </div>
                             
