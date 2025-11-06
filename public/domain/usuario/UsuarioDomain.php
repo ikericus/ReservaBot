@@ -342,7 +342,6 @@ class UsuarioDomain {
      */
     private function crearConfiguracionesIniciales(int $usuarioId, string $negocio, string $telefono): void {
         $configuracionesIniciales = [
-            'app_name' => $negocio,
             'empresa_nombre' => $negocio,
             'empresa_telefono' => !empty($telefono) ? $telefono : '',
             'modo_aceptacion' => 'manual',
