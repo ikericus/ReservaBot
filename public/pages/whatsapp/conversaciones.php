@@ -1,6 +1,9 @@
 <?php
 // pages/whatsapp/conversaciones.php
 
+// NOTA: Esta página solo se muestra cuando WhatsApp está conectado (control en whatsapp.php)
+// Por tanto, no es necesario verificar la conexión aquí para deshabilitar controles
+
 // Solo configurar si no estamos siendo incluidos desde whatsapp.php
 if (!isset($conversationsPageContent)) {
     $currentPage = 'conversaciones';
@@ -423,7 +426,6 @@ if (!isset($conversationsPageContent)) {
                             placeholder="Escribe un mensaje..."
                             rows="1"
                             maxlength="1000"
-                            <?php echo !$whatsappConnected ? 'disabled' : ''; ?>
                         ></textarea>
                     </div>
                     
@@ -431,18 +433,10 @@ if (!isset($conversationsPageContent)) {
                         id="sendButton"
                         class="send-button"
                         onclick="sendMessage()"
-                        <?php echo !$whatsappConnected ? 'disabled' : ''; ?>
                     >
                         <i class="ri-send-plane-fill text-xl"></i>
                     </button>
                 </div>
-                
-                <?php if (!$whatsappConnected): ?>
-                <div class="mt-2 text-sm text-gray-500 text-center">
-                    <i class="ri-error-warning-line mr-1"></i>
-                    Conecta WhatsApp para enviar mensajes
-                </div>
-                <?php endif; ?>
             </div>
         </div>
         
@@ -459,7 +453,6 @@ class ConversationsManager {
         this.isLoading = false;
         this.searchTerm = '';
         this.refreshInterval = null;
-        this.whatsappConnected = <?php echo $whatsappConnected ? 'true' : 'false'; ?>;
         this.isMobile = window.innerWidth < 768;
         
         this.init();
@@ -728,7 +721,7 @@ class ConversationsManager {
     }
 
     async sendMessage() {
-        if (!this.currentConversation || !this.whatsappConnected) return;
+        if (!this.currentConversation) return;
 
         const input = document.getElementById('messageInput');
         const button = document.getElementById('sendButton');
