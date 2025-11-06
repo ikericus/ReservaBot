@@ -769,6 +769,8 @@ code {
             };
             titleElement.textContent = titles[tipo] || 'Personalizar mensaje';
             
+            updateAvailableVariables(tipo);
+
             // Cargar mensaje actual
             const template = templates[tipo];
             if (template) {
@@ -808,6 +810,31 @@ code {
             }
         }
 
+        function updateAvailableVariables(tipo) {
+            const variablesContainer = document.querySelector('.bg-blue-50.border.border-blue-200.rounded-lg.p-4.mb-6 .text-sm.text-blue-800.space-y-1');
+            
+            if (!variablesContainer) return;
+            
+            let variablesHTML = '';
+            
+            if (tipo === 'bienvenida') {
+                // Solo negocio para bienvenida
+                variablesHTML = `
+                    <p><code class="bg-blue-100 px-2 py-0.5 rounded">{negocio}</code> - Nombre de tu negocio</p>
+                `;
+            } else {
+                // Para confirmación y recordatorio
+                variablesHTML = `
+                    <p><code class="bg-blue-100 px-2 py-0.5 rounded">{nombre_cliente}</code> - Nombre del cliente</p>
+                    <p><code class="bg-blue-100 px-2 py-0.5 rounded">{fecha}</code> - Fecha de la cita (dd/mm/aaaa)</p>
+                    <p><code class="bg-blue-100 px-2 py-0.5 rounded">{hora}</code> - Hora de la cita (HH:MM)</p>
+                    <p><code class="bg-blue-100 px-2 py-0.5 rounded">{negocio}</code> - Nombre de tu negocio</p>
+                `;
+            }
+            
+            variablesContainer.innerHTML = variablesHTML;
+        }
+
         // Actualizar vista previa
         function updatePreview() {
             const messageElement = document.getElementById('templateMessage');
@@ -821,14 +848,22 @@ code {
                 return;
             }
             
-            // Reemplazar placeholders con ejemplos
-            const ejemplos = {
-                '{nombre_cliente}': 'Juan Pérez',
-                '{fecha}': '15/12/2024',
-                '{hora}': '10:30',
-                '{duracion}': '45 minutos',
-                '{negocio}': 'Mi Negocio'
-            };
+            // MODIFICADO: Reemplazar placeholders con ejemplos según el tipo de mensaje
+            let ejemplos = {};
+            
+            if (currentTemplateType === 'bienvenida') {
+                ejemplos = {
+                    '{negocio}': 'Mi Negocio'
+                };
+            } else {
+                // Para confirmación y recordatorio
+                ejemplos = {
+                    '{nombre_cliente}': 'Juan Pérez',
+                    '{fecha}': '15/12/2024',
+                    '{hora}': '10:30',
+                    '{negocio}': 'Mi Negocio'
+                };
+            }
             
             for (const [placeholder, ejemplo] of Object.entries(ejemplos)) {
                 preview = preview.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), ejemplo);
