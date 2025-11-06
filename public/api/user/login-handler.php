@@ -54,7 +54,6 @@ try {
         'id' => $usuario->getId(),
         'email' => $usuario->getEmail(),
         'nombre' => $usuario->getNombre(),
-        'negocio' => $usuario->getNegocio(),
         'plan' => $usuario->getPlan(),
         'is_admin' => $esAdmin
     ]);
