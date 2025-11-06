@@ -62,9 +62,7 @@ class ConfiguracionDomain {
                 $emailData['cuerpo_html']
             );
             
-            if ($resultado) {
-                debug_log("Email de prueba enviado a {$emailDestino} para usuario {$usuarioId}");
-            } else {
+            if (!$resultado) {
                 error_log("Error al enviar email de prueba a {$emailDestino}");
             }
             
