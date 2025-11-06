@@ -73,7 +73,7 @@ function setAuthenticatedUser(array $userData): void {
     $_SESSION['user_id'] = $userData['id'];
     $_SESSION['user_email'] = $userData['email'];
     $_SESSION['user_name'] = $userData['nombre'] ?? '';
-    $_SESSION['user_plan'] = $userData['plan'] ?? 'gratis';
+    $_SESSION['user_plan'] = $userData['plan'] ?? 'basico';
     $_SESSION['is_admin'] = $userData['is_admin'] ?? false;
     $_SESSION['user_role'] = ($userData['is_admin'] ?? false) ? 'admin' : 'user';
     $_SESSION['login_time'] = time();
@@ -93,7 +93,7 @@ function getAuthenticatedUser(): ?array {
         'email' => $_SESSION['user_email'] ?? '',
         'nombre' => $_SESSION['user_name'] ?? '',
         'role' => $_SESSION['user_role'] ?? 'user',
-        'plan' => $_SESSION['user_plan'] ?? 'gratis',
+        'plan' => $_SESSION['user_plan'] ?? 'basico',
         'is_admin' => $_SESSION['is_admin'] ?? false, // ← De la sesión
         'login_time' => $_SESSION['login_time'] ?? '',
         'last_activity' => $_SESSION['last_activity'] ?? ''
