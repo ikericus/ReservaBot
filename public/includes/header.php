@@ -224,8 +224,8 @@
                     <div class="p-4 border-b border-gray-100">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center">
-                                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center mr-3">
-                                    <i class="ri-calendar-line text-white text-lg"></i>
+                                <div class="user-avatar h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold mr-3">
+                                    <?php echo strtoupper(substr($usuarioEntity->getNombre(), 0, 1)); ?>
                                 </div>
                                 <div>
                                     <div class="font-bold gradient-text"><?php echo htmlspecialchars($configuraciones['empresa_nombre'] ?? 'Error empresa_nombre'); ?></div>
@@ -268,7 +268,7 @@
                         
                         <!-- Usuario móvil -->
                         <div class="mt-8 px-4 pt-4 border-t border-gray-100">
-                            <div class="flex items-center p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
+                            <!-- <div class="flex items-center p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
                                 <div class="user-avatar h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold mr-3">
                                     <?php echo strtoupper(substr($user['nombre'] ?? 'U', 0, 1)); ?>
                                 </div>
@@ -276,7 +276,7 @@
                                     <p class="text-sm font-semibold text-gray-900"><?php echo htmlspecialchars($configuraciones['empresa_nombre'] ?? 'Error empresa_nombre'); ?></p>
                                     <p class="text-xs text-gray-500"><?php echo htmlspecialchars($usuarioEntity->getNombre() ?? 'Error nombre usuario'); ?></p>
                                 </div>
-                            </div>
+                            </div> -->
                             
                             <div class="mt-3 space-y-2">
                                 <a href="/perfil" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
