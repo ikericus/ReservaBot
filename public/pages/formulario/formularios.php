@@ -38,13 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'nombre' => trim($_POST['nombre'] ?? ''),
                 'activo' => true,
                 'confirmacion_automatica' => isset($_POST['confirmacion_auto']),
-                'empresa_nombre' => $_POST['empresa_nombre'] ?? $currentUser['negocio'] ?? null,
-                'empresa_logo' => !empty($_POST['empresa_logo']) ? $_POST['empresa_logo'] : null,
-                'direccion' => !empty($_POST['direccion']) ? $_POST['direccion'] : null,
-                'telefono_contacto' => !empty($_POST['telefono_contacto']) ? $_POST['telefono_contacto'] : null,
-                'email_contacto' => !empty($_POST['email_contacto']) ? $_POST['email_contacto'] : null,
-                'color_primario' => $_POST['color_primario'] ?? '#667eea',
-                'color_secundario' => $_POST['color_secundario'] ?? '#764ba2',
                 'mensaje_bienvenida' => !empty($_POST['mensaje_bienvenida']) ? $_POST['mensaje_bienvenida'] : null,
             ], $usuario_id);
             
@@ -276,12 +269,6 @@ include 'includes/header.php';
     max-width: 100%;
 }
 
-/* Sección de colores - mejorar responsividad */
-.form-mobile-card .mb-3 .flex {
-    width: 100%;
-    max-width: 100%;
-}
-
 /* Botones de acción */
 .form-card-actions {
     padding: 0 1rem 1rem 1rem;
@@ -443,35 +430,6 @@ include 'includes/header.php';
     margin-bottom: 0.5rem;
     display: block;
     word-wrap: break-word;
-}
-
-/* Colores en formulario móvil - corregir flex */
-.mobile-create-form .flex.gap-3 {
-    display: flex;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    width: 100%;
-    align-items: center;
-}
-
-.mobile-create-form .flex.gap-3 input[type="color"] {
-    width: 3rem;
-    height: 2.5rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-.mobile-create-form .flex.gap-3 input[type="text"] {
-    flex: 1;
-    min-width: 0;
-    padding: 0.625rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    background: #f9fafb;
-    font-size: 0.875rem;
-    font-family: monospace;
 }
 
 .mobile-form-checkbox {
@@ -713,141 +671,26 @@ include 'includes/header.php';
             <p class="mt-1 text-xs text-gray-500">Solo para identificar este enlace en tu panel de control</p>
         </div>
 
-        <!-- Buscar el formulario existente y añadir estos campos después del campo "descripcion" -->
-
-        <!-- Información de la empresa -->
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-6 pt-6 border-t border-gray-200">
-            <!-- <div class="sm:col-span-2">
-                <h3 class="text-lg font-medium text-gray-900">🏢 Información de la empresa</h3>
-            </div> -->
-                        
-            <div>
-                <label for="empresa_nombre" class="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre de la empresa *
-                </label>
-                <input
-                    type="text"
-                    name="empresa_nombre"
-                    id="empresa_nombre"
-                    required
-                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ej: Clínica Dental López"
-                    value="<?php echo htmlspecialchars($currentUser['negocio'] ?? ''); ?>"
-                >
-            </div>
-            
-            <div>
-                <label for="empresa_logo" class="block text-sm font-medium text-gray-700 mb-1">
-                    URL del logo (opcional)
-                </label>
-                <input
-                    type="url"
-                    name="empresa_logo"
-                    id="empresa_logo"
-                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="https://ejemplo.com/logo.png"
-                >
-            </div>
-            
-            <div>
-                <label for="direccion" class="block text-sm font-medium text-gray-700 mb-1">
-                    Dirección
-                </label>
-                <input
-                    type="text"
-                    name="direccion"
-                    id="direccion"
-                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Calle Principal 123, Madrid"
-                >
-            </div>
-            
-            <div>
-                <label for="telefono_contacto" class="block text-sm font-medium text-gray-700 mb-1">
-                    Teléfono de contacto
-                </label>
-                <input
-                    type="tel"
-                    name="telefono_contacto"
-                    id="telefono_contacto"
-                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="+34 900 123 456"
-                >
-            </div>
-        </div>
-
-        <!-- Personalización visual -->
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-6 pt-6 border-t border-gray-200">
-            <!-- <div class="sm:col-span-2">
-                <h3 class="text-lg font-medium text-gray-900 ">🎨 Personalización visual</h3>
-            </div> -->
-            
-            <div>
-                <label for="color_primario" class="block text-sm font-medium text-gray-700 mb-1">
-                    Color primario
-                </label>
-                <div class="flex items-center space-x-3">
-                    <input
-                        type="color"
-                        name="color_primario"
-                        id="color_primario"
-                        value="#667eea"
-                        class="h-10 w-16 border border-gray-300 rounded cursor-pointer"
-                    >
-                    <input
-                        type="text"
-                        id="color_primario_text"
-                        value="#667eea"
-                        class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
-                        readonly
-                    >
-                </div>
-            </div>
-            
-            <div>
-                <label for="color_secundario" class="block text-sm font-medium text-gray-700 mb-1">
-                    Color secundario
-                </label>
-                <div class="flex items-center space-x-3">
-                    <input
-                        type="color"
-                        name="color_secundario"
-                        id="color_secundario"
-                        value="#764ba2"
-                        class="h-10 w-16 border border-gray-300 rounded cursor-pointer"
-                    >
-                    <input
-                        type="text"
-                        id="color_secundario_text"
-                        value="#764ba2"
-                        class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
-                        readonly
-                    >
-                </div>
-            </div>
-            
-            <div class="sm:col-span-2">
-                <label for="mensaje_bienvenida" class="block text-sm font-medium text-gray-700 mb-1">
-                    Mensaje de bienvenida personalizado
-                </label>
-                <textarea
-                    name="mensaje_bienvenida"
-                    id="mensaje_bienvenida"
-                    rows="3"
-                    class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ej: Bienvenido a nuestra clínica. Reserva tu cita de forma rápida y sencilla."
-                ></textarea>
-            </div>
+        <!-- Mensaje de bienvenida -->
+        <div>
+            <label for="mensaje_bienvenida" class="block text-sm font-medium text-gray-700 mb-1">
+                Mensaje de bienvenida personalizado (opcional)
+            </label>
+            <textarea
+                name="mensaje_bienvenida"
+                id="mensaje_bienvenida"
+                rows="3"
+                class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Ej: Bienvenido a nuestra clínica. Reserva tu cita de forma rápida y sencilla."
+            ></textarea>
         </div>
         
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-6 pt-6 border-t border-gray-200">
-            <div class="flex items-center">
-                <input type="checkbox" id="confirmacion_auto" name="confirmacion_auto" 
-                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                <label for="confirmacion_auto" class="ml-2 block text-sm text-gray-700">
-                    Confirmación automática (las reservas se confirman automáticamente)
-                </label>
-            </div>
+        <div class="flex items-center">
+            <input type="checkbox" id="confirmacion_auto" name="confirmacion_auto" 
+                class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+            <label for="confirmacion_auto" class="ml-2 block text-sm text-gray-700">
+                Confirmación automática (las reservas se confirman automáticamente)
+            </label>
         </div>
 
         <div class="flex justify-end">
@@ -885,66 +728,11 @@ include 'includes/header.php';
             placeholder="Ej: Formulario Consulta General">
         <p class="text-xs text-gray-500 mb-4 -mt-3">Solo para identificar este enlace en tu panel</p>
         
-        <!-- Información de la empresa -->
-        <div class="mt-6 pt-4 border-t border-gray-200">
-            <h3 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                🏢 Información de la empresa
-            </h3>
-            
-            <label class="mobile-form-label">Nombre de la empresa*</label>
-            <input type="text" name="empresa_nombre" required
-                class="mobile-form-input"
-                placeholder="Ej: Clínica Dental López"
-                value="<?php echo htmlspecialchars($currentUser['negocio'] ?? ''); ?>">
-            
-            <label class="mobile-form-label">URL del logo (opcional)</label>
-            <input type="url" name="empresa_logo"
-                   class="mobile-form-input"
-                   placeholder="https://ejemplo.com/logo.png">
-            
-            <label class="mobile-form-label">Dirección</label>
-            <input type="text" name="direccion"
-                   class="mobile-form-input"
-                   placeholder="Calle Principal 123, Madrid">
-            
-            <label class="mobile-form-label">Teléfono de contacto</label>
-            <input type="tel" name="telefono_contacto"
-                   class="mobile-form-input"
-                   placeholder="+34 900 123 456">
-            
-            <label class="mobile-form-label">Email de contacto</label>
-            <input type="email" name="email_contacto"
-                   class="mobile-form-input"
-                   placeholder="info@empresa.com">
-        </div>
-        
-        <!-- Personalización visual -->
-        <div class="mt-6 pt-4 border-t border-gray-200">
-            <h3 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                🎨 Personalización visual
-            </h3>
-            
-            <label class="mobile-form-label">Color primario</label>
-            <div class="flex gap-3 mb-4 w-full">
-                <input type="color" name="color_primario" value="#667eea" id="color_primario_mobile"
-                       class="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer flex-shrink-0">
-                <input type="text" id="color_primario_text_mobile" value="#667eea" readonly
-                       class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm">
-            </div>
-            
-            <label class="mobile-form-label">Color secundario</label>
-            <div class="flex gap-3 mb-4 w-full">
-                <input type="color" name="color_secundario" value="#764ba2" id="color_secundario_mobile"
-                       class="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer flex-shrink-0">
-                <input type="text" id="color_secundario_text_mobile" value="#764ba2" readonly
-                       class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm">
-            </div>
-            
-            <label class="mobile-form-label">Mensaje de bienvenida personalizado</label>
-            <textarea name="mensaje_bienvenida" rows="3"
-                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm resize-vertical min-h-16"
-                     placeholder="Ej: Bienvenido a nuestra clínica. Reserva tu cita de forma rápida y sencilla."></textarea>
-        </div>
+        <!-- Mensaje de bienvenida -->
+        <label class="mobile-form-label">Mensaje de bienvenida personalizado (opcional)</label>
+        <textarea name="mensaje_bienvenida" rows="3"
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm resize-vertical min-h-16 mb-4"
+                 placeholder="Ej: Bienvenido a nuestra clínica. Reserva tu cita de forma rápida y sencilla."></textarea>
         
         <!-- Confirmación automática -->
         <div class="mobile-form-checkbox mt-4">
@@ -1051,107 +839,6 @@ include 'includes/header.php';
                         
                         <!-- Contenido del enlace -->
                         <div class="p-6">
-                           
-                            <!-- Información de la empresa -->
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                                <div class="space-y-4">
-                                    <h4 class="text-sm font-semibold text-gray-900 flex items-center">
-                                        <i class="ri-building-line mr-2 text-blue-600"></i>
-                                        Información de la empresa
-                                    </h4>
-                                    
-                                    <div class="space-y-3 pl-6">
-                                        <div class="flex items-start">
-                                            <span class="text-sm font-medium text-gray-700 w-20 flex-shrink-0">Nombre:</span>
-                                            <span class="text-sm text-gray-900"><?php echo htmlspecialchars($enlace['empresa_nombre'] ?: 'No especificado'); ?></span>
-                                        </div>
-                                        
-                                        <?php if (!empty($enlace['direccion'])): ?>
-                                        <div class="flex items-start">
-                                            <span class="text-sm font-medium text-gray-700 w-20 flex-shrink-0">Dirección:</span>
-                                            <span class="text-sm text-gray-900"><?php echo htmlspecialchars($enlace['direccion']); ?></span>
-                                        </div>
-                                        <?php endif; ?>
-                                        
-                                        <?php if (!empty($enlace['telefono_contacto'])): ?>
-                                        <div class="flex items-start">
-                                            <span class="text-sm font-medium text-gray-700 w-20 flex-shrink-0">Teléfono:</span>
-                                            <span class="text-sm text-gray-900">
-                                                <a href="tel:<?php echo htmlspecialchars($enlace['telefono_contacto']); ?>" 
-                                                   class="text-blue-600 hover:text-blue-800">
-                                                    <?php echo htmlspecialchars($enlace['telefono_contacto']); ?>
-                                                </a>
-                                            </span>
-                                        </div>
-                                        <?php endif; ?>
-                                        
-                                        <?php if (!empty($enlace['email_contacto'])): ?>
-                                        <div class="flex items-start">
-                                            <span class="text-sm font-medium text-gray-700 w-20 flex-shrink-0">Email:</span>
-                                            <span class="text-sm text-gray-900">
-                                                <a href="mailto:<?php echo htmlspecialchars($enlace['email_contacto']); ?>" 
-                                                   class="text-blue-600 hover:text-blue-800">
-                                                    <?php echo htmlspecialchars($enlace['email_contacto']); ?>
-                                                </a>
-                                            </span>
-                                        </div>
-                                        <?php endif; ?>
-                                        
-                                        <?php if (!empty($enlace['empresa_logo'])): ?>
-                                        <div class="flex items-start">
-                                            <span class="text-sm font-medium text-gray-700 w-20 flex-shrink-0">Logo:</span>
-                                            <div class="flex items-center space-x-2">
-                                                <img src="<?php echo htmlspecialchars($enlace['empresa_logo']); ?>" 
-                                                     alt="Logo" 
-                                                     class="h-8 w-auto object-contain border rounded">
-                                                <a href="<?php echo htmlspecialchars($enlace['empresa_logo']); ?>" 
-                                                   target="_blank" 
-                                                   class="text-xs text-blue-600 hover:text-blue-800">
-                                                    Ver imagen
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                                
-                                <!-- Personalización visual -->
-                                <div class="space-y-4">
-                                    <h4 class="text-sm font-semibold text-gray-900 flex items-center">
-                                        <i class="ri-palette-line mr-2 text-purple-600"></i>
-                                        Personalización visual
-                                    </h4>
-                                    
-                                    <div class="space-y-3 pl-6">
-                                        <div class="flex items-center">
-                                            <span class="text-sm font-medium text-gray-700 w-24 flex-shrink-0">Color primario:</span>
-                                            <div class="flex items-center space-x-2">
-                                                <div class="w-6 h-6 rounded border border-gray-300" 
-                                                     style="background-color: <?php echo htmlspecialchars($enlace['color_primario'] ?: '#667eea'); ?>"></div>
-                                                <span class="text-sm text-gray-900 font-mono"><?php echo htmlspecialchars($enlace['color_primario'] ?: '#667eea'); ?></span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="flex items-center">
-                                            <span class="text-sm font-medium text-gray-700 w-24 flex-shrink-0">Color secundario:</span>
-                                            <div class="flex items-center space-x-2">
-                                                <div class="w-6 h-6 rounded border border-gray-300" 
-                                                     style="background-color: <?php echo htmlspecialchars($enlace['color_secundario'] ?: '#764ba2'); ?>"></div>
-                                                <span class="text-sm text-gray-900 font-mono"><?php echo htmlspecialchars($enlace['color_secundario'] ?: '#764ba2'); ?></span>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Vista previa del gradiente -->
-                                        <div class="flex items-center">
-                                            <span class="text-sm font-medium text-gray-700 w-24 flex-shrink-0">Vista previa:</span>
-                                            <div class="w-32 h-8 rounded border border-gray-300" 
-                                                 style="background: linear-gradient(135deg, <?php echo htmlspecialchars($enlace['color_primario'] ?: '#667eea'); ?> 0%, <?php echo htmlspecialchars($enlace['color_secundario'] ?: '#764ba2'); ?> 100%);">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
                             <!-- Mensaje de bienvenida -->
                             <?php if (!empty($enlace['mensaje_bienvenida'])): ?>
                             <div class="mb-4">
@@ -1225,7 +912,6 @@ include 'includes/header.php';
                                     <i class="ri-link"></i>
                                 </div>
                                 <h3 class="form-card-title"><?php echo htmlspecialchars($enlace['nombre']); ?></h3>
-                                <p class="form-card-description">Empresa: <?php echo htmlspecialchars($enlace['empresa_nombre'] ?: 'No especificado'); ?></p>
                                 
                                 <div class="form-card-badges">
                                     <span class="form-badge <?php echo $enlace['confirmacion_automatica'] ? 'form-badge-auto' : 'form-badge-manual'; ?>">
@@ -1241,40 +927,14 @@ include 'includes/header.php';
                             
                             <!-- Información detallada móvil -->
                             <div class="px-4 pb-2">
-                                <!-- Colores -->
-                                <div class="mb-3">
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span class="text-gray-600">Colores:</span>
-                                        <div class="flex items-center space-x-2">
-                                            <div class="w-4 h-4 rounded border" 
-                                                 style="background-color: <?php echo htmlspecialchars($enlace['color_primario'] ?: '#667eea'); ?>"></div>
-                                            <div class="w-4 h-4 rounded border" 
-                                                 style="background-color: <?php echo htmlspecialchars($enlace['color_secundario'] ?: '#764ba2'); ?>"></div>
-                                            <div class="w-12 h-4 rounded border" 
-                                                 style="background: linear-gradient(135deg, <?php echo htmlspecialchars($enlace['color_primario'] ?: '#667eea'); ?> 0%, <?php echo htmlspecialchars($enlace['color_secundario'] ?: '#764ba2'); ?> 100%);">
-                                            </div>
-                                        </div>
+                                <!-- Mensaje de bienvenida -->
+                                <?php if (!empty($enlace['mensaje_bienvenida'])): ?>
+                                <div class="mb-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                                    <div class="text-xs font-semibold text-green-700 mb-1 flex items-center">
+                                        <i class="ri-message-2-line mr-1"></i>
+                                        Mensaje de bienvenida:
                                     </div>
-                                </div>
-                                
-                                <!-- Contacto -->
-                                <?php if (!empty($enlace['telefono_contacto']) || !empty($enlace['email_contacto'])): ?>
-                                <div class="mb-3 text-sm">
-                                    <div class="text-gray-600 mb-1">Contacto:</div>
-                                    <?php if (!empty($enlace['telefono_contacto'])): ?>
-                                        <div class="flex items-center text-gray-700 mb-1">
-                                            <i class="ri-phone-line mr-2 text-green-600"></i>
-                                            <a href="tel:<?php echo htmlspecialchars($enlace['telefono_contacto']); ?>" 
-                                               class="text-blue-600"><?php echo htmlspecialchars($enlace['telefono_contacto']); ?></a>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if (!empty($enlace['email_contacto'])): ?>
-                                        <div class="flex items-center text-gray-700">
-                                            <i class="ri-mail-line mr-2 text-blue-600"></i>
-                                            <a href="mailto:<?php echo htmlspecialchars($enlace['email_contacto']); ?>" 
-                                               class="text-blue-600 truncate"><?php echo htmlspecialchars($enlace['email_contacto']); ?></a>
-                                        </div>
-                                    <?php endif; ?>
+                                    <p class="text-sm text-gray-700 italic">"<?php echo htmlspecialchars($enlace['mensaje_bienvenida']); ?>"</p>
                                 </div>
                                 <?php endif; ?>
                                 
@@ -1305,11 +965,6 @@ include 'includes/header.php';
                             $baseUrl = $protocol . $host . $path;
                             $enlaceCompleto = $baseUrl . 'reservar?f=' . $enlace['slug'];
                             ?>
-                            
-                            <!-- <div class="form-card-url">
-                                <div class="form-card-url-label">Enlace del formulario:</div>
-                                <div class="form-card-url-text"><?php echo $enlaceCompleto; ?></div>
-                            </div> -->
                             
                             <div class="form-card-actions">
                                 <a href="<?php echo $enlaceCompleto; ?>" 
@@ -1467,44 +1122,6 @@ document.addEventListener('DOMContentLoaded', function() {
             formContainerMobile.classList.toggle('collapsed');
             formContainerMobile.classList.toggle('expanded');
             toggleBtnMobile.classList.toggle('active');
-        });
-    }
-    
-    // Sincronizar inputs de color con texto (Desktop)
-    const colorPrimario = document.getElementById('color_primario');
-    const colorPrimarioText = document.getElementById('color_primario_text');
-    
-    if (colorPrimario && colorPrimarioText) {
-        colorPrimario.addEventListener('input', function() {
-            colorPrimarioText.value = this.value;
-        });
-    }
-    
-    const colorSecundario = document.getElementById('color_secundario');
-    const colorSecundarioText = document.getElementById('color_secundario_text');
-    
-    if (colorSecundario && colorSecundarioText) {
-        colorSecundario.addEventListener('input', function() {
-            colorSecundarioText.value = this.value;
-        });
-    }
-    
-    // Sincronizar inputs de color con texto (Mobile)
-    const colorPrimarioMobile = document.getElementById('color_primario_mobile');
-    const colorPrimarioTextMobile = document.getElementById('color_primario_text_mobile');
-    
-    if (colorPrimarioMobile && colorPrimarioTextMobile) {
-        colorPrimarioMobile.addEventListener('input', function() {
-            colorPrimarioTextMobile.value = this.value;
-        });
-    }
-    
-    const colorSecundarioMobile = document.getElementById('color_secundario_mobile');
-    const colorSecundarioTextMobile = document.getElementById('color_secundario_text_mobile');
-    
-    if (colorSecundarioMobile && colorSecundarioTextMobile) {
-        colorSecundarioMobile.addEventListener('input', function() {
-            colorSecundarioTextMobile.value = this.value;
         });
     }
 });
