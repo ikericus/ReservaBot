@@ -67,10 +67,24 @@ class EmailTemplates {
             }
         }
         
-        // Header con logo o texto
-        $headerContent = $logoBase64 
-            ? "<img src='{$logoBase64}' alt='{$nombreNegocio}' style='max-height: 64px; max-width: 200px;'>"
-            : "<h1 style='color: white; margin: 0;'>{$nombreNegocio}</h1>";
+        $headerContent = "";
+
+        // Mostrar logo si existe
+        if ($logoBase64) {
+            $headerContent .= "
+                <div style='text-align:center;'>
+                    <img src='{$logoBase64}' alt='{$nombreNegocio}' 
+                        style='max-height: 70px; max-width: 230px; display:block; margin:0 auto;'>
+                </div>
+            ";
+        }
+
+        // Nombre del negocio siempre visible, con estilo profesional
+        $headerContent .= "
+            <h2 style='color: white; margin: 6px 0 0; font-size: 20px; text-align:center; font-weight:500;'>
+                {$nombreNegocio}
+            </h2>
+        ";
         
         return "
         <!DOCTYPE html>
