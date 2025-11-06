@@ -17,7 +17,7 @@ class WhatsAppMessageTemplate {
     private const MENSAJES_DEFAULT = [
         'confirmacion' => "¡Hola {nombre_cliente}! ✅\n\nTu reserva ha sido confirmada:\n📅 Fecha: {fecha}\n⏰ Hora: {hora}\n⏱️ Duración: {duracion}\n\n¡Te esperamos en {negocio}!",
         'recordatorio' => "¡Hola {nombre_cliente}! 👋\n\nTe recordamos tu cita de mañana:\n📅 Fecha: {fecha}\n⏰ Hora: {hora}\n⏱️ Duración: {duracion}\n\n¡Nos vemos en {negocio}!",
-        'bienvenida' => "¡Hola! 👋 Bienvenido/a a {negocio}.\n\n¿En qué podemos ayudarte? Estamos aquí para atenderte."
+        'bienvenida' => "¡Hola! 👋 Bienvenido/a a {negocio}.\n\nEnseguida leeré tu mensaje."
     ];
     
     private function __construct(
