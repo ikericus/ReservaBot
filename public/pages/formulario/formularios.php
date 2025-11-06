@@ -63,7 +63,7 @@ try {
     $enlaces = array_map(fn($f) => $f->toArray(), $formulariosEntities);
     
     $configuracionDomain = getContainer()->getConfiguracionDomain();
-    $$configUsuario = $configuracionDomain->obtenerConfiguraciones($usuario_id);
+    $configUsuario = $configuracionDomain->obtenerConfiguraciones($usuario_id);
 
 } catch (Exception $e) {
     setFlashError('Error al obtener formularios: ' . $e->getMessage());
