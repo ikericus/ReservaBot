@@ -62,17 +62,9 @@ try {
     $formulariosEntities = $formularioDomain->obtenerFormulariosUsuario($usuario_id);
     $enlaces = array_map(fn($f) => $f->toArray(), $formulariosEntities);
     
-    // Obtener configuración visual del usuario
-    $configuracionRepo = getContainer()->getConfiguracionNegocioRepository();
-    $configUsuario = [
-        'empresa_nombre' => $configuracionRepo->obtenerValor('empresa_nombre', $usuario_id) ?? $currentUser['negocio'] ?? '',
-        'color_primario' => $configuracionRepo->obtenerValor('color_primario', $usuario_id) ?? '#667eea',
-        'color_secundario' => $configuracionRepo->obtenerValor('color_secundario', $usuario_id) ?? '#764ba2',
-        'empresa_imagen' => $configuracionRepo->obtenerValor('empresa_imagen', $usuario_id),
-        'telefono_contacto' => $configuracionRepo->obtenerValor('telefono_contacto', $usuario_id),
-        'email_contacto' => $configuracionRepo->obtenerValor('email_contacto', $usuario_id),
-        'direccion' => $configuracionRepo->obtenerValor('direccion', $usuario_id),
-    ];
+    $configuracionDomain = getContainer()->getConfiguracionDomain();
+    $$configUsuario = $configuracionDomain->obtenerConfiguraciones($usuario_id);
+
 } catch (Exception $e) {
     setFlashError('Error al obtener formularios: ' . $e->getMessage());
     $enlaces = [];
