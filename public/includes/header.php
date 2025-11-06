@@ -144,9 +144,9 @@
             letter-spacing: 0.05em;
         }
         
-        .user-avatar {
+        /* .user-avatar {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
+        } */
         
         .notification-badge {
             animation: pulse 2s infinite;
@@ -268,15 +268,6 @@
                         
                         <!-- Usuario móvil -->
                         <div class="mt-8 px-4 pt-4 border-t border-gray-100">
-                            <!-- <div class="flex items-center p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
-                                <div class="user-avatar h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold mr-3">
-                                    <?php echo strtoupper(substr($user['nombre'] ?? 'U', 0, 1)); ?>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm font-semibold text-gray-900"><?php echo htmlspecialchars($configuraciones['empresa_nombre'] ?? 'Error empresa_nombre'); ?></p>
-                                    <p class="text-xs text-gray-500"><?php echo htmlspecialchars($usuarioEntity->getNombre() ?? 'Error nombre usuario'); ?></p>
-                                </div>
-                            </div> -->
                             
                             <div class="mt-3 space-y-2">
                                 <a href="/perfil" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
@@ -291,7 +282,6 @@
                             
                             <div class="mt-3 text-center">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800">
-                                    <i class="ri-vip-crown-line mr-1"></i>
                                     Plan <?php echo ucfirst($user['plan'] ?? 'Básico'); ?>
                                 </span>
                             </div>

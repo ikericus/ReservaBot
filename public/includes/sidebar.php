@@ -94,6 +94,11 @@ try {
     error_log('Error obteniendo estadísticas del sidebar: ' . $e->getMessage());
 }
 ?>
+<style>
+    .user-avatar {
+        background: linear-gradient(135deg, <?php echo $configuraciones['color_primario'] ?? '#667eea' ?>  0%, <?php echo $configuraciones['color_secundario'] ?? '#667eea' ?> 100%);
+    }
+</style>
 
 <!-- Sidebar Mejorado -->
 <div class="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 sidebar-glass shadow-2xl">
