@@ -227,6 +227,34 @@ include 'includes/header.php';
     50% { opacity: 0.6; }
 }
 
+/* Estilos para el modal del editor de plantillas */
+#templateEditorModal {
+    backdrop-filter: blur(2px);
+}
+
+#templateEditorModal.flex {
+    animation: fadeIn 0.2s ease-out;
+}
+
+#templateEditorModal .bg-white {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+code {
+    font-family: 'Courier New', monospace;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     body {
@@ -496,7 +524,7 @@ include 'includes/header.php';
                     <?php endif; ?>
                 </div>
                 
-                <!-- Card de mensajes automáticos -->
+                <!-- Card de mensajes automáticos ACTUALIZADO CON BOTONES PERSONALIZAR -->
                 <div class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo ($connectionStatus !== 'connected' && $connectionStatus !== 'ready') ? 'opacity-50 pointer-events-none' : ''; ?>">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                         <i class="ri-message-line text-green-600 mr-2"></i>
@@ -505,32 +533,59 @@ include 'includes/header.php';
                     <p class="text-gray-600 mb-6">Configura qué mensajes se enviarán automáticamente a tus clientes.</p>
                     
                     <div class="space-y-4">
-                        <label class="flex items-start p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                            <input type="checkbox" id="autoConfirmation" <?php echo ($whatsappConfig['auto_confirmacion'] ?? false) ? 'checked' : ''; ?> class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4 mt-1 flex-shrink-0">
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-medium text-gray-900">Confirmación de reservas</h4>
-                                <p class="text-sm text-gray-600 mt-1">Enviar confirmación automática cuando se cree una nueva reserva</p>
-                                <p class="text-xs text-gray-500 mt-1">Ejemplo: "Tu reserva ha sido confirmada para el {fecha} a las {hora}"</p>
-                            </div>
-                        </label>
+                        <!-- Confirmación -->
+                        <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                            <label class="flex items-start cursor-pointer">
+                                <input type="checkbox" id="autoConfirmation" <?php echo ($whatsappConfig['auto_confirmacion'] ?? false) ? 'checked' : ''; ?> class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4 mt-1 flex-shrink-0">
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-medium text-gray-900">Confirmación de reservas</h4>
+                                    <p class="text-sm text-gray-600 mt-1">Enviar confirmación automática cuando se cree una nueva reserva</p>
+                                    <p class="text-xs text-gray-500 mt-1">Ejemplo: "Tu reserva ha sido confirmada para el {fecha} a las {hora}"</p>
+                                </div>
+                            </label>
+                            <?php if ($whatsappConfig['auto_confirmacion'] ?? false): ?>
+                                <button onclick="openTemplateEditor('confirmacion')" class="mt-3 text-blue-600 hover:text-blue-700 text-sm font-medium inline-flex items-center">
+                                    <i class="ri-edit-line mr-1"></i>
+                                    Personalizar mensaje
+                                </button>
+                            <?php endif; ?>
+                        </div>
                         
-                        <label class="flex items-start p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                            <input type="checkbox" id="autoReminders" <?php echo ($whatsappConfig['auto_recordatorio'] ?? false) ? 'checked' : ''; ?> class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4 mt-1 flex-shrink-0">
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-medium text-gray-900">Recordatorios automáticos</h4>
-                                <p class="text-sm text-gray-600 mt-1">Enviar recordatorio 24 horas antes de la cita</p>
-                                <p class="text-xs text-gray-500 mt-1">Se envía automáticamente a las 10:00 AM del día anterior</p>
-                            </div>
-                        </label>
+                        <!-- Recordatorio -->
+                        <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                            <label class="flex items-start cursor-pointer">
+                                <input type="checkbox" id="autoReminders" <?php echo ($whatsappConfig['auto_recordatorio'] ?? false) ? 'checked' : ''; ?> class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4 mt-1 flex-shrink-0">
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-medium text-gray-900">Recordatorios automáticos</h4>
+                                    <p class="text-sm text-gray-600 mt-1">Enviar recordatorio 24 horas antes de la cita</p>
+                                    <p class="text-xs text-gray-500 mt-1">Se envía automáticamente a las 10:00 AM del día anterior</p>
+                                </div>
+                            </label>
+                            <?php if ($whatsappConfig['auto_recordatorio'] ?? false): ?>
+                                <button onclick="openTemplateEditor('recordatorio')" class="mt-3 text-blue-600 hover:text-blue-700 text-sm font-medium inline-flex items-center">
+                                    <i class="ri-edit-line mr-1"></i>
+                                    Personalizar mensaje
+                                </button>
+                            <?php endif; ?>
+                        </div>
                         
-                        <label class="flex items-start p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                            <input type="checkbox" id="autoWelcome" <?php echo ($whatsappConfig['auto_bienvenida'] ?? false) ? 'checked' : ''; ?> class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4 mt-1 flex-shrink-0">
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-medium text-gray-900">Mensaje de bienvenida</h4>
-                                <p class="text-sm text-gray-600 mt-1">Responder automáticamente cuando un cliente escriba por primera vez</p>
-                                <p class="text-xs text-gray-500 mt-1">Solo se envía una vez por cliente nuevo</p>
-                            </div>
-                        </label>
+                        <!-- Bienvenida -->
+                        <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                            <label class="flex items-start cursor-pointer">
+                                <input type="checkbox" id="autoWelcome" <?php echo ($whatsappConfig['auto_bienvenida'] ?? false) ? 'checked' : ''; ?> class="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-4 mt-1 flex-shrink-0">
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-medium text-gray-900">Mensaje de bienvenida</h4>
+                                    <p class="text-sm text-gray-600 mt-1">Responder automáticamente cuando un cliente escriba por primera vez</p>
+                                    <p class="text-xs text-gray-500 mt-1">Solo se envía una vez por cliente nuevo</p>
+                                </div>
+                            </label>
+                            <?php if ($whatsappConfig['auto_bienvenida'] ?? false): ?>
+                                <button onclick="openTemplateEditor('bienvenida')" class="mt-3 text-blue-600 hover:text-blue-700 text-sm font-medium inline-flex items-center">
+                                    <i class="ri-edit-line mr-1"></i>
+                                    Personalizar mensaje
+                                </button>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     
                     <div class="mt-6 pt-6 border-t border-gray-200">
@@ -538,9 +593,6 @@ include 'includes/header.php';
                             <i class="ri-save-line mr-2"></i>
                             Guardar Configuración
                         </button>
-                        <a href="/configuracion#mensajes" class="mt-3 md:mt-0 md:ml-3 inline-block text-blue-600 hover:text-blue-700 text-sm font-medium">
-                            Personalizar mensajes →
-                        </a>
                     </div>
                 </div>
             </div>
@@ -587,9 +639,277 @@ include 'includes/header.php';
         </div>
     </div>
 
+    <!-- Modal para editar plantilla de mensaje -->
+    <div id="templateEditorModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-gray-900" id="modalTitle">Personalizar mensaje</h3>
+                    <button onclick="closeTemplateEditor()" class="text-gray-400 hover:text-gray-600">
+                        <i class="ri-close-line text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <!-- Información sobre placeholders -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <h4 class="font-medium text-blue-900 mb-2 flex items-center">
+                        <i class="ri-information-line mr-2"></i>
+                        Variables disponibles
+                    </h4>
+                    <div class="text-sm text-blue-800 space-y-1">
+                        <p><code class="bg-blue-100 px-2 py-0.5 rounded">{nombre_cliente}</code> - Nombre del cliente</p>
+                        <p><code class="bg-blue-100 px-2 py-0.5 rounded">{fecha}</code> - Fecha de la cita (dd/mm/aaaa)</p>
+                        <p><code class="bg-blue-100 px-2 py-0.5 rounded">{hora}</code> - Hora de la cita (HH:MM)</p>
+                        <p><code class="bg-blue-100 px-2 py-0.5 rounded">{duracion}</code> - Duración de la cita</p>
+                        <p><code class="bg-blue-100 px-2 py-0.5 rounded">{negocio}</code> - Nombre de tu negocio</p>
+                    </div>
+                </div>
+                
+                <!-- Editor de mensaje -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Mensaje
+                    </label>
+                    <textarea 
+                        id="templateMessage" 
+                        rows="8" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm"
+                        placeholder="Escribe tu mensaje aquí..."
+                    ></textarea>
+                    <p class="mt-2 text-sm text-gray-500">
+                        <span id="charCount">0</span> / 1000 caracteres
+                    </p>
+                </div>
+                
+                <!-- Vista previa -->
+                <div class="mb-6">
+                    <h4 class="block text-sm font-medium text-gray-700 mb-2">Vista previa</h4>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div class="bg-white rounded-lg p-3 shadow-sm">
+                            <p id="previewMessage" class="text-sm text-gray-800 whitespace-pre-wrap">
+                                Escribe un mensaje para ver la vista previa...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="flex flex-col md:flex-row gap-3 md:justify-between">
+                    <button 
+                        onclick="restoreDefaultTemplate()" 
+                        class="text-gray-600 hover:text-gray-800 font-medium inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                        <i class="ri-restart-line mr-2"></i>
+                        Restaurar mensaje por defecto
+                    </button>
+                    
+                    <div class="flex flex-col md:flex-row gap-3">
+                        <button 
+                            onclick="closeTemplateEditor()" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                        >
+                            Cancelar
+                        </button>
+                        <button 
+                            onclick="saveTemplate()" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        >
+                            <i class="ri-save-line mr-2"></i>
+                            Guardar mensaje
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
     // Solo inicializar el manager si tiene acceso y no estamos en la tab de conversaciones
     <?php if ($tabActivo === 'configuracion'): ?>
+        // Variables globales para el editor de plantillas
+        let currentTemplateType = null;
+        let templates = {};
+        let placeholders = {};
+
+        // Cargar plantillas al iniciar
+        async function loadTemplates() {
+            try {
+                const response = await fetch('/api/whatsapp-get-templates');
+                const data = await response.json();
+                
+                if (data.success) {
+                    templates = data.templates;
+                    placeholders = data.placeholders;
+                }
+            } catch (error) {
+                console.error('Error cargando plantillas:', error);
+            }
+        }
+
+        // Abrir editor de plantilla
+        async function openTemplateEditor(tipo) {
+            currentTemplateType = tipo;
+            
+            // Cargar plantillas si no están cargadas
+            if (Object.keys(templates).length === 0) {
+                await loadTemplates();
+            }
+            
+            const modal = document.getElementById('templateEditorModal');
+            const titleElement = document.getElementById('modalTitle');
+            const messageElement = document.getElementById('templateMessage');
+            
+            // Configurar título
+            const titles = {
+                'confirmacion': 'Personalizar mensaje de confirmación',
+                'recordatorio': 'Personalizar mensaje de recordatorio',
+                'bienvenida': 'Personalizar mensaje de bienvenida'
+            };
+            titleElement.textContent = titles[tipo] || 'Personalizar mensaje';
+            
+            // Cargar mensaje actual
+            const template = templates[tipo];
+            if (template) {
+                messageElement.value = template.mensaje;
+                updateCharCount();
+                updatePreview();
+            }
+            
+            // Mostrar modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            messageElement.focus();
+        }
+
+        // Cerrar editor de plantilla
+        function closeTemplateEditor() {
+            const modal = document.getElementById('templateEditorModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentTemplateType = null;
+        }
+
+        // Actualizar contador de caracteres
+        function updateCharCount() {
+            const messageElement = document.getElementById('templateMessage');
+            const charCountElement = document.getElementById('charCount');
+            const count = messageElement.value.length;
+            
+            charCountElement.textContent = count;
+            
+            if (count > 1000) {
+                charCountElement.classList.add('text-red-600');
+                charCountElement.classList.remove('text-gray-500');
+            } else {
+                charCountElement.classList.remove('text-red-600');
+                charCountElement.classList.add('text-gray-500');
+            }
+        }
+
+        // Actualizar vista previa
+        function updatePreview() {
+            const messageElement = document.getElementById('templateMessage');
+            const previewElement = document.getElementById('previewMessage');
+            
+            let preview = messageElement.value;
+            
+            if (!preview.trim()) {
+                previewElement.textContent = 'Escribe un mensaje para ver la vista previa...';
+                previewElement.classList.add('text-gray-400');
+                return;
+            }
+            
+            // Reemplazar placeholders con ejemplos
+            const ejemplos = {
+                '{nombre_cliente}': 'Juan Pérez',
+                '{fecha}': '15/12/2024',
+                '{hora}': '10:30',
+                '{duracion}': '45 minutos',
+                '{negocio}': 'Mi Negocio'
+            };
+            
+            for (const [placeholder, ejemplo] of Object.entries(ejemplos)) {
+                preview = preview.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), ejemplo);
+            }
+            
+            previewElement.textContent = preview;
+            previewElement.classList.remove('text-gray-400');
+        }
+
+        // Guardar plantilla
+        async function saveTemplate() {
+            const messageElement = document.getElementById('templateMessage');
+            const mensaje = messageElement.value.trim();
+            
+            if (!mensaje) {
+                window.whatsappManager?.showNotification('El mensaje no puede estar vacío', 'error');
+                return;
+            }
+            
+            if (mensaje.length > 1000) {
+                window.whatsappManager?.showNotification('El mensaje no puede superar los 1000 caracteres', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/whatsapp-save-template', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tipo_mensaje: currentTemplateType,
+                        mensaje: mensaje
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    templates[currentTemplateType] = data.template;
+                    window.whatsappManager?.showNotification('Mensaje guardado correctamente', 'success');
+                    closeTemplateEditor();
+                } else {
+                    throw new Error(data.error || 'Error desconocido');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                window.whatsappManager?.showNotification('Error guardando mensaje: ' + error.message, 'error');
+            }
+        }
+
+        // Restaurar plantilla por defecto
+        async function restoreDefaultTemplate() {
+            if (!confirm('¿Estás seguro de que quieres restaurar el mensaje por defecto? Se perderán los cambios actuales.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/whatsapp-restore-template', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tipo_mensaje: currentTemplateType
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    templates[currentTemplateType] = data.template;
+                    document.getElementById('templateMessage').value = data.template.mensaje;
+                    updateCharCount();
+                    updatePreview();
+                    window.whatsappManager?.showNotification('Mensaje restaurado al valor por defecto', 'success');
+                } else {
+                    throw new Error(data.error || 'Error desconocido');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                window.whatsappManager?.showNotification('Error restaurando mensaje: ' + error.message, 'error');
+            }
+        }
+
         class WhatsAppManager {
             constructor() {
                 this.currentStatus = '<?php echo $connectionStatus; ?>';
@@ -609,6 +929,26 @@ include 'includes/header.php';
                         this.startStatusCheck();
                     }
                 });
+                
+                // Event listeners para el editor
+                const messageElement = document.getElementById('templateMessage');
+                
+                if (messageElement) {
+                    messageElement.addEventListener('input', function() {
+                        updateCharCount();
+                        updatePreview();
+                    });
+                }
+                
+                // Cerrar modal con Escape
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        closeTemplateEditor();
+                    }
+                });
+                
+                // Cargar plantillas al iniciar
+                loadTemplates();
             }
 
             cacheElements() {
@@ -837,6 +1177,8 @@ include 'includes/header.php';
                 
                 if (data.success) {
                     window.whatsappManager?.showNotification('Configuración guardada correctamente', 'success');
+                    // Recargar para mostrar/ocultar botones de personalizar
+                    setTimeout(() => window.location.reload(), 1000);
                 } else {
                     throw new Error(data.error);
                 }
