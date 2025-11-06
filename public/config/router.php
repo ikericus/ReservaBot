@@ -49,9 +49,7 @@ class Router {
         $this->addRoute('GET',      '/admin/usuarios',                  'pages/admin/usuarios.php',             ['auth', 'admin']);
         $this->addRoute('GET',      '/admin/reservas',                  'pages/admin/reservas.php',             ['auth', 'admin']);
         $this->addRoute('GET',      '/admin/whatsapp',                  'pages/admin/whatsapp.php',             ['auth', 'admin']);
-        $this->addRoute('GET',      '/admin/logs',                      'pages/admin/logs.php',                 ['auth', 'admin']);        
-        $this->addRoute('POST',     '/api/admin/whatsapp-debug',        'api/admin/whatsapp-debug.php',         ['auth', 'admin']);      
-        $this->addRoute('GET',      '/api/admin/whatsapp-debug',        'api/admin/whatsapp-debug.php',         ['auth', 'admin']);
+        $this->addRoute('GET',      '/admin/logs',                      'pages/admin/logs.php',                 ['auth', 'admin']);
 
         $this->addRoute('GET',      '/dia',                             'pages/calendario/dia.php',             ['auth']);        
         $this->addRoute('GET',      '/semana',                          'pages/calendario/semana.php',          ['auth']);        
@@ -61,7 +59,7 @@ class Router {
         $this->addRoute('GET',      '/reserva',                         'pages/reserva/reserva.php',            ['auth']);        
         $this->addRoute('GET',      '/reserva-form',                    'pages/reserva/reserva-form.php',       ['auth']);  
         $this->addRoute('GET',      '/clientes',                        'pages/cliente/clientes.php',           ['auth']);
-        $this->addRoute('GET',      '/cliente',                 'pages/cliente/cliente.php',    ['auth']);
+        $this->addRoute('GET',      '/cliente',                         'pages/cliente/cliente.php',    ['auth']);
         $this->addRoute('GET',      '/formularios',                     'pages/formulario/formularios.php',     ['auth']);
         $this->addRoute('POST',     '/formularios',                     'pages/formulario/formularios.php',     ['auth']); 
         $this->addRoute('GET',      '/configuracion',                   'pages/user/configuracion.php',         ['auth']);
@@ -78,6 +76,8 @@ class Router {
         $this->addRoute('POST',     '/api/reserva-publica-crear',               'api/reserva-publica-crear.php',             ['auth']);
         $this->addRoute('POST',     '/api/horas-disponibles',                   'api/horas-disponibles.php',                 ['auth']);
         $this->addRoute('POST',     '/api/configuracion-actualizar',            'api/configuracion-actualizar.php',          ['auth']);
+        $this->addRoute('POST',     '/api/configuracion-email-prueba',          'api/configuracion-email-prueba.php',          ['auth']);
+        
         $this->addRoute('POST',     '/api/whatsapp-send',                       'api/whatsapp-send.php',                     ['auth']);
         $this->addRoute('POST',     '/api/whatsapp-connect',                    'api/whatsapp-connect.php',                  ['auth']);
         $this->addRoute('GET',      '/api/whatsapp-status',                     'api/whatsapp-status.php',                   ['auth']);

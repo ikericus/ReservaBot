@@ -1,5 +1,5 @@
 <?php
-// api/crear-reserva-publica.php
+// api/reserva-publica-crear.php
 
 // Cabeceras para JSON
 header('Content-Type: application/json');

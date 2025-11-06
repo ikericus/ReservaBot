@@ -76,7 +76,8 @@ class Container {
     public function getConfiguracionDomain(): ConfiguracionDomain {
         if (!isset($this->services['configuracionDomain'])) {
             $this->services['configuracionDomain'] = new ConfiguracionDomain(
-                $this->getConfiguracionNegocioRepository()
+                $this->getConfiguracionNegocioRepository(),
+                $this->getEmailRepository()
             );
         }
         return $this->services['configuracionDomain'];

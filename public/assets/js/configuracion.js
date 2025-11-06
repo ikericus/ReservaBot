@@ -363,6 +363,91 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ========================================================================
+    // EMAIL DE PRUEBA
+    // ========================================================================
+    
+    const btnEnviarEmailPrueba = document.getElementById('btnEnviarEmailPrueba');
+    const feedbackDiv = document.getElementById('emailPruebaFeedback');
+    
+    if (btnEnviarEmailPrueba && feedbackDiv) {
+        btnEnviarEmailPrueba.addEventListener('click', async function() {
+            // Deshabilitar botón mientras se procesa
+            const btnOriginalHTML = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i><span>Enviando...</span>';
+            
+            // Ocultar feedback previo
+            feedbackDiv.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/configuracion-email-prueba', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Mostrar mensaje de éxito
+                    feedbackDiv.className = 'mt-3 p-3 rounded-md bg-green-50 border border-green-200';
+                    feedbackDiv.innerHTML = `
+                        <div class="flex items-start">
+                            <i class="ri-check-circle-line text-green-500 mr-2 mt-0.5"></i>
+                            <div class="flex-1">
+                                <p class="text-sm text-green-800 font-medium">¡Email enviado correctamente!</p>
+                                <p class="text-xs text-green-700 mt-1">${result.message}</p>
+                            </div>
+                        </div>
+                    `;
+                    feedbackDiv.classList.remove('hidden');
+                    
+                    // Ocultar mensaje después de 10 segundos
+                    setTimeout(() => {
+                        feedbackDiv.classList.add('hidden');
+                    }, 10000);
+                    
+                } else {
+                    // Mostrar mensaje de error
+                    feedbackDiv.className = 'mt-3 p-3 rounded-md bg-red-50 border border-red-200';
+                    feedbackDiv.innerHTML = `
+                        <div class="flex items-start">
+                            <i class="ri-error-warning-line text-red-500 mr-2 mt-0.5"></i>
+                            <div class="flex-1">
+                                <p class="text-sm text-red-800 font-medium">Error al enviar el email</p>
+                                <p class="text-xs text-red-700 mt-1">${result.error || 'Por favor, inténtalo de nuevo'}</p>
+                            </div>
+                        </div>
+                    `;
+                    feedbackDiv.classList.remove('hidden');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                
+                // Mostrar mensaje de error de red
+                feedbackDiv.className = 'mt-3 p-3 rounded-md bg-red-50 border border-red-200';
+                feedbackDiv.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="ri-error-warning-line text-red-500 mr-2 mt-0.5"></i>
+                        <div class="flex-1">
+                            <p class="text-sm text-red-800 font-medium">Error de conexión</p>
+                            <p class="text-xs text-red-700 mt-1">No se pudo conectar con el servidor. Por favor, verifica tu conexión e inténtalo de nuevo.</p>
+                        </div>
+                    </div>
+                `;
+                feedbackDiv.classList.remove('hidden');
+                
+            } finally {
+                // Restaurar botón
+                this.disabled = false;
+                this.innerHTML = btnOriginalHTML;
+            }
+        });
+    }
+    
+    // ========================================================================
     // FORM SUBMISSION
     // ========================================================================
     

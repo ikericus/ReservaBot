@@ -430,4 +430,87 @@ class EmailTemplates {
         ];
     }
 
+    /**
+     * Template: Email de prueba de configuración (NEGOCIO - Personalizado)
+     * 
+     * Genera un email de ejemplo para que el usuario visualice cómo se verán
+     * los emails con su configuración de colores, logo y datos del negocio
+     */
+    public function emailPruebaConfiguracion(string $nombreUsuario, int $usuarioId): array {
+        // Obtener configuración del negocio
+        $nombreNegocio = $this->appName;
+        $colorPrimario = '#4F46E5';
+        
+        if ($this->configuracionRepository) {
+            try {
+                $nombreNegocio = $this->configuracionRepository->obtenerValor('empresa_nombre', $usuarioId) 
+                    ?? $this->appName;
+                $colorPrimario = $this->configuracionRepository->obtenerValor('color_primario', $usuarioId) 
+                    ?? '#4F46E5';
+            } catch (\Exception $e) {
+                error_log("Error obteniendo configuración para email de prueba: " . $e->getMessage());
+            }
+        }
+        
+        // Datos ficticios de una reserva de ejemplo
+        $fechaEjemplo = date('d/m/Y', strtotime('+7 days'));
+        $horaEjemplo = '10:00';
+        
+        // Nota de prueba destacada
+        $notaPrueba = "
+            <div style='background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin-bottom: 20px; border-radius: 8px;'>
+                <p style='margin: 0; color: #1e40af; font-size: 14px;'>
+                    <strong>📧 Email de Prueba</strong><br>
+                    Este es un email de ejemplo para que visualices cómo se mostrarán los colores, logo y datos de tu negocio en los emails enviados a tus clientes. 
+                    Los datos de la reserva son ficticios.
+                </p>
+            </div>";
+        
+        // Contenido del email usando el mismo formato que confirmacionReserva
+        $contenidoHtml = $notaPrueba . "
+            <h2 style='color: #1f2937; margin-top: 0;'>Hola {$nombreUsuario},</h2>
+            <p>Tu reserva ha sido <strong style='color: #10b981;'>confirmada</strong>.</p>
+            
+            <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;'>
+                <h3 style='margin-top: 0; color: #374151;'>📅 Detalles de tu cita:</h3>
+                <table style='width: 100%;'>
+                    <tr><td style='padding: 8px 0; color: #374151;'><strong>Fecha:</strong></td><td style='color: #6b7280;'>{$fechaEjemplo}</td></tr>
+                    <tr><td style='padding: 8px 0; color: #374151;'><strong>Hora:</strong></td><td style='color: #6b7280;'>{$horaEjemplo}</td></tr>
+                    <tr><td style='padding: 8px 0; color: #374151;'><strong>Teléfono:</strong></td><td style='color: #6b7280;'>+34 600 000 000</td></tr>
+                </table>
+                <p style='margin-top: 15px; color: #374151;'><strong>Comentarios:</strong><br>Este es un mensaje de ejemplo para visualizar cómo se verán los emails enviados a tus clientes.</p>
+            </div>";
+        
+        // Botón de gestión
+        $gestionUrl = $this->baseUrl . '/reserva/ejemplo';
+        $contenidoHtml .= $this->generarBoton($gestionUrl, 'Gestionar mi reserva', $colorPrimario);
+        
+        // Banner de estado confirmado
+        $contenidoHtml .= "
+            <div style='background: #d1fae5; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; margin: 20px 0;'>
+                <p style='margin: 0; color: #065f46;'><strong>✅ Reserva confirmada</strong><br>¡Te esperamos!</p>
+            </div>";
+        
+        // Versión texto plano
+        $contenidoTexto = "=== EMAIL DE PRUEBA ===\n\n";
+        $contenidoTexto .= "Este es un email de ejemplo para visualizar cómo se mostrarán los emails a tus clientes.\n";
+        $contenidoTexto .= "Los datos de la reserva son ficticios.\n\n";
+        $contenidoTexto .= "======================\n\n";
+        $contenidoTexto .= "Hola {$nombreUsuario},\n\n";
+        $contenidoTexto .= "Tu reserva ha sido confirmada.\n\n";
+        $contenidoTexto .= "Detalles:\n";
+        $contenidoTexto .= "- Fecha: {$fechaEjemplo}\n";
+        $contenidoTexto .= "- Hora: {$horaEjemplo}\n";
+        $contenidoTexto .= "- Teléfono: +34 600 000 000\n";
+        $contenidoTexto .= "- Comentarios: Este es un mensaje de ejemplo para visualizar cómo se verán los emails enviados a tus clientes.\n\n";
+        $contenidoTexto .= "Gestiona tu reserva aquí: {$gestionUrl}\n\n";
+        $contenidoTexto .= "Saludos,\n{$nombreNegocio}";
+        
+        return [
+            'asunto' => "🎨 [PRUEBA] ✅ Tu reserva en {$nombreNegocio}",
+            'cuerpo_texto' => $contenidoTexto,
+            'cuerpo_html' => $this->wrapHtmlNegocio('Email de Prueba', $contenidoHtml, $usuarioId)
+        ];
+    }
+
 }
