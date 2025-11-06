@@ -21,7 +21,7 @@
     <link rel="manifest" href="/manifest.json">
     <script defer>
         if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/service-worker.js")
+        navigator.serviceWorker.register("/sw.js")
             .then(() => console.log("Service Worker registrado"))
             .catch(err => console.log("Error al registrar SW:", err));
         }
