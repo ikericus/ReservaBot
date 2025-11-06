@@ -27,14 +27,10 @@ class FormularioRepository implements IFormularioRepository
     {
         $sql = "
             INSERT INTO formularios_publicos (
-                usuario_id, nombre, slug, activo, confirmacion_automatica,
-                empresa_nombre, empresa_logo, direccion, telefono_contacto, email_contacto,
-                color_primario, color_secundario, mensaje_bienvenida,
+                usuario_id, nombre, descripcion, slug, activo, confirmacion_automatica,
                 created_at, updated_at
             ) VALUES (
-                :usuario_id, :nombre, :slug, :activo, :confirmacion_automatica,
-                :empresa_nombre, :empresa_logo, :direccion, :telefono_contacto, :email_contacto,
-                :color_primario, :color_secundario, :mensaje_bienvenida,
+                :usuario_id, :nombre, :descripcion, :slug, :activo, :confirmacion_automatica,
                 :created_at, :updated_at
             )
         ";
@@ -44,17 +40,10 @@ class FormularioRepository implements IFormularioRepository
             $stmt->execute([
                 ':usuario_id' => $formulario->getUsuarioId(),
                 ':nombre' => $formulario->getNombre(),
+                ':descripcion' => $formulario->getDescripcion(),
                 ':slug' => $formulario->getSlug(),
                 ':activo' => $formulario->isActivo() ? 1 : 0,
                 ':confirmacion_automatica' => $formulario->isConfirmacionAutomatica() ? 1 : 0,
-                ':empresa_nombre' => $formulario->getEmpresaNombre(),
-                ':empresa_logo' => $formulario->getEmpresaLogo(),
-                ':direccion' => $formulario->getDireccion(),
-                ':telefono_contacto' => $formulario->getTelefonoContacto(),
-                ':email_contacto' => $formulario->getEmailContacto(),
-                ':color_primario' => $formulario->getColorPrimario(),
-                ':color_secundario' => $formulario->getColorSecundario(),
-                ':mensaje_bienvenida' => $formulario->getMensajeBienvenida(),
                 ':created_at' => $formulario->getCreatedAt()->format('Y-m-d H:i:s'),
                 ':updated_at' => $formulario->getUpdatedAt()->format('Y-m-d H:i:s'),
             ]);
@@ -82,16 +71,9 @@ class FormularioRepository implements IFormularioRepository
             UPDATE formularios_publicos 
             SET 
                 nombre = :nombre,
+                descripcion = :descripcion,
                 activo = :activo,
                 confirmacion_automatica = :confirmacion_automatica,
-                empresa_nombre = :empresa_nombre,
-                empresa_logo = :empresa_logo,
-                direccion = :direccion,
-                telefono_contacto = :telefono_contacto,
-                email_contacto = :email_contacto,
-                color_primario = :color_primario,
-                color_secundario = :color_secundario,
-                mensaje_bienvenida = :mensaje_bienvenida,
                 updated_at = :updated_at
             WHERE id = :id AND usuario_id = :usuario_id
         ";
@@ -102,16 +84,9 @@ class FormularioRepository implements IFormularioRepository
                 ':id' => $formulario->getId(),
                 ':usuario_id' => $formulario->getUsuarioId(),
                 ':nombre' => $formulario->getNombre(),
+                ':descripcion' => $formulario->getDescripcion(),
                 ':activo' => $formulario->isActivo() ? 1 : 0,
                 ':confirmacion_automatica' => $formulario->isConfirmacionAutomatica() ? 1 : 0,
-                ':empresa_nombre' => $formulario->getEmpresaNombre(),
-                ':empresa_logo' => $formulario->getEmpresaLogo(),
-                ':direccion' => $formulario->getDireccion(),
-                ':telefono_contacto' => $formulario->getTelefonoContacto(),
-                ':email_contacto' => $formulario->getEmailContacto(),
-                ':color_primario' => $formulario->getColorPrimario(),
-                ':color_secundario' => $formulario->getColorSecundario(),
-                ':mensaje_bienvenida' => $formulario->getMensajeBienvenida(),
                 ':updated_at' => $formulario->getUpdatedAt()->format('Y-m-d H:i:s'),
             ]);
         } catch (PDOException $e) {

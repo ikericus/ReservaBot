@@ -225,7 +225,7 @@ class EmailTemplates {
         $horaFormateada = substr($reserva['hora'], 0, 5);
         $usuarioId = $reserva['usuario_id'];
         
-        // Obtener nombre del negocio
+        // Obtener nombre del negocio y color primario desde configuraciones
         $nombreNegocio = $this->appName;
         $colorPrimario = '#4F46E5';
         
