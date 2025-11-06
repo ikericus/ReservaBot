@@ -37,8 +37,10 @@ class EmailRepository implements IEmailRepository {
             $mail->SMTPAuth   = true;
             $mail->Username   = $_ENV['MAIL_USERNAME'] ?? 'noreply@reservabot.es';
             $mail->Password   = $_ENV['MAIL_PASSWORD'] ?? 'CAMBIAR';
-            $mail->SMTPSecure = 'ssl'; // Hostinger usa SSL en 465
-            $mail->Port       = $_ENV['MAIL_PORT'] ?? 465;
+            // $mail->SMTPSecure = 'ssl'; // Hostinger usa SSL en 465
+            // $mail->Port       = $_ENV['MAIL_PORT'] ?? 587;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
 
             // Remitente
             $fromEmail = $opciones['from_email'] ?? $this->fromEmail;
