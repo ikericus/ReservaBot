@@ -525,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (confirmarBtn) {
         confirmarBtn.addEventListener('click', function() {
             if (confirm('¿Aceptar esta solicitud de reserva?')) {
-                fetch('/api/actualizar-reserva', {
+                fetch('/api/reserva-actualizar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -558,7 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         document.getElementById('confirmRechazarBtn').addEventListener('click', function() {
-            fetch('/api/rechazar-reserva', {
+            fetch('/api/reserva-rechazar', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -589,7 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         document.getElementById('confirmCancelarBtn').addEventListener('click', function() {
-            fetch('/api/cancelar-reserva', {
+            fetch('/api/reserva-cancelar', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

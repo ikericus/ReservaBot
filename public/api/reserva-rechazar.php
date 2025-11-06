@@ -1,5 +1,5 @@
 <?php
-// api/cancelar-reserva.php
+// api/reserva-rechazar.php
 
 header('Content-Type: application/json');
 
@@ -29,19 +29,19 @@ if (!isset($data['id'])) {
 try {
     $reservaDomain = getContainer()->getReservaDomain();
     
-    // Cancelar reserva confirmada (cambia estado a "cancelada")
-    $reserva = $reservaDomain->cancelarReserva((int)$data['id'], $userId);
+    // Rechazar reserva pendiente (cambia estado a "rechazada")
+    $reserva = $reservaDomain->rechazarReserva((int)$data['id'], $userId);
     
     echo json_encode([
         'success' => true,
-        'message' => 'Reserva cancelada correctamente'
+        'message' => 'Reserva rechazada correctamente'
     ]);
     
 } catch (\DomainException $e) {
-    http_response_code(400);
+    http_response_code(404);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 } catch (\Exception $e) {
-    error_log('Error cancelando reserva: ' . $e->getMessage());
+    error_log('Error rechazando reserva: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
 }

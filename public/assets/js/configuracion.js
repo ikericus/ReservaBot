@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // data['calendario'] = JSON.stringify({});
             
             try {
-                const response = await fetch('/api/actualizar-configuracion', {
+                const response = await fetch('/api/configuracion-actualizar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

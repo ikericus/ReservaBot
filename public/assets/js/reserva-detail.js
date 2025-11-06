@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (confirmarBtn) {
         confirmarBtn.addEventListener('click', function() {
             if (confirm('¿Confirmar esta reserva?')) {
-                fetch('api/actualizar-reserva', {
+                fetch('api/reserva-actualizar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (cancelarStatusBtn) {
         cancelarStatusBtn.addEventListener('click', function() {
             if (confirm('¿Marcar esta reserva como pendiente?')) {
-                fetch('api/actualizar-reserva', {
+                fetch('api/reserva-actualizar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Confirmar eliminación
     confirmDeleteBtn.addEventListener('click', function() {
-        fetch('api/rechazar-reserva', {
+        fetch('api/reserva-rechazar', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

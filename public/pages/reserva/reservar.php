@@ -828,7 +828,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                     }
                     
                     // Enviar vía AJAX a la API (que ahora usa ReservaDomain)
-                    fetch('api/crear-reserva-publica', {
+                    fetch('api/reserva-publica-crear', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -839,7 +839,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                         // Verificar si la respuesta es válida
                         if (!response.ok) {
                             if (response.status === 404) {
-                                throw new Error('API no encontrada. Verifica que el archivo api/crear-reserva-publica existe.');
+                                throw new Error('API no encontrada. Verifica que el archivo api/reserva-publica-crear existe.');
                             } else if (response.status === 500) {
                                 throw new Error('Error interno del servidor. Revisa los logs de PHP.');
                             } else {

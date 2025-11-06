@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = this.getAttribute('data-id');
             
             if (confirm('¿Confirmar esta reserva?')) {
-                fetch('api/actualizar-reserva', {
+                fetch('api/reserva-actualizar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = this.getAttribute('data-id');
             
             if (confirm('¿Estás seguro de cancelar esta reserva? Esta acción no se puede deshacer.')) {
-                fetch('api/cancelar-reserva', {
+                fetch('api/reserva-cancelar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

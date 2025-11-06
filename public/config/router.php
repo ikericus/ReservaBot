@@ -71,13 +71,13 @@ class Router {
         $this->addRoute('GET',      '/conversaciones',                  'pages/whatsapp/conversaciones.php',    ['auth']);  
 
         // API protegida        
-        $this->addRoute('POST',     '/api/crear-reserva',                       'api/crear-reserva.php',                     ['auth']);
-        $this->addRoute('POST',     '/api/actualizar-reserva',                  'api/actualizar-reserva.php',                ['auth']);    
-        $this->addRoute('POST',     '/api/rechazar-reserva',                    'api/rechazar-reserva.php',                  ['auth']);
-        $this->addRoute('POST',     '/api/cancelar-reserva',                    'api/cancelar-reserva.php',                  ['auth']);    
-        $this->addRoute('POST',     '/api/crear-reserva-publica',               'api/crear-reserva-publica.php',             ['auth']);
+        $this->addRoute('POST',     '/api/reserva-crear',                       'api/reserva-crear.php',                     ['auth']);
+        $this->addRoute('POST',     '/api/reserva-actualizar',                  'api/reserva-actualizar.php',                ['auth']);    
+        $this->addRoute('POST',     '/api/reserva-rechazar',                    'api/reserva-rechazar.php',                  ['auth']);
+        $this->addRoute('POST',     '/api/reserva-cancelar',                    'api/reserva-cancelar.php',                  ['auth']);    
+        $this->addRoute('POST',     '/api/reserva-publica-crear',               'api/reserva-publica-crear.php',             ['auth']);
         $this->addRoute('POST',     '/api/horas-disponibles',                   'api/horas-disponibles.php',                 ['auth']);
-        $this->addRoute('POST',     '/api/actualizar-configuracion',            'api/actualizar-configuracion.php',          ['auth']);
+        $this->addRoute('POST',     '/api/configuracion-actualizar',            'api/configuracion-actualizar.php',          ['auth']);
         $this->addRoute('POST',     '/api/whatsapp-send',                       'api/whatsapp-send.php',                     ['auth']);
         $this->addRoute('POST',     '/api/whatsapp-connect',                    'api/whatsapp-connect.php',                  ['auth']);
         $this->addRoute('GET',      '/api/whatsapp-status',                     'api/whatsapp-status.php',                   ['auth']);

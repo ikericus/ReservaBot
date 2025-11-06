@@ -606,6 +606,34 @@ include 'includes/header.php';
                             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         >
                     </div>
+
+                    <!-- Botón para enviar email de prueba -->
+                    <div class="border-t pt-6 mt-6">
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <div class="flex items-start justify-between flex-wrap gap-4">
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="text-sm font-medium text-blue-900 mb-1 flex items-center">
+                                        <i class="ri-mail-send-line mr-2"></i>
+                                        Vista previa de email
+                                    </h3>
+                                    <p class="text-sm text-blue-700">
+                                        Envía un email de ejemplo a <strong><?php echo htmlspecialchars($currentUser['email']); ?></strong> 
+                                        para visualizar cómo se mostrarán los colores, logo y datos de tu negocio en los emails enviados a tus clientes.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    id="btnEnviarEmailPrueba"
+                                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex-shrink-0"
+                                >
+                                    <i class="ri-mail-send-line mr-2"></i>
+                                    <span>Enviar email de prueba</span>
+                                </button>
+                            </div>
+                            <!-- Mensaje de feedback -->
+                            <div id="emailPruebaFeedback" class="hidden mt-3 p-3 rounded-md"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

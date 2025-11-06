@@ -583,7 +583,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.stopPropagation(); // Evitar que el click llegue al card
             const id = this.getAttribute('data-id');
             
-            fetch('api/actualizar-reserva', {
+            fetch('api/reserva-actualizar', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -614,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = this.getAttribute('data-id');
             
             if (confirm('¿Estás seguro de rechazar esta reserva?')) {
-                fetch('api/rechazar-reserva', {
+                fetch('api/reserva-rechazar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -645,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = this.getAttribute('data-id');
             
             if (confirm('¿Estás seguro de cancelar esta reserva?')) {
-                fetch('api/cancelar-reserva', {
+                fetch('api/reserva-cancelar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

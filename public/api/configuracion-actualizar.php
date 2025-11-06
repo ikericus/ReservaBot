@@ -1,5 +1,5 @@
 <?php
-// api/actualizar-configuracion.php
+// api/configuracion-actualizar.php
 
 header('Content-Type: application/json');
 

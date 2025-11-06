@@ -577,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Determinar la URL según el modo
-        const url = isEditMode ? '/api/actualizar-reserva' : '/api/crear-reserva';
+        const url = isEditMode ? '/api/reserva-actualizar' : '/api/reserva-crear';
         
         // Realizar la petición
         fetch(url, {

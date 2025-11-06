@@ -1,5 +1,5 @@
 <?php
-// api/actualizar-reserva-publica.php
+// api/reserva-publica-actualizar.php
 
 header('Content-Type: application/json');
 
