@@ -228,7 +228,7 @@
                                     <?php echo strtoupper(substr($usuarioEntity->getNombre(), 0, 1)); ?>
                                 </div>
                                 <div>
-                                    <div class="font-bold gradient-text"><?php echo htmlspecialchars($configuraciones['empresa_nombre'] ?? 'Error empresa_nombre'); ?></div>
+                                    <div class="font-bold text-gray-900"><?php echo htmlspecialchars($configuraciones['empresa_nombre'] ?? 'Error empresa_nombre'); ?></div>
                                     <div class="text-xs text-gray-500"><?php echo htmlspecialchars($usuarioEntity->getNombre() ?? 'Error nombre usuario'); ?></div>
                                 </div>
                             </div>
