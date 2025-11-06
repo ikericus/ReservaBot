@@ -27,6 +27,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['phone'])) {
         $whatsappDomain = getContainer()->getWhatsAppDomain();
         $mensajes = $whatsappDomain->obtenerMensajesConversacion($userId, $phoneNumber, $limit);
         
+        // Intentar obtener nombre del cliente
+        $clienteName = null;
+        try {
+            $clienteDomain = getContainer()->getClienteDomain();
+            $clienteDetalle = $clienteDomain->obtenerDetalleCliente($phoneNumber, $userId);
+            $clienteName = $clienteDetalle['cliente']->getNombre();
+        } catch (\Exception $e) {
+            // Si no se encuentra el cliente, se usará el nombre por defecto
+            debug_log("No se encontró cliente para teléfono: $phoneNumber");
+        }
+        
         // Transformar mensajes para frontend
         $mensajesArray = array_map(function($msg) {
             return [
@@ -44,6 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['phone'])) {
             'success' => true,
             'messages' => $mensajesArray,
             'phone' => $phoneNumber,
+            'clientName' => $clienteName,
             'total' => count($mensajesArray)
         ]);
         exit;
@@ -96,6 +108,9 @@ try {
     $conversaciones = $whatsappDomain->obtenerConversaciones($userId, $limit);
     $noLeidas = $whatsappDomain->contarNoLeidas($userId);
     
+    // Obtener ClienteDomain para enriquecer con nombres
+    $clienteDomain = getContainer()->getClienteDomain();
+    
     // Las conversaciones vienen como arrays con esta estructura:
     // [
     //   'phone_number' => '34612345678',
@@ -105,9 +120,24 @@ try {
     // ]
     
     // Transformar para el frontend
-    $conversacionesArray = array_map(function($conv) {
+    $conversacionesArray = array_map(function($conv) use ($clienteDomain, $userId) {
         $ultimoMsg = $conv['ultimo_mensaje'];
         $phoneNumber = $conv['phone_number'];
+        
+        // Intentar obtener nombre real del cliente
+        $name = null;
+        try {
+            $clienteDetalle = $clienteDomain->obtenerDetalleCliente($phoneNumber, $userId);
+            $name = $clienteDetalle['cliente']->getNombre();
+        } catch (\Exception $e) {
+            // Si no se encuentra el cliente, usar formato por defecto
+            debug_log("No se encontró cliente para teléfono: $phoneNumber");
+        }
+        
+        // Si no hay nombre, usar formato de contacto
+        if (empty($name)) {
+            $name = 'Contacto ' . substr($phoneNumber, -4);
+        }
         
         // Formatear tiempo
         $timestamp = new DateTime($conv['ultima_actividad']);
@@ -124,7 +154,7 @@ try {
         
         return [
             'phone' => $phoneNumber,
-            'name' => 'Contacto ' . substr($phoneNumber, -4), // TODO: Buscar nombre real en tabla de contactos
+            'name' => $name,
             'lastMessage' => $ultimoMsg->getMessageText(),
             'lastMessageTime' => $timeStr,
             'unreadCount' => $conv['no_leidos'],

@@ -545,14 +545,14 @@ class ConversationsManager {
         this.isLoading = true;
         
         try {
-            const response = await fetch('/api/whatsapp-conversations-2?limit=50');
+            const response = await fetch('/api/whatsapp-conversations?limit=50');
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
             const data = await response.json();
-            console.log('📊 Conversaciones recibidas (enriquecidas):', data);
+            console.log('📊 Conversaciones recibidas (con nombres):', data);
             
             if (data.success && data.conversations) {
                 this.conversations = data.conversations;
@@ -648,14 +648,19 @@ class ConversationsManager {
 
     async loadMessages(phoneNumber) {
         try {
-            const response = await fetch(`/api/whatsapp-conversations-enriched?phone=${phoneNumber}&message_limit=50`);
+            const response = await fetch(`/api/whatsapp-conversations?phone=${phoneNumber}&message_limit=50`);
             const data = await response.json();
             
             if (data.success && data.messages) {
                 this.renderMessages(data.messages);
                 
+                // Si viene nombre del cliente, actualizar la conversación
                 const conversation = this.conversations.find(c => c.phone === phoneNumber);
                 if (conversation) {
+                    // Si el API devuelve un nombre de cliente, actualizarlo
+                    if (data.clientName) {
+                        conversation.name = data.clientName;
+                    }
                     this.updateChatHeader(conversation);
                 }
             }
