@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             try {
                 // Redimensionar a 64x64 y convertir a base64
-                const base64 = await resizeAndEncodeImage(file, 64, 64);
+                const base64 = await resizeAndEncodeImage(file, 128, 128);
                 
                 // Actualizar preview
                 imagePreview.innerHTML = `<img src="${base64}" alt="Logo">`;
