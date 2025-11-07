@@ -369,104 +369,95 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
         <!-- Formulario de reserva -->
         <div class="min-h-screen bg-gray-50">
 
-            <!-- Header -->
-            <div class="gradient-bg relative overflow-hidden">
-                <!-- Efecto sutil de fondo -->
-                <div class="absolute inset-0 opacity-5">
-                    <div class="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -mr-20 -mt-20"></div>
-                    <div class="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full -ml-16 -mb-16"></div>
-                </div>
-                
-                <!-- Contenido principal -->
-                <div class="relative z-10 max-w-4xl mx-auto px-4 py-3 sm:px-6">
-                    <div class="flex items-center justify-between text-white">
-                        
-                        <!-- Logo y nombre (lado izquierdo) -->
-                        <div class="flex items-center space-x-3">
-                            <?php if (!empty($configuracionNegocio['logo'])): ?>
-                                <div class="flex-shrink-0">
-                                    <img src="<?php echo htmlspecialchars($configuracionNegocio['logo']); ?>" 
-                                        alt="<?php echo htmlspecialchars($configuracionNegocio['nombre']); ?>"
-                                        class="h-10 w-auto object-contain bg-white/15 rounded-lg p-1.5 shadow-md">
-                                </div>
-                            <?php endif; ?>
-                            
-                            <div class="min-w-0">
-                                <h1 class="text-lg font-bold sm:text-xl truncate">
-                                    <?php echo htmlspecialchars($configuracionNegocio['nombre']); ?>
-                                </h1>
+        <!-- Header -->
+        <div class="gradient-bg relative overflow-hidden">
+            <!-- Efecto sutil de fondo -->
+            <div class="absolute inset-0 opacity-5">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -mr-20 -mt-20"></div>
+                <div class="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full -ml-16 -mb-16"></div>
+            </div>
+            
+            <!-- Contenido principal -->
+            <div class="relative z-10 max-w-4xl mx-auto px-4 py-3 sm:px-6">
+                <div class="flex items-center justify-between text-white">
+                    
+                    <!-- Logo y nombre (lado izquierdo) -->
+                    <div class="flex items-center space-x-3">
+                        <?php if (!empty($configuracionNegocio['logo'])): ?>
+                            <div class="flex-shrink-0">
+                                <img src="<?php echo htmlspecialchars($configuracionNegocio['logo']); ?>" 
+                                    alt="<?php echo htmlspecialchars($configuracionNegocio['nombre']); ?>"
+                                    class="h-10 w-auto object-contain bg-white/15 rounded-lg p-1.5 shadow-md">
                             </div>
-                        </div>
+                        <?php endif; ?>
                         
-                        <!-- Información de contacto (lado derecho) -->
-                        <div class="hidden sm:flex items-center space-x-4 text-sm">
-                            <?php if (!empty($configuracionNegocio['telefono'])): ?>
-                                <a href="tel:<?php echo htmlspecialchars($configuracionNegocio['telefono']); ?>" 
-                                class="flex items-center space-x-2 bg-white/10 rounded-full px-3 py-1.5 hover:bg-white/20 transition-colors">
-                                    <i class="ri-phone-line text-xs"></i>
-                                    <span class="font-medium"><?php echo htmlspecialchars($configuracionNegocio['telefono']); ?></span>
-                                </a>
-                            <?php endif; ?>
-                            
-                            <?php if (!empty($configuracionNegocio['direccion'])): ?>
-                                <div class="flex items-center space-x-2 text-white/80 max-w-xs">
-                                    <i class="ri-map-pin-line text-xs flex-shrink-0"></i>
-                                    <span class="truncate text-xs"><?php echo htmlspecialchars($configuracionNegocio['direccion']); ?></span>
-                                </div>
-                            <?php endif; ?>
+                        <div class="min-w-0">
+                            <h1 class="text-lg font-bold sm:text-xl truncate">
+                                <?php echo htmlspecialchars($configuracionNegocio['nombre']); ?>
+                            </h1>
                         </div>
+                    </div>
+                    
+                    <!-- Información de contacto DESKTOP (lado derecho) -->
+                    <div class="hidden sm:flex items-center space-x-4 text-sm">
+                        <?php if (!empty($configuracionNegocio['telefono'])): ?>
+                            <a href="tel:<?php echo htmlspecialchars($configuracionNegocio['telefono']); ?>" 
+                            class="flex items-center space-x-2 bg-white/10 rounded-full px-3 py-1.5 hover:bg-white/20 transition-colors">
+                                <i class="ri-phone-line text-xs"></i>
+                                <span class="font-medium"><?php echo htmlspecialchars($configuracionNegocio['telefono']); ?></span>
+                            </a>
+                        <?php endif; ?>
                         
-                        <!-- Menú móvil para información -->
-                        <div class="sm:hidden">
+                        <?php if (!empty($configuracionNegocio['direccion'])): ?>
+                            <div class="flex items-center space-x-2 text-white/80 max-w-xs">
+                                <i class="ri-map-pin-line text-xs flex-shrink-0"></i>
+                                <span class="truncate text-xs"><?php echo htmlspecialchars($configuracionNegocio['direccion']); ?></span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <!-- MÓVIL: Teléfono siempre visible + botón info para más -->
+                    <div class="sm:hidden flex items-center space-x-2">
+                        <?php if (!empty($configuracionNegocio['telefono'])): ?>
+                            <a href="tel:<?php echo htmlspecialchars($configuracionNegocio['telefono']); ?>" 
+                            class="flex items-center space-x-1.5 bg-white/10 rounded-full px-2.5 py-1.5 hover:bg-white/20 transition-colors">
+                                <i class="ri-phone-line text-sm"></i>
+                                <span class="font-medium text-xs"><?php echo htmlspecialchars($configuracionNegocio['telefono']); ?></span>
+                            </a>
+                        <?php endif; ?>
+                        
+                        <?php if (!empty($configuracionNegocio['direccion']) || !empty($configuracionNegocio['email'])): ?>
                             <button type="button" onclick="toggleMobileInfo()" class="bg-white/10 rounded-full p-2 hover:bg-white/20 transition-colors">
                                 <i class="ri-information-line text-sm"></i>
                             </button>
-                        </div>
+                        <?php endif; ?>
                     </div>
-                    
-                    <!-- Mensaje de bienvenida compacto (opcional) -->
-                    <?php if (!empty($formulario['descripcion'])): ?>
-                        <div class="mt-2 text-center">
-                            <p class="text-sm text-white/90 max-w-2xl mx-auto leading-relaxed">
-                                <?php echo htmlspecialchars($formulario['mensaje_bienvenida']); ?>
-                            </p>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <!-- Información móvil desplegable -->
-                    <div id="mobileInfo" class="hidden sm:hidden mt-3 pt-3 border-t border-white/20">
-                        <div class="space-y-2 text-sm">
-                            <?php if (!empty($configuracionNegocio['telefono'])): ?>
-                                <div class="flex items-center justify-center space-x-2">
-                                    <i class="ri-phone-line"></i>
-                                    <a href="tel:<?php echo htmlspecialchars($configuracionNegocio['telefono']); ?>" 
-                                    class="font-medium text-white/90 bg-white/20">
-                                        <?php echo htmlspecialchars($configuracionNegocio['telefono']); ?>
-                                    </a>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <?php if (!empty($configuracionNegocio['direccion'])): ?>
-                                <div class="flex items-center justify-center space-x-2 text-white/80">
-                                    <i class="ri-map-pin-line"></i>
-                                    <span class="text-center"><?php echo htmlspecialchars($configuracionNegocio['direccion']); ?></span>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <?php if (!empty($configuracionNegocio['email'])): ?>
-                                <div class="flex items-center justify-center space-x-2 text-white/80">
-                                    <i class="ri-mail-line"></i>
-                                    <a href="mailto:<?php echo htmlspecialchars($configuracionNegocio['email']); ?>" 
-                                    class="hover:text-white/60">
-                                        <?php echo htmlspecialchars($configuracionNegocio['email']); ?>
-                                    </a>
-                                </div>
-                            <?php endif; ?>
-                        </div>
+                </div>
+                
+                <!-- Información móvil desplegable (ahora solo dirección y email) -->
+                <div id="mobileInfo" class="hidden sm:hidden mt-3 pt-3 border-t border-white/20">
+                    <div class="space-y-2 text-sm">
+                        <?php if (!empty($configuracionNegocio['direccion'])): ?>
+                            <div class="flex items-center justify-center space-x-2 text-white/80">
+                                <i class="ri-map-pin-line"></i>
+                                <span class="text-center"><?php echo htmlspecialchars($configuracionNegocio['direccion']); ?></span>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <?php if (!empty($configuracionNegocio['email'])): ?>
+                            <div class="flex items-center justify-center space-x-2 text-white/80">
+                                <i class="ri-mail-line"></i>
+                                <a href="mailto:<?php echo htmlspecialchars($configuracionNegocio['email']); ?>" 
+                                class="hover:text-white/60">
+                                    <?php echo htmlspecialchars($configuracionNegocio['email']); ?>
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
-            
+        </div>
+
             <!-- Formulario -->
             <div class="max-w-2xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
                 <div class="bg-white rounded-lg shadow-lg fade-in">
