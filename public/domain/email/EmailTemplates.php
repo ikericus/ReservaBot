@@ -10,10 +10,122 @@ class EmailTemplates {
     private string $appName;
     private ?IConfiguracionNegocioRepository $configuracionRepository;
     
+    // Cache para evitar múltiples llamadas a la BD
+    private array $configuracionesCache = [];
+    
     public function __construct(?IConfiguracionNegocioRepository $configuracionRepository = null) {
         $this->baseUrl = $_ENV['APP_URL'];
         $this->appName = $_ENV['APP_NAME'];
         $this->configuracionRepository = $configuracionRepository;
+    }
+    
+    /**
+     * Obtiene todas las configuraciones del negocio de una sola vez
+     */
+    private function obtenerConfiguracionNegocio(int $usuarioId): array {
+        // Usar cache para evitar múltiples llamadas en el mismo request
+        if (isset($this->configuracionesCache[$usuarioId])) {
+            return $this->configuracionesCache[$usuarioId];
+        }
+        
+        $config = [
+            'nombre' => $this->appName,
+            'color_primario' => '#667eea',
+            'color_secundario' => '#764ba2',
+            'logo' => null,
+            'telefono' => null,
+            'email' => null,
+            'direccion' => null,
+            'web' => null
+        ];
+        
+        if ($this->configuracionRepository) {
+            try {
+                $todas = $this->configuracionRepository->obtenerTodas($usuarioId);
+                
+                $config['nombre'] = $todas['empresa_nombre'] ?? $this->appName;
+                $config['color_primario'] = $todas['color_primario'] ?? '#667eea';
+                $config['color_secundario'] = $todas['color_secundario'] ?? '#764ba2';
+                $config['logo'] = $todas['empresa_imagen'] ?? null;
+                $config['telefono'] = $todas['empresa_telefono'] ?? null;
+                $config['email'] = $todas['empresa_email'] ?? null;
+                $config['direccion'] = $todas['empresa_direccion'] ?? null;
+                $config['web'] = $todas['empresa_web'] ?? null;
+                
+            } catch (\Exception $e) {
+                error_log("Error obteniendo configuración del negocio: " . $e->getMessage());
+            }
+        }
+        
+        $this->configuracionesCache[$usuarioId] = $config;
+        return $config;
+    }
+    
+    /**
+     * Genera el header personalizado del negocio
+     */
+    private function generarHeaderNegocio(array $config): string {
+        $headerContent = "";
+        
+        // Mostrar logo si existe
+        if ($config['logo']) {
+            $headerContent .= "
+                <div style='text-align:center;'>
+                    <img src='{$config['logo']}' alt='{$config['nombre']}' style='max-height: 70px; max-width: 230px; display:block; margin:0 auto;'>
+                </div>
+            ";
+        }
+        
+        // Nombre del negocio siempre visible
+        $headerContent .= "
+            <h2 style='color: white; margin: 6px 0 0; font-size: 20px; text-align:center; font-weight:500;'>
+                {$config['nombre']}
+            </h2>
+        ";
+        
+        return $headerContent;
+    }
+    
+    /**
+     * Genera el footer con información de contacto del negocio
+     */
+    private function generarFooterNegocio(array $config): string {
+        $contactInfo = [];
+        
+        if ($config['telefono']) {
+            $contactInfo[] = "📞 {$config['telefono']}";
+        }
+        
+        if ($config['email']) {
+            $contactInfo[] = "✉️ {$config['email']}";
+        }
+        
+        if ($config['direccion']) {
+            $contactInfo[] = "📍 {$config['direccion']}";
+        }
+        
+        if ($config['web']) {
+            $webLimpio = preg_replace('#^https?://#', '', $config['web']);
+            $contactInfo[] = "🌐 <a href='{$config['web']}' style='color: #666; text-decoration: none;'>{$webLimpio}</a>";
+        }
+        
+        $contactHtml = '';
+        if (!empty($contactInfo)) {
+            $contactHtml = "
+                <div style='margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e5e7eb;'>
+                    <p style='margin: 5px 0; font-size: 12px; line-height: 1.6;'>
+                        " . implode("<br>", $contactInfo) . "
+                    </p>
+                </div>
+            ";
+        }
+        
+        return "
+            <div style='text-align: center; padding: 20px; color: #666; font-size: 12px; border-top: 1px solid #e5e7eb;'>
+                {$contactHtml}
+                <p style='margin: 5px 0 0 0; font-size: 11px; color: #999;'>Powered by {$this->appName}</p>
+            </div>
+        ";
     }
     
     /**
@@ -48,42 +160,9 @@ class EmailTemplates {
      * Genera HTML base con header de negocio (personalizado por usuario/empresa)
      */
     private function wrapHtmlNegocio(string $titulo, string $contenido, int $usuarioId): string {
-        $nombreNegocio = $this->appName;
-        $colorPrimario = '#667eea';
-        $colorSecundario = '#764ba2';
-        $logoBase64 = null;
-        
-        if ($this->configuracionRepository) {
-            try {
-                $nombreNegocio = $this->configuracionRepository->obtenerValor('empresa_nombre', $usuarioId) 
-                    ?? $this->appName;
-                $colorPrimario = $this->configuracionRepository->obtenerValor('color_primario', $usuarioId) 
-                    ?? '#667eea';
-                $colorSecundario = $this->configuracionRepository->obtenerValor('color_secundario', $usuarioId) 
-                    ?? '#764ba2';
-                $logoBase64 = $this->configuracionRepository->obtenerValor('empresa_imagen', $usuarioId);
-            } catch (\Exception $e) {
-                error_log("Error obteniendo configuración: " . $e->getMessage());
-            }
-        }
-        
-        $headerContent = "";
-
-        // Mostrar logo si existe
-        if ($logoBase64) {
-            $headerContent .= "
-                <div style='text-align:center;'>
-                    <img src='{$logoBase64}' alt='{$nombreNegocio}' style='max-height: 70px; max-width: 230px; display:block; margin:0 auto;'>
-                </div>
-            ";
-        }
-
-        // Nombre del negocio siempre visible, con estilo profesional
-        $headerContent .= "
-            <h2 style='color: white; margin: 6px 0 0; font-size: 20px; text-align:center; font-weight:500;'>
-                {$nombreNegocio}
-            </h2>
-        ";
+        $config = $this->obtenerConfiguracionNegocio($usuarioId);
+        $headerContent = $this->generarHeaderNegocio($config);
+        $footerContent = $this->generarFooterNegocio($config);
         
         return "
         <!DOCTYPE html>
@@ -95,15 +174,13 @@ class EmailTemplates {
         </head>
         <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f8fafc;'>
             <div style='max-width: 600px; margin: 0 auto; background-color: white;'>
-                <div style='background: linear-gradient(135deg, {$colorPrimario} 0%, {$colorSecundario} 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;'>
+                <div style='background: linear-gradient(135deg, {$config['color_primario']} 0%, {$config['color_secundario']} 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;'>
                     {$headerContent}
                 </div>
                 <div style='padding: 30px 20px;'>
                     {$contenido}
                 </div>
-                <div style='text-align: center; padding: 20px; color: #666; font-size: 12px; border-top: 1px solid #e5e7eb;'>
-                    <p style='margin: 5px 0 0 0; font-size: 11px; color: #999;'>Powered by {$this->appName}</p>
-                </div>
+                {$footerContent}
             </div>
         </body>
         </html>";
@@ -123,6 +200,51 @@ class EmailTemplates {
             Si tienes problemas con el botón, copia y pega este enlace:<br>
             <a href='{$url}' style='color: #4F46E5; word-break: break-all;'>{$url}</a>
         </p>";
+    }
+    
+    /**
+     * Genera un banner de alerta/información
+     */
+    private function generarBanner(string $tipo, string $titulo, string $mensaje): string {
+        $colores = [
+            'info' => ['bg' => '#eff6ff', 'border' => '#3b82f6', 'text' => '#1e40af'],
+            'success' => ['bg' => '#d1fae5', 'border' => '#10b981', 'text' => '#065f46'],
+            'warning' => ['bg' => '#fef3c7', 'border' => '#f59e0b', 'text' => '#92400e'],
+            'error' => ['bg' => '#fee2e2', 'border' => '#ef4444', 'text' => '#991b1b'],
+            'neutral' => ['bg' => '#f3f4f6', 'border' => '#6b7280', 'text' => '#374151']
+        ];
+        
+        $color = $colores[$tipo] ?? $colores['info'];
+        
+        return "
+        <div style='background: {$color['bg']}; padding: 15px; border-radius: 8px; border-left: 4px solid {$color['border']}; margin: 20px 0;'>
+            <p style='margin: 0; color: {$color['text']};'>
+                <strong>{$titulo}</strong><br>{$mensaje}
+            </p>
+        </div>";
+    }
+    
+    /**
+     * Genera tabla de detalles genérica
+     */
+    private function generarTablaDetalles(string $titulo, array $filas, string $borderColor = '#10b981'): string {
+        $filasHtml = '';
+        foreach ($filas as $label => $valor) {
+            $filasHtml .= "
+                <tr>
+                    <td style='padding: 8px 0; color: #374151;'><strong>{$label}:</strong></td>
+                    <td style='color: #6b7280;'>{$valor}</td>
+                </tr>
+            ";
+        }
+        
+        return "
+        <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid {$borderColor};'>
+            <h3 style='margin-top: 0; color: #374151;'>{$titulo}</h3>
+            <table style='width: 100%;'>
+                {$filasHtml}
+            </table>
+        </div>";
     }
     
     /**
@@ -157,7 +279,6 @@ class EmailTemplates {
         ];
     }
     
-    
     /**
      * Template: Reset de contraseña (INSTITUCIONAL)
      */
@@ -168,12 +289,8 @@ class EmailTemplates {
             <h2 style='color: #1f2937; margin-top: 0;'>¡Hola {$nombre}!</h2>
             <p>Recibimos una solicitud para restablecer tu contraseña.</p>
             <p>Para crear una nueva contraseña, haz clic en el siguiente botón:</p>
-            " . $this->generarBoton($url, 'Restablecer contraseña', '#EF4444') . "
-            <div style='background: #FEF3C7; padding: 15px; border-left: 4px solid #F59E0B; margin: 20px 0;'>
-                <p style='margin: 0; color: #92400e;'>
-                    <strong>⚠️ Importante:</strong> Este enlace expirará en 1 hora.
-                </p>
-            </div>
+            " . $this->generarBoton($url, 'Restablecer contraseña', '#EF4444') . 
+            $this->generarBanner('warning', '⚠️ Importante:', 'Este enlace expirará en 1 hora.') . "
             <p style='color: #6b7280; font-size: 14px;'>
                 Si no solicitaste este cambio, puedes ignorar este mensaje.
             </p>";
@@ -237,20 +354,8 @@ class EmailTemplates {
         $horaFormateada = substr($reserva['hora'], 0, 5);
         $usuarioId = $reserva['usuario_id'];
         
-        // Obtener nombre del negocio y color primario desde configuraciones
-        $nombreNegocio = $this->appName;
-        $colorPrimario = '#4F46E5';
-        
-        if ($this->configuracionRepository) {
-            try {
-                $nombreNegocio = $this->configuracionRepository->obtenerValor('empresa_nombre', $usuarioId) 
-                    ?? $this->appName;
-                $colorPrimario = $this->configuracionRepository->obtenerValor('color_primario', $usuarioId) 
-                    ?? '#4F46E5';
-            } catch (\Exception $e) {
-                error_log("Error obteniendo configuración para confirmación de reserva: " . $e->getMessage());
-            }
-        }
+        // Obtener configuración del negocio (una sola llamada)
+        $config = $this->obtenerConfiguracionNegocio($usuarioId);
         
         $esConfirmada = $reserva['estado'] === 'confirmada';
         $esCancelada = $reserva['estado'] === 'cancelada';
@@ -261,61 +366,59 @@ class EmailTemplates {
             $estadoTexto = 'confirmada';
             $estadoIcon = '✅';
             $estadoColor = '#10b981';
+            $bannerTipo = 'success';
+            $bannerTitulo = '✅ Reserva confirmada';
+            $bannerMensaje = '¡Te esperamos!';
         } elseif ($esCancelada) {
             $estadoTexto = 'cancelada';
             $estadoIcon = '❌';
             $estadoColor = '#6b7280';
+            $bannerTipo = 'neutral';
+            $bannerTitulo = '❌ Reserva cancelada';
+            $bannerMensaje = 'Tu reserva ha sido cancelada.';
         } elseif ($esRechazada) {
             $estadoTexto = 'rechazada';
             $estadoIcon = '❌';
             $estadoColor = '#ef4444';
+            $bannerTipo = 'error';
+            $bannerTitulo = '❌ Reserva rechazada';
+            $bannerMensaje = 'Lo sentimos, no pudimos confirmar tu reserva.';
         } else {
             $estadoTexto = 'pendiente de confirmación';
             $estadoIcon = '⏳';
             $estadoColor = '#f59e0b';
+            $bannerTipo = 'warning';
+            $bannerTitulo = '⏳ Pendiente';
+            $bannerMensaje = 'Te contactaremos pronto.';
         }
+        
+        // Preparar detalles de la reserva
+        $detalles = [
+            'Fecha' => $fechaFormateada,
+            'Hora' => $horaFormateada,
+            'Teléfono' => $reserva['telefono']
+        ];
         
         $contenidoHtml = "
             <h2 style='color: #1f2937; margin-top: 0;'>Hola {$reserva['nombre']},</h2>
             <p>Tu reserva ha sido <strong style='color: {$estadoColor};'>{$estadoTexto}</strong>.</p>
-            
-            <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid {$estadoColor};'>
-                <h3 style='margin-top: 0; color: #374151;'>📅 Detalles de tu cita:</h3>
-                <table style='width: 100%;'>
-                    <tr><td style='padding: 8px 0; color: #374151;'><strong>Fecha:</strong></td><td style='color: #6b7280;'>{$fechaFormateada}</td></tr>
-                    <tr><td style='padding: 8px 0; color: #374151;'><strong>Hora:</strong></td><td style='color: #6b7280;'>{$horaFormateada}</td></tr>
-                    <tr><td style='padding: 8px 0; color: #374151;'><strong>Teléfono:</strong></td><td style='color: #6b7280;'>{$reserva['telefono']}</td></tr>
-                </table>
-                " . (!empty($reserva['mensaje']) ? "<p style='margin-top: 15px; color: #374151;'><strong>Comentarios:</strong><br>{$reserva['mensaje']}</p>" : "") . "
+            " . $this->generarTablaDetalles('📅 Detalles de tu cita:', $detalles, $estadoColor);
+        
+        // Añadir comentarios si existen
+        if (!empty($reserva['mensaje'])) {
+            $contenidoHtml .= "
+            <div style='background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;'>
+                <p style='margin: 0; color: #374151;'><strong>Comentarios:</strong><br>{$reserva['mensaje']}</p>
             </div>";
+        }
         
         // Agregar botón de gestión solo si hay URL y no está cancelada/rechazada
         if ($gestionUrl && !$esCancelada && !$esRechazada) {
-            $contenidoHtml .= $this->generarBoton($gestionUrl, 'Gestionar mi reserva', $colorPrimario);
+            $contenidoHtml .= $this->generarBoton($gestionUrl, 'Gestionar mi reserva', $config['color_primario']);
         }
         
         // Banner de estado
-        if ($esConfirmada) {
-            $contenidoHtml .= "
-            <div style='background: #d1fae5; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; margin: 20px 0;'>
-                <p style='margin: 0; color: #065f46;'><strong>✅ Reserva confirmada</strong><br>¡Te esperamos!</p>
-            </div>";
-        } elseif ($esCancelada) {
-            $contenidoHtml .= "
-            <div style='background: #f3f4f6; padding: 15px; border-radius: 8px; border-left: 4px solid #6b7280; margin: 20px 0;'>
-                <p style='margin: 0; color: #374151;'><strong>❌ Reserva cancelada</strong><br>Tu reserva ha sido cancelada.</p>
-            </div>";
-        } elseif ($esRechazada) {
-            $contenidoHtml .= "
-            <div style='background: #fee2e2; padding: 15px; border-radius: 8px; border-left: 4px solid #ef4444; margin: 20px 0;'>
-                <p style='margin: 0; color: #991b1b;'><strong>❌ Reserva rechazada</strong><br>Lo sentimos, no pudimos confirmar tu reserva.</p>
-            </div>";
-        } else {
-            $contenidoHtml .= "
-            <div style='background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0;'>
-                <p style='margin: 0; color: #92400e;'><strong>⏳ Pendiente</strong><br>Te contactaremos pronto.</p>
-            </div>";
-        }
+        $contenidoHtml .= $this->generarBanner($bannerTipo, $bannerTitulo, $bannerMensaje);
         
         $contenidoTexto = "Hola {$reserva['nombre']},\n\n";
         $contenidoTexto .= "Tu reserva ha sido {$estadoTexto}.\n\n";
@@ -329,14 +432,14 @@ class EmailTemplates {
         if ($gestionUrl && !$esCancelada && !$esRechazada) {
             $contenidoTexto .= "\nGestiona tu reserva aquí: {$gestionUrl}\n";
         }
-        $contenidoTexto .= "\nSaludos,\n{$nombreNegocio}";
+        $contenidoTexto .= "\nSaludos,\n{$config['nombre']}";
         
         return [
-            'asunto' => "{$estadoIcon} Tu reserva en {$nombreNegocio}",
+            'asunto' => "{$estadoIcon} Tu reserva en {$config['nombre']}",
             'cuerpo_texto' => $contenidoTexto,
             'cuerpo_html' => $this->wrapHtmlNegocio('Confirmación de Reserva', $contenidoHtml, $usuarioId),
             'opciones' => [
-                'from_name' => $nombreNegocio
+                'from_name' => $config['nombre']
             ]
         ];
     }
@@ -348,45 +451,26 @@ class EmailTemplates {
         $fechaActual = date('d/m/Y H:i:s');
         $asuntoFormateado = !empty($asunto) ? ucfirst($asunto) : 'Consulta general';
         
+        $detalles = [
+            'Nombre' => $nombre,
+            'Email' => "<a href='mailto:{$emailCliente}' style='color: #667eea;'>{$emailCliente}</a>",
+            'Asunto' => $asuntoFormateado,
+            'Fecha' => $fechaActual
+        ];
+        
         $contenidoHtml = "
             <h2 style='color: #1f2937; margin-top: 0;'>📧 Nuevo Contacto Web</h2>
             <p style='color: #6b7280;'>Se ha recibido un nuevo mensaje desde el formulario de contacto.</p>
-            
-            <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;'>
-                <h3 style='margin-top: 0; color: #374151;'>👤 Información del contacto</h3>
-                <table style='width: 100%; border-collapse: collapse;'>
-                    <tr>
-                        <td style='padding: 8px 0; color: #374151; width: 120px;'><strong>Nombre:</strong></td>
-                        <td style='padding: 8px 0; color: #6b7280;'>{$nombre}</td>
-                    </tr>
-                    <tr>
-                        <td style='padding: 8px 0; color: #374151;'><strong>Email:</strong></td>
-                        <td style='padding: 8px 0; color: #6b7280;'>
-                            <a href='mailto:{$emailCliente}' style='color: #667eea;'>{$emailCliente}</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style='padding: 8px 0; color: #374151;'><strong>Asunto:</strong></td>
-                        <td style='padding: 8px 0; color: #6b7280;'>{$asuntoFormateado}</td>
-                    </tr>
-                    <tr>
-                        <td style='padding: 8px 0; color: #374151;'><strong>Fecha:</strong></td>
-                        <td style='padding: 8px 0; color: #6b7280;'>{$fechaActual}</td>
-                    </tr>
-                </table>
-            </div>
-            
+            " . $this->generarTablaDetalles('👤 Información del contacto', $detalles, '#667eea') . "
             <div style='background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #bfdbfe;'>
                 <h3 style='margin-top: 0; color: #374151;'>💬 Mensaje</h3>
                 <div style='color: #1e40af; line-height: 1.6; white-space: pre-wrap;'>{$mensaje}</div>
             </div>
-            
             <div style='text-align: center; margin: 30px 0;'>
                 <a href='mailto:{$emailCliente}?subject=Re: {$asuntoFormateado}' style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;'>
                     📧 Responder
                 </a>
             </div>
-            
             <p style='font-size: 12px; color: #9ca3af; text-align: center; margin: 20px 0 0 0; padding-top: 20px; border-top: 1px solid #e5e7eb;'>
                 Este email fue generado automáticamente desde el formulario de contacto.<br>
                 <strong>No responder a este email</strong> - Usar el botón de respuesta.
@@ -414,17 +498,18 @@ class EmailTemplates {
      */
     public function alertaServidorCaido(): array {
         $asunto = "Alerta: Servidor WhatsApp no saludable en {$this->appName}";
-
         $estado = 'desconocido';
         $timestamp = date('Y-m-d H:i:s');
-
+        
+        $detalles = [
+            'Estado' => $estado,
+            'Último reporte' => $timestamp
+        ];
+        
         $contenidoHtml = "
             <h2 style='color: #b91c1c; margin-top: 0;'>⚠️ Servidor no saludable</h2>
             <p>Se ha detectado un problema con el servicio de WhatsApp en <strong>{$this->appName}</strong>.</p>
-            <table style='border-collapse: collapse; width: 100%; margin-top: 10px;'>
-                <tr><td style='padding: 6px; border: 1px solid #ddd;'>Estado</td><td style='padding: 6px; border: 1px solid #ddd;'>{$estado}</td></tr>
-                <tr><td style='padding: 6px; border: 1px solid #ddd;'>Último reporte</td><td style='padding: 6px; border: 1px solid #ddd;'>{$timestamp}</td></tr>
-            </table>
+            " . $this->generarTablaDetalles('📊 Estado del servidor', $detalles, '#ef4444') . "
             <p style='margin-top: 16px;'>Por favor, revisa el estado del servidor lo antes posible.</p>
             " . $this->generarBoton($this->baseUrl . '/admin/whatsapp', 'Ver estado del servidor', '#ef4444') . "
             <p style='color: #6b7280; font-size: 14px;'>
@@ -447,66 +532,32 @@ class EmailTemplates {
 
     /**
      * Template: Email de prueba de configuración (NEGOCIO - Personalizado)
-     * 
-     * Genera un email de ejemplo para que el usuario visualice cómo se verán
-     * los emails con su configuración de colores, logo y datos del negocio
      */
     public function emailPruebaConfiguracion(string $nombreUsuario, int $usuarioId): array {
-        // Obtener configuración del negocio
-        $nombreNegocio = $this->appName;
-        $colorPrimario = '#4F46E5';
+        // Obtener configuración del negocio (una sola llamada)
+        $config = $this->obtenerConfiguracionNegocio($usuarioId);
         
-        if ($this->configuracionRepository) {
-            try {
-                $nombreNegocio = $this->configuracionRepository->obtenerValor('empresa_nombre', $usuarioId) 
-                    ?? $this->appName;
-                $colorPrimario = $this->configuracionRepository->obtenerValor('color_primario', $usuarioId) 
-                    ?? '#4F46E5';
-            } catch (\Exception $e) {
-                error_log("Error obteniendo configuración para email de prueba: " . $e->getMessage());
-            }
-        }
-        
-        // Datos ficticios de una reserva de ejemplo
+        // Datos ficticios
         $fechaEjemplo = date('d/m/Y', strtotime('+7 days'));
         $horaEjemplo = '10:00';
         
-        // Nota de prueba destacada
-        $notaPrueba = "
-            <div style='background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin-bottom: 20px; border-radius: 8px;'>
-                <p style='margin: 0; color: #1e40af; font-size: 14px;'>
-                    <strong>Email de Prueba</strong><br>
-                    Este es un email de ejemplo para que visualices cómo se mostrarán los colores, logo y datos de tu negocio en los emails enviados a tus clientes. 
-                    Los datos de la reserva son ficticios.
-                </p>
-            </div>";
+        $detalles = [
+            'Fecha' => $fechaEjemplo,
+            'Hora' => $horaEjemplo,
+            'Teléfono' => '+34 600 000 000'
+        ];
         
-        // Contenido del email usando el mismo formato que confirmacionReserva
-        $contenidoHtml = $notaPrueba . "
+        $contenidoHtml = 
+            $this->generarBanner('info', '📧 Email de Prueba', 'Este es un email de ejemplo para que visualices cómo se mostrarán los colores, logo y datos de tu negocio en los emails enviados a tus clientes. Los datos de la reserva son ficticios.') . "
             <h2 style='color: #1f2937; margin-top: 0;'>Hola {$nombreUsuario},</h2>
             <p>Tu reserva ha sido <strong style='color: #10b981;'>confirmada</strong>.</p>
-            
-            <div style='background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;'>
-                <h3 style='margin-top: 0; color: #374151;'>📅 Detalles de tu cita:</h3>
-                <table style='width: 100%;'>
-                    <tr><td style='padding: 8px 0; color: #374151;'><strong>Fecha:</strong></td><td style='color: #6b7280;'>{$fechaEjemplo}</td></tr>
-                    <tr><td style='padding: 8px 0; color: #374151;'><strong>Hora:</strong></td><td style='color: #6b7280;'>{$horaEjemplo}</td></tr>
-                    <tr><td style='padding: 8px 0; color: #374151;'><strong>Teléfono:</strong></td><td style='color: #6b7280;'>+34 600 000 000</td></tr>
-                </table>
-                <p style='margin-top: 15px; color: #374151;'><strong>Comentarios:</strong><br>Este es un mensaje de ejemplo para visualizar cómo se verán los emails enviados a tus clientes.</p>
-            </div>";
+            " . $this->generarTablaDetalles('📅 Detalles de tu cita:', $detalles, '#10b981') . "
+            <div style='background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;'>
+                <p style='margin: 0; color: #374151;'><strong>Comentarios:</strong><br>Este es un mensaje de ejemplo para visualizar cómo se verán los emails enviados a tus clientes.</p>
+            </div>
+            " . $this->generarBoton($this->baseUrl . '/reserva/ejemplo', 'Gestionar mi reserva', $config['color_primario']) .
+            $this->generarBanner('success', '✅ Reserva confirmada', '¡Te esperamos!');
         
-        // Botón de gestión
-        $gestionUrl = $this->baseUrl . '/reserva/ejemplo';
-        $contenidoHtml .= $this->generarBoton($gestionUrl, 'Gestionar mi reserva', $colorPrimario);
-        
-        // Banner de estado confirmado
-        $contenidoHtml .= "
-            <div style='background: #d1fae5; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; margin: 20px 0;'>
-                <p style='margin: 0; color: #065f46;'><strong>✅ Reserva confirmada</strong><br>¡Te esperamos!</p>
-            </div>";
-        
-        // Versión texto plano
         $contenidoTexto = "=== EMAIL DE PRUEBA ===\n\n";
         $contenidoTexto .= "Este es un email de ejemplo para visualizar cómo se mostrarán los emails a tus clientes.\n";
         $contenidoTexto .= "Los datos de la reserva son ficticios.\n\n";
@@ -518,17 +569,16 @@ class EmailTemplates {
         $contenidoTexto .= "- Hora: {$horaEjemplo}\n";
         $contenidoTexto .= "- Teléfono: +34 600 000 000\n";
         $contenidoTexto .= "- Comentarios: Este es un mensaje de ejemplo para visualizar cómo se verán los emails enviados a tus clientes.\n\n";
-        $contenidoTexto .= "Gestiona tu reserva aquí: {$gestionUrl}\n\n";
-        $contenidoTexto .= "Saludos,\n{$nombreNegocio}";
+        $contenidoTexto .= "Gestiona tu reserva aquí: {$this->baseUrl}/reserva/ejemplo\n\n";
+        $contenidoTexto .= "Saludos,\n{$config['nombre']}";
         
         return [
-            'asunto' => "[PRUEBA] ✅ Tu reserva en {$nombreNegocio}",
+            'asunto' => "[PRUEBA] ✅ Tu reserva en {$config['nombre']}",
             'cuerpo_texto' => $contenidoTexto,
             'cuerpo_html' => $this->wrapHtmlNegocio('Email de Prueba', $contenidoHtml, $usuarioId),
             'opciones' => [
-                'from_name' => $nombreNegocio
+                'from_name' => $config['nombre']
             ]
         ];
     }
-
 }
