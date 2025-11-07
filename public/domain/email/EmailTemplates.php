@@ -91,7 +91,7 @@ class EmailTemplates {
      */
     private function generarFooterNegocio(array $config): string {
         $contactInfo = [];
-        
+
         if ($config['telefono']) {
             $contactInfo[] = "📞 {$config['telefono']}";
         }
@@ -114,6 +114,7 @@ class EmailTemplates {
             $contactHtml = "
                 <div style='margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e5e7eb;'>
                     <p style='margin: 5px 0; font-size: 12px; line-height: 1.6;'>
+                        <strong>" . $config['nombre'] . "</strong><br>
                         " . implode("<br>", $contactInfo) . "
                     </p>
                 </div>
@@ -123,7 +124,7 @@ class EmailTemplates {
         return "
             <div style='text-align: center; padding: 20px; color: #666; font-size: 12px; border-top: 1px solid #e5e7eb;'>
                 {$contactHtml}
-                <p style='margin: 5px 0 0 0; font-size: 11px; color: #999;'>Powered by {$this->appName}</p>
+                <p style='margin: 5px 0 0 0; font-size: 11px; color: #999;'>Powered by <a href='www.reservabot.es'>{$this->appName}</a></p>
             </div>
         ";
     }
@@ -401,7 +402,7 @@ class EmailTemplates {
         
         $contenidoHtml = "
             <h2 style='color: #1f2937; margin-top: 0;'>Hola {$reserva['nombre']},</h2>
-            <p>Tu reserva ha sido <strong style='color: {$estadoColor};'>{$estadoTexto}</strong>.</p>
+            <p>Tu reserva está <strong style='color: {$estadoColor};'>{$estadoTexto}</strong>.</p>
             " . $this->generarTablaDetalles('📅 Detalles de tu cita:', $detalles, $estadoColor);
         
         // Añadir comentarios si existen
@@ -421,7 +422,7 @@ class EmailTemplates {
         $contenidoHtml .= $this->generarBanner($bannerTipo, $bannerTitulo, $bannerMensaje);
         
         $contenidoTexto = "Hola {$reserva['nombre']},\n\n";
-        $contenidoTexto .= "Tu reserva ha sido {$estadoTexto}.\n\n";
+        $contenidoTexto .= "Tu reserva está {$estadoTexto}.\n\n";
         $contenidoTexto .= "Detalles:\n";
         $contenidoTexto .= "- Fecha: {$fechaFormateada}\n";
         $contenidoTexto .= "- Hora: {$horaFormateada}\n";
