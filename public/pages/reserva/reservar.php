@@ -471,6 +471,23 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
             <div class="max-w-2xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
                 <div class="bg-white rounded-lg shadow-lg fade-in">
                     <div class="px-6 py-8">
+
+                        <!-- Mensaje de bienvenida / Descripción destacada -->
+                        <?php if (!empty($formulario['descripcion'])): ?>
+                            <div class="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500 rounded-lg p-4 shadow-sm">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <i class="ri-information-line text-blue-600 text-xl mt-0.5"></i>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-gray-800 text-base leading-relaxed">
+                                            <?php echo nl2br(htmlspecialchars($formulario['descripcion'])); ?>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                        
                         <!-- Contenedor para mensajes de error -->
                         <div id="errorContainer" class="mb-6 bg-red-50 border border-red-200 rounded-md p-4 hidden">
                             <div class="flex">
