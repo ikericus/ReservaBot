@@ -74,6 +74,11 @@ class Router {
         $this->addRoute('POST',     '/api/reserva-rechazar',                    'api/reserva-rechazar.php',                  ['auth']);
         $this->addRoute('POST',     '/api/reserva-cancelar',                    'api/reserva-cancelar.php',                  ['auth']);    
         $this->addRoute('POST',     '/api/reserva-publica-crear',               'api/reserva-publica-crear.php',             ['auth']);
+         
+        $this->addRoute('POST',     '/api/formulario-crear',                    'api/formulario-crear.php',                  ['auth']);
+        $this->addRoute('POST',     '/api/formulario-actualizar',               'api/formulario-actualizar.php',             ['auth']);
+        $this->addRoute('POST',     '/api/formulario-eliminar',                 'api/formulario-eliminar.php',               ['auth']);
+
         $this->addRoute('POST',     '/api/horas-disponibles',                   'api/horas-disponibles.php',                 ['auth']);
         $this->addRoute('POST',     '/api/configuracion-actualizar',            'api/configuracion-actualizar.php',          ['auth']);
         $this->addRoute('POST',     '/api/configuracion-email-prueba',          'api/configuracion-email-prueba.php',        ['auth']);
