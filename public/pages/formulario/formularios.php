@@ -684,14 +684,14 @@ include 'includes/header.php';
         <!-- Mensaje de bienvenida -->
         <div>
             <label for="mensaje_bienvenida" class="block text-sm font-medium text-gray-700 mb-1">
-                Mensaje de bienvenida personalizado (opcional)
+                Mensaje personalizado (opcional)
             </label>
             <textarea
                 name="mensaje_bienvenida"
                 id="mensaje_bienvenida"
                 rows="3"
                 class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Ej: Bienvenido a nuestra clínica. Reserva tu cita de forma rápida y sencilla."
+                placeholder="Ej: Bienvenido a nuestro negocio. Reserva tu cita de forma rápida y sencilla."
             ></textarea>
         </div>
         
@@ -737,7 +737,7 @@ include 'includes/header.php';
         <p class="text-xs text-gray-500 mb-4 -mt-3">Solo para identificar este enlace en tu panel</p>
         
         <!-- Mensaje de bienvenida -->
-        <label class="mobile-form-label">Mensaje de bienvenida personalizado (opcional)</label>
+        <label class="mobile-form-label">Mensaje personalizado (opcional)</label>
         <textarea name="mensaje_bienvenida" rows="3"
                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm resize-vertical min-h-16 mb-4"
                  placeholder="Ej: Bienvenido a nuestra clínica. Reserva tu cita de forma rápida y sencilla."></textarea>
@@ -851,7 +851,7 @@ include 'includes/header.php';
                             <div class="mb-4">
                                 <h4 class="text-sm font-semibold text-gray-900 flex items-center mb-3">
                                     <i class="ri-message-2-line mr-2 text-green-600"></i>
-                                    Mensaje de bienvenida
+                                    Mensaje personalizado
                                 </h4>
                                 <div class="pl-6 p-3 bg-gray-50 rounded-md border-l-4 border-green-400">
                                     <p class="text-sm text-gray-700 italic">"<?php echo nl2br(htmlspecialchars($enlace['descripcion'])); ?>"</p>
@@ -961,7 +961,7 @@ include 'includes/header.php';
                                 <div class="mb-3 p-3 bg-green-50 rounded-lg border border-green-200">
                                     <div class="text-xs font-semibold text-green-700 mb-1 flex items-center">
                                         <i class="ri-message-2-line mr-1"></i>
-                                        Mensaje de bienvenida:
+                                        Mensaje personalizado:
                                     </div>
                                     <p class="text-sm text-gray-700 italic">"<?php echo htmlspecialchars($enlace['mensaje_bienvenida']); ?>"</p>
                                 </div>
@@ -1128,7 +1128,7 @@ include 'includes/header.php';
                         
                         <div>
                             <label for="descripcionEditar" class="block text-sm font-medium text-gray-700 mb-1">
-                                Mensaje de bienvenida (opcional)
+                                Mensaje personalizado (opcional)
                             </label>
                             <textarea
                                 name="mensaje_bienvenida"
