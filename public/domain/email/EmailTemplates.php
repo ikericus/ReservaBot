@@ -8,12 +8,9 @@ use ReservaBot\Domain\Configuracion\IConfiguracionNegocioRepository;
 class EmailTemplates {
     private string $baseUrl;
     private string $appName;
-    private ?IConfiguracionNegocioRepository $configuracionRepository;
-    
-    // Cache para evitar múltiples llamadas a la BD
-    private array $configuracionesCache = [];
-    
-    public function __construct(?IConfiguracionNegocioRepository $configuracionRepository = null) {
+    private IConfiguracionNegocioRepository $configuracionRepository;
+        
+    public function __construct(IConfiguracionNegocioRepository $configuracionRepository = null) {
         $this->baseUrl = $_ENV['APP_URL'];
         $this->appName = $_ENV['APP_NAME'];
         $this->configuracionRepository = $configuracionRepository;
@@ -23,41 +20,25 @@ class EmailTemplates {
      * Obtiene todas las configuraciones del negocio de una sola vez
      */
     private function obtenerConfiguracionNegocio(int $usuarioId): array {
-        // Usar cache para evitar múltiples llamadas en el mismo request
-        if (isset($this->configuracionesCache[$usuarioId])) {
-            return $this->configuracionesCache[$usuarioId];
+        
+        $config = [];
+
+        try {
+            $todas = $this->configuracionRepository->obtenerTodas($usuarioId);
+            
+            $config['nombre']           = $todas['empresa_nombre']      ?? $this->appName;
+            $config['color_primario']   = $todas['color_primario']      ?? '#667eea';
+            $config['color_secundario'] = $todas['color_secundario']    ?? '#764ba2';
+            $config['logo']             = $todas['empresa_imagen']      ?? null;
+            $config['telefono']         = $todas['empresa_telefono']    ?? null;
+            $config['email']            = $todas['empresa_email']       ?? null;
+            $config['direccion']        = $todas['empresa_direccion']   ?? null;
+            $config['web']              = $todas['empresa_web']         ?? null;
+            
+        } catch (\Exception $e) {
+            error_log("Error obteniendo configuración del negocio: " . $e->getMessage());
         }
         
-        $config = [
-            'nombre' => $this->appName,
-            'color_primario' => '#667eea',
-            'color_secundario' => '#764ba2',
-            'logo' => null,
-            'telefono' => null,
-            'email' => null,
-            'direccion' => null,
-            'web' => null
-        ];
-        
-        if ($this->configuracionRepository) {
-            try {
-                $todas = $this->configuracionRepository->obtenerTodas($usuarioId);
-                
-                $config['nombre'] = $todas['empresa_nombre'] ?? $this->appName;
-                $config['color_primario'] = $todas['color_primario'] ?? '#667eea';
-                $config['color_secundario'] = $todas['color_secundario'] ?? '#764ba2';
-                $config['logo'] = $todas['empresa_imagen'] ?? null;
-                $config['telefono'] = $todas['empresa_telefono'] ?? null;
-                $config['email'] = $todas['empresa_email'] ?? null;
-                $config['direccion'] = $todas['empresa_direccion'] ?? null;
-                $config['web'] = $todas['empresa_web'] ?? null;
-                
-            } catch (\Exception $e) {
-                error_log("Error obteniendo configuración del negocio: " . $e->getMessage());
-            }
-        }
-        
-        $this->configuracionesCache[$usuarioId] = $config;
         return $config;
     }
     
