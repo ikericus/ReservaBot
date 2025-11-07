@@ -8,9 +8,9 @@ use ReservaBot\Domain\Configuracion\IConfiguracionNegocioRepository;
 class EmailTemplates {
     private string $baseUrl;
     private string $appName;
-    private IConfiguracionNegocioRepository $configuracionRepository;
+    private ?IConfiguracionNegocioRepository $configuracionRepository;
         
-    public function __construct(IConfiguracionNegocioRepository $configuracionRepository = null) {
+    public function __construct(?IConfiguracionNegocioRepository $configuracionRepository = null) {
         $this->baseUrl = $_ENV['APP_URL'];
         $this->appName = $_ENV['APP_NAME'];
         $this->configuracionRepository = $configuracionRepository;
