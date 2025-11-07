@@ -425,7 +425,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                     </div>
                     
                     <!-- Mensaje de bienvenida compacto (opcional) -->
-                    <?php if (!empty($formulario['mensaje_bienvenida'])): ?>
+                    <?php if (!empty($formulario['descripcion'])): ?>
                         <div class="mt-2 text-center">
                             <p class="text-sm text-white/90 max-w-2xl mx-auto leading-relaxed">
                                 <?php echo htmlspecialchars($formulario['mensaje_bienvenida']); ?>
