@@ -499,11 +499,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             data['mapeo_semana'] = JSON.stringify(mapeoSemana);
             
-            // TODO: Calendario (cuando se implemente)
-            // data['calendario'] = JSON.stringify({});
-            
             try {
-                const response = await fetch('/api/actualizar-configuracion', {
+                const response = await fetch('/api/configuracion-actualizar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
