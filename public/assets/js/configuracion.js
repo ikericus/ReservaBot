@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
             feedbackDiv.classList.add('hidden');
             
             try {
-                const response = await fetch('/api/configuracion-email-prueba.php', {
+                const response = await fetch('/api/configuracion-email-prueba', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
