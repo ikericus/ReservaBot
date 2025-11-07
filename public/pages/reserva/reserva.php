@@ -58,66 +58,10 @@ try {
     $whatsappConnected = false;
 }
 
-$configuracionNegocio = [];
-try {
-    $configuracionDomain = getContainer()->getConfiguracionDomain();
-    $todas = $configuracionDomain->obtenerConfiguraciones($userId);
-    
-    $configuracionNegocio['nombre'] = $todas['empresa_nombre'] ?? $_ENV['APP_NAME'];
-    $configuracionNegocio['color_primario'] = $todas['color_primario'] ?? '#667eea';
-    $configuracionNegocio['color_secundario'] = $todas['color_secundario'] ?? '#764ba2';
-    $configuracionNegocio['logo'] = $todas['empresa_imagen'] ?? null;
-} catch (\Exception $e) {
-    error_log("Error obteniendo configuración del negocio: " . $e->getMessage());
-    $configuracionNegocio['nombre'] = $_ENV['APP_NAME'];
-    $configuracionNegocio['color_primario'] = '#667eea';
-    $configuracionNegocio['color_secundario'] = '#764ba2';
-    $configuracionNegocio['logo'] = null;
-}
-
 include 'includes/header.php';
 ?>
 
 <style>
-
-    /* Header personalizado del negocio */
-.business-header {
-    background: linear-gradient(135deg, <?php echo $configuracionNegocio['color_primario']; ?> 0%, <?php echo $configuracionNegocio['color_secundario']; ?> 100%);
-    padding: 2rem 1rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1.5rem;
-    text-align: center;
-}
-
-.business-logo {
-    max-height: 70px;
-    max-width: 230px;
-    display: block;
-    margin: 0 auto 1rem auto;
-}
-
-.business-name {
-    color: white;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
-}
-
-@media (max-width: 768px) {
-    .business-header {
-        padding: 1.5rem 1rem;
-    }
-    
-    .business-logo {
-        max-height: 50px;
-    }
-    
-    .business-name {
-        font-size: 1.25rem;
-    }
-}
-
 .container-max-width {
     max-width: 1200px;
     margin: 0 auto;
@@ -282,32 +226,9 @@ include 'includes/header.php';
         font-size: 1.25rem;
     }
 }
-
-.btn-primary-custom {
-    background: <?php echo $configuracionNegocio['color_primario']; ?>;
-    border-color: <?php echo $configuracionNegocio['color_primario']; ?>;
-}
-
-.btn-primary-custom:hover {
-    background: <?php echo $configuracionNegocio['color_secundario']; ?>;
-    border-color: <?php echo $configuracionNegocio['color_secundario']; ?>;
-}
-
 </style>
 
 <div class="container-max-width">
-
-    <!-- Header del negocio personalizado -->
-    <div class="business-header">
-        <?php if ($configuracionNegocio['logo']): ?>
-            <img src="<?php echo htmlspecialchars($configuracionNegocio['logo']); ?>" 
-                 alt="<?php echo htmlspecialchars($configuracionNegocio['nombre']); ?>" 
-                 class="business-logo">
-        <?php endif; ?>
-        <h1 class="business-name">
-            <?php echo htmlspecialchars($configuracionNegocio['nombre']); ?>
-        </h1>
-    </div>
 
     <!-- Información de la reserva -->
     <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6">
