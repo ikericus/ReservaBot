@@ -53,13 +53,17 @@ class ConfiguracionDomain {
         try {
             // Generar email usando el template
             $emailData = $this->emailTemplates->emailPruebaConfiguracion($nombreUsuario, $usuarioId);
+                        
+            // Email de destino
+            $emailContacto = $_ENV['CONTACT_EMAIL'] ?? 'contacto@reservabot.es';
             
             // Enviar el email
             $resultado = $this->emailRepository->enviar(
                 $emailDestino,
                 $emailData['asunto'],
                 $emailData['cuerpo_texto'],
-                $emailData['cuerpo_html']
+                $emailData['cuerpo_html'],
+                $emailData['opciones']
             );
             
             if (!$resultado) {

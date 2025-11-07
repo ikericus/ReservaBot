@@ -334,7 +334,10 @@ class EmailTemplates {
         return [
             'asunto' => "{$estadoIcon} Tu reserva en {$nombreNegocio}",
             'cuerpo_texto' => $contenidoTexto,
-            'cuerpo_html' => $this->wrapHtmlNegocio('Confirmación de Reserva', $contenidoHtml, $usuarioId)
+            'cuerpo_html' => $this->wrapHtmlNegocio('Confirmación de Reserva', $contenidoHtml, $usuarioId),
+            'opciones' => [
+                'from_name' => $nombreNegocio
+            ]
         ];
     }
 
@@ -521,7 +524,10 @@ class EmailTemplates {
         return [
             'asunto' => "[PRUEBA] ✅ Tu reserva en {$nombreNegocio}",
             'cuerpo_texto' => $contenidoTexto,
-            'cuerpo_html' => $this->wrapHtmlNegocio('Email de Prueba', $contenidoHtml, $usuarioId)
+            'cuerpo_html' => $this->wrapHtmlNegocio('Email de Prueba', $contenidoHtml, $usuarioId),
+            'opciones' => [
+                'from_name' => $nombreNegocio
+            ]
         ];
     }
 

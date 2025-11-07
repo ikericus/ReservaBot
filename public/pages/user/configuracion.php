@@ -954,10 +954,7 @@ include 'includes/header.php';
             <p class="text-sm text-gray-500 italic">Sin horarios definidos</p>
         </div>
 
-        <button
-            type="button"
-            class="btn-add-ventana mt-4 text-sm text-blue-600 hover:text-blue-800 flex items-center"
-        >
+        <button type="button" class="btn-add-ventana mt-4 text-sm text-blue-600 hover:text-blue-800 flex items-center">
             <i class="ri-add-line mr-1"></i>
             Añadir ventana horaria
         </button>
