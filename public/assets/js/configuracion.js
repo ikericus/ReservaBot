@@ -370,17 +370,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const feedbackDiv = document.getElementById('emailPruebaFeedback');
     
     if (btnEnviarEmailPrueba && feedbackDiv) {
-        btnEnviarEmailPrueba.addEventListener('click', async function() {
+        btnEnviarEmailPrueba.addEventListener('click', async function(e) {
+            e.preventDefault(); // Prevenir cualquier comportamiento por defecto
+            
+            const button = this; // Guardar referencia al botón
+            
             // Deshabilitar botón mientras se procesa
-            const btnOriginalHTML = this.innerHTML;
-            this.disabled = true;
-            this.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i><span>Enviando...</span>';
+            const btnOriginalHTML = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i><span>Enviando...</span>';
             
             // Ocultar feedback previo
             feedbackDiv.classList.add('hidden');
             
             try {
-                const response = await fetch('/api/configuracion-email-prueba', {
+                const response = await fetch('/api/configuracion-email-prueba.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -440,9 +444,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 feedbackDiv.classList.remove('hidden');
                 
             } finally {
-                // Restaurar botón
-                this.disabled = false;
-                this.innerHTML = btnOriginalHTML;
+                // Restaurar botón siempre
+                console.log('Restaurando botón...'); // Debug
+                button.disabled = false;
+                button.innerHTML = btnOriginalHTML;
             }
         });
     }
@@ -510,7 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // data['calendario'] = JSON.stringify({});
             
             try {
-                const response = await fetch('/api/configuracion-actualizar', {
+                const response = await fetch('/api/actualizar-configuracion', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

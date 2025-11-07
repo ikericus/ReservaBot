@@ -33,12 +33,12 @@ class EmailRepository implements IEmailRepository {
         try {
             // SMTP CONFIG HOSTINGER
             $mail->isSMTP();
-            $mail->Host       = $_ENV['MAIL_HOST'] ?? 'smtp.hostinger.com';
+            $mail->Host       = $_ENV['MAIL_HOST'];
             $mail->SMTPAuth   = true;
-            $mail->Username   = $_ENV['MAIL_USERNAME'] ?? 'noreply@reservabot.es';
-            $mail->Password   = $_ENV['MAIL_PASSWORD'] ?? '';
-            $mail->SMTPSecure = $_ENV['MAIL_ENCRYPTION'] ?? 'ssl';
-            $mail->Port       = $_ENV['MAIL_PORT'] ?? 587;
+            $mail->Username   = $_ENV['MAIL_USERNAME'];
+            $mail->Password   = $_ENV['MAIL_PASSWORD'];
+            $mail->SMTPSecure = $_ENV['MAIL_ENCRYPTION'];
+            $mail->Port       = $_ENV['MAIL_PORT'];
 
             // Remitente
             $fromEmail = $opciones['from_email'] ?? $this->fromEmail;

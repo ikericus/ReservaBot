@@ -76,7 +76,7 @@ class Router {
         $this->addRoute('POST',     '/api/reserva-publica-crear',               'api/reserva-publica-crear.php',             ['auth']);
         $this->addRoute('POST',     '/api/horas-disponibles',                   'api/horas-disponibles.php',                 ['auth']);
         $this->addRoute('POST',     '/api/configuracion-actualizar',            'api/configuracion-actualizar.php',          ['auth']);
-        $this->addRoute('POST',     '/api/configuracion-email-prueba',          'api/configuracion-email-prueba.php',          ['auth']);
+        $this->addRoute('POST',     '/api/configuracion-email-prueba',          'api/configuracion-email-prueba.php',        ['auth']);
         
         $this->addRoute('POST',     '/api/whatsapp-send',                       'api/whatsapp-send.php',                     ['auth']);
         $this->addRoute('POST',     '/api/whatsapp-connect',                    'api/whatsapp-connect.php',                  ['auth']);

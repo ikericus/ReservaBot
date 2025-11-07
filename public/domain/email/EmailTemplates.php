@@ -73,8 +73,7 @@ class EmailTemplates {
         if ($logoBase64) {
             $headerContent .= "
                 <div style='text-align:center;'>
-                    <img src='{$logoBase64}' alt='{$nombreNegocio}' 
-                        style='max-height: 70px; max-width: 230px; display:block; margin:0 auto;'>
+                    <img src='{$logoBase64}' alt='{$nombreNegocio}' style='max-height: 70px; max-width: 230px; display:block; margin:0 auto;'>
                 </div>
             ";
         }
