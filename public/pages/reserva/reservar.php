@@ -32,6 +32,38 @@ if (empty($slug)) {
     }
 }
 
+$configuracionNegocio = [];
+if ($formulario) {
+    try {
+        $configuracionDomain = getContainer()->getConfiguracionDomain();
+        $todasConfig = $configuracionDomain->obtenerConfiguraciones($formulario['usuario_id']);
+        
+        $configuracionNegocio = [
+            'nombre' => $todasConfig['empresa_nombre'] ?? ($formulario['empresa_nombre'] ?? $formulario['nombre']),
+            'logo' => $todasConfig['empresa_imagen'] ?? ($formulario['empresa_logo'] ?? null),
+            'telefono' => $todasConfig['empresa_telefono'] ?? ($formulario['telefono_contacto'] ?? null),
+            'email' => $todasConfig['empresa_email'] ?? null,
+            'direccion' => $todasConfig['empresa_direccion'] ?? ($formulario['direccion'] ?? null),
+            'web' => $todasConfig['empresa_web'] ?? null,
+            'color_primario' => $todasConfig['color_primario'] ?? ($formulario['color_primario'] ?? '#667eea'),
+            'color_secundario' => $todasConfig['color_secundario'] ?? ($formulario['color_secundario'] ?? '#764ba2')
+        ];
+    } catch (Exception $e) {
+        error_log("Error obteniendo configuración del negocio: " . $e->getMessage());
+        // Usar valores del formulario como fallback
+        $configuracionNegocio = [
+            'nombre' => $formulario['empresa_nombre'] ?? $formulario['nombre'],
+            'logo' => $formulario['empresa_logo'] ?? null,
+            'telefono' => $formulario['telefono_contacto'] ?? null,
+            'email' => null,
+            'direccion' => $formulario['direccion'] ?? null,
+            'web' => null,
+            'color_primario' => $formulario['color_primario'] ?? '#667eea',
+            'color_secundario' => $formulario['color_secundario'] ?? '#764ba2'
+        ];
+    }
+}
+
 // Obtener configuración de horarios usando ReservaDomain
 $horarios = [];
 $intervaloReservas = 30;
@@ -141,8 +173,8 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
         
 <style>
     :root {
-        --primary-color: <?php echo htmlspecialchars($formulario['color_primario'] ?? '#667eea'); ?>;
-        --secondary-color: <?php echo htmlspecialchars($formulario['color_secundario'] ?? '#764ba2'); ?>;
+        --primary-color: <?php echo htmlspecialchars($configuracionNegocio['color_primario'] ?? '#667eea'); ?>;
+        --secondary-color: <?php echo htmlspecialchars($configuracionNegocio['color_secundario'] ?? '#764ba2'); ?>;
     }
     
     /* === GRADIENTE COMPACTO === */
@@ -338,7 +370,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
         <div class="min-h-screen bg-gray-50">
 
             <!-- Header -->
-           <div class="gradient-bg relative overflow-hidden">
+            <div class="gradient-bg relative overflow-hidden">
                 <!-- Efecto sutil de fondo -->
                 <div class="absolute inset-0 opacity-5">
                     <div class="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -mr-20 -mt-20"></div>
@@ -351,20 +383,20 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                         
                         <!-- Logo y nombre (lado izquierdo) -->
                         <div class="flex items-center space-x-3">
-                            <?php if (!empty($formulario['empresa_logo'])): ?>
+                            <?php if (!empty($configuracionNegocio['logo'])): ?>
                                 <div class="flex-shrink-0">
-                                    <img src="<?php echo htmlspecialchars($formulario['empresa_logo']); ?>" 
-                                        alt="<?php echo htmlspecialchars($formulario['empresa_nombre'] ?? $formulario['nombre']); ?>"
+                                    <img src="<?php echo htmlspecialchars($configuracionNegocio['logo']); ?>" 
+                                        alt="<?php echo htmlspecialchars($configuracionNegocio['nombre']); ?>"
                                         class="h-10 w-auto object-contain bg-white/15 rounded-lg p-1.5 shadow-md">
                                 </div>
                             <?php endif; ?>
                             
                             <div class="min-w-0">
                                 <h1 class="text-lg font-bold sm:text-xl truncate">
-                                    <?php echo htmlspecialchars($formulario['empresa_nombre'] ?? $formulario['nombre']); ?>
+                                    <?php echo htmlspecialchars($configuracionNegocio['nombre']); ?>
                                 </h1>
                                 
-                                <?php if (!empty($formulario['nombre']) && $formulario['nombre'] !== ($formulario['empresa_nombre'] ?? '')): ?>
+                                <?php if (!empty($formulario['nombre']) && $formulario['nombre'] !== $configuracionNegocio['nombre']): ?>
                                     <p class="text-sm text-white/90 truncate">
                                         <?php echo htmlspecialchars($formulario['nombre']); ?>
                                     </p>
@@ -374,18 +406,18 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                         
                         <!-- Información de contacto (lado derecho) -->
                         <div class="hidden sm:flex items-center space-x-4 text-sm">
-                            <?php if (!empty($formulario['telefono_contacto'])): ?>
-                                <a href="tel:<?php echo htmlspecialchars($formulario['telefono_contacto']); ?>" 
+                            <?php if (!empty($configuracionNegocio['telefono'])): ?>
+                                <a href="tel:<?php echo htmlspecialchars($configuracionNegocio['telefono']); ?>" 
                                 class="flex items-center space-x-2 bg-white/10 rounded-full px-3 py-1.5 hover:bg-white/20 transition-colors">
                                     <i class="ri-phone-line text-xs"></i>
-                                    <span class="font-medium"><?php echo htmlspecialchars($formulario['telefono_contacto']); ?></span>
+                                    <span class="font-medium"><?php echo htmlspecialchars($configuracionNegocio['telefono']); ?></span>
                                 </a>
                             <?php endif; ?>
                             
-                            <?php if (!empty($formulario['direccion'])): ?>
+                            <?php if (!empty($configuracionNegocio['direccion'])): ?>
                                 <div class="flex items-center space-x-2 text-white/80 max-w-xs">
                                     <i class="ri-map-pin-line text-xs flex-shrink-0"></i>
-                                    <span class="truncate text-xs"><?php echo htmlspecialchars($formulario['direccion']); ?></span>
+                                    <span class="truncate text-xs"><?php echo htmlspecialchars($configuracionNegocio['direccion']); ?></span>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -410,27 +442,36 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                     <!-- Información móvil desplegable -->
                     <div id="mobileInfo" class="hidden sm:hidden mt-3 pt-3 border-t border-white/20">
                         <div class="space-y-2 text-sm">
-                            <?php if (!empty($formulario['telefono_contacto'])): ?>
+                            <?php if (!empty($configuracionNegocio['telefono'])): ?>
                                 <div class="flex items-center justify-center space-x-2">
                                     <i class="ri-phone-line"></i>
-                                    <a href="tel:<?php echo htmlspecialchars($formulario['telefono_contacto']); ?>" 
+                                    <a href="tel:<?php echo htmlspecialchars($configuracionNegocio['telefono']); ?>" 
                                     class="font-medium hover:text-white/80">
-                                        <?php echo htmlspecialchars($formulario['telefono_contacto']); ?>
+                                        <?php echo htmlspecialchars($configuracionNegocio['telefono']); ?>
                                     </a>
                                 </div>
                             <?php endif; ?>
                             
-                            <?php if (!empty($formulario['direccion'])): ?>
+                            <?php if (!empty($configuracionNegocio['direccion'])): ?>
                                 <div class="flex items-center justify-center space-x-2 text-white/80">
                                     <i class="ri-map-pin-line"></i>
-                                    <span class="text-center"><?php echo htmlspecialchars($formulario['direccion']); ?></span>
+                                    <span class="text-center"><?php echo htmlspecialchars($configuracionNegocio['direccion']); ?></span>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($configuracionNegocio['email'])): ?>
+                                <div class="flex items-center justify-center space-x-2 text-white/80">
+                                    <i class="ri-mail-line"></i>
+                                    <a href="mailto:<?php echo htmlspecialchars($configuracionNegocio['email']); ?>" 
+                                    class="hover:text-white/60">
+                                        <?php echo htmlspecialchars($configuracionNegocio['email']); ?>
+                                    </a>
                                 </div>
                             <?php endif; ?>
                         </div>
                     </div>
                 </div>
             </div>
-
             
             <!-- Formulario -->
             <div class="max-w-2xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -607,6 +648,9 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                     </div>
                 </div>
             </div>
+        
+        
+        
         </div>
     <?php endif; ?>
     
