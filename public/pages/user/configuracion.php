@@ -406,6 +406,25 @@ include 'includes/header.php';
     .btn-delete-tipo {
         font-size: 0.875rem;
     }
+    
+    /* Email de prueba - Mobile */
+    .bg-blue-50.rounded-lg.p-4 {
+        padding: 0.75rem;
+    }
+    
+    .bg-blue-50 .flex.items-start {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    #btnEnviarEmailPrueba {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    #btnEnviarEmailPrueba span {
+        font-size: 0.875rem;
+    }
 }
 
 @media (max-width: 640px) {
@@ -425,6 +444,15 @@ include 'includes/header.php';
     
     #btnAddTipoDia i {
         margin-right: 0;
+    }
+    
+    /* Email de prueba - Extra small screens */
+    .bg-blue-50 h3 {
+        font-size: 0.875rem;
+    }
+    
+    .bg-blue-50 p {
+        font-size: 0.8125rem;
     }
 }
 </style>
@@ -610,21 +638,21 @@ include 'includes/header.php';
                     <!-- Botón para enviar email de prueba -->
                     <div class="border-t pt-6 mt-6">
                         <div class="bg-blue-50 rounded-lg p-4">
-                            <div class="flex items-start justify-between flex-wrap gap-4">
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="text-sm font-medium text-blue-900 mb-1 flex items-center">
+                            <div class="space-y-3">
+                                <div>
+                                    <h3 class="text-sm font-medium text-blue-900 mb-2 flex items-center">
                                         <i class="ri-mail-send-line mr-2"></i>
                                         Vista previa de email
                                     </h3>
                                     <p class="text-sm text-blue-700">
-                                        Envía un email de ejemplo a <strong><?php echo htmlspecialchars($currentUser['email']); ?></strong> 
+                                        Envía un email de ejemplo a <strong class="break-all"><?php echo htmlspecialchars($currentUser['email']); ?></strong> 
                                         para visualizar cómo se mostrarán los colores, logo y datos de tu negocio en los emails enviados a tus clientes.
                                     </p>
                                 </div>
                                 <button
                                     type="button"
                                     id="btnEnviarEmailPrueba"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex-shrink-0"
+                                    class="w-full md:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                 >
                                     <i class="ri-mail-send-line mr-2"></i>
                                     <span>Enviar email de prueba</span>

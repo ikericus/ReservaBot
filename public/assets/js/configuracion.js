@@ -372,14 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnEnviarEmailPrueba && feedbackDiv) {
         btnEnviarEmailPrueba.addEventListener('click', async function(e) {
             e.preventDefault(); // Prevenir cualquier comportamiento por defecto
-            
-            const button = this; // Guardar referencia al botón
-            
-            // Deshabilitar botón mientras se procesa
-            const btnOriginalHTML = button.innerHTML;
-            button.disabled = true;
-            button.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i><span>Enviando...</span>';
-            
+                        
             // Ocultar feedback previo
             feedbackDiv.classList.add('hidden');
             
@@ -443,11 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 feedbackDiv.classList.remove('hidden');
                 
-            } finally {
-                // Restaurar botón siempre
-                console.log('Restaurando botón...'); // Debug
-                button.disabled = false;
-                button.innerHTML = btnOriginalHTML;
             }
         });
     }
