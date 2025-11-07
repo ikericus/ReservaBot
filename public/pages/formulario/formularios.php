@@ -31,6 +31,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log("Error eliminando formulario: " . $e->getMessage());
         }
     }
+
+    // Procesar activación/desactivación
+    if (isset($_POST['toggle_estado'])) {
+        $id = intval($_POST['id'] ?? 0);
+        $accion = $_POST['accion'] ?? '';
+        
+        try {
+            if ($accion === 'activar') {
+                $formularioDomain->activarFormulario($id, $usuario_id);
+                setFlashSuccess('Enlace activado correctamente');
+            } elseif ($accion === 'desactivar') {
+                $formularioDomain->desactivarFormulario($id, $usuario_id);
+                setFlashSuccess('Enlace desactivado correctamente');
+            }
+        } catch (Exception $e) {
+            setFlashError('Error al cambiar el estado del enlace: ' . $e->getMessage());
+            error_log("Error cambiando estado de formulario: " . $e->getMessage());
+        }
+    }
+
+    // Procesar edición de enlace
+    if (isset($_POST['editar_enlace'])) {
+        $id = intval($_POST['id'] ?? 0);
+        
+        try {
+            $formularioDomain->actualizarFormulario($id, [
+                'nombre' => trim($_POST['nombre'] ?? ''),
+                'descripcion' => !empty($_POST['mensaje_bienvenida']) ? trim($_POST['mensaje_bienvenida']) : null,
+                'confirmacion_automatica' => isset($_POST['confirmacion_auto']),
+            ], $usuario_id);
+            
+            setFlashSuccess('Enlace actualizado correctamente');
+            
+        } catch (InvalidArgumentException $e) {
+            setFlashError('Error de validación: ' . $e->getMessage());
+        } catch (Exception $e) {
+            setFlashError('Error al actualizar el formulario');
+            error_log("Error actualizando formulario: " . $e->getMessage());
+        }
+    }
+
     // Procesar creación de enlace
     if (isset($_POST['crear_enlace'])) {
         try {
@@ -625,6 +666,46 @@ include 'includes/header.php';
         display: block;
     }
 }
+
+/* Botones de toggle estado en móvil */
+.form-btn-toggle-on {
+    border-color: #10b981;
+    color: #047857;
+    background: white;
+}
+
+.form-btn-toggle-on:hover {
+    background: #ecfdf5;
+    color: #065f46;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.form-btn-toggle-off {
+    border-color: #f59e0b;
+    color: #d97706;
+    background: white;
+}
+
+.form-btn-toggle-off:hover {
+    background: #fef3c7;
+    color: #b45309;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+.form-btn-edit {
+    border-color: #6366f1;
+    color: #4f46e5;
+    background: white;
+}
+
+.form-btn-edit:hover {
+    background: #eef2ff;
+    color: #4338ca;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+}
 </style>
 
 <?php if (!empty($mensaje)): ?>
@@ -839,22 +920,21 @@ include 'includes/header.php';
                         
                         <!-- Contenido del enlace -->
                         <div class="p-6">
-                            <!-- Mensaje de bienvenida -->
-                            <?php if (!empty($enlace['mensaje_bienvenida'])): ?>
+                            <!-- Mensaje de bienvenida/descripción -->
+                            <?php if (!empty($enlace['descripcion'])): ?>
                             <div class="mb-4">
                                 <h4 class="text-sm font-semibold text-gray-900 flex items-center mb-3">
                                     <i class="ri-message-2-line mr-2 text-green-600"></i>
                                     Mensaje de bienvenida
                                 </h4>
                                 <div class="pl-6 p-3 bg-gray-50 rounded-md border-l-4 border-green-400">
-                                    <p class="text-sm text-gray-700 italic">"<?php echo htmlspecialchars($enlace['mensaje_bienvenida']); ?>"</p>
+                                    <p class="text-sm text-gray-700 italic">"<?php echo nl2br(htmlspecialchars($enlace['descripcion'])); ?>"</p>
                                 </div>
                             </div>
                             <?php endif; ?>
                             
-                            <!-- Estadísticas de uso (si las tienes) -->
+                            <!-- Estadísticas de uso -->
                             <?php
-                            // Opcional: obtener estadísticas de uso del formulario
                             try {
                                 $stmt = getPDO()->prepare("SELECT COUNT(*) as total_reservas FROM reservas WHERE formulario_id = ?");
                                 $stmt->execute([$enlace['id']]);
@@ -866,7 +946,7 @@ include 'includes/header.php';
                             ?>
                             
                             <div class="pt-4 border-t border-gray-200">
-                                <div class="flex items-center justify-between">
+                                <div class="flex items-center justify-between mb-4">
                                     <div class="flex items-center space-x-6">
                                         <div class="flex items-center text-sm text-gray-600">
                                             <i class="ri-calendar-check-line mr-2 text-blue-600"></i>
@@ -876,13 +956,37 @@ include 'includes/header.php';
                                         
                                         <div class="flex items-center text-sm text-gray-600">
                                             <i class="ri-link mr-2 text-purple-600"></i>
-                                            <span class="ml-1 font-mono"><?php echo $enlaceCompleto; ?></span>
+                                            <span class="ml-1 font-mono text-xs"><?php echo $enlaceCompleto; ?></span>
                                         </div>
                                     </div>
                                     
                                     <div class="text-xs text-gray-500">
                                         ID: <?php echo $enlace['id']; ?>
                                     </div>
+                                </div>
+                                
+                                <!-- Botones de acción secundarios -->
+                                <div class="flex items-center justify-end space-x-2 pt-3 border-t border-gray-100">
+                                    <!-- Botón de activar/desactivar -->
+                                    <form method="post" class="inline">
+                                        <input type="hidden" name="id" value="<?php echo $enlace['id']; ?>">
+                                        <input type="hidden" name="accion" value="<?php echo $enlace['activo'] ? 'desactivar' : 'activar'; ?>">
+                                        <button type="submit" name="toggle_estado" value="1"
+                                                class="inline-flex items-center px-3 py-1.5 border <?php echo $enlace['activo'] ? 'border-orange-300 text-orange-700 hover:bg-orange-50' : 'border-green-300 text-green-700 hover:bg-green-50'; ?> shadow-sm text-xs font-medium rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 <?php echo $enlace['activo'] ? 'focus:ring-orange-500' : 'focus:ring-green-500'; ?> transition-colors">
+                                            <i class="<?php echo $enlace['activo'] ? 'ri-pause-circle-line' : 'ri-play-circle-line'; ?> mr-1.5"></i>
+                                            <?php echo $enlace['activo'] ? 'Desactivar' : 'Activar'; ?>
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Botón de editar -->
+                                    <button class="btn-editar inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                            data-id="<?php echo $enlace['id']; ?>"
+                                            data-nombre="<?php echo htmlspecialchars($enlace['nombre']); ?>"
+                                            data-descripcion="<?php echo htmlspecialchars($enlace['descripcion'] ?? ''); ?>"
+                                            data-confirmacion="<?php echo $enlace['confirmacion_automatica'] ? '1' : '0'; ?>">
+                                        <i class="ri-edit-line mr-1.5"></i>
+                                        Editar
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -968,8 +1072,8 @@ include 'includes/header.php';
                             
                             <div class="form-card-actions">
                                 <a href="<?php echo $enlaceCompleto; ?>" 
-                                   target="_blank"
-                                   class="form-action-btn form-btn-view">
+                                target="_blank"
+                                class="form-action-btn form-btn-view">
                                     <i class="ri-eye-line"></i>
                                     Ver
                                 </a>
@@ -978,7 +1082,7 @@ include 'includes/header.php';
                                         data-clipboard-text="<?php echo $enlaceCompleto; ?>"
                                         data-enlace-id="<?php echo $enlace['id']; ?>">
                                     <i class="ri-file-copy-line"></i>
-                                    Copiar enlace
+                                    Copiar
                                 </button>
                                 
                                 <button class="form-action-btn form-btn-qr btn-qr"
@@ -988,13 +1092,33 @@ include 'includes/header.php';
                                     QR
                                 </button>
                                 
+                                <!-- Botón de activar/desactivar -->
+                                <form method="post" class="contents">
+                                    <input type="hidden" name="id" value="<?php echo $enlace['id']; ?>">
+                                    <input type="hidden" name="accion" value="<?php echo $enlace['activo'] ? 'desactivar' : 'activar'; ?>">
+                                    <button type="submit" name="toggle_estado" value="1"
+                                            class="form-action-btn <?php echo $enlace['activo'] ? 'form-btn-toggle-off' : 'form-btn-toggle-on'; ?>">
+                                        <i class="<?php echo $enlace['activo'] ? 'ri-pause-circle-line' : 'ri-play-circle-line'; ?>"></i>
+                                        <?php echo $enlace['activo'] ? 'Pausar' : 'Activar'; ?>
+                                    </button>
+                                </form>
+                                
+                                <button class="form-action-btn form-btn-edit btn-editar"
+                                        data-id="<?php echo $enlace['id']; ?>"
+                                        data-nombre="<?php echo htmlspecialchars($enlace['nombre']); ?>"
+                                        data-descripcion="<?php echo htmlspecialchars($enlace['descripcion'] ?? ''); ?>"
+                                        data-confirmacion="<?php echo $enlace['confirmacion_automatica'] ? '1' : '0'; ?>">
+                                    <i class="ri-edit-line"></i>
+                                    Editar
+                                </button>
+                                
                                 <button class="form-action-btn form-btn-delete btn-eliminar"
                                         data-id="<?php echo $enlace['id']; ?>"
                                         data-nombre="<?php echo htmlspecialchars($enlace['nombre']); ?>">
                                     <i class="ri-delete-bin-line"></i>
                                     Eliminar
                                 </button>
-                            </div>
+                            </div>  
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -1045,6 +1169,76 @@ include 'includes/header.php';
                     Cerrar
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar enlace -->
+<div id="editarModal" class="fixed inset-0 z-10 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form method="post" id="formEditar">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="mb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                            Editar Enlace de Reserva
+                        </h3>
+                        <p class="mt-2 text-sm text-gray-500">
+                            Modifica los detalles de tu enlace de reserva
+                        </p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <input type="hidden" name="id" id="idEnlaceEditar">
+                        
+                        <div>
+                            <label for="nombreEditar" class="block text-sm font-medium text-gray-700 mb-1">
+                                Nombre del enlace *
+                            </label>
+                            <input type="text" id="nombreEditar" name="nombre" required
+                                class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Ej: Formulario Consulta General">
+                        </div>
+                        
+                        <div>
+                            <label for="descripcionEditar" class="block text-sm font-medium text-gray-700 mb-1">
+                                Mensaje de bienvenida (opcional)
+                            </label>
+                            <textarea
+                                name="mensaje_bienvenida"
+                                id="descripcionEditar"
+                                rows="3"
+                                class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Ej: Bienvenido a nuestra clínica. Reserva tu cita de forma rápida y sencilla."
+                            ></textarea>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" id="confirmacionAutoEditar" name="confirmacion_auto" 
+                                class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <label for="confirmacionAutoEditar" class="ml-2 block text-sm text-gray-700">
+                                Confirmación automática
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" name="editar_enlace" value="1"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        <i class="ri-save-line mr-2"></i>
+                        Guardar Cambios
+                    </button>
+                    <button type="button" id="cancelarEditar"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -1122,6 +1316,36 @@ document.addEventListener('DOMContentLoaded', function() {
             formContainerMobile.classList.toggle('collapsed');
             formContainerMobile.classList.toggle('expanded');
             toggleBtnMobile.classList.toggle('active');
+        });
+    }
+
+    // Modal de edición
+    const editarModal = document.getElementById('editarModal');
+    const formEditar = document.getElementById('formEditar');
+    const btnsCancelarEditar = document.getElementById('cancelarEditar');
+    const btsEditar = document.querySelectorAll('.btn-editar');
+    
+    // Abrir modal de edición
+    btsEditar.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const nombre = this.dataset.nombre;
+            const descripcion = this.dataset.descripcion;
+            const confirmacion = this.dataset.confirmacion === '1';
+            
+            document.getElementById('idEnlaceEditar').value = id;
+            document.getElementById('nombreEditar').value = nombre;
+            document.getElementById('descripcionEditar').value = descripcion;
+            document.getElementById('confirmacionAutoEditar').checked = confirmacion;
+            
+            editarModal.classList.remove('hidden');
+        });
+    });
+    
+    // Cerrar modal de edición
+    if (btnsCancelarEditar) {
+        btnsCancelarEditar.addEventListener('click', function() {
+            editarModal.classList.add('hidden');
         });
     }
 });
