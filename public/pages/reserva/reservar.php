@@ -165,7 +165,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $formulario ? htmlspecialchars($formulario['nombre']) : 'Reservar Cita'; ?> - ReservaBot</title>
+    <title><?php echo htmlspecialchars($configuracionNegocio['nombre']); ?> - Reservar Cita</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Iconos -->
@@ -395,12 +395,6 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                                 <h1 class="text-lg font-bold sm:text-xl truncate">
                                     <?php echo htmlspecialchars($configuracionNegocio['nombre']); ?>
                                 </h1>
-                                
-                                <?php if (!empty($formulario['nombre']) && $formulario['nombre'] !== $configuracionNegocio['nombre']): ?>
-                                    <p class="text-sm text-white/90 truncate">
-                                        <?php echo htmlspecialchars($formulario['nombre']); ?>
-                                    </p>
-                                <?php endif; ?>
                             </div>
                         </div>
                         

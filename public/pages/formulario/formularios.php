@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'nombre' => trim($_POST['nombre'] ?? ''),
                 'activo' => true,
                 'confirmacion_automatica' => isset($_POST['confirmacion_auto']),
-                'mensaje_bienvenida' => !empty($_POST['mensaje_bienvenida']) ? $_POST['mensaje_bienvenida'] : null,
+                'descripcion' => !empty($_POST['mensaje_bienvenida']) ? trim($_POST['mensaje_bienvenida']) : null,
             ], $usuario_id);
             
             setFlashSuccess('Enlace de reserva creado correctamente');
