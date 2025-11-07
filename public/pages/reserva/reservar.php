@@ -440,7 +440,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
                                 <div class="flex items-center justify-center space-x-2">
                                     <i class="ri-phone-line"></i>
                                     <a href="tel:<?php echo htmlspecialchars($configuracionNegocio['telefono']); ?>" 
-                                    class="font-medium hover:text-white/80">
+                                    class="font-medium text-white/90 bg-white/20">
                                         <?php echo htmlspecialchars($configuracionNegocio['telefono']); ?>
                                     </a>
                                 </div>
