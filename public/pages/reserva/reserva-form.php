@@ -1,6 +1,8 @@
 <?php
 // pages/reserva/reserva-form.php
 
+error_log("Prueba");
+
 // Configurar la página actual
 $currentPage = 'reserva-form';
 $pageTitle = 'ReservaBot - Formulario de Reserva';
