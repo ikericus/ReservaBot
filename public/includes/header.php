@@ -320,11 +320,6 @@
                             </nav>
                         </div>
 
-                        <?php
-                        error_log("Test log " . date('Y-m-d H:i:s'));
-                        phpinfo();
-                        ?>
-                        
                         <div class="flex items-center space-x-4">
                             <a href="/reserva-form" class="btn-nueva-reserva inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
                                 <i class="ri-add-line mr-2 text-lg"></i>
