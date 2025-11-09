@@ -18,12 +18,18 @@ if (isset($_SESSION['form_data'])) unset($_SESSION['form_data']);
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $isEditMode = $id > 0;
 
-// Para nuevas reservas, usar siempre la fecha de hoy por defecto
 if (!$isEditMode) {
+    // Para nuevas reservas, usar siempre la fecha de hoy por defecto
     $fecha = isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d');
+    
+    // Obtener parámetros de la URL para prellenar el formulario
+    $telefonoUrl = isset($_GET['telefono']) ? trim($_GET['telefono']) : '';
+    $nombreUrl = isset($_GET['nombre']) ? trim($_GET['nombre']) : '';
 } else {
     // En modo edición, se establecerá cuando obtengamos la reserva
     $fecha = null;
+    $telefonoUrl = '';
+    $nombreUrl = '';
 }
 
 // Obtener usuario autenticado
@@ -122,7 +128,7 @@ include 'includes/header.php';
                         autocomplete="off"
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         placeholder="+34 600 123 456"
-                        value="<?php echo $isEditMode ? htmlspecialchars($reserva['telefono']) : (isset($formData['telefono']) ? htmlspecialchars($formData['telefono']) : ''); ?>"
+                        value="<?php echo $isEditMode ? htmlspecialchars($reserva['telefono']) : (isset($formData['telefono']) ? htmlspecialchars($formData['telefono']) : htmlspecialchars($telefonoUrl)); ?>"
                     >
                     <!-- Indicador de búsqueda -->
                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none" id="searchIndicator" style="display: none;">
@@ -156,7 +162,7 @@ include 'includes/header.php';
                         required
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         placeholder="Nombre del cliente"
-                        value="<?php echo $isEditMode ? htmlspecialchars($reserva['nombre']) : (isset($formData['nombre']) ? htmlspecialchars($formData['nombre']) : ''); ?>"
+                        value="<?php echo $isEditMode ? htmlspecialchars($reserva['nombre']) : (isset($formData['nombre']) ? htmlspecialchars($formData['nombre']) : htmlspecialchars($nombreUrl)); ?>"
                     >
                 </div>
                 <div id="clientInfoBadge" class="mt-1 hidden">
@@ -555,6 +561,15 @@ document.addEventListener('DOMContentLoaded', function() {
     if (telefonoInput.value) {
         const normalizedPhone = normalizePhoneForWhatsApp(telefonoInput.value);
         whatsappHidden.value = normalizedPhone;
+    }
+
+    // Si venimos de la URL con parámetros, normalizar el teléfono y disparar búsqueda
+    if (!isEditMode && telefonoInput.value) {
+        const normalizedPhone = normalizePhoneForWhatsApp(telefonoInput.value);
+        whatsappHidden.value = normalizedPhone;
+        
+        // Disparar búsqueda automática para verificar si el cliente existe
+        searchClients(telefonoInput.value);
     }
 
     // Manejar el envío del formulario
