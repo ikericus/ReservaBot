@@ -212,12 +212,16 @@ class Reserva {
     public function getTokenExpires(): ?DateTime { return $this->tokenExpires; }
     public function getFormularioId(): ?int { return $this->formularioId; }
     
+    public function estaPendiente(): bool {
+        return $this->estado === EstadoReserva::PENDIENTE;
+    }
+
     public function estaConfirmada(): bool {
         return $this->estado === EstadoReserva::CONFIRMADA;
     }
     
-    public function estaPendiente(): bool {
-        return $this->estado === EstadoReserva::PENDIENTE;
+    public function estaRechazada(): bool {
+        return $this->estado === EstadoReserva::RECHAZADA;
     }
     
     public function estaCancelada(): bool {

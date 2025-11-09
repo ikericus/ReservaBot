@@ -46,7 +46,13 @@ try {
         $finSemana, 
         $userId
     );
-    $reservas = array_map(fn($r) => $r->toArray(), $reservasEntities);
+    
+    // Filtramos solo las pendientes o confirmadas
+    $reservasFiltradas = array_filter($reservasEntities, function($r) {
+        return $r->estaPendiente() || $r->estaConfirmada();
+    });
+
+    $reservas = array_map(fn($r) => $r->toArray(), $reservasFiltradas);
 } catch (Exception $e) {
     setFlashError('Error al obtener reservas: ' . $e->getMessage());
     $reservas = [];
