@@ -404,25 +404,24 @@ function formatearDiaCompleto($fecha) {
 </head>
 <body class="bg-gray-50">
 
-    <?php if ($error): ?>
-        <!-- Página de error -->
-        <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-md w-full space-y-8 text-center">
-                <div class="fade-in">
-                    <i class="ri-error-warning-line text-6xl text-red-500 mb-4"></i>
-                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Error</h1>
-                    <p class="text-gray-600 mb-6"><?php echo htmlspecialchars($error); ?></p>
-                    <p class="text-sm text-gray-500 mb-6">El enlace puede haber expirado o no ser válido.</p>
-                    <a href="/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                        <i class="ri-home-line mr-2"></i>
-                        Volver al inicio
-                    </a>
-                </div>
+<?php if ($error): ?>
+    <!-- Página de error -->
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 text-center">
+            <div class="fade-in">
+                <i class="ri-error-warning-line text-6xl text-red-500 mb-4"></i>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">Error</h1>
+                <p class="text-gray-600 mb-6"><?php echo htmlspecialchars($error); ?></p>
+                <p class="text-sm text-gray-500 mb-6">El enlace puede haber expirado o no ser válido.</p>
+                <a href="/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    <i class="ri-home-line mr-2"></i>
+                    Volver al inicio
+                </a>
             </div>
         </div>
+    </div>
 
-    <?php else: ?>
-        
+<?php else: ?>
     <!-- Página principal -->
     <div class="min-h-screen bg-gray-50">
         
@@ -516,7 +515,243 @@ function formatearDiaCompleto($fecha) {
             </div>
         </div>
 
-        <!-- Resto del contenido (sin cambios en estructura) -->
+        <!-- Contenido -->
+        <div class="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            
+            <?php if (!empty($mensaje)): ?>
+                <div class="mb-6 p-4 rounded-md <?php echo $tipoMensaje === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'; ?>">
+                    <div class="flex">
+                        <i class="<?php echo $tipoMensaje === 'success' ? 'ri-check-line text-green-400' : 'ri-error-warning-line text-red-400'; ?> mt-0.5 mr-3"></i>
+                        <p class="text-sm <?php echo $tipoMensaje === 'success' ? 'text-green-800' : 'text-red-800'; ?>"><?php echo htmlspecialchars($mensaje); ?></p>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Información de la reserva -->
+                <div class="bg-white rounded-lg shadow-sm fade-in">
+                    <div class="px-6 py-5 border-b border-gray-200">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Detalles de tu reserva</h3>
+                    </div>
+                    <div class="px-6 py-5">
+                        
+                        <!-- Estado -->
+                        <div class="mb-6">
+                            <div class="flex items-center">
+                                <?php
+                                $estadoConfig = [
+                                    'confirmada' => ['color' => 'green', 'icon' => 'ri-check-line', 'text' => 'Confirmada'],
+                                    'pendiente' => ['color' => 'yellow', 'icon' => 'ri-time-line', 'text' => 'Pendiente'],
+                                    'cancelada' => ['color' => 'red', 'icon' => 'ri-close-line', 'text' => 'Cancelada']
+                                ];
+                                $config = $estadoConfig[$reserva['estado']] ?? $estadoConfig['pendiente'];
+                                ?>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-<?php echo $config['color']; ?>-100 text-<?php echo $config['color']; ?>-800">
+                                    <i class="<?php echo $config['icon']; ?> mr-1"></i>
+                                    <?php echo $config['text']; ?>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Información -->
+                        <dl class="space-y-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Nombre</dt>
+                                <dd class="mt-1 text-sm text-gray-900"><?php echo htmlspecialchars($reserva['nombre']); ?></dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Teléfono</dt>
+                                <dd class="mt-1 text-sm text-gray-900"><?php echo htmlspecialchars($reserva['telefono']); ?></dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Email</dt>
+                                <dd class="mt-1 text-sm text-gray-900"><?php echo htmlspecialchars($reserva['email']); ?></dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Fecha</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    <i class="ri-calendar-line mr-2 text-primary"></i>
+                                    <?php echo formatearFechaEspanol($reserva['fecha']); ?>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Hora</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    <i class="ri-time-line mr-2 text-primary"></i>
+                                    <?php echo substr($reserva['hora'], 0, 5); ?>
+                                </dd>
+                            </div>
+                            <?php if (!empty($reserva['mensaje'])): ?>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Comentarios</dt>
+                                <dd class="mt-1 text-sm text-gray-900"><?php echo nl2br(htmlspecialchars($reserva['mensaje'])); ?></dd>
+                            </div>
+                            <?php endif; ?>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Fecha de creación</dt>
+                                <dd class="mt-1 text-sm text-gray-900"><?php echo date('d/m/Y \a \l\a\s H:i', strtotime($reserva['created_at'])); ?></dd>
+                            </div>
+                        </dl>
+
+                        <!-- Información de modificación -->
+                        <?php if ($puedeModificar): ?>
+                            <div class="mt-6 p-4 bg-primary-50 rounded-lg border border-primary-200">
+                                <h4 class="text-sm font-medium text-primary-900 mb-2">📝 Modificación disponible</h4>
+                                <p class="text-sm text-primary-800">
+                                    Puedes modificar o cancelar tu reserva hasta 24 horas antes de la cita.
+                                    <br><strong>Tiempo restante:</strong> <?php echo $tiempoRestante; ?>
+                                </p>
+                            </div>
+                        <?php else: ?>
+                            <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">🔒 Modificación no disponible</h4>
+                                <p class="text-sm text-gray-600">
+                                    <?php if ($reserva['estado'] === 'cancelada'): ?>
+                                        Esta reserva ha sido cancelada.
+                                    <?php else: ?>
+                                        El plazo para modificar esta reserva ha expirado (24h antes de la cita).
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Panel de acciones -->
+                <div class="space-y-6">
+                    
+                    <?php if ($puedeModificar): ?>
+                        <!-- Modificar fecha/hora -->
+                        <div class="bg-white rounded-lg shadow-sm fade-in">
+                            <div class="px-6 py-5 border-b border-gray-200">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Cambiar fecha y hora</h3>
+                            </div>
+                            <div class="px-6 py-5">
+                                <form method="POST" id="modificarForm" class="space-y-6">
+                                    <input type="hidden" name="action" value="modificar">
+                                    <input type="hidden" name="nueva_fecha" id="selectedDate">
+                                    <input type="hidden" name="nueva_hora" id="selectedTime">
+                                    
+                                    <!-- Selección de fecha -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-3">Nueva fecha</label>
+                                        <div class="date-grid" id="dateGrid">
+                                            <?php foreach ($horariosDisponibles as $fecha => $info): ?>
+                                                <div class="date-option" data-fecha="<?php echo $fecha; ?>" data-horas="<?php echo htmlspecialchars(json_encode($info['horas'])); ?>">
+                                                    <div class="day"><?php echo $info['dia_semana']; ?></div>
+                                                    <div class="date"><?php echo date('j M', strtotime($fecha)); ?></div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Selección de hora -->
+                                    <div id="timeSection" class="hidden-section">
+                                        <label class="block text-sm font-medium text-gray-700 mb-3">Nueva hora</label>
+                                        <div class="time-grid" id="timeGrid">
+                                            <!-- Las horas se cargarán dinámicamente -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Resumen de selección -->
+                                    <div id="summarySection" class="hidden-section">
+                                        <div class="bg-gray-50 rounded-lg p-4 border">
+                                            <h4 class="text-sm font-medium text-gray-900 mb-2">Resumen del cambio:</h4>
+                                            <div class="flex items-center justify-between text-sm">
+                                                <div>
+                                                    <span class="text-gray-600">Fecha actual:</span>
+                                                    <span class="ml-2 font-medium"><?php echo formatearFechaEspanol($reserva['fecha']); ?> a las <?php echo substr($reserva['hora'], 0, 5); ?></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between text-sm mt-2">
+                                                <div>
+                                                    <span class="text-gray-600">Nueva fecha:</span>
+                                                    <span class="ml-2 font-medium text-primary" id="newDateSummary">-</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed" id="btnModificar" disabled>
+                                        <i class="ri-calendar-check-line mr-2"></i>
+                                        Confirmar cambio
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Cancelar reserva -->
+                        <div class="bg-white rounded-lg shadow-sm fade-in">
+                            <div class="px-6 py-5 border-b border-gray-200">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Cancelar reserva</h3>
+                            </div>
+                            <div class="px-6 py-5">
+                                <p class="text-sm text-gray-600 mb-4">
+                                    Si necesitas cancelar tu reserva, puedes hacerlo desde aquí. Esta acción no se puede deshacer.
+                                </p>
+                                <button type="button" onclick="confirmarCancelacion()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
+                                    <i class="ri-close-line mr-2"></i>
+                                    Cancelar mi reserva
+                                </button>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Información de contacto -->
+                    <div class="bg-white rounded-lg shadow-sm fade-in">
+                        <div class="px-6 py-5 border-b border-gray-200">
+                            <h3 class="text-lg font-medium text-gray-900">¿Necesitas ayuda?</h3>
+                        </div>
+                        <div class="px-6 py-5">
+                            <div class="space-y-3 text-sm">
+                                <?php if (!empty($reserva['telefono_contacto'])): ?>
+                                <div class="flex items-center">
+                                    <i class="ri-phone-line text-green-500 mr-3"></i>
+                                    <div>
+                                        <span class="text-gray-700">Para cambios urgentes: </span>
+                                        <a href="tel:<?php echo htmlspecialchars($reserva['telefono_contacto']); ?>" 
+                                           class="text-primary font-medium hover:underline">
+                                            <?php echo htmlspecialchars($reserva['telefono_contacto']); ?>
+                                        </a>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($reserva['email_contacto'])): ?>
+                                <div class="flex items-center">
+                                    <i class="ri-mail-line text-blue-500 mr-3"></i>
+                                    <div>
+                                        <span class="text-gray-700">Email: </span>
+                                        <a href="mailto:<?php echo htmlspecialchars($reserva['email_contacto']); ?>" 
+                                           class="text-primary font-medium hover:underline">
+                                            <?php echo htmlspecialchars($reserva['email_contacto']); ?>
+                                        </a>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <div class="flex items-center">
+                                    <i class="ri-time-line text-orange-500 mr-3"></i>
+                                    <span class="text-gray-700">Recuerda llegar 5 minutos antes</span>
+                                </div>
+                                
+                                <?php if (!empty($reserva['direccion'])): ?>
+                                <div class="flex items-start">
+                                    <i class="ri-map-pin-line text-red-500 mr-3 mt-0.5"></i>
+                                    <div>
+                                        <span class="text-gray-700">Dirección: </span>
+                                        <span class="text-gray-900"><?php echo htmlspecialchars($reserva['direccion']); ?></span>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal de confirmación de cancelación -->
     <div id="modalCancelacion" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -555,16 +790,9 @@ function formatearDiaCompleto($fecha) {
 
 <?php endif; ?>
 
-
 <script>
 // Datos de horarios disponibles
 const horariosDisponibles = <?php echo json_encode($horariosDisponibles); ?>;
-
-// Función para toggle del menú móvil
-function toggleMobileInfo() {
-    const mobileInfo = document.getElementById('mobileInfo');
-    mobileInfo.classList.toggle('hidden');
-}
 
 document.addEventListener('DOMContentLoaded', function() {
     let selectedDate = null;
@@ -638,7 +866,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Manejar envío del formulario de modificación
+    // Manejar envío del formulario
     if (modificarForm) {
         modificarForm.addEventListener('submit', function(e) {
             if (!selectedDate || !selectedTime) {
@@ -649,7 +877,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Mostrar loading state
             const originalText = btnModificar.innerHTML;
-            btnModificar.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i>Modificando...';
+            btnModificar.innerHTML = '<i class="ri-loader-line animate-spin mr-2"></i>Modificando...';
             btnModificar.disabled = true;
             
             return true;
@@ -657,7 +885,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Funciones para modal de cancelación
 function confirmarCancelacion() {
     document.getElementById('modalCancelacion').classList.remove('hidden');
 }
@@ -665,26 +892,6 @@ function confirmarCancelacion() {
 function cerrarModal() {
     document.getElementById('modalCancelacion').classList.add('hidden');
 }
-
-// Cerrar modal con ESC
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        const modal = document.getElementById('modalCancelacion');
-        if (modal && !modal.classList.contains('hidden')) {
-            cerrarModal();
-        }
-    }
-});
-
-// Cerrar modal al hacer clic fuera
-document.addEventListener('click', function(e) {
-    const modal = document.getElementById('modalCancelacion');
-    if (modal && !modal.classList.contains('hidden')) {
-        if (e.target === modal) {
-            cerrarModal();
-        }
-    }
-});
 </script>
 
 </body>
