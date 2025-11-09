@@ -26,8 +26,10 @@ $usuarioId = $currentUser['id'];
 $intervaloReservas = 30; // Default
 $duracionReservas = 60; // Default
 
+$configuracionDomain = getContainer()->getConfiguracionDomain();
+$reservaDomain = getContainer()->getReservaDomain();
+
 try {
-    $configuracionDomain = getContainer()->getConfiguracionDomain();
     $intervaloReservas = $configuracionDomain->obtenerIntervaloReservas($usuarioId);
     $duracionReservas = $configuracionDomain->obtenerDuracionReserva($usuarioId);
 } catch (Exception $e) {
@@ -44,7 +46,6 @@ $horasOcupadas = [];
 $reserva = null;
 if ($isEditMode) {
     try {
-        $reservaDomain = getContainer()->getReservaDomain();
         $reservaObj = $reservaDomain->obtenerReserva($id, $usuarioId);
         
         // Convertir a array para compatibilidad con el resto del código
