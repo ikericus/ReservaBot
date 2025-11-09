@@ -380,20 +380,17 @@ class EmailTemplates {
             'Hora' => $horaFormateada,
             'Teléfono' => $reserva['telefono']
         ];
+
+        // Añadir 'mensaje'  si está informado
+        if (!empty($reserva['mensaje'])) {
+            $detalles['Mensaje'] = nl2br($reserva['mensaje']); // nl2br por si hay saltos de línea
+        }
         
         $contenidoHtml = "
             <h2 style='color: #1f2937; margin-top: 0;'>Hola {$reserva['nombre']},</h2>
             <p>Tu reserva está <strong style='color: {$estadoColor};'>{$estadoTexto}</strong>.</p>
             " . $this->generarTablaDetalles('📅 Detalles de tu cita:', $detalles, $estadoColor);
-        
-        // Añadir comentarios si existen
-        if (!empty($reserva['mensaje'])) {
-            $contenidoHtml .= "
-            <div style='background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;'>
-                <p style='margin: 0; color: #374151;'><strong>Comentarios:</strong><br>{$reserva['mensaje']}</p>
-            </div>";
-        }
-        
+                
         // Agregar botón de gestión solo si hay URL y no está cancelada/rechazada
         if ($gestionUrl && !$esCancelada && !$esRechazada) {
             $contenidoHtml .= $this->generarBoton($gestionUrl, 'Gestionar mi reserva', $config['color_primario']);
