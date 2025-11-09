@@ -1,5 +1,5 @@
 <?php
-// api/buscar-clientes.php
+// api/clientes-buscar.php
 
 header('Content-Type: application/json');
 

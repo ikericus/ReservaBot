@@ -92,7 +92,7 @@ class Router {
         $this->addRoute('POST',     '/api/whatsapp-save-template',              'api/whatsapp-save-template.php',            ['auth']);
         $this->addRoute('POST',     '/api/whatsapp-restore-template',           'api/whatsapp-restore-template.php',         ['auth']);
         $this->addRoute('GET',      '/api/whatsapp-conversations',              'api/whatsapp-conversations.php',            ['auth']);
-        $this->addRoute('POST',     '/api/buscar-clientes',                     'api/buscar-clientes.php',                   ['auth']);
+        $this->addRoute('POST',     '/api/clientes-buscar',                     'api/clientes-buscar.php',                   ['auth']);
                 
         // Webhook para WhatsApp
         $this->addRoute('POST',     '/api/whatsapp-webhook',            'api/whatsapp-webhook.php');
