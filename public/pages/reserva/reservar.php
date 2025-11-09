@@ -32,25 +32,32 @@ if (empty($slug)) {
     }
 }
 
+// Obtener configuración completa del formulario y negocio
 $configuracionNegocio = [];
+$horarios = [];
+$intervaloReservas = 30;
+$duracionReservas = 60;
+$modoAceptacion = 'manual';
+
 if ($formulario) {
     try {
         $configuracionDomain = getContainer()->getConfiguracionDomain();
-        $todasConfig = $configuracionDomain->obtenerConfiguraciones($formulario['usuario_id']);
+        $usuarioId = $formulario['usuario_id'];
         
-        $configuracionNegocio = [
-            'nombre' => $todasConfig['empresa_nombre'] ?? ($formulario['empresa_nombre'] ?? $formulario['nombre']),
-            'logo' => $todasConfig['empresa_imagen'] ?? ($formulario['empresa_logo'] ?? null),
-            'telefono' => $todasConfig['empresa_telefono'] ?? ($formulario['telefono_contacto'] ?? null),
-            'email' => $todasConfig['empresa_email'] ?? null,
-            'direccion' => $todasConfig['empresa_direccion'] ?? ($formulario['direccion'] ?? null),
-            'web' => $todasConfig['empresa_web'] ?? null,
-            'color_primario' => $todasConfig['color_primario'] ?? ($formulario['color_primario'] ?? '#667eea'),
-            'color_secundario' => $todasConfig['color_secundario'] ?? ($formulario['color_secundario'] ?? '#764ba2')
-        ];
+        // ✅ UN SOLO MÉTODO obtiene TODA la configuración necesaria
+        $config = $configuracionDomain->obtenerConfiguracionFormularioPublico($usuarioId, $formulario);
+        
+        // Extraer las diferentes partes
+        $configuracionNegocio = $config['negocio'];
+        $horarios = $config['horarios'];
+        $intervaloReservas = $config['intervalo'];
+        $duracionReservas = $config['duracion'];
+        $modoAceptacion = $config['modo_aceptacion'];
+        
     } catch (Exception $e) {
-        error_log("Error obteniendo configuración del negocio: " . $e->getMessage());
-        // Usar valores del formulario como fallback
+        error_log("Error obteniendo configuración: " . $e->getMessage());
+        
+        // Valores por defecto en caso de error
         $configuracionNegocio = [
             'nombre' => $formulario['empresa_nombre'] ?? $formulario['nombre'],
             'logo' => $formulario['empresa_logo'] ?? null,
@@ -61,71 +68,7 @@ if ($formulario) {
             'color_primario' => $formulario['color_primario'] ?? '#667eea',
             'color_secundario' => $formulario['color_secundario'] ?? '#764ba2'
         ];
-    }
-}
-
-// Obtener configuración de horarios usando ReservaDomain
-$horarios = [];
-$intervaloReservas = 30;
-$modoAceptacion = 'manual';
-
-if ($formulario) {
-    try {
-        $reservaDomain = getContainer()->getReservaDomain();
-        $usuarioId = $formulario['usuario_id'];
         
-        // Obtener configuración de horarios a través del dominio
-        $diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
-        
-        // Crear una fecha de ejemplo para cada día de la semana
-        $fechaBase = new DateTime();
-        $diaActual = (int)$fechaBase->format('w'); // 0 (domingo) a 6 (sábado)
-        
-        foreach ($diasSemana as $index => $dia) {
-            // Mapear índice a día de semana: lun=1, mar=2, ..., dom=0
-            $diaNumerico = $index === 6 ? 0 : $index + 1;
-            
-            // Calcular días de diferencia desde hoy
-            $diferenciaDias = ($diaNumerico - $diaActual + 7) % 7;
-            if ($diferenciaDias === 0) {
-                $diferenciaDias = 0; // Hoy
-            }
-            
-            $fechaPrueba = clone $fechaBase;
-            $fechaPrueba->modify("+{$diferenciaDias} days");
-            
-            try {
-                // Obtener horas del día a través del dominio
-                $horasDelDia = $reservaDomain->obtenerHorasDelDia($fechaPrueba, $usuarioId);
-                
-                $horarios[$dia] = [
-                    'activo' => !empty($horasDelDia),
-                    'inicio' => !empty($horasDelDia) ? $horasDelDia[0] : '09:00',
-                    'fin' => !empty($horasDelDia) ? end($horasDelDia) : '18:00'
-                ];
-            } catch (Exception $e) {
-                // Si falla, marcar como inactivo
-                $horarios[$dia] = [
-                    'activo' => false,
-                    'inicio' => '09:00',
-                    'fin' => '18:00'
-                ];
-            }
-        }
-        
-        // El intervalo se puede inferir o obtener de configuración
-        // Por ahora usamos un valor por defecto
-        $intervaloReservas = 30;
-        
-        // Obtener modo de aceptación desde configuraciones
-        $stmt = getPDO()->prepare("SELECT valor FROM configuraciones WHERE clave = 'modo_aceptacion' AND usuario_id = ?");
-        $stmt->execute([$usuarioId]);
-        $modoAceptacion = $stmt->fetchColumn() ?: 'manual';
-        
-    } catch (Exception $e) {
-        error_log("Error obteniendo configuración de horarios: " . $e->getMessage());
-        
-        // Si hay error, usar horarios por defecto
         foreach (['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'] as $dia) {
             $horarios[$dia] = [
                 'activo' => in_array($dia, ['lun', 'mar', 'mie', 'jue', 'vie']),
@@ -133,7 +76,9 @@ if ($formulario) {
                 'fin' => '18:00'
             ];
         }
+        
         $intervaloReservas = 30;
+        $duracionReservas = 60;
         $modoAceptacion = 'manual';
     }
 }
@@ -661,6 +606,7 @@ if (isset($_GET['success']) && $_GET['success'] == '1' && $formulario) {
         const config = {
             horarios: <?php echo json_encode($horarios ?? []); ?>,
             intervalo: <?php echo json_encode($intervaloReservas ?? 30); ?>,
+            duracion: <?php echo json_encode($duracionReservas ?? 60); ?>,
             slug: <?php echo json_encode($slug); ?>,
             confirmacionAutomatica: <?php echo json_encode($formulario['confirmacion_automatica'] ?? 0); ?>,
             usuarioId: <?php echo json_encode($formulario['usuario_id'] ?? null); ?>,

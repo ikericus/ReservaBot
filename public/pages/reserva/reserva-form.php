@@ -22,13 +22,16 @@ $isEditMode = $id > 0;
 $currentUser = getAuthenticatedUser();
 $usuarioId = $currentUser['id'];
 
-// Obtener el intervalo de reservas configurado
+// Obtener configuración de reservas desde ConfiguracionDomain
 $intervaloReservas = 30; // Default
+$duracionReservas = 60; // Default
+
 try {
-    $reservaDomain = getContainer()->getReservaDomain();
-    $intervaloReservas = $reservaDomain->obtenerIntervaloReservas($usuarioId);
+    $configuracionDomain = getContainer()->getConfiguracionDomain();
+    $intervaloReservas = $configuracionDomain->obtenerIntervaloReservas($usuarioId);
+    $duracionReservas = $configuracionDomain->obtenerDuracionReserva($usuarioId);
 } catch (Exception $e) {
-    error_log("Error obteniendo intervalo de reservas: " . $e->getMessage());
+    error_log("Error obteniendo configuración de reservas: " . $e->getMessage());
 }
 
 // Variables iniciales
@@ -40,7 +43,8 @@ $horasOcupadas = [];
 // Obtener la reserva si estamos en modo edición
 $reserva = null;
 if ($isEditMode) {
-    try {        
+    try {
+        $reservaDomain = getContainer()->getReservaDomain();
         $reservaObj = $reservaDomain->obtenerReserva($id, $usuarioId);
         
         // Convertir a array para compatibilidad con el resto del código
@@ -62,15 +66,27 @@ if ($isEditMode) {
         // Usar la fecha de la reserva en modo edición
         $fecha = $reserva['fecha'];
         
-        // Obtener horas ocupadas del día (excluyendo esta reserva)
+        // Obtener horas ocupadas del día (excluyendo esta reserva y considerando duración)
         try {
             $fechaObj = new DateTime($reserva['fecha']);
             $reservasDelDia = $reservaDomain->obtenerReservasPorFecha($fechaObj, $usuarioId);
             
+            // Calcular todas las franjas bloqueadas por cada reserva (considerando duración)
             foreach ($reservasDelDia as $r) {
                 // Excluir la reserva actual
                 if ($r->getId() !== $reserva['id'] && $r->getEstado()->esActiva()) {
-                    $horasOcupadas[] = $r->getHora();
+                    // Calcular TODAS las franjas bloqueadas por esta reserva
+                    $franjasBloqueadas = $configuracionDomain->calcularFranjasBloqueadas(
+                        $r->getHora(),
+                        $usuarioId
+                    );
+                    
+                    // Agregar todas las franjas al array
+                    foreach ($franjasBloqueadas as $franja) {
+                        if (!in_array($franja, $horasOcupadas)) {
+                            $horasOcupadas[] = $franja;
+                        }
+                    }
                 }
             }
         } catch (Exception $e) {
@@ -90,14 +106,25 @@ if ($isEditMode) {
     $telefonoUrl = isset($_GET['telefono']) ? trim($_GET['telefono']) : '';
     $nombreUrl = isset($_GET['nombre']) ? trim($_GET['nombre']) : '';
     
-    // Obtener horas ocupadas del día actual
+    // Obtener horas ocupadas del día actual (considerando duración de reservas)
     try {
         $fechaObj = new DateTime($fecha);
         $reservasDelDia = $reservaDomain->obtenerReservasPorFecha($fechaObj, $usuarioId);
         
+        // Calcular todas las franjas bloqueadas por cada reserva
         foreach ($reservasDelDia as $reserva) {
             if ($reserva->getEstado()->esActiva()) {
-                $horasOcupadas[] = $reserva->getHora();
+                // Calcular todas las franjas bloqueadas
+                $franjasBloqueadas = $configuracionDomain->calcularFranjasBloqueadas(
+                    $reserva->getHora(),
+                    $usuarioId
+                );
+                
+                foreach ($franjasBloqueadas as $franja) {
+                    if (!in_array($franja, $horasOcupadas)) {
+                        $horasOcupadas[] = $franja;
+                    }
+                }
             }
         }
     } catch (Exception $e) {
@@ -350,7 +377,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const fechaInput = document.getElementById('fecha');
     const horaSelect = document.getElementById('hora');
     const intervaloReservas = <?php echo $intervaloReservas; ?>;
-    
+    const duracionReservas = <?php echo $duracionReservas; ?>; 
+
     // Actualizar horas disponibles cuando cambia la fecha
     if (fechaInput) {
         fechaInput.addEventListener('change', function() {

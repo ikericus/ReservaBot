@@ -114,6 +114,90 @@ class ConfiguracionDomain {
         
         return $franjas;
     }
+
+    /**
+     * Obtiene el modo de aceptación de reservas (manual/automatico)
+     */
+    public function obtenerModoAceptacion(int $usuarioId): string {
+        $valor = $this->repository->obtener('modo_aceptacion', $usuarioId);
+        return $valor ?: 'manual';
+    }
+
+    /**
+     * Obtiene la configuración completa del negocio para uso público
+     * Combina configuración general con configuración del formulario
+     */
+    public function obtenerConfiguracionNegocioPublica(int $usuarioId, ?array $formulario = null): array {
+        $todasConfig = $this->repository->obtenerTodas($usuarioId);
+        
+        return [
+            'nombre' => $todasConfig['empresa_nombre'] ?? ($formulario['empresa_nombre'] ?? $formulario['nombre'] ?? 'Mi Negocio'),
+            'logo' => $todasConfig['empresa_imagen'] ?? ($formulario['empresa_logo'] ?? null),
+            'telefono' => $todasConfig['empresa_telefono'] ?? ($formulario['telefono_contacto'] ?? null),
+            'email' => $todasConfig['empresa_email'] ?? null,
+            'direccion' => $todasConfig['empresa_direccion'] ?? ($formulario['direccion'] ?? null),
+            'web' => $todasConfig['empresa_web'] ?? null,
+            'color_primario' => $todasConfig['color_primario'] ?? ($formulario['color_primario'] ?? '#667eea'),
+            'color_secundario' => $todasConfig['color_secundario'] ?? ($formulario['color_secundario'] ?? '#764ba2')
+        ];
+    }
+
+    /**
+     * Obtiene los horarios de toda la semana
+     * Retorna un array con los 7 días de la semana y su configuración
+     */
+    public function obtenerHorariosSemana(int $usuarioId): array {
+        $diasSemana = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
+        $horarios = [];
+        
+        foreach ($diasSemana as $dia) {
+            try {
+                $horarioDia = $this->repository->obtenerHorarioDia($dia, $usuarioId);
+                
+                // Obtener primera y última hora de las ventanas
+                $inicio = '09:00';
+                $fin = '18:00';
+                
+                if ($horarioDia['activo'] && !empty($horarioDia['ventanas'])) {
+                    $inicios = array_column($horarioDia['ventanas'], 'inicio');
+                    $fines = array_column($horarioDia['ventanas'], 'fin');
+                    $inicio = min($inicios);
+                    $fin = max($fines);
+                }
+                
+                $horarios[$dia] = [
+                    'activo' => $horarioDia['activo'],
+                    'inicio' => $inicio,
+                    'fin' => $fin,
+                    'ventanas' => $horarioDia['ventanas'] ?? []
+                ];
+            } catch (Exception $e) {
+                error_log("Error obteniendo horario de {$dia}: " . $e->getMessage());
+                $horarios[$dia] = [
+                    'activo' => false,
+                    'inicio' => '09:00',
+                    'fin' => '18:00',
+                    'ventanas' => []
+                ];
+            }
+        }
+        
+        return $horarios;
+    }
+
+    /**
+     * Obtiene todas las configuraciones necesarias para el formulario público
+     * Incluye horarios, intervalos, duración y modo de aceptación
+     */
+    public function obtenerConfiguracionFormularioPublico(int $usuarioId, ?array $formulario = null): array {
+        return [
+            'horarios' => $this->obtenerHorariosSemana($usuarioId),
+            'intervalo' => $this->obtenerIntervaloReservas($usuarioId),
+            'duracion' => $this->obtenerDuracionReserva($usuarioId),
+            'modo_aceptacion' => $this->obtenerModoAceptacion($usuarioId),
+            'negocio' => $this->obtenerConfiguracionNegocioPublica($usuarioId, $formulario)
+        ];
+    }
     
     /**
      * Envía un email de prueba al usuario con la configuración actual de su negocio
