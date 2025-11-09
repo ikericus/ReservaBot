@@ -254,7 +254,7 @@ function formatearDiaCompleto($fecha) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Reserva - <?php echo htmlspecialchars($configuracionNegocio['nombre']); ?></title>
+    <title><?php echo htmlspecialchars($configuracionNegocio['nombre']); ?> - Mi Reserva</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
     
@@ -451,7 +451,6 @@ function formatearDiaCompleto($fecha) {
                             <h1 class="text-lg font-bold sm:text-xl truncate">
                                 <?php echo htmlspecialchars($configuracionNegocio['nombre']); ?>
                             </h1>
-                            <p class="text-xs text-white/80 hidden sm:block">Mi Reserva</p>
                         </div>
                     </div>
                     

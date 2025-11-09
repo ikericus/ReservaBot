@@ -29,6 +29,7 @@ class Router {
         $this->addRoute('GET',      '/reservar',                        'pages/reserva/reservar.php');
         $this->addRoute('POST',     '/reservar',                        'pages/reserva/reservar.php');
         $this->addRoute('GET',      '/mi-reserva',                      'pages/reserva/mi-reserva.php');
+        $this->addRoute('POST',     '/mi-reserva',                      'pages/reserva/mi-reserva.php');
         $this->addRoute('GET',      '/login',                           'pages/user/login.php');
         $this->addRoute('GET',      '/signup',                          'pages/user/signup.php');
         $this->addRoute('GET',      '/logout',                          'pages/user/logout.php');
