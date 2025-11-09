@@ -47,4 +47,9 @@ interface IConfiguracionNegocioRepository {
      * Obtiene el intervalo de tiempo entre citas (en minutos)
      */
     public function obtenerIntervalo(int $usuarioId): int;
+
+    /**
+     * Obtiene la duración de las reservas en minutos
+     */
+    public function obtenerDuracionReserva(int $usuarioId): int;
 }

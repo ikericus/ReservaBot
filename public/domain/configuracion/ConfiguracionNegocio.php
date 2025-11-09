@@ -21,4 +21,6 @@ class ConfiguracionNegocio {
             'valor' => $this->valor
         ];
     }
+
+    
 }

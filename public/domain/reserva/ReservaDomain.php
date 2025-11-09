@@ -3,27 +3,27 @@
 
 namespace ReservaBot\Domain\Reserva;
 
-use ReservaBot\Domain\Configuracion\IConfiguracionNegocioRepository;
+use ReservaBot\Domain\Configuracion\ConfiguracionDomain;
 use ReservaBot\Domain\Email\IEmailRepository;
 use ReservaBot\Domain\Email\EmailTemplates;
 use DateTime;
 
 class ReservaDomain {
     private IReservaRepository $reservaRepository;
-    private IConfiguracionNegocioRepository $configuracionRepository;
+    private ConfiguracionDomain $configuracionDomain;
     private ?IEmailRepository $emailRepository;
     private EmailTemplates $emailTemplates;
     
     public function __construct(
         IReservaRepository $reservaRepository,
-        IConfiguracionNegocioRepository $configuracionRepository,
+        ConfiguracionDomain $configuracionDomain,
         ?IEmailRepository $emailRepository = null,
         ?EmailTemplates $emailTemplates = null
     ) {
         $this->reservaRepository = $reservaRepository;
-        $this->configuracionRepository = $configuracionRepository;
+        $this->configuracionDomain = $configuracionDomain;
         $this->emailRepository = $emailRepository;
-        $this->emailTemplates = $emailTemplates ?? new EmailTemplates($configuracionRepository);
+        $this->emailTemplates = $emailTemplates ?? new EmailTemplates($configuracionDomain->getRepository());
     }
     
     /**
@@ -71,7 +71,7 @@ class ReservaDomain {
         ?int $excluirReservaId = null
     ): bool {
         // 1. Verificar si el horario está dentro de las horas de negocio
-        if (!$this->configuracionRepository->estaDisponible($fecha, $hora, $usuarioId)) {
+        if (!$this->configuracionDomain->verificarHorarioDisponible($fecha, $hora, $usuarioId)) {
             return false;
         }
         
@@ -85,18 +85,11 @@ class ReservaDomain {
     }
     
     /**
-     * Verifica si un horario está dentro de las horas de negocio
-     */
-    public function verificarHorarioDisponible(DateTime $fecha, string $hora, int $usuarioId): bool {
-        return $this->configuracionRepository->estaDisponible($fecha, $hora, $usuarioId);
-    }
-    
-    /**
      * Obtiene horas disponibles para una fecha
      */
     public function obtenerHorasDisponibles(DateTime $fecha, int $usuarioId): array {
         // Obtener todas las horas configuradas para ese día
-        $todasLasHoras = $this->configuracionRepository->obtenerHorasDelDia($fecha, $usuarioId);
+        $todasLasHoras = $this->configuracionDomain->obtenerHorasDelDia($fecha, $usuarioId);
         
         // Obtener reservas existentes para esa fecha
         $reservasExistentes = $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
@@ -112,20 +105,6 @@ class ReservaDomain {
         return array_values(array_filter($todasLasHoras, function($hora) use ($horasOcupadas) {
             return !in_array($hora, $horasOcupadas);
         }));
-    }
-    
-    /**
-     * Obtiene todas las horas del día según configuración
-     */
-    public function obtenerHorasDelDia(DateTime $fecha, int $usuarioId): array {
-        return $this->configuracionRepository->obtenerHorasDelDia($fecha, $usuarioId);
-    }
-    
-    /**
-     * Obtiene el intervalo de reservas configurado (en minutos)
-     */
-    public function obtenerIntervaloReservas(int $usuarioId): int {
-        return $this->configuracionRepository->obtenerIntervalo($usuarioId);
     }
     
     /**
@@ -260,7 +239,7 @@ class ReservaDomain {
         }
         
         // Verificar que el horario está dentro de las horas de negocio
-        if (!$this->verificarHorarioDisponible($fecha, $hora, $usuarioId)) {
+        if (!$this->configuracionDomain->verificarHorarioDisponible($fecha, $hora, $usuarioId)) {
             throw new \DomainException('La hora seleccionada está fuera del horario de atención');
         }
         
@@ -570,7 +549,7 @@ class ReservaDomain {
      */
     private function obtenerYValidarHorarioDia(DateTime $fecha, int $usuarioId): array {
         $diaSemana = $this->obtenerDiaSemana($fecha);
-        $horarioDia = $this->configuracionRepository->obtenerHorarioDia($diaSemana, $usuarioId);
+        $horarioDia = $this->configuracionDomain->obtenerHorarioDia($diaSemana, $usuarioId);
         
         // Asegurar que todas las ventanas tengan capacidad
         foreach ($horarioDia['ventanas'] as &$ventana) {
@@ -592,13 +571,15 @@ class ReservaDomain {
     
     /**
      * Calcula la capacidad disponible por hora
+     * IMPORTANTE: Considera la duración de las reservas para bloquear múltiples franjas
      */
     private function calcularCapacidadPorHora(
         array $todasLasHoras, 
         array $ventanas, 
-        array $reservasExistentes
+        array $reservasExistentes,
+        int $usuarioId
     ): array {
-        $reservasPorHora = $this->contarReservasPorHora($reservasExistentes);
+        $reservasPorHora = $this->contarReservasPorHora($reservasExistentes, $usuarioId);
         $horasConCapacidad = [];
         
         foreach ($todasLasHoras as $hora) {
@@ -649,6 +630,7 @@ class ReservaDomain {
         array $horasDisponibles,
         array $horarioDia,
         int $intervalo,
+        int $duracion,
         array $horasConCapacidad,
         DateTime $fecha
     ): array {
@@ -679,6 +661,7 @@ class ReservaDomain {
             'horario_fin' => $horaFinGlobal,
             'ventanas' => $ventanasInfo,
             'intervalo' => $intervalo,
+            'duracion' => $duracion,
             'total_ventanas' => count($horarioDia['ventanas']),
             'capacidad_info' => $horasConCapacidad,
             'tiene_capacidad_multiple' => $tieneCapacidadMultiple
@@ -690,7 +673,8 @@ class ReservaDomain {
      */
     public function obtenerHorasDisponiblesConCapacidad(DateTime $fecha, int $usuarioId): array {
         $horarioDia = $this->obtenerYValidarHorarioDia($fecha, $usuarioId);
-        $intervalo = $this->configuracionRepository->obtenerIntervalo($usuarioId);
+        $intervalo = $this->configuracionDomain->obtenerIntervaloReservas($usuarioId);
+        $duracion = $this->configuracionDomain->obtenerDuracionReserva($usuarioId);
         
         $todasLasHoras = $this->generarHorasPorVentanas($horarioDia['ventanas'], $intervalo);
         $reservasExistentes = $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
@@ -698,7 +682,8 @@ class ReservaDomain {
         $horasConCapacidad = $this->calcularCapacidadPorHora(
             $todasLasHoras, 
             $horarioDia['ventanas'], 
-            $reservasExistentes
+            $reservasExistentes,
+            $usuarioId
         );
         
         $horasDisponibles = $this->filtrarHorasDisponibles($todasLasHoras, $horasConCapacidad, $fecha);
@@ -706,7 +691,8 @@ class ReservaDomain {
         return $this->formatearRespuestaHorasDisponibles(
             $horasDisponibles, 
             $horarioDia, 
-            $intervalo, 
+            $intervalo,
+            $duracion,
             $horasConCapacidad,
             $fecha
         );
@@ -738,14 +724,29 @@ class ReservaDomain {
 
     /**
      * Cuenta reservas activas agrupadas por hora
+     * IMPORTANTE: Considera la duración de cada reserva para bloquear múltiples franjas
+     * 
+     * Ejemplo: Si una reserva dura 60 min y el intervalo es 15 min,
+     * una reserva a las 11:00 bloqueará: 11:00, 11:15, 11:30, 11:45
      */
-    private function contarReservasPorHora(array $reservas): array {
+    private function contarReservasPorHora(array $reservas, int $usuarioId): array {
         $contador = [];
         
         foreach ($reservas as $reserva) {
             if ($reserva->getEstado()->esActiva()) {
-                $hora = $reserva->getHora();
-                $contador[$hora] = ($contador[$hora] ?? 0) + 1;
+                $horaInicio = $reserva->getHora();
+                
+                // Calcular todas las franjas bloqueadas por esta reserva
+                // Usa ConfiguracionDomain que conoce la duración e intervalo
+                $franjasBloqueadas = $this->configuracionDomain->calcularFranjasBloqueadas(
+                    $horaInicio,
+                    $usuarioId
+                );
+                
+                // Marcar todas las franjas como ocupadas
+                foreach ($franjasBloqueadas as $franja) {
+                    $contador[$franja] = ($contador[$franja] ?? 0) + 1;
+                }
             }
         }
         

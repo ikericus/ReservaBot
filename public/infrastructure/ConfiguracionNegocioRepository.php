@@ -139,6 +139,16 @@ class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository 
         
         return $valor ? (int)$valor : 30;
     }
+
+    public function obtenerDuracionReserva(int $usuarioId): int {
+        $stmt = $this->pdo->prepare(
+            "SELECT valor FROM configuraciones_usuario WHERE clave = 'duracion_reserva' AND usuario_id = ?"
+        );
+        $stmt->execute([$usuarioId]);
+        $valor = $stmt->fetchColumn();
+        
+        return $valor ? (int)$valor : 60; // Default 60 minutos
+    }
     
     private function obtenerHorarioDiaInterno(DateTime $fecha, int $usuarioId): array {
         $diasMap = [

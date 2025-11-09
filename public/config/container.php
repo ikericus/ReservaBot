@@ -56,7 +56,7 @@ class Container {
         if (!isset($this->services['reservaDomain'])) {
             $this->services['reservaDomain'] = new ReservaDomain(
                 $this->getReservaRepository(),
-                $this->getConfiguracionNegocioRepository(),
+                $this->getConfiguracionDomain(),
                 $this->getEmailRepository()
             );
         }
@@ -135,8 +135,7 @@ class Container {
     
     private function getConfiguracionNegocioRepository(): ConfiguracionNegocioRepository {
         if (!isset($this->services['configuracionNegocioRepository'])) {
-            $this->services['configuracionNegocioRepository'] = 
-                new ConfiguracionNegocioRepository($this->pdo);
+            $this->services['configuracionNegocioRepository'] = new ConfiguracionNegocioRepository($this->pdo);
         }
         return $this->services['configuracionNegocioRepository'];
     }
