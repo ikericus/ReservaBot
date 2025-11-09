@@ -25,7 +25,6 @@ if (!isset($data['usuario_id'])) {
 
 $fecha = $data['fecha'];
 $usuarioId = (int)$data['usuario_id'];
-$adminMode = isset($data['admin_mode']) && $data['admin_mode'] === true;
 
 // Validar formato
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
@@ -41,8 +40,11 @@ if ($fecha < date('Y-m-d')) {
     exit;
 }
 
+// Verificar si es modo admin
+$adminMode = isset($data['admin_mode']) && $data['admin_mode'] === true;
+
 if ($adminMode) {
-    // Modo admin: devolver TODAS las horas del día con estado
+    // Modo admin: devolver solo las horas ocupadas
     try {
         $fechaObj = new DateTime($fecha);
         $reservaDomain = getContainer()->getReservaDomain();
@@ -52,10 +54,12 @@ if ($adminMode) {
         
         // Obtener horas ocupadas
         $horasOcupadas = [];
+        $excluirId = isset($data['excluir_id']) ? (int)$data['excluir_id'] : null;
+        
         foreach ($reservasDelDia as $reserva) {
             if ($reserva->getEstado()->esActiva()) {
                 // Excluir la reserva que se está editando
-                if (isset($data['excluir_id']) && $reserva->getId() == $data['excluir_id']) {
+                if ($excluirId && $reserva->getId() == $excluirId) {
                     continue;
                 }
                 $horasOcupadas[] = $reserva->getHora();
@@ -76,6 +80,8 @@ if ($adminMode) {
         exit;
     }
 }
+
+// Si no es admin_mode, continuar con el código normal...
 
 try {
     $fechaObj = new DateTime($fecha);

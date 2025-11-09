@@ -602,6 +602,13 @@ class ReservaDomain {
     }
 
     /**
+     * Obtiene el intervalo de reservas configurado (en minutos)
+     */
+    public function obtenerIntervaloReservas(int $usuarioId): int {
+        return $this->configuracionRepository->obtenerIntervalo($usuarioId);
+    }
+
+    /**
      * Genera todas las horas posibles según ventanas e intervalo
      */
     private function generarHorasPorVentanas(array $ventanas, int $intervalo): array {

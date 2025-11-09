@@ -18,74 +18,29 @@ if (isset($_SESSION['form_data'])) unset($_SESSION['form_data']);
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $isEditMode = $id > 0;
 
-// Obtener reservas existentes para validar disponibilidad
-$reservasDelDia = [];
-if (!$isEditMode && isset($fecha)) {
-    try {
-        $reservaDomain = getContainer()->getReservaDomain();
-        $fechaObj = new DateTime($fecha);
-        $reservasDelDia = $reservaDomain->obtenerReservasPorFecha($fechaObj, $usuarioId);
-        
-        // Obtener solo las horas ocupadas (reservas activas)
-        $horasOcupadas = [];
-        foreach ($reservasDelDia as $reserva) {
-            if ($reserva->getEstado()->esActiva()) {
-                $horasOcupadas[] = $reserva->getHora();
-            }
-        }
-    } catch (Exception $e) {
-        error_log("Error obteniendo reservas del día: " . $e->getMessage());
-        $horasOcupadas = [];
-    }
-}
-
-// Si estamos en modo edición, obtener la hora actual de la reserva para excluirla
-$horaActualReserva = '';
-if ($isEditMode && isset($reserva)) {
-    $horaActualReserva = $reserva['hora'];
-    
-    // Obtener reservas del día de esta reserva
-    try {
-        $reservaDomain = getContainer()->getReservaDomain();
-        $fechaObj = new DateTime($reserva['fecha']);
-        $reservasDelDia = $reservaDomain->obtenerReservasPorFecha($fechaObj, $usuarioId);
-        
-        $horasOcupadas = [];
-        foreach ($reservasDelDia as $r) {
-            // Excluir la reserva actual
-            if ($r->getId() !== $reserva['id'] && $r->getEstado()->esActiva()) {
-                $horasOcupadas[] = $r->getHora();
-            }
-        }
-    } catch (Exception $e) {
-        error_log("Error obteniendo reservas del día: " . $e->getMessage());
-        $horasOcupadas = [];
-    }
-}
-
-if (!$isEditMode) {
-    // Para nuevas reservas, usar siempre la fecha de hoy por defecto
-    $fecha = isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d');
-    
-    // Obtener parámetros de la URL para prellenar el formulario
-    $telefonoUrl = isset($_GET['telefono']) ? trim($_GET['telefono']) : '';
-    $nombreUrl = isset($_GET['nombre']) ? trim($_GET['nombre']) : '';
-} else {
-    // En modo edición, se establecerá cuando obtengamos la reserva
-    $fecha = null;
-    $telefonoUrl = '';
-    $nombreUrl = '';
-}
-
 // Obtener usuario autenticado
 $currentUser = getAuthenticatedUser();
 $usuarioId = $currentUser['id'];
+
+// Obtener el intervalo de reservas configurado
+$intervaloReservas = 30; // Default
+try {
+    $reservaDomain = getContainer()->getReservaDomain();
+    $intervaloReservas = $reservaDomain->obtenerIntervaloReservas($usuarioId);
+} catch (Exception $e) {
+    error_log("Error obteniendo intervalo de reservas: " . $e->getMessage());
+}
+
+// Variables iniciales
+$fecha = null;
+$telefonoUrl = '';
+$nombreUrl = '';
+$horasOcupadas = [];
 
 // Obtener la reserva si estamos en modo edición
 $reserva = null;
 if ($isEditMode) {
     try {        
-        $reservaDomain = getContainer()->getReservaDomain();
         $reservaObj = $reservaDomain->obtenerReserva($id, $usuarioId);
         
         // Convertir a array para compatibilidad con el resto del código
@@ -100,17 +55,53 @@ if ($isEditMode) {
         ];
         
         if (!$reserva) {
-            // Si la reserva no existe, redirigir al calendario
             header('Location: /dia');
             exit;
         }
         
         // Usar la fecha de la reserva en modo edición
         $fecha = $reserva['fecha'];
-    } catch (\PDOException $e) {
-        // Si hay un error, redirigir al calendario
+        
+        // Obtener horas ocupadas del día (excluyendo esta reserva)
+        try {
+            $fechaObj = new DateTime($reserva['fecha']);
+            $reservasDelDia = $reservaDomain->obtenerReservasPorFecha($fechaObj, $usuarioId);
+            
+            foreach ($reservasDelDia as $r) {
+                // Excluir la reserva actual
+                if ($r->getId() !== $reserva['id'] && $r->getEstado()->esActiva()) {
+                    $horasOcupadas[] = $r->getHora();
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Error obteniendo reservas del día en edición: " . $e->getMessage());
+        }
+        
+    } catch (\Exception $e) {
+        error_log("Error obteniendo reserva: " . $e->getMessage());
         header('Location: /dia');
         exit;
+    }
+} else {
+    // Modo creación
+    $fecha = isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d');
+    
+    // Obtener parámetros de la URL para prellenar el formulario
+    $telefonoUrl = isset($_GET['telefono']) ? trim($_GET['telefono']) : '';
+    $nombreUrl = isset($_GET['nombre']) ? trim($_GET['nombre']) : '';
+    
+    // Obtener horas ocupadas del día actual
+    try {
+        $fechaObj = new DateTime($fecha);
+        $reservasDelDia = $reservaDomain->obtenerReservasPorFecha($fechaObj, $usuarioId);
+        
+        foreach ($reservasDelDia as $reserva) {
+            if ($reserva->getEstado()->esActiva()) {
+                $horasOcupadas[] = $reserva->getHora();
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Error obteniendo reservas del día: " . $e->getMessage());
     }
 }
 
@@ -255,21 +246,23 @@ include 'includes/header.php';
                         >
                             <option value="">Seleccione una hora</option>
                             <?php
-                            // Generar todas las horas del día en intervalos de 30 minutos (00:00 a 23:30)
+                            // Generar todas las horas del día según el intervalo configurado
+                            $minutosIntervalo = $intervaloReservas;
+                            
                             for ($hora = 0; $hora < 24; $hora++) {
-                                for ($minuto = 0; $minuto < 60; $minuto += 30) {
+                                for ($minuto = 0; $minuto < 60; $minuto += $minutosIntervalo) {
                                     $horaFormateada = sprintf('%02d:%02d', $hora, $minuto);
                                     
                                     // Verificar si está seleccionada
                                     $selected = '';
-                                    if ($isEditMode && substr($reserva['hora'], 0, 5) === $horaFormateada) {
+                                    if ($isEditMode && isset($reserva['hora']) && substr($reserva['hora'], 0, 5) === $horaFormateada) {
                                         $selected = 'selected';
                                     } elseif (!$isEditMode && isset($formData['hora']) && $formData['hora'] === $horaFormateada) {
                                         $selected = 'selected';
                                     }
                                     
-                                    // Verificar si está ocupada (excepto la hora actual en modo edición)
-                                    $ocupada = isset($horasOcupadas) && in_array($horaFormateada, $horasOcupadas);
+                                    // Verificar si está ocupada
+                                    $ocupada = in_array($horaFormateada, $horasOcupadas);
                                     $disabled = $ocupada ? 'disabled' : '';
                                     $label = $ocupada ? "{$horaFormateada} (Ocupada)" : $horaFormateada;
                                     $style = $ocupada ? 'style="color: #9ca3af; background-color: #f3f4f6;"' : '';
@@ -356,9 +349,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const fechaInput = document.getElementById('fecha');
     const horaSelect = document.getElementById('hora');
+    const intervaloReservas = <?php echo $intervaloReservas; ?>;
     
     // Actualizar horas disponibles cuando cambia la fecha
-    if (fechaInput && !isEditMode) {
+    if (fechaInput) {
         fechaInput.addEventListener('change', function() {
             const fecha = this.value;
             if (!fecha) return;
@@ -366,9 +360,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Mostrar loading
             const horaActual = horaSelect.value;
             horaSelect.disabled = true;
+            horaSelect.innerHTML = '<option value="">Cargando horas...</option>';
             
             // Obtener horas ocupadas para la nueva fecha
-            fetch('/api/horas-disponibles', {  // Usar el mismo endpoint
+            fetch('/api/horas-disponibles', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -376,8 +371,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ 
                     fecha: fecha,
                     usuario_id: <?php echo $usuarioId; ?>,
-                    admin_mode: true,  // Indicar que es modo admin
-                    excluir_id: <?php echo $isEditMode ? $reserva['id'] : 'null'; ?>
+                    admin_mode: true,
+                    excluir_id: <?php echo $isEditMode && isset($reserva['id']) ? $reserva['id'] : 'null'; ?>
                 })
             })
             .then(response => response.json())
@@ -385,11 +380,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success && data.admin_mode) {
                     const horasOcupadas = data.horas_ocupadas || [];
                     
-                    // Regenerar opciones
+                    // Regenerar opciones usando el intervalo configurado
                     horaSelect.innerHTML = '<option value="">Seleccione una hora</option>';
                     
                     for (let h = 0; h < 24; h++) {
-                        for (let m = 0; m < 60; m += 30) {
+                        for (let m = 0; m < 60; m += intervaloReservas) {
                             const horaFormateada = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
                             const ocupada = horasOcupadas.includes(horaFormateada);
                             
@@ -415,6 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error:', error);
+                horaSelect.innerHTML = '<option value="">Error al cargar horas</option>';
                 horaSelect.disabled = false;
             });
         });
