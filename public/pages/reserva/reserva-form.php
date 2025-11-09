@@ -18,6 +18,51 @@ if (isset($_SESSION['form_data'])) unset($_SESSION['form_data']);
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $isEditMode = $id > 0;
 
+// Obtener reservas existentes para validar disponibilidad
+$reservasDelDia = [];
+if (!$isEditMode && isset($fecha)) {
+    try {
+        $reservaDomain = getContainer()->getReservaDomain();
+        $fechaObj = new DateTime($fecha);
+        $reservasDelDia = $reservaDomain->obtenerReservasPorFecha($fechaObj, $usuarioId);
+        
+        // Obtener solo las horas ocupadas (reservas activas)
+        $horasOcupadas = [];
+        foreach ($reservasDelDia as $reserva) {
+            if ($reserva->getEstado()->esActiva()) {
+                $horasOcupadas[] = $reserva->getHora();
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Error obteniendo reservas del día: " . $e->getMessage());
+        $horasOcupadas = [];
+    }
+}
+
+// Si estamos en modo edición, obtener la hora actual de la reserva para excluirla
+$horaActualReserva = '';
+if ($isEditMode && isset($reserva)) {
+    $horaActualReserva = $reserva['hora'];
+    
+    // Obtener reservas del día de esta reserva
+    try {
+        $reservaDomain = getContainer()->getReservaDomain();
+        $fechaObj = new DateTime($reserva['fecha']);
+        $reservasDelDia = $reservaDomain->obtenerReservasPorFecha($fechaObj, $usuarioId);
+        
+        $horasOcupadas = [];
+        foreach ($reservasDelDia as $r) {
+            // Excluir la reserva actual
+            if ($r->getId() !== $reserva['id'] && $r->getEstado()->esActiva()) {
+                $horasOcupadas[] = $r->getHora();
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Error obteniendo reservas del día: " . $e->getMessage());
+        $horasOcupadas = [];
+    }
+}
+
 if (!$isEditMode) {
     // Para nuevas reservas, usar siempre la fecha de hoy por defecto
     $fecha = isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d');
@@ -202,28 +247,38 @@ include 'includes/header.php';
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="ri-time-line text-gray-400"></i>
                     </div>
-                    <select
-                        name="hora"
-                        id="hora"
-                        required
-                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    >
-                        <option value="">Seleccione una hora</option>
-                        <?php
-                        // Horarios disponibles
-                        $horarios = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'];
-                        
-                        foreach ($horarios as $horario):
-                            $selected = '';
-                            if ($isEditMode && substr($reserva['hora'], 0, 5) === $horario) {
-                                $selected = 'selected';
-                            } elseif (!$isEditMode && isset($formData['hora']) && $formData['hora'] === $horario) {
-                                $selected = 'selected';
+                        <select
+                            name="hora"
+                            id="hora"
+                            required
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        >
+                            <option value="">Seleccione una hora</option>
+                            <?php
+                            // Generar todas las horas del día en intervalos de 30 minutos (00:00 a 23:30)
+                            for ($hora = 0; $hora < 24; $hora++) {
+                                for ($minuto = 0; $minuto < 60; $minuto += 30) {
+                                    $horaFormateada = sprintf('%02d:%02d', $hora, $minuto);
+                                    
+                                    // Verificar si está seleccionada
+                                    $selected = '';
+                                    if ($isEditMode && substr($reserva['hora'], 0, 5) === $horaFormateada) {
+                                        $selected = 'selected';
+                                    } elseif (!$isEditMode && isset($formData['hora']) && $formData['hora'] === $horaFormateada) {
+                                        $selected = 'selected';
+                                    }
+                                    
+                                    // Verificar si está ocupada (excepto la hora actual en modo edición)
+                                    $ocupada = isset($horasOcupadas) && in_array($horaFormateada, $horasOcupadas);
+                                    $disabled = $ocupada ? 'disabled' : '';
+                                    $label = $ocupada ? "{$horaFormateada} (Ocupada)" : $horaFormateada;
+                                    $style = $ocupada ? 'style="color: #9ca3af; background-color: #f3f4f6;"' : '';
+                                    
+                                    echo "<option value=\"{$horaFormateada}\" {$selected} {$disabled} {$style}>{$label}</option>";
+                                }
                             }
-                        ?>
-                            <option value="<?php echo $horario; ?>" <?php echo $selected; ?>><?php echo $horario; ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                            ?>
+                        </select>
                 </div>
             </div>
             
@@ -298,6 +353,72 @@ document.addEventListener('DOMContentLoaded', function() {
     let searchTimeout;
     let selectedClientData = null;
     const isEditMode = <?php echo $isEditMode ? 'true' : 'false'; ?>;
+
+    const fechaInput = document.getElementById('fecha');
+    const horaSelect = document.getElementById('hora');
+    
+    // Actualizar horas disponibles cuando cambia la fecha
+    if (fechaInput && !isEditMode) {
+        fechaInput.addEventListener('change', function() {
+            const fecha = this.value;
+            if (!fecha) return;
+            
+            // Mostrar loading
+            const horaActual = horaSelect.value;
+            horaSelect.disabled = true;
+            
+            // Obtener horas ocupadas para la nueva fecha
+            fetch('/api/horas-disponibles', {  // Usar el mismo endpoint
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    fecha: fecha,
+                    usuario_id: <?php echo $usuarioId; ?>,
+                    admin_mode: true,  // Indicar que es modo admin
+                    excluir_id: <?php echo $isEditMode ? $reserva['id'] : 'null'; ?>
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.admin_mode) {
+                    const horasOcupadas = data.horas_ocupadas || [];
+                    
+                    // Regenerar opciones
+                    horaSelect.innerHTML = '<option value="">Seleccione una hora</option>';
+                    
+                    for (let h = 0; h < 24; h++) {
+                        for (let m = 0; m < 60; m += 30) {
+                            const horaFormateada = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                            const ocupada = horasOcupadas.includes(horaFormateada);
+                            
+                            const option = document.createElement('option');
+                            option.value = horaFormateada;
+                            option.textContent = ocupada ? `${horaFormateada} (Ocupada)` : horaFormateada;
+                            option.disabled = ocupada;
+                            
+                            if (ocupada) {
+                                option.style.color = '#9ca3af';
+                                option.style.backgroundColor = '#f3f4f6';
+                            }
+                            
+                            if (horaFormateada === horaActual) {
+                                option.selected = true;
+                            }
+                            
+                            horaSelect.appendChild(option);
+                        }
+                    }
+                }
+                horaSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                horaSelect.disabled = false;
+            });
+        });
+    }
 
     // Función para mostrar errores
     function showErrors(errors) {
@@ -385,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         showSearchIndicator();
 
-        fetch('/api/buscar-clientes', {
+        fetch('/api/clientes-buscar', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

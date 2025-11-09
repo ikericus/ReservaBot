@@ -25,6 +25,7 @@ if (!isset($data['usuario_id'])) {
 
 $fecha = $data['fecha'];
 $usuarioId = (int)$data['usuario_id'];
+$adminMode = isset($data['admin_mode']) && $data['admin_mode'] === true;
 
 // Validar formato
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
@@ -38,6 +39,42 @@ if ($fecha < date('Y-m-d')) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'La fecha no puede ser anterior a hoy']);
     exit;
+}
+
+if ($adminMode) {
+    // Modo admin: devolver TODAS las horas del día con estado
+    try {
+        $fechaObj = new DateTime($fecha);
+        $reservaDomain = getContainer()->getReservaDomain();
+        
+        // Obtener reservas del día
+        $reservasDelDia = $reservaDomain->obtenerReservasPorFecha($fechaObj, $usuarioId);
+        
+        // Obtener horas ocupadas
+        $horasOcupadas = [];
+        foreach ($reservasDelDia as $reserva) {
+            if ($reserva->getEstado()->esActiva()) {
+                // Excluir la reserva que se está editando
+                if (isset($data['excluir_id']) && $reserva->getId() == $data['excluir_id']) {
+                    continue;
+                }
+                $horasOcupadas[] = $reserva->getHora();
+            }
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'horas_ocupadas' => array_values(array_unique($horasOcupadas)),
+            'admin_mode' => true
+        ]);
+        exit;
+        
+    } catch (\Exception $e) {
+        error_log('Error en modo admin: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+        exit;
+    }
 }
 
 try {
