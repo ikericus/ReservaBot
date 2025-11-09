@@ -445,7 +445,87 @@ class ReservaDomain {
         
         return $reserva;
     }
-    
+
+    /**
+     * Obtiene TODOS los datos necesarios para el formulario de reserva (admin)
+     * Incluye configuración, reserva (si existe) y horas ocupadas del día
+     * 
+     * @param int|null $reservaId ID de la reserva en modo edición, null en modo creación
+     * @param int $usuarioId ID del usuario/negocio
+     * @param string $fecha Fecha para la cual obtener horas ocupadas
+     */
+    public function obtenerDatosFormularioReserva(?int $reservaId, int $usuarioId, string $fecha): array {
+        $reserva = null;
+        $horasOcupadas = [];
+        
+        // Obtener configuración de intervalos y duración
+        $intervaloReservas = $this->configuracionDomain->obtenerIntervaloReservas($usuarioId);
+        $duracionReservas = $this->configuracionDomain->obtenerDuracionReserva($usuarioId);
+        
+        // Si es modo edición, obtener la reserva
+        if ($reservaId) {
+            try {
+                $reservaObj = $this->obtenerReserva($reservaId, $usuarioId);
+                
+                // Convertir a array para la vista
+                $reserva = [
+                    'id' => $reservaObj->getId(),
+                    'nombre' => $reservaObj->getNombre(),
+                    'telefono' => $reservaObj->getTelefono()->getValue(),
+                    'fecha' => $reservaObj->getFecha()->format('Y-m-d'),
+                    'hora' => $reservaObj->getHora(),
+                    'mensaje' => $reservaObj->getMensaje(),
+                    'estado' => $reservaObj->getEstado()->value
+                ];
+                
+                // Usar la fecha de la reserva
+                $fecha = $reserva['fecha'];
+            } catch (\DomainException $e) {
+                // La reserva no existe o no pertenece al usuario
+                throw $e;
+            }
+        }
+        
+        // Obtener horas ocupadas del día (considerando duración de reservas)
+        try {
+            $fechaObj = new DateTime($fecha);
+            $reservasDelDia = $this->reservaRepository->obtenerPorFecha($fechaObj, $usuarioId);
+            
+            // Calcular todas las franjas bloqueadas por cada reserva
+            foreach ($reservasDelDia as $r) {
+                // En modo edición, excluir la reserva actual
+                if ($reservaId && $r->getId() === $reservaId) {
+                    continue;
+                }
+                
+                if ($r->getEstado()->esActiva()) {
+                    // Calcular TODAS las franjas bloqueadas por esta reserva
+                    $franjasBloqueadas = $this->configuracionDomain->calcularFranjasBloqueadas(
+                        $r->getHora(),
+                        $usuarioId
+                    );
+                    
+                    // Agregar todas las franjas al array
+                    foreach ($franjasBloqueadas as $franja) {
+                        if (!in_array($franja, $horasOcupadas)) {
+                            $horasOcupadas[] = $franja;
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Error obteniendo horas ocupadas: " . $e->getMessage());
+        }
+        
+        return [
+            'reserva' => $reserva,
+            'horas_ocupadas' => $horasOcupadas,
+            'fecha' => $fecha,
+            'intervalo' => $intervaloReservas,
+            'duracion' => $duracionReservas
+        ];
+    }
+        
     /**
      * Elimina una reserva
      */

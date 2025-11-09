@@ -22,115 +22,43 @@ $isEditMode = $id > 0;
 $currentUser = getAuthenticatedUser();
 $usuarioId = $currentUser['id'];
 
-// Obtener configuración de reservas desde ConfiguracionDomain
-$intervaloReservas = 30; // Default
-$duracionReservas = 60; // Default
+// Obtener fecha inicial
+$fecha = $isEditMode ? null : (isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d'));
 
-$configuracionDomain = getContainer()->getConfiguracionDomain();
-$reservaDomain = getContainer()->getReservaDomain();
+// Obtener parámetros de la URL (solo modo creación)
+$telefonoUrl = !$isEditMode && isset($_GET['telefono']) ? trim($_GET['telefono']) : '';
+$nombreUrl = !$isEditMode && isset($_GET['nombre']) ? trim($_GET['nombre']) : '';
+
+// Valores por defecto
+$reserva = null;
+$horasOcupadas = [];
+$intervaloReservas = 30;
+$duracionReservas = 60;
 
 try {
-    $intervaloReservas = $configuracionDomain->obtenerIntervaloReservas($usuarioId);
-    $duracionReservas = $configuracionDomain->obtenerDuracionReserva($usuarioId);
+    $reservaDomain = getContainer()->getReservaDomain();
+    
+    // ✅ UN SOLO MÉTODO obtiene TODO lo necesario
+    $datosFormulario = $reservaDomain->obtenerDatosFormularioReserva(
+        $isEditMode ? $id : null,
+        $usuarioId,
+        $fecha ?? date('Y-m-d')
+    );
+    
+    // Extraer todos los datos
+    $reserva = $datosFormulario['reserva'];
+    $horasOcupadas = $datosFormulario['horas_ocupadas'];
+    $fecha = $datosFormulario['fecha'];
+    $intervaloReservas = $datosFormulario['intervalo'];
+    $duracionReservas = $datosFormulario['duracion'];
+    
+} catch (\DomainException $e) {
+    // Reserva no encontrada o no pertenece al usuario
+    error_log("Error obteniendo datos del formulario: " . $e->getMessage());
+    header('Location: /dia');
+    exit;
 } catch (Exception $e) {
-    error_log("Error obteniendo configuración de reservas: " . $e->getMessage());
-}
-
-// Variables iniciales
-$fecha = null;
-$telefonoUrl = '';
-$nombreUrl = '';
-$horasOcupadas = [];
-
-// Obtener la reserva si estamos en modo edición
-$reserva = null;
-if ($isEditMode) {
-    try {
-        $reservaObj = $reservaDomain->obtenerReserva($id, $usuarioId);
-        
-        // Convertir a array para compatibilidad con el resto del código
-        $reserva = [
-            'id' => $reservaObj->getId(),
-            'nombre' => $reservaObj->getNombre(),
-            'telefono' => $reservaObj->getTelefono()->getValue(),
-            'fecha' => $reservaObj->getFecha()->format('Y-m-d'),
-            'hora' => $reservaObj->getHora(),
-            'mensaje' => $reservaObj->getMensaje(),
-            'estado' => $reservaObj->getEstado()->value
-        ];
-        
-        if (!$reserva) {
-            header('Location: /dia');
-            exit;
-        }
-        
-        // Usar la fecha de la reserva en modo edición
-        $fecha = $reserva['fecha'];
-        
-        // Obtener horas ocupadas del día (excluyendo esta reserva y considerando duración)
-        try {
-            $fechaObj = new DateTime($reserva['fecha']);
-            $reservasDelDia = $reservaDomain->obtenerReservasPorFecha($fechaObj, $usuarioId);
-            
-            // Calcular todas las franjas bloqueadas por cada reserva (considerando duración)
-            foreach ($reservasDelDia as $r) {
-                // Excluir la reserva actual
-                if ($r->getId() !== $reserva['id'] && $r->getEstado()->esActiva()) {
-                    // Calcular TODAS las franjas bloqueadas por esta reserva
-                    $franjasBloqueadas = $configuracionDomain->calcularFranjasBloqueadas(
-                        $r->getHora(),
-                        $usuarioId
-                    );
-                    
-                    // Agregar todas las franjas al array
-                    foreach ($franjasBloqueadas as $franja) {
-                        if (!in_array($franja, $horasOcupadas)) {
-                            $horasOcupadas[] = $franja;
-                        }
-                    }
-                }
-            }
-        } catch (Exception $e) {
-            error_log("Error obteniendo reservas del día en edición: " . $e->getMessage());
-        }
-        
-    } catch (\Exception $e) {
-        error_log("Error obteniendo reserva: " . $e->getMessage());
-        header('Location: /dia');
-        exit;
-    }
-} else {
-    // Modo creación
-    $fecha = isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d');
-    
-    // Obtener parámetros de la URL para prellenar el formulario
-    $telefonoUrl = isset($_GET['telefono']) ? trim($_GET['telefono']) : '';
-    $nombreUrl = isset($_GET['nombre']) ? trim($_GET['nombre']) : '';
-    
-    // Obtener horas ocupadas del día actual (considerando duración de reservas)
-    try {
-        $fechaObj = new DateTime($fecha);
-        $reservasDelDia = $reservaDomain->obtenerReservasPorFecha($fechaObj, $usuarioId);
-        
-        // Calcular todas las franjas bloqueadas por cada reserva
-        foreach ($reservasDelDia as $reserva) {
-            if ($reserva->getEstado()->esActiva()) {
-                // Calcular todas las franjas bloqueadas
-                $franjasBloqueadas = $configuracionDomain->calcularFranjasBloqueadas(
-                    $reserva->getHora(),
-                    $usuarioId
-                );
-                
-                foreach ($franjasBloqueadas as $franja) {
-                    if (!in_array($franja, $horasOcupadas)) {
-                        $horasOcupadas[] = $franja;
-                    }
-                }
-            }
-        }
-    } catch (Exception $e) {
-        error_log("Error obteniendo reservas del día: " . $e->getMessage());
-    }
+    error_log("Error inesperado: " . $e->getMessage());
 }
 
 // Incluir la cabecera
