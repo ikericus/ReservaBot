@@ -17,12 +17,13 @@ class ReservaDomain {
     public function __construct(
         IReservaRepository $reservaRepository,
         IConfiguracionNegocioRepository $configuracionRepository,
-        ?IEmailRepository $emailRepository = null
+        ?IEmailRepository $emailRepository = null,
+        ?EmailTemplates $emailTemplates = null
     ) {
         $this->reservaRepository = $reservaRepository;
         $this->configuracionRepository = $configuracionRepository;
         $this->emailRepository = $emailRepository;
-        $this->emailTemplates = new EmailTemplates($configuracionRepository);
+        $this->emailTemplates = $emailTemplates ?? new EmailTemplates($configuracionRepository);
     }
     
     /**
@@ -67,8 +68,8 @@ class ReservaDomain {
         DateTime $fecha, 
         string $hora, 
         int $usuarioId,
-        ?int $excluirReservaId = null ): bool {
-            
+        ?int $excluirReservaId = null
+    ): bool {
         // 1. Verificar si el horario está dentro de las horas de negocio
         if (!$this->configuracionRepository->estaDisponible($fecha, $hora, $usuarioId)) {
             return false;
@@ -121,6 +122,13 @@ class ReservaDomain {
     }
     
     /**
+     * Obtiene el intervalo de reservas configurado (en minutos)
+     */
+    public function obtenerIntervaloReservas(int $usuarioId): int {
+        return $this->configuracionRepository->obtenerIntervalo($usuarioId);
+    }
+    
+    /**
      * Crea una nueva reserva validando disponibilidad
      */
     public function crearReserva(
@@ -130,8 +138,8 @@ class ReservaDomain {
         string $hora,
         int $usuarioId,
         string $mensaje = '',
-        ?string $notasInternas = null ): Reserva {
-
+        ?string $notasInternas = null
+    ): Reserva {
         // Verificar disponibilidad
         if (!$this->verificarDisponibilidad($fecha, $hora, $usuarioId)) {
             throw new \DomainException('El horario seleccionado no está disponible');
@@ -158,6 +166,41 @@ class ReservaDomain {
     }
     
     /**
+     * Crea una nueva reserva desde el panel de administración
+     * NO valida disponibilidad - el admin puede reservar en cualquier horario
+     */
+    public function crearReservaAdmin(
+        string $nombre,
+        string $telefono,
+        DateTime $fecha,
+        string $hora,
+        int $usuarioId,
+        string $mensaje = '',
+        ?string $notasInternas = null
+    ): Reserva {
+        // NO verificar disponibilidad - el admin tiene control total
+        
+        // Crear entidad
+        $reserva = Reserva::crear(
+            $nombre,
+            $telefono,
+            $fecha,
+            $hora,
+            $usuarioId,
+            $mensaje,
+            $notasInternas
+        );
+        
+        // Persistir
+        $reserva = $this->reservaRepository->guardar($reserva);
+        
+        // NO enviar email automáticamente - las reservas del admin son internas
+        // Si tiene email, se enviará cuando se confirme
+        
+        return $reserva;
+    }
+    
+    /**
      * Verifica si existe una reserva duplicada para el mismo email o teléfono
      * en la misma fecha y hora
      */
@@ -166,7 +209,8 @@ class ReservaDomain {
         string $telefono,
         DateTime $fecha,
         string $hora,
-        int $usuarioId ): bool {
+        int $usuarioId
+    ): bool {
         // Obtener reservas activas para esa fecha
         $reservasEnFecha = $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
         
@@ -203,7 +247,8 @@ class ReservaDomain {
         int $usuarioId,
         string $mensaje = '',
         ?int $formularioId = null,
-        bool $confirmacionAutomatica = false ): Reserva {
+        bool $confirmacionAutomatica = false
+    ): Reserva {
         // Validar email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new \InvalidArgumentException('Email no válido');
@@ -262,38 +307,70 @@ class ReservaDomain {
     }
     
     /**
-     * Envía email al cliente según el estado de la reserva
-     * Método genérico que detecta automáticamente qué email enviar
+     * Verifica si se puede enviar email para una reserva
      */
-    private function enviarEmailReserva(Reserva $reserva): bool {
-        // Si no hay repositorio de email configurado, log y retornar
+    private function puedeEnviarEmail(Reserva $reserva): bool {
         if (!$this->emailRepository) {
             error_log("EmailRepository no configurado. No se puede enviar email para reserva #{$reserva->getId()}");
             return false;
         }
         
-        // Verificar que la reserva tiene email
         if (!$reserva->getEmail()) {
-            // No es un error, simplemente no hay email (reservas del admin)
+            return false; // No es un error, simplemente no hay email
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Genera el contenido del email según el estado de la reserva
+     */
+    private function generarContenidoEmail(Reserva $reserva): array {
+        $gestionUrl = $this->generarUrlGestion($reserva);
+        
+        return $this->emailTemplates->confirmacionReserva(
+            $reserva->toArray(),
+            $gestionUrl
+        );
+    }
+    
+    /**
+     * Genera la URL de gestión de la reserva
+     */
+    private function generarUrlGestion(Reserva $reserva): ?string {
+        if (!$reserva->getAccessToken()) {
+            return null;
+        }
+        
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        
+        return $protocol . $host . '/mi-reserva?token=' . $reserva->getAccessToken();
+    }
+    
+    /**
+     * Registra el resultado del envío de email
+     */
+    private function registrarEnvioEmail(Reserva $reserva, bool $enviado): void {
+        if ($enviado) {
+            debug_log("Email enviado exitosamente para reserva #{$reserva->getId()} - Estado: {$reserva->getEstado()->value}");
+        } else {
+            error_log("Error al enviar email para reserva #{$reserva->getId()}");
+        }
+    }
+    
+    /**
+     * Envía email al cliente según el estado de la reserva
+     * Método genérico que detecta automáticamente qué email enviar
+     */
+    private function enviarEmailReserva(Reserva $reserva): bool {
+        if (!$this->puedeEnviarEmail($reserva)) {
             return false;
         }
         
         try {
-            // Generar URL de gestión usando el token (si existe)
-            $gestionUrl = null;
-            if ($reserva->getAccessToken()) {
-                $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
-                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-                $gestionUrl = $protocol . $host . '/mi-reserva?token=' . $reserva->getAccessToken();
-            }
+            $emailData = $this->generarContenidoEmail($reserva);
             
-            // Generar contenido del email usando templates
-            $emailData = $this->emailTemplates->confirmacionReserva(
-                $reserva->toArray(),
-                $gestionUrl
-            );
-            
-            // Enviar email
             $enviado = $this->emailRepository->enviar(
                 $reserva->getEmail(),
                 $emailData['asunto'],
@@ -301,12 +378,7 @@ class ReservaDomain {
                 $emailData['cuerpo_html']
             );
             
-            if ($enviado) {
-                debug_log("Email enviado exitosamente para reserva #{$reserva->getId()} - Estado: {$reserva->getEstado()->value}");
-            } else {
-                error_log("Error al enviar email para reserva #{$reserva->getId()}");
-            }
-            
+            $this->registrarEnvioEmail($reserva, $enviado);
             return $enviado;
             
         } catch (\Exception $e) {
@@ -316,35 +388,39 @@ class ReservaDomain {
     }
     
     /**
+     * Ejecuta una acción sobre una reserva y envía email
+     */
+    private function ejecutarAccionReserva(
+        int $id, 
+        int $usuarioId, 
+        callable $accion
+    ): Reserva {
+        $reserva = $this->obtenerReserva($id, $usuarioId);
+        $accion($reserva);
+        $reserva = $this->reservaRepository->guardar($reserva);
+        $this->enviarEmailReserva($reserva);
+        return $reserva;
+    }
+    
+    /**
      * Confirma una reserva
      */
     public function confirmarReserva(int $id, int $usuarioId): Reserva {
-        $reserva = $this->obtenerReserva($id, $usuarioId);
-        
-        $reserva->confirmar();
-        
-        $reserva = $this->reservaRepository->guardar($reserva);
-        
-        // Enviar email de confirmación
-        $this->enviarEmailReserva($reserva);
-        
-        return $reserva;
+        return $this->ejecutarAccionReserva($id, $usuarioId, fn($r) => $r->confirmar());
     }
     
     /**
      * Cancela una reserva
      */
     public function cancelarReserva(int $id, int $usuarioId): Reserva {
-        $reserva = $this->obtenerReserva($id, $usuarioId);
-        
-        $reserva->cancelar();
-        
-        $reserva = $this->reservaRepository->guardar($reserva);
-        
-        // Enviar email de cancelación
-        $this->enviarEmailReserva($reserva);
-        
-        return $reserva;
+        return $this->ejecutarAccionReserva($id, $usuarioId, fn($r) => $r->cancelar());
+    }
+    
+    /**
+     * Rechaza una reserva pendiente
+     */
+    public function rechazarReserva(int $id, int $usuarioId): Reserva {
+        return $this->ejecutarAccionReserva($id, $usuarioId, fn($r) => $r->rechazar());
     }
     
     /**
@@ -355,12 +431,17 @@ class ReservaDomain {
         int $usuarioId,
         DateTime $nuevaFecha,
         string $nuevaHora,
-        ?string $nuevoMensaje = null ): Reserva {
+        ?string $nuevoMensaje = null,
+        bool $omitirValidacionDisponibilidad = false
+    ): Reserva {
         $reserva = $this->obtenerReserva($id, $usuarioId);
         
         // Verificar disponibilidad del nuevo horario (excluyendo esta reserva)
-        if (!$this->verificarDisponibilidad($nuevaFecha, $nuevaHora, $usuarioId, $id)) {
-            throw new \DomainException('El nuevo horario no está disponible');
+        // Solo si NO se omite la validación
+        if (!$omitirValidacionDisponibilidad) {
+            if (!$this->verificarDisponibilidad($nuevaFecha, $nuevaHora, $usuarioId, $id)) {
+                throw new \DomainException('El nuevo horario no está disponible');
+            }
         }
         
         $reserva->modificar($nuevaFecha, $nuevaHora, $nuevoMensaje);
@@ -385,22 +466,6 @@ class ReservaDomain {
         
         return $reserva;
     }
-
-    /**
-     * Rechaza una reserva pendiente
-     */
-    public function rechazarReserva(int $id, int $usuarioId): Reserva {
-        $reserva = $this->obtenerReserva($id, $usuarioId);
-        
-        $reserva->rechazar();
-        
-        $reserva = $this->reservaRepository->guardar($reserva);
-        
-        // Enviar email de rechazo
-        $this->enviarEmailReserva($reserva);
-        
-        return $reserva;
-    }
     
     /**
      * Elimina una reserva
@@ -411,28 +476,24 @@ class ReservaDomain {
         
         $this->reservaRepository->eliminar($id, $usuarioId);
     }
-
+    
     /**
-     * Modifica una reserva pública mediante token de acceso
+     * Obtiene y valida una reserva pública por token
      */
-    public function modificarReservaPublica(
-        int $reservaId,
-        string $token,
-        DateTime $nuevaFecha,
-        string $nuevaHora ): Reserva {
-        // Obtener reserva por ID y validar token
+    private function obtenerYValidarReservaPublica(int $reservaId, string $token): Reserva {
         $reserva = $this->reservaRepository->obtenerPorIdYToken($reservaId, $token);
         
         if (!$reserva) {
             throw new \DomainException('Reserva no encontrada o token inválido');
         }
         
-        // Validar que no está cancelada
-        if ($reserva->estaCancelada()) {
-            throw new \DomainException('No se puede modificar una reserva cancelada');
-        }
-        
-        // Validar plazo de 24h
+        return $reserva;
+    }
+    
+    /**
+     * Valida que no se ha superado el plazo de 24h para modificar/cancelar
+     */
+    private function validarPlazoModificacion(Reserva $reserva): void {
         $fechaHoraReserva = clone $reserva->getFecha();
         $fechaHoraReserva->setTime(
             (int)substr($reserva->getHora(), 0, 2),
@@ -443,8 +504,34 @@ class ReservaDomain {
         $fechaLimite->modify('-24 hours');
         
         if (new DateTime() >= $fechaLimite) {
-            throw new \DomainException('No se puede modificar la reserva. El plazo límite ha expirado (24h antes de la cita)');
+            throw new \DomainException(
+                'No se puede modificar la reserva. El plazo límite ha expirado (24h antes de la cita)'
+            );
         }
+    }
+    
+    /**
+     * Valida que una reserva pública puede ser modificada/cancelada
+     */
+    private function validarModificacionPublica(Reserva $reserva): void {
+        if ($reserva->estaCancelada()) {
+            throw new \DomainException('No se puede modificar una reserva cancelada');
+        }
+        
+        $this->validarPlazoModificacion($reserva);
+    }
+
+    /**
+     * Modifica una reserva pública mediante token de acceso
+     */
+    public function modificarReservaPublica(
+        int $reservaId,
+        string $token,
+        DateTime $nuevaFecha,
+        string $nuevaHora
+    ): Reserva {
+        $reserva = $this->obtenerYValidarReservaPublica($reservaId, $token);
+        $this->validarModificacionPublica($reserva);
         
         // Verificar disponibilidad del nuevo horario
         if (!$this->verificarDisponibilidad($nuevaFecha, $nuevaHora, $reserva->getUsuarioId(), $reservaId)) {
@@ -465,29 +552,8 @@ class ReservaDomain {
      * Cancela una reserva pública mediante token de acceso
      */
     public function cancelarReservaPublica(int $reservaId, string $token): Reserva {
-        $reserva = $this->reservaRepository->obtenerPorIdYToken($reservaId, $token);
-        
-        if (!$reserva) {
-            throw new \DomainException('Reserva no encontrada o token inválido');
-        }
-        
-        if ($reserva->estaCancelada()) {
-            throw new \DomainException('La reserva ya está cancelada');
-        }
-        
-        // Validar plazo de 24h
-        $fechaHoraReserva = clone $reserva->getFecha();
-        $fechaHoraReserva->setTime(
-            (int)substr($reserva->getHora(), 0, 2),
-            (int)substr($reserva->getHora(), 3, 2)
-        );
-        
-        $fechaLimite = clone $fechaHoraReserva;
-        $fechaLimite->modify('-24 hours');
-        
-        if (new DateTime() >= $fechaLimite) {
-            throw new \DomainException('No se puede cancelar la reserva. El plazo límite ha expirado (24h antes de la cita)');
-        }
+        $reserva = $this->obtenerYValidarReservaPublica($reservaId, $token);
+        $this->validarModificacionPublica($reserva);
         
         $reserva->cancelar();
         
@@ -498,61 +564,72 @@ class ReservaDomain {
         
         return $reserva;
     }
-
+    
     /**
-     * Obtiene horas disponibles con información detallada de capacidad
+     * Obtiene y valida el horario del día
      */
-    public function obtenerHorasDisponiblesConCapacidad(DateTime $fecha, int $usuarioId): array {
+    private function obtenerYValidarHorarioDia(DateTime $fecha, int $usuarioId): array {
         $diaSemana = $this->obtenerDiaSemana($fecha);
-        $horarioConfig = $this->configuracionRepository->obtenerHorarioDia($diaSemana, $usuarioId);
+        $horarioDia = $this->configuracionRepository->obtenerHorarioDia($diaSemana, $usuarioId);
         
         // Asegurar que todas las ventanas tengan capacidad
-        foreach ($horarioConfig['ventanas'] as &$ventana) {
+        foreach ($horarioDia['ventanas'] as &$ventana) {
             if (!isset($ventana['capacidad'])) {
                 $ventana['capacidad'] = 1;
             }
         }
         
-        if (!$horarioConfig['activo']) {
+        if (!$horarioDia['activo']) {
             throw new \DomainException('El día seleccionado no está disponible');
         }
         
-        $ventanas = $horarioConfig['ventanas'];
-        
-        if (empty($ventanas)) {
+        if (empty($horarioDia['ventanas'])) {
             throw new \DomainException('No hay horarios configurados para este día');
         }
         
-        // Obtener intervalo de reservas
-        $intervalo = $this->configuracionRepository->obtenerIntervalo($usuarioId);
-        
-        // Obtener todas las horas posibles del día
-        $todasLasHoras = $this->generarHorasPorVentanas($ventanas, $intervalo);
-        
-        // Obtener reservas existentes para la fecha
-        $reservasExistentes = $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
-        
-        // Contar reservas activas por hora
+        return $horarioDia;
+    }
+    
+    /**
+     * Calcula la capacidad disponible por hora
+     */
+    private function calcularCapacidadPorHora(
+        array $todasLasHoras, 
+        array $ventanas, 
+        array $reservasExistentes
+    ): array {
         $reservasPorHora = $this->contarReservasPorHora($reservasExistentes);
-        
-        // Calcular disponibilidad por hora
         $horasConCapacidad = [];
-        $horasDisponibles = [];
         
         foreach ($todasLasHoras as $hora) {
             $capacidadTotal = $this->obtenerCapacidadParaHora($hora, $ventanas);
             $reservasActuales = $reservasPorHora[$hora] ?? 0;
             $disponibles = $capacidadTotal - $reservasActuales;
             
-            if ($disponibles > 0) {
-                $horasDisponibles[] = $hora;
-            }
-            
             $horasConCapacidad[$hora] = [
                 'total' => $capacidadTotal,
                 'ocupadas' => $reservasActuales,
                 'libres' => $disponibles
             ];
+        }
+        
+        return $horasConCapacidad;
+    }
+    
+    /**
+     * Filtra las horas disponibles (con capacidad libre)
+     */
+    private function filtrarHorasDisponibles(
+        array $todasLasHoras, 
+        array $horasConCapacidad, 
+        DateTime $fecha
+    ): array {
+        $horasDisponibles = [];
+        
+        foreach ($todasLasHoras as $hora) {
+            if ($horasConCapacidad[$hora]['libres'] > 0) {
+                $horasDisponibles[] = $hora;
+            }
         }
         
         // Si es hoy, filtrar horas pasadas
@@ -562,12 +639,25 @@ class ReservaDomain {
             $horasDisponibles = array_values($horasDisponibles);
         }
         
-        // Calcular rangos globales
+        return $horasDisponibles;
+    }
+    
+    /**
+     * Formatea la respuesta con información de horas disponibles
+     */
+    private function formatearRespuestaHorasDisponibles(
+        array $horasDisponibles,
+        array $horarioDia,
+        int $intervalo,
+        array $horasConCapacidad,
+        DateTime $fecha
+    ): array {
+        $ventanasInfo = [];
         $horaInicioGlobal = null;
         $horaFinGlobal = null;
-        $ventanasInfo = [];
+        $tieneCapacidadMultiple = false;
         
-        foreach ($ventanas as $ventana) {
+        foreach ($horarioDia['ventanas'] as $ventana) {
             $ventanasInfo[] = $ventana['inicio'] . ' - ' . $ventana['fin'] . 
                             ' (máx. ' . $ventana['capacidad'] . ' reservas)';
             
@@ -577,35 +667,49 @@ class ReservaDomain {
             if ($horaFinGlobal === null || $ventana['fin'] > $horaFinGlobal) {
                 $horaFinGlobal = $ventana['fin'];
             }
-        }
-        
-        // Detectar si hay capacidad múltiple
-        $tieneCapacidadMultiple = false;
-        foreach ($ventanas as $ventana) {
             if ($ventana['capacidad'] > 1) {
                 $tieneCapacidadMultiple = true;
-                break;
             }
         }
         
         return [
             'horas' => $horasDisponibles,
-            'dia_semana' => $diaSemana,
+            'dia_semana' => $this->obtenerDiaSemana($fecha),
             'horario_inicio' => $horaInicioGlobal,
             'horario_fin' => $horaFinGlobal,
             'ventanas' => $ventanasInfo,
             'intervalo' => $intervalo,
-            'total_ventanas' => count($ventanas),
+            'total_ventanas' => count($horarioDia['ventanas']),
             'capacidad_info' => $horasConCapacidad,
             'tiene_capacidad_multiple' => $tieneCapacidadMultiple
         ];
     }
 
     /**
-     * Obtiene el intervalo de reservas configurado (en minutos)
+     * Obtiene horas disponibles con información detallada de capacidad
      */
-    public function obtenerIntervaloReservas(int $usuarioId): int {
-        return $this->configuracionRepository->obtenerIntervalo($usuarioId);
+    public function obtenerHorasDisponiblesConCapacidad(DateTime $fecha, int $usuarioId): array {
+        $horarioDia = $this->obtenerYValidarHorarioDia($fecha, $usuarioId);
+        $intervalo = $this->configuracionRepository->obtenerIntervalo($usuarioId);
+        
+        $todasLasHoras = $this->generarHorasPorVentanas($horarioDia['ventanas'], $intervalo);
+        $reservasExistentes = $this->reservaRepository->obtenerPorFecha($fecha, $usuarioId);
+        
+        $horasConCapacidad = $this->calcularCapacidadPorHora(
+            $todasLasHoras, 
+            $horarioDia['ventanas'], 
+            $reservasExistentes
+        );
+        
+        $horasDisponibles = $this->filtrarHorasDisponibles($todasLasHoras, $horasConCapacidad, $fecha);
+        
+        return $this->formatearRespuestaHorasDisponibles(
+            $horasDisponibles, 
+            $horarioDia, 
+            $intervalo, 
+            $horasConCapacidad,
+            $fecha
+        );
     }
 
     /**
@@ -714,8 +818,8 @@ class ReservaDomain {
     }
 
     /**
-    * Obtiene el historial de cambios de reservas
-    */
+     * Obtiene el historial de cambios de reservas
+     */
     public function obtenerHistorialCambios(int $usuarioId, ?int $limite = 50): array {
         $auditoria = $this->reservaRepository->obtenerHistorialAuditoria($usuarioId, $limite);
         
@@ -738,6 +842,9 @@ class ReservaDomain {
         }, $auditoria);
     }
 
+    /**
+     * Genera una descripción legible del cambio realizado
+     */
     private function generarDescripcionCambio(array $registro): string {
         switch ($registro['accion']) {
             case 'creada':
