@@ -78,7 +78,7 @@ try {
         $reserva = $reservaDomain->confirmarReserva($reserva->getId(), $userId);
     }
     
-    debug_log("Reserva creada - ID: {$reserva->getId()}, Teléfono: {$telefono}");
+    debug_log("Reserva confirmada con ID: {$reserva->getId()}");
     
     jsonResponse(true, [
         'reserva' => $reserva->toArray(),
