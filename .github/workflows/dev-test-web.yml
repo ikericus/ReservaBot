@@ -1,0 +1,29 @@
+name: Run Behat Tests DEV
+
+on:
+  push:
+    branches:
+      - dev  # Solo cuando se hace un push en la rama `dev`
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+
+      - name: Install dependencies
+        run: |
+          curl -sS https://getcomposer.org/installer | php
+          php composer.phar install
+          
+      - name: Run Behat tests
+        run: |
+          vendor/bin/behat --strict --tags ~@wip
+        continue-on-error: false  # Si los tests fallan, detiene el flujo

@@ -1,0 +1,29 @@
+name: Deploy Web DEV
+
+on:
+  push:
+    branches:
+      - dev  # El despliegue solo se activa cuando hay un push en la rama `main`
+    paths:
+      - 'public/**'  # Solo se activa cuando hay cambios en public/
+
+jobs:
+  ftp-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2  # Para poder comparar cambios
+      
+      - name: Deploy public/ via FTP
+        run: |
+          echo "Deploying public/ via FTP..."
+          # Aquí colocas la acción de despliegue, en este caso via FTP
+          uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+          with:
+            server: ${{ secrets.FTP_HOST }}
+            username: ${{ secrets.FTP_USER }}
+            password: ${{ secrets.FTP_PASS }}
+            local-dir: ./public/
+            server-dir: /
+            dangerous-clean-slate: false

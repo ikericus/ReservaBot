@@ -1,0 +1,35 @@
+name: Deploy Server
+
+on:
+  push:
+    branches:
+      - main  # El despliegue solo se activa cuando hay un push en la rama `main`
+    paths:
+      - 'server/**'  # Solo se activa cuando hay cambios en server/
+
+jobs:
+  server-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2  # Para poder comparar cambios
+
+      - name: Deploy server.js
+        run: |
+          echo "Deploying server/..."
+          # Crear la clave privada temporal
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
+          chmod 600 private_key
+
+          # Usamos SCP para copiar el archivo al servidor remoto
+          scp -i private_key -o StrictHostKeyChecking=no server/server.js ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/debian/whatsapp-server/server.js
+
+          # Reiniciar el servidor con PM2
+          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /home/debian/whatsapp-server
+            /home/debian/.nvm/versions/node/v20.19.2/bin/pm2 restart whatsapp-server || /home/debian/.nvm/versions/node/v20.19.2/bin/pm2 start server.js --name whatsapp-server
+          EOF
+          
+          # Limpiar la clave privada temporal
+          rm -f private_key
