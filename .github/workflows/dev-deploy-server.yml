@@ -1,9 +1,9 @@
-name: Deploy Server
+name: Deploy Server PRO
 
 on:
   push:
     branches:
-      - main  # El despliegue solo se activa cuando hay un push en la rama `main`
+      - dev  # El despliegue solo se activa cuando hay un push en la rama `main`
     paths:
       - 'server/**'  # Solo se activa cuando hay cambios en server/
 
