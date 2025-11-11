@@ -9,9 +9,9 @@
     "require-dev": {
         "behat/behat": "^3.13",
         "behat/mink": "^1.10",
-        "friends-of-behat/mink-extension": "^2.5",
-        "friends-of-behat/mink-browserkit-driver": "^1.6",
-        "behat/mink-goutte-driver": "2.x-dev"
+        "behat/mink-extension": "^2.4",
+        "behat/mink-browserkit-driver": "^2.0@dev",
+        "behat/mink-goutte-driver": "^2.0@dev"
     },
     "config": {
         "bin-dir": "vendor/bin"
