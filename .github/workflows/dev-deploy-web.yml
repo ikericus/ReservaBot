@@ -8,6 +8,7 @@ on:
       - 'public/**'  # Solo se activa cuando hay cambios en public/
 
 jobs:
+  
   ftp-deploy:
     runs-on: ubuntu-latest
     steps:
@@ -34,3 +35,7 @@ jobs:
           local-dir: ./public/
           server-dir: /public_html/
           dangerous-clean-slate: false
+
+  trigger-tests:  # ← Este job se ejecuta DESPUÉS del deploy
+    needs: ftp-deploy  # ← Espera a que "deploy" termine con éxito
+    uses: ./.github/workflows/dev-test-web.yml  # ← Llama al otro workflow

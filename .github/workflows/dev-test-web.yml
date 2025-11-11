@@ -1,11 +1,11 @@
 name: Run Behat Tests
 
 on:
+  workflow_call:  # ← Añade esto para permitir que otros workflows lo llamen
   push:
     branches:
       - dev
     paths:
-      - 'public/**'
       - 'tests/features/**'
       - 'behat.yml'
       - 'composer.json'
