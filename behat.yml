@@ -13,5 +13,3 @@ default:
       sessions:
         default:
           goutte: ~
-      javascript_session: default
-      browser_name: chrome
