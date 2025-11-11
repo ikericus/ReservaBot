@@ -21,9 +21,9 @@ jobs:
           # Aquí colocas la acción de despliegue, en este caso via FTP
           uses: SamKirkland/FTP-Deploy-Action@v4.3.4
           with:
-            server: ${{ secrets.FTP_HOST }}
-            username: ${{ secrets.FTP_USER }}
-            password: ${{ secrets.FTP_PASS }}
+            server: ${{ secrets.FTP_DEV_HOST }}
+            username: ${{ secrets.FTP_DEV_USER }}
+            password: ${{ secrets.FTP_DEV_PASS }}
             local-dir: ./public/
             server-dir: /
             dangerous-clean-slate: false
