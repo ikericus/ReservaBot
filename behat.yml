@@ -8,6 +8,5 @@ default:
   extensions:
     Behat\MinkExtension:
       base_url: '%env(BEHAT_BASE_URL)%'
-      default_session: goutte
-      goutte: ~
-      browser_name: chrome
+      default_session: symfony
+      symfony: ~
