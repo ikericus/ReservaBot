@@ -3,12 +3,7 @@ default:
     default:
       contexts:
         - FeatureContext
-      paths:
-        - '%paths.base%/tests/features'
   extensions:
     Behat\MinkExtension:
-      base_url: '%env(BEHAT_BASE_URL)%'
-      default_session: symfony
-      sessions:
-        symfony:
-          symfony: ~
+      base_url: 'https://dev.reservabot.es'
+      goutte: ~

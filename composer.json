@@ -7,14 +7,9 @@
     },
     "require-dev": {
         "behat/behat": "^3.13",
-        "behat/mink": "^1.11",
+        "behat/mink": "^1.10",
         "behat/mink-extension": "^2.3",
-        "friends-of-behat/mink-browserkit-driver": "^1.6",
-        "symfony/browser-kit": "^5.4|^6.0",
-        "symfony/http-client": "^5.4|^6.0"
-    },
-    "config": {
-        "sort-packages": true,
-        "optimize-autoloader": true
+        "behat/mink-goutte-driver": "^1.2",
+        "fabpot/goutte": "^3.3"
     }
 }
