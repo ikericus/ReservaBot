@@ -3,27 +3,82 @@ name: Run Behat Tests DEV
 on:
   push:
     branches:
-      - dev  # Solo cuando se hace un push en la rama `dev`
- 
+      - dev
+  pull_request:
+    branches:
+      - dev
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.0', '8.1']
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up PHP
+      - name: Set up PHP ${{ matrix.php-version }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.0'
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, xml, ctype, json, curl, dom, libxml
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php-version }}-
 
       - name: Install dependencies
-        run: |
-          curl -sS https://getcomposer.org/installer | php
-          php composer.phar install
-          
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Create build directory
+        run: mkdir -p build/junit
+
       - name: Run Behat tests
         run: |
-          vendor/bin/behat --strict --tags ~@wip
-        continue-on-error: false  # Si los tests fallan, detiene el flujo
+          vendor/bin/behat \
+            --strict \
+            --format progress \
+            --out std \
+            --format junit \
+            --out build/junit
+        continue-on-error: false
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: build/junit/*.xml
+          check_name: Behat Test Results (PHP ${{ matrix.php-version }})
+
+      - name: Upload Behat logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: behat-logs-php-${{ matrix.php-version }}
+          path: build/
+          retention-days: 7
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "## Test Results (PHP ${{ matrix.php-version }}) 🧪" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f build/junit/default.xml ]; then
+            echo "Tests ejecutados correctamente ✅" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Tests fallidos ❌" >> $GITHUB_STEP_SUMMARY
+          fi

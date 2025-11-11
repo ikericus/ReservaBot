@@ -1,0 +1,17 @@
+default:
+  suites:
+    default:
+      paths:
+        - '%paths.base%/tests/features'
+      contexts:
+        - FeatureContext
+      filters:
+        tags: "~@wip"
+  extensions:
+    Behat\MinkExtension:
+      base_url: 'https://dev.reservabot.es'
+      sessions:
+        default:
+          goutte: ~
+      javascript_session: default
+      browser_name: chrome

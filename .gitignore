@@ -1,4 +1,6 @@
+# IDE
 /.vscode
+
 /.ssh
 server/.env
 .env
@@ -7,3 +9,10 @@ server/.env
 .htaccess
 .htaccess.dev
 .htaccess.pro
+
+# Composer
+/vendor/
+composer.lock
+
+# Behat
+/build/
