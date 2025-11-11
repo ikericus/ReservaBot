@@ -7,39 +7,35 @@ on:
     paths:
       - 'public/**'  
       - 'tests/features/**'
+      - 'behat.yml'
+      - 'composer.json'
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        php-version: ['8.0', '8.1']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up PHP ${{ matrix.php-version }}
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-version }}
+          php-version: '8.2'  # Usa la misma versión que tienes en producción
           extensions: mbstring, xml, ctype, json, curl, dom, libxml
           coverage: none
           tools: composer:v2
 
-      - name: Validate composer.json and composer.lock
+      - name: Validate composer.json
         run: composer validate --strict
 
       - name: Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: vendor
-          key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-php-8.0-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-${{ matrix.php-version }}-
+            ${{ runner.os }}-php-8.0-
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
@@ -62,23 +58,26 @@ jobs:
         if: always()
         with:
           files: build/junit/*.xml
-          check_name: Behat Test Results (PHP ${{ matrix.php-version }})
+          check_name: Behat Test Results
 
       - name: Upload Behat logs
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: behat-logs-php-${{ matrix.php-version }}
+          name: behat-logs
           path: build/
           retention-days: 7
 
       - name: Test summary
         if: always()
         run: |
-          echo "## Test Results (PHP ${{ matrix.php-version }}) 🧪" >> $GITHUB_STEP_SUMMARY
+          echo "## 🧪 Behat Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f build/junit/default.xml ]; then
-            echo "Tests ejecutados correctamente ✅" >> $GITHUB_STEP_SUMMARY
+            tests=$(grep -o 'tests="[0-9]*"' build/junit/default.xml | head -1 | grep -o '[0-9]*')
+            failures=$(grep -o 'failures="[0-9]*"' build/junit/default.xml | head -1 | grep -o '[0-9]*')
+            echo "- ✅ Tests ejecutados: $tests" >> $GITHUB_STEP_SUMMARY
+            echo "- ❌ Tests fallidos: $failures" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Tests fallidos ❌" >> $GITHUB_STEP_SUMMARY
+            echo "❌ No se generaron resultados de tests" >> $GITHUB_STEP_SUMMARY
           fi
