@@ -113,7 +113,10 @@ class FeatureContext extends MinkContext implements Context
      */
     public function laUrlDeberiaContener($text)
     {
-        $this->assertSession()->addressMatches('/' . preg_quote($text, '/') . '/');
+        $currentUrl = $this->getSession()->getCurrentUrl();
+        if (strpos($currentUrl, $text) === false) {
+            throw new \Exception("La URL '$currentUrl' no contiene '$text'");
+        }
     }
 
     /**
