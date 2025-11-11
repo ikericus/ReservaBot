@@ -20,4 +20,5 @@ jobs:
         php-version: '7.4'
     - run: rm -f composer.lock
     - run: composer install --no-cache
+    - run: composer dump-autoload
     - run: vendor/bin/behat

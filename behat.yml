@@ -3,6 +3,8 @@ default:
     default:
       contexts:
         - FeatureContext
+      paths:
+        features: tests/features
   extensions:
     Behat\MinkExtension:
       base_url: 'https://dev.reservabot.es'
