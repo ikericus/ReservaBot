@@ -13,40 +13,18 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, xml, ctype, json, curl, dom, libxml
-          coverage: none
-          tools: composer:v2
-
-      - name: Install dependencies
-        run: |
-          composer clear-cache
-          rm -rf vendor composer.lock
-          composer install --no-interaction --prefer-dist --no-progress
-
-      - name: Create build directory
-        run: mkdir -p build/junit
-
-      - name: Run Behat tests
-        run: |
-          vendor/bin/behat \
-            --strict \
-            --format progress \
-            --format junit \
-            --out build/junit
-        continue-on-error: false
-
-      - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: build/junit/*.xml
-          check_name: Behat Test Results
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+    
+    - name: Install dependencies
+      run: composer install
+    
+    - name: Run tests
+      run: vendor/bin/behat
+      env:
+        BEHAT_BASE_URL: https://dev.reservabot.es

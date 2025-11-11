@@ -1,14 +1,13 @@
 default:
   suites:
     default:
-      paths:
-        - '%paths.base%/tests/features'
       contexts:
         - FeatureContext
+      paths:
+        - '%paths.base%/tests/features'
   extensions:
     Behat\MinkExtension:
-      base_url: 'https://dev.reservabot.es'
-      sessions:
-        default:
-          goutte: ~
+      base_url: '%env(BEHAT_BASE_URL)%'
+      default_session: goutte
+      goutte: ~
       browser_name: chrome
