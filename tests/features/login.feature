@@ -53,7 +53,6 @@ Característica: Sistema de login de ReservaBot
     Cuando hago clic en "Regístrate aquí"
     Entonces debería estar en la página "/signup"
 
-  @wip
   Escenario: Login exitoso con credenciales válidas
     Dado estoy en la página "/login"
     Cuando completo el campo "email" con "test@reservabot.es"
