@@ -38,7 +38,7 @@ jobs:
             ${{ runner.os }}-php-8.2-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-interaction
+        run: composer install -no-interaction --prefer-dist --no-progress --ignore-platform-reqs
 
       - name: Create build directory
         run: mkdir -p build/junit

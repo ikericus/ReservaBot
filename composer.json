@@ -1,24 +1,28 @@
 {
-    "name": "reservabot/internal-project",
-    "description": "Proyecto privado interno.",
-    "type": "project",
-    "license": "proprietary",
-    "require": {
-        "php": ">=8.0"
-    },
-    "require-dev": {
-        "behat/behat": "^3.13",
-        "behat/mink": "^1.10",
-        "behat/mink-extension": "^2.4",
-        "behat/mink-browserkit-driver": "^2.0@dev",
-        "behat/mink-goutte-driver": "^2.0@dev"
-    },
-    "config": {
-        "bin-dir": "vendor/bin"
-    },
-    "autoload": {
-        "psr-4": {
-            "Tests\\Features\\": "tests/features/"
-        }
+  "name": "miempresa/mi-proyecto",
+  "description": "Proyecto privado para pruebas de Behat en CI",
+  "type": "project",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.0"
+  },
+  "require-dev": {
+    "behat/behat": "^3.13",
+    "behat/mink": "^1.10",
+    "behat/mink-extension": "2.x-dev",
+    "behat/mink-browserkit-driver": "2.0@dev",
+    "behat/mink-goutte-driver": "2.0@dev"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "bin-dir": "vendor/bin",
+    "sort-packages": true,
+    "preferred-install": "dist"
+  },
+  "autoload": {
+    "psr-4": {
+      "Tests\\Features\\": "tests/features/"
     }
+  }
 }
