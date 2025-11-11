@@ -252,7 +252,7 @@ class Router {
         
         include PROJECT_ROOT . '/pages/errors/404.php';
         exit;
-    } 
+    }
     
     private function handleError(Exception $e) {
         http_response_code(500);

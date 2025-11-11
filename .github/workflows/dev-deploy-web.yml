@@ -14,16 +14,23 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 2  # Para poder comparar cambios
-      
-      - name: Deploy public/ via FTP
+
+      - name: Check if public/ changed
+        id: check-public
         run: |
-          echo "Deploying public/ via FTP..."
-          # Aquí colocas la acción de despliegue, en este caso via FTP
-          uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-          with:
-            server: ${{ secrets.FTP_DEV_HOST }}
-            username: ${{ secrets.FTP_DEV_USER }}
-            password: ${{ secrets.FTP_DEV_PASS }}
-            local-dir: ./public/
-            server-dir: /
-            dangerous-clean-slate: false
+          if git diff --name-only HEAD^ HEAD | grep -q '^public/'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy public/ via FTP
+        if: steps.check-public.outputs.changed == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_DEV_HOST }}
+          username: ${{ secrets.FTP_DEV_USER }}
+          password: ${{ secrets.FTP_DEV_PASS }}
+          local-dir: ./public/
+          server-dir: /
+          dangerous-clean-slate: false
