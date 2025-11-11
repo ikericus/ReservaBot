@@ -40,7 +40,7 @@ class Router {
         $this->addRoute('POST',     '/api/register-handler',            'api/user/register-handler.php');
         $this->addRoute('POST',     '/api/contacto-handler',            'api/contacto-handler.php');   
 
-        // Rutas protegidas    
+        // Rutas protegidas   
 
         // Admin
         $this->addRoute('GET',      '/admin',                           'pages/admin/dashboard.php',            ['auth', 'admin']);
