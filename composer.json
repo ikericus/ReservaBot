@@ -9,20 +9,12 @@
         "behat/behat": "^3.13",
         "behat/mink": "^1.11",
         "behat/mink-extension": "^2.3",
-        "behat/mink-goutte-driver": "^2.0",
-        "fabpot/goutte": "^4.0",
-        "friends-of-behat/mink-browserkit-driver": "^1.6"
-    },
-    "autoload": {
-        "psr-4": {
-            "": "tests/features/"
-        }
+        "friends-of-behat/mink-browserkit-driver": "^1.6",
+        "symfony/browser-kit": "^5.4|^6.0",
+        "symfony/http-client": "^5.4|^6.0"
     },
     "config": {
         "sort-packages": true,
-        "optimize-autoloader": true,
-        "allow-plugins": {
-            "friends-of-behat/mink-browserkit-driver": true
-        }
+        "optimize-autoloader": true
     }
 }
