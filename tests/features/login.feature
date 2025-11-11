@@ -61,3 +61,4 @@ Característica: Sistema de login de ReservaBot
     Y hago clic en el botón "Iniciar Sesión"
     Entonces debería estar en la página "/admin"
     Y debería ver "Panel"
+    
