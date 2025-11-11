@@ -354,7 +354,8 @@ class ReservaDomain {
                 $reserva->getEmail(),
                 $emailData['asunto'],
                 $emailData['cuerpo_texto'],
-                $emailData['cuerpo_html']
+                $emailData['cuerpo_html'],
+                $emailData['opciones'] ?? []
             );
             
             $this->registrarEnvioEmail($reserva, $enviado);
