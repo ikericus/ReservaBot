@@ -5,13 +5,10 @@ default:
         - '%paths.base%/tests/features'
       contexts:
         - FeatureContext
-      filters:
-        tags: "~@wip"
 
   extensions:
     Behat\MinkExtension:
       base_url: 'https://dev.reservabot.es'
-      javascript_session: ~ # Goutte no soporta JS, dejar vacío
       sessions:
         default:
           goutte: ~

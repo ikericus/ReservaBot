@@ -1,4 +1,4 @@
-name: Run Behat Tests DEV
+name: Run Behat Tests
 
 on:
   push:
@@ -11,39 +11,38 @@ on:
       - 'composer.json'
 
 jobs:
-  behat:
+  test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.2
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, xml, ctype, json, curl, dom, libxml, openssl, iconv, pdo_mysql
+          extensions: mbstring, xml, ctype, json, curl, dom, libxml
+          coverage: none
           tools: composer:v2
 
-      - name: Validate composer.json
-        run: composer validate
-
-      - name: Cache Composer packages
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: ${{ runner.os }}-php-8.2-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-php-8.2-
-
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
+        run: |
+          composer clear-cache
+          rm -rf vendor composer.lock
+          composer install --no-interaction --prefer-dist --no-progress
 
       - name: Create build directory
         run: mkdir -p build/junit
 
       - name: Run Behat tests
-        run: vendor/bin/behat --strict --format progress --format junit --out build/junit
+        run: |
+          vendor/bin/behat \
+            --strict \
+            --format progress \
+            --format junit \
+            --out build/junit
+        continue-on-error: false
 
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -51,25 +50,3 @@ jobs:
         with:
           files: build/junit/*.xml
           check_name: Behat Test Results
-
-      - name: Upload Behat logs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: behat-logs
-          path: build/
-          retention-days: 7
-
-      - name: Test summary
-        if: always()
-        run: |
-          echo "## 🧪 Behat Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f build/junit/default.xml ]; then
-            tests=$(grep -o 'tests="[0-9]*"' build/junit/default.xml | head -1 | grep -o '[0-9]*')
-            failures=$(grep -o 'failures="[0-9]*"' build/junit/default.xml | head -1 | grep -o '[0-9]*')
-            echo "- ✅ Tests ejecutados: $tests" >> $GITHUB_STEP_SUMMARY
-            echo "- ❌ Tests fallidos: $failures" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ No se generaron resultados de tests" >> $GITHUB_STEP_SUMMARY
-          fi
