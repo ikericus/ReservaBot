@@ -11,7 +11,8 @@
     "behat/mink": "^1.10",
     "behat/mink-extension": "2.x-dev",
     "behat/mink-browserkit-driver": "2.0@dev",
-    "behat/mink-goutte-driver": "2.0@dev"
+    "behat/mink-goutte-driver": "2.0@dev",
+    "fabpot/goutte": "^3.3"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
