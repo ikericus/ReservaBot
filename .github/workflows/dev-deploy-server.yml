@@ -23,11 +23,11 @@ jobs:
           chmod 600 private_key
 
           # Usamos SCP para copiar el archivo al servidor remoto
-          scp -i private_key -o StrictHostKeyChecking=no server/server.js ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/debian/whatsapp-server/server.js
+          scp -i private_key -o StrictHostKeyChecking=no server/server.js ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/debian/whatsapp-server-dev/server.js
 
           # Reiniciar el servidor con PM2
           ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            cd /home/debian/whatsapp-server
+            cd /home/debian/whatsapp-server-dev
             /home/debian/.nvm/versions/node/v20.19.2/bin/pm2 restart whatsapp-server || /home/debian/.nvm/versions/node/v20.19.2/bin/pm2 start server.js --name whatsapp-server
           EOF
           
