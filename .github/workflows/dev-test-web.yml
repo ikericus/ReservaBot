@@ -4,9 +4,8 @@ on:
   push:
     branches:
       - dev
-  pull_request:
-    branches:
-      - dev
+    paths:
+      - 'public/**'  # Solo se activa cuando hay cambios en public/
 
 jobs:
   test:
