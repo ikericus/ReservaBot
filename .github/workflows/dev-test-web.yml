@@ -5,25 +5,24 @@ on:
     branches:
       - dev
     paths:
-      - 'public/**'  
+      - 'public/**'
       - 'tests/features/**'
       - 'behat.yml'
       - 'composer.json'
 
 jobs:
-  test:
+  behat:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up PHP
+      - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, xml, ctype, json, curl, dom, libxml
-          coverage: none
+          extensions: mbstring, xml, ctype, json, curl, dom, libxml, openssl, iconv, pdo_mysql
           tools: composer:v2
 
       - name: Validate composer.json
@@ -38,20 +37,13 @@ jobs:
             ${{ runner.os }}-php-8.2-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress --ignore-platform-reqs
+        run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Create build directory
         run: mkdir -p build/junit
 
       - name: Run Behat tests
-        run: |
-          vendor/bin/behat \
-            --strict \
-            --format progress \
-            --out std \
-            --format junit \
-            --out build/junit
-        continue-on-error: false
+        run: vendor/bin/behat --strict --format progress --format junit --out build/junit
 
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
