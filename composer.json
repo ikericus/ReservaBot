@@ -1,4 +1,8 @@
 {
+    "name": "reservabot/internal-project",
+    "description": "Proyecto privado interno.",
+    "type": "project",
+    "license": "proprietary",
     "require": {
         "php": ">=8.0"
     },
