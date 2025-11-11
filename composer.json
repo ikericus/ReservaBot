@@ -7,7 +7,7 @@
     "php": ">=8.0"
   },
   "require-dev": {
-    "behat/behat": "^3.13",
+    "behat/behat": "~3.12",
     "behat/mink": "^1.10",
     "behat/mink-extension": "^2.3",
     "behat/mink-browserkit-driver": "^1.6",
