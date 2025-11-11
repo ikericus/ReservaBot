@@ -9,3 +9,6 @@ default:
     Behat\MinkExtension:
       base_url: '%env(BEHAT_BASE_URL)%'
       default_session: symfony
+      sessions:
+        symfony:
+          symfony: ~
