@@ -1,4 +1,9 @@
 /.vscode
-server/.env
 /.ssh
+server/.env
 .env
+.env.dev
+.env.pro
+.htaccess
+.htaccess.dev
+.htaccess.pro
