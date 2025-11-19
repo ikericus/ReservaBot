@@ -22,3 +22,6 @@ jobs:
     - run: composer install --no-cache
     - run: composer dump-autoload
     - run: vendor/bin/behat
+      env:
+        DEV_USER: ${{ secrets.DEV_USER }}
+        DEV_PASSWORD: ${{ secrets.DEV_PASSWORD }}
