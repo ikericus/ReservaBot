@@ -714,7 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
- 
+
 <?php 
 // Incluir el pie de página
 include 'includes/footer.php'; 
