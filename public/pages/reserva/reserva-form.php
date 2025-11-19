@@ -184,7 +184,7 @@ include 'includes/header.php';
                         id="fecha"
                         required
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        value="<?php echo $isEditMode ? $reserva['fecha'] : (isset($formData['fecha']) ? $formData['fecha'] : $fecha); ?>"
+                        value="<?php echo $fecha; ?>"
                     >
                 </div>
             </div>
