@@ -22,18 +22,20 @@ $isEditMode = $id > 0;
 $currentUser = getAuthenticatedUser();
 $usuarioId = $currentUser['id'];
 
-// Obtener fecha inicial
-$fecha = $isEditMode ? null : (isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d'));
-
 // Obtener parámetros de la URL (solo modo creación)
 $telefonoUrl = !$isEditMode && isset($_GET['telefono']) ? trim($_GET['telefono']) : '';
 $nombreUrl = !$isEditMode && isset($_GET['nombre']) ? trim($_GET['nombre']) : '';
+$horaInicial = !$isEditMode && isset($_GET['hora']) ? $_GET['hora'] : '';
+
+// Determinar fecha para obtener horas ocupadas
+$fechaParaHorasOcupadas = $isEditMode ? null : (isset($_GET['fecha']) ? $_GET['fecha'] : (isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d')));
 
 // Valores por defecto
 $reserva = null;
 $horasOcupadas = [];
 $intervaloReservas = 30;
 $duracionReservas = 60;
+$fecha = null;
 
 try {
     $reservaDomain = getContainer()->getReservaDomain();
@@ -42,15 +44,23 @@ try {
     $datosFormulario = $reservaDomain->obtenerDatosFormularioReserva(
         $isEditMode ? $id : null,
         $usuarioId,
-        $fecha ?? date('Y-m-d')
+        $fechaParaHorasOcupadas ?? date('Y-m-d')
     );
     
     // Extraer todos los datos
     $reserva = $datosFormulario['reserva'];
     $horasOcupadas = $datosFormulario['horas_ocupadas'];
-    $fecha = $datosFormulario['fecha'];
     $intervaloReservas = $datosFormulario['intervalo'];
     $duracionReservas = $datosFormulario['duracion'];
+    
+    // Determinar la fecha final a mostrar
+    if ($isEditMode) {
+        // En edición, usar la fecha de la reserva
+        $fecha = $datosFormulario['fecha'];
+    } else {
+        // En creación, priorizar URL, luego formData, luego hoy
+        $fecha = isset($_GET['fecha']) ? $_GET['fecha'] : (isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d'));
+    }
     
 } catch (\DomainException $e) {
     // Reserva no encontrada o no pertenece al usuario
@@ -180,7 +190,7 @@ include 'includes/header.php';
                         id="fecha"
                         required
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        value="<?php echo $isEditMode ? $reserva['fecha'] : (isset($formData['fecha']) ? $formData['fecha'] : $fecha); ?>"
+                        value="<?php echo $fecha; ?>"
                     >
                 </div>
             </div>
@@ -212,6 +222,8 @@ include 'includes/header.php';
                                     // Verificar si está seleccionada
                                     $selected = '';
                                     if ($isEditMode && isset($reserva['hora']) && substr($reserva['hora'], 0, 5) === $horaFormateada) {
+                                        $selected = 'selected';
+                                    } elseif (!$isEditMode && $horaInicial === $horaFormateada) {
                                         $selected = 'selected';
                                     } elseif (!$isEditMode && isset($formData['hora']) && $formData['hora'] === $horaFormateada) {
                                         $selected = 'selected';

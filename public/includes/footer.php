@@ -144,8 +144,14 @@
         }
         </script>
     
-    <?php if (isset($pageScript)): ?>
-        <script src="assets/js/<?php echo $pageScript; ?>.js"></script>
-    <?php endif; ?>
+        <?php if (isset($pageScript)): ?>
+            <?php
+                $jsFilePath = "assets/js/$pageScript.js";
+                if (file_exists($jsFilePath)) {
+                    $jsVersion = filemtime($jsFilePath);
+                    echo '<script src="assets/js/' . $pageScript . '.js?v=' . $jsVersion . '"></script>';
+                }
+            ?>
+        <?php endif; ?>
 </body>
 </html>
