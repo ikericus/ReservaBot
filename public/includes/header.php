@@ -27,6 +27,14 @@
         }
     </script>
 
+    <?php if (isset($pageStyle)): ?>
+        <?php
+            $cssFilePath = "assets/css/$pageStyle.css";
+            $cssVersion = file_exists($cssFilePath) ? filemtime($cssFilePath) : time();
+        ?>
+        <link rel="stylesheet" href="assets/css/<?php echo $pageStyle; ?>.css?v=<?php echo $cssVersion; ?>">
+    <?php endif; ?>
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;
