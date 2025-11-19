@@ -39,3 +39,4 @@ jobs:
   trigger-tests:  # ← Este job se ejecuta DESPUÉS del deploy
     needs: ftp-deploy  # ← Espera a que "deploy" termine con éxito
     uses: ./.github/workflows/dev-test-web.yml  # ← Llama al otro workflow
+    secrets: inherit

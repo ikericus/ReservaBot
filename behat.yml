@@ -7,5 +7,5 @@ default:
         features: tests/features
   extensions:
     Behat\MinkExtension:
-      base_url: 'https://admin:5Gixizo9,@dev.reservabot.es' #'https://dev.reservabot.es'
+      base_url: 'https://%env(DEV_USER)%:%env(DEV_PASSWORD)%@dev.reservabot.es' #'https://dev.reservabot.es'
       goutte: ~

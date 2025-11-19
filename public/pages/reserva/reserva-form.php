@@ -656,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Disparar búsqueda automática para verificar si el cliente existe
         searchClients(telefonoInput.value);
-    }
+    } 
 
     // Manejar el envío del formulario
     form.addEventListener('submit', function(e) {
