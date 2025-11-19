@@ -23,5 +23,5 @@ jobs:
     - run: composer dump-autoload
     - run: vendor/bin/behat
       env:
-        DEV_USER: ${{ secrets.DEV_USER }}
-        DEV_PASSWORD: ${{ secrets.DEV_PASSWORD }}
+        DEV_USER: ${{ secrets.WEB_DEV_USER }}
+        DEV_PASSWORD: ${{ secrets.WEB_DEV_PASSWORD }}
