@@ -147,10 +147,11 @@
         <?php if (isset($pageScript)): ?>
             <?php
                 $jsFilePath = "assets/js/$pageScript.js";
-                $jsVersion = file_exists($jsFilePath) ? filemtime($jsFilePath) : time();
+                if (file_exists($jsFilePath)) {
+                    $jsVersion = filemtime($jsFilePath);
+                    echo '<script src="assets/js/' . $pageScript . '.js?v=' . $jsVersion . '"></script>';
+                }
             ?>
-            <script src="assets/js/<?php echo $pageScript; ?>.js?v=<?php echo $jsVersion; ?>"></script>
         <?php endif; ?>
-
 </body>
 </html>

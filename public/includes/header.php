@@ -26,13 +26,15 @@
             .catch(err => console.log("Error al registrar SW:", err));
         }
     </script>
-
+    
     <?php if (isset($pageStyle)): ?>
         <?php
             $cssFilePath = "assets/css/$pageStyle.css";
-            $cssVersion = file_exists($cssFilePath) ? filemtime($cssFilePath) : time();
+            if (file_exists($cssFilePath)) {
+                $cssVersion = filemtime($cssFilePath);
+                echo '<link rel="stylesheet" href="assets/css/' . $pageStyle . '.css?v=' . $cssVersion . '">';
+            }
         ?>
-        <link rel="stylesheet" href="assets/css/<?php echo $pageStyle; ?>.css?v=<?php echo $cssVersion; ?>">
     <?php endif; ?>
 
     <style>
