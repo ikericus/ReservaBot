@@ -22,19 +22,21 @@ $isEditMode = $id > 0;
 $currentUser = getAuthenticatedUser();
 $usuarioId = $currentUser['id'];
 
-// Obtener fecha y hora iniciales
-$fecha = $isEditMode ? null : (isset($formData['fecha']) ? $formData['fecha'] : (isset($_GET['fecha']) ? $_GET['fecha'] : date('Y-m-d')));
-$horaInicial = !$isEditMode && isset($_GET['hora']) ? $_GET['hora'] : '';
-
 // Obtener parámetros de la URL (solo modo creación)
+$fechaUrl = !$isEditMode && isset($_GET['fecha']) ? $_GET['fecha'] : null;
+$horaInicial = !$isEditMode && isset($_GET['hora']) ? $_GET['hora'] : '';
 $telefonoUrl = !$isEditMode && isset($_GET['telefono']) ? trim($_GET['telefono']) : '';
 $nombreUrl = !$isEditMode && isset($_GET['nombre']) ? trim($_GET['nombre']) : '';
+
+// Determinar fecha inicial
+$fechaInicial = $isEditMode ? null : ($fechaUrl ?? (isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d')));
 
 // Valores por defecto
 $reserva = null;
 $horasOcupadas = [];
 $intervaloReservas = 30;
 $duracionReservas = 60;
+$fecha = null;
 
 try {
     $reservaDomain = getContainer()->getReservaDomain();
@@ -43,15 +45,17 @@ try {
     $datosFormulario = $reservaDomain->obtenerDatosFormularioReserva(
         $isEditMode ? $id : null,
         $usuarioId,
-        $fecha ?? date('Y-m-d')
+        $fechaInicial ?? date('Y-m-d')
     );
     
     // Extraer todos los datos
     $reserva = $datosFormulario['reserva'];
     $horasOcupadas = $datosFormulario['horas_ocupadas'];
-    $fecha = $datosFormulario['fecha'];
     $intervaloReservas = $datosFormulario['intervalo'];
     $duracionReservas = $datosFormulario['duracion'];
+    
+    // Usar la fecha de la URL si existe, sino la del formulario
+    $fecha = $fechaUrl ?? $datosFormulario['fecha'];
     
 } catch (\DomainException $e) {
     // Reserva no encontrada o no pertenece al usuario
