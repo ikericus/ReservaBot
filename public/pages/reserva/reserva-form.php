@@ -30,6 +30,15 @@ $horaInicial = !$isEditMode && isset($_GET['hora']) ? $_GET['hora'] : '';
 // Obtener fecha inicial
 $fecha = $isEditMode ? null : (isset($_GET['fecha']) ? $_GET['fecha'] : (isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d')));
 
+// DEBUG - BORRAR DESPUÉS
+debug_log("=== DEBUG RESERVA FORM ===");
+debug_log("isEditMode: " . ($isEditMode ? 'true' : 'false'));
+debug_log("GET fecha: " . ($_GET['fecha'] ?? 'no existe'));
+debug_log("GET hora: " . ($_GET['hora'] ?? 'no existe'));
+debug_log("formData fecha: " . ($formData['fecha'] ?? 'no existe'));
+debug_log("fecha calculada: " . ($fecha ?? 'null'));
+debug_log("========================");
+
 // Valores por defecto
 $reserva = null;
 $horasOcupadas = [];
@@ -186,6 +195,13 @@ include 'includes/header.php';
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         value="<?php echo $isEditMode ? $reserva['fecha'] : (isset($formData['fecha']) ? $formData['fecha'] : $fecha); ?>"
                     >
+                    <!-- DEBUG -->
+                    <div style="color: red; font-size: 12px;">
+                        DEBUG - isEditMode: <?php echo $isEditMode ? 'true' : 'false'; ?><br>
+                        DEBUG - $fecha: <?php echo $fecha ?? 'NULL'; ?><br>
+                        DEBUG - $_GET['fecha']: <?php echo $_GET['fecha'] ?? 'NO EXISTE'; ?><br>
+                        DEBUG - formData['fecha']: <?php echo $formData['fecha'] ?? 'NO EXISTE'; ?><br>
+                    </div>
                 </div>
             </div>
             
