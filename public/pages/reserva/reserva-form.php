@@ -22,8 +22,9 @@ $isEditMode = $id > 0;
 $currentUser = getAuthenticatedUser();
 $usuarioId = $currentUser['id'];
 
-// Obtener fecha inicial
-$fecha = $isEditMode ? null : (isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d'));
+// Obtener fecha y hora iniciales
+$fecha = $isEditMode ? null : (isset($formData['fecha']) ? $formData['fecha'] : (isset($_GET['fecha']) ? $_GET['fecha'] : date('Y-m-d')));
+$horaInicial = !$isEditMode && isset($_GET['hora']) ? $_GET['hora'] : '';
 
 // Obtener parámetros de la URL (solo modo creación)
 $telefonoUrl = !$isEditMode && isset($_GET['telefono']) ? trim($_GET['telefono']) : '';
@@ -212,6 +213,8 @@ include 'includes/header.php';
                                     // Verificar si está seleccionada
                                     $selected = '';
                                     if ($isEditMode && isset($reserva['hora']) && substr($reserva['hora'], 0, 5) === $horaFormateada) {
+                                        $selected = 'selected';
+                                    } elseif (!$isEditMode && $horaInicial === $horaFormateada) {
                                         $selected = 'selected';
                                     } elseif (!$isEditMode && isset($formData['hora']) && $formData['hora'] === $horaFormateada) {
                                         $selected = 'selected';

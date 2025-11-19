@@ -654,6 +654,86 @@ include 'includes/header.php';
         flex-direction: row;
     }
 }
+
+/* Botón de crear reserva en hover */
+.hour-content {
+    position: relative;
+}
+
+.hour-content:not(.has-reservation):hover .hour-add-btn {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.hour-add-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    font-size: 0.875rem;
+}
+
+.hour-add-btn:hover {
+    transform: translate(-50%, -50%) scale(1.05);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.hour-add-btn i {
+    font-size: 1rem;
+    margin-right: 0.25rem;
+}
+
+/* Móvil */
+@media (max-width: 768px) {
+    .mobile-hour-content:not(.has-reservation):hover .mobile-hour-add-btn {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .mobile-hour-add-btn {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        opacity: 0;
+        transition: all 0.2s ease;
+        z-index: 10;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.75rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        font-size: 0.75rem;
+    }
+
+    .mobile-hour-add-btn:hover {
+        transform: translate(-50%, -50%) scale(1.05);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .mobile-hour-add-btn i {
+        font-size: 0.875rem;
+        margin-right: 0.25rem;
+    }
+}
 </style>
 
 <!-- Vista Desktop -->
