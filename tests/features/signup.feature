@@ -99,7 +99,7 @@ Característica: Sistema de registro de ReservaBot
     Cuando completo el formulario con:
       | nombre           | Usuario Test       |
       | negocio          | Mi Negocio Test    |
-      | email            | nuevo@test.com     |
+      | email            | test_{timestamp}@test.com |
       | password         | Password123!       |
       | confirm_password | Password123!       |
     Y marco la casilla "terminos"
@@ -118,7 +118,8 @@ Característica: Sistema de registro de ReservaBot
     Y marco el radio button "plan" con valor "profesional"
     Y marco la casilla "terminos"
     Y hago clic en el botón "Crear mi cuenta"
-    Entonces la URL debería contener "api/register-handler"
+    Entonces debería estar en la página "/login"
+    Y debería ver un mensaje de éxito
 
   Escenario: Verificar enlace de inicio de sesión
     Dado estoy en la página "/signup"

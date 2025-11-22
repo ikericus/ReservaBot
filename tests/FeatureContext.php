@@ -88,6 +88,8 @@ class FeatureContext extends MinkContext implements Context
     public function completoElFormularioCon(TableNode $table)
     {
         foreach ($table->getRowsHash() as $field => $value) {
+            // Reemplazar {timestamp} con timestamp actual
+            $value = str_replace('{timestamp}', time(), $value);
             $this->fillField($field, $value);
         }
     }
