@@ -162,3 +162,4 @@ Característica: Sistema de registro de ReservaBot
     Dado estoy autenticado como "demo@dev.reservabot.es"
     Cuando estoy en la página "/signup"
     Entonces debería estar en la página "/reservas"
+    
