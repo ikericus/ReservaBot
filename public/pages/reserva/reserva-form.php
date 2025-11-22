@@ -28,15 +28,18 @@ try {
         $datosFormulario = $reservaDomain->obtenerDatosFormularioReserva($reservaId, $usuarioId, null);
         
         $reserva = $datosFormulario['reserva'];
-        $fecha = $datosFormulario['fecha'];
+        $fechaReserva = $datosFormulario['fecha'];
+        echo "<!-- DEBUG 0: : '$fechaReserva' -->";
         $horasOcupadas = $datosFormulario['horas_ocupadas'];
         
     } else {
         // MODO CREACIÓN: Valores por defecto desde URL o actuales
-        $fecha = $_GET['fecha'] ?? $formData['fecha'] ?? date('Y-m-d');
+        $fechaReserva = $_GET['fecha'] ?? $formData['fecha'] ?? date('Y-m-d');
+        echo "<!-- DEBUG 1: : '$fechaReserva' -->";
         
-        $datosFormulario = $reservaDomain->obtenerDatosFormularioReserva(null, $usuarioId, $fecha);
+        $datosFormulario = $reservaDomain->obtenerDatosFormularioReserva(null, $usuarioId, $fechaReserva);
         
+        echo "<!-- DEBUG 11: : '$fechaReserva' -->";
         $reserva = [
             'telefono' => $_GET['telefono'] ?? $formData['telefono'] ?? '',
             'nombre' => $_GET['nombre'] ?? $formData['nombre'] ?? '',
@@ -163,6 +166,7 @@ include 'includes/header.php';
 
             <!-- Fecha -->
             <div>
+                <?php echo "<!-- DEBUG 3: : '$fechaReserva' -->"; ?>
                 <label for="fecha" class="block text-sm font-medium text-gray-700 mb-1">
                     Fecha
                 </label>
@@ -176,7 +180,7 @@ include 'includes/header.php';
                         id="fecha"
                         required
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        value="<?php echo htmlspecialchars($fecha); ?>"
+                        value="<?php echo htmlspecialchars($fechaReserva); ?>"
                     >
                 </div>
             </div>
@@ -255,7 +259,7 @@ include 'includes/header.php';
         
         <!-- Botones de acción -->
         <div class="flex justify-end space-x-3">            
-            <a href="<?php echo $isEditMode ? "/reserva?id={$reservaId}" : "/day?date={$fecha}"; ?>"
+            <a href="<?php echo $isEditMode ? "/reserva?id={$reservaId}" : "/day?date={$fechaReserva}"; ?>"
                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 Cancelar
             </a>
