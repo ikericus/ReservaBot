@@ -1,5 +1,9 @@
 <?php
 
+function isDevelopment(): bool {
+    return ($_ENV['APP_ENV'] ?? 'production') === 'development';
+}
+
 /**
  * Datos de usario demo
  */

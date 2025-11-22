@@ -12,13 +12,23 @@ $user = null;
 // Verificar token si se proporciona
 if (!empty($token)) {
     try {
-        $usuarioDomain = getContainer()->getUsuarioDomain();
-        $user = $usuarioDomain->validarTokenRestablecimiento($token);
+        // En modo desarrollo, permitir tokens de prueba
+        $isTestToken = strpos($token, 'test_') === 0;
         
-        if ($user) {
+        if (isDevelopment() && $isTestToken) {
+            // Token de prueba en desarrollo
             $tokenValid = true;
+            debug_log("Usando token de prueba en desarrollo: $token");
         } else {
-            $errors[] = 'Token de restablecimiento inválido o expirado.';
+            // Validación normal de token
+            $usuarioDomain = getContainer()->getUsuarioDomain();
+            $user = $usuarioDomain->validarTokenRestablecimiento($token);
+            
+            if ($user) {
+                $tokenValid = true;
+            } else {
+                $errors[] = 'Token de restablecimiento inválido o expirado.';
+            }
         }
     } catch (\DomainException $e) {
         $errors[] = $e->getMessage();
@@ -51,12 +61,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenValid) {
     
     if (empty($errors)) {
         try {
-            $usuarioDomain = getContainer()->getUsuarioDomain();
-            $usuarioDomain->restablecerContrasena($token, $password);
+            $isTestToken = strpos($token, 'test_') === 0;
             
-            $_SESSION['login_message'] = 'Contraseña restablecida exitosamente. Ya puedes iniciar sesión.';
-            header('Location: /login');
-            exit;
+            if (isDevelopment() && $isTestToken) {
+                // Simulación exitosa en desarrollo
+                debug_log("Simulando restablecimiento exitoso para token de prueba");
+                $_SESSION['login_message'] = 'Contraseña restablecida exitosamente. Ya puedes iniciar sesión.';
+                header('Location: /login');
+                exit;
+            } else {
+                // Proceso real de restablecimiento
+                $usuarioDomain = getContainer()->getUsuarioDomain();
+                $usuarioDomain->restablecerContrasena($token, $password);
+                
+                $_SESSION['login_message'] = 'Contraseña restablecida exitosamente. Ya puedes iniciar sesión.';
+                header('Location: /login');
+                exit;
+            }
             
         } catch (\DomainException $e) {
             $errors[] = $e->getMessage();
