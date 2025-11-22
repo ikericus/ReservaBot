@@ -13,7 +13,6 @@ $email = trim(strtolower($_POST['email'] ?? ''));
 $telefono = trim($_POST['telefono'] ?? '');
 $negocio = trim($_POST['negocio'] ?? '');
 $password = $_POST['password'] ?? '';
-$confirmPassword = $_POST['confirm_password'] ?? '';
 $plan = $_POST['plan'] ?? 'basico';
 $terminos = isset($_POST['terminos']);
 
@@ -24,7 +23,6 @@ if (empty($nombre)) $errors[] = 'El nombre es obligatorio';
 if (empty($email)) $errors[] = 'El email es obligatorio';
 if (empty($negocio)) $errors[] = 'El nombre del negocio es obligatorio';
 if (empty($password)) $errors[] = 'La contraseña es obligatoria';
-if (empty($confirmPassword)) $errors[] = 'La confirmación de contraseña es obligatoria';
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $errors[] = 'El formato del email no es válido';
@@ -32,10 +30,6 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 if (strlen($password) < 6) {
     $errors[] = 'La contraseña debe tener al menos 6 caracteres';
-}
-
-if ($password !== $confirmPassword) {
-    $errors[] = 'Las contraseñas no coinciden';
 }
 
 if (!$terminos) {
