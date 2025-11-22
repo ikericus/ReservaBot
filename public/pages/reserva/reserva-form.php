@@ -6,69 +6,59 @@ $currentPage = 'reserva-form';
 $pageTitle = 'ReservaBot - Formulario de Reserva';
 $pageScript = 'reserva-form';
 
-// Obtener mensajes de error y datos del formulario si existen
-$error = isset($_SESSION['error']) ? $_SESSION['error'] : null;
-$formData = isset($_SESSION['form_data']) ? $_SESSION['form_data'] : [];
-
-// Limpiar los mensajes de la sesión después de obtenerlos
-if (isset($_SESSION['error'])) unset($_SESSION['error']);
-if (isset($_SESSION['form_data'])) unset($_SESSION['form_data']);
-
-// Comprobar si es modo edición o creación
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-$isEditMode = $id > 0;
+// Obtener mensajes de error y datos previos si existen
+$error = $_SESSION['error'] ?? null;
+$formData = $_SESSION['form_data'] ?? [];
+unset($_SESSION['error'], $_SESSION['form_data']);
 
 // Obtener usuario autenticado
 $currentUser = getAuthenticatedUser();
 $usuarioId = $currentUser['id'];
 
-// Obtener parámetros de la URL (solo modo creación)
-$telefonoUrl = !$isEditMode && isset($_GET['telefono']) ? trim($_GET['telefono']) : '';
-$nombreUrl = !$isEditMode && isset($_GET['nombre']) ? trim($_GET['nombre']) : '';
-$horaInicial = !$isEditMode && isset($_GET['hora']) ? $_GET['hora'] : '';
+// DETERMINAR MODO: EDICIÓN vs CREACIÓN
+$reservaId = isset($_GET['id']) ? (int)$_GET['id'] : null;
+$isEditMode = $reservaId !== null;
 
-// Determinar fecha para obtener horas ocupadas
-$fechaParaHorasOcupadas = $isEditMode ? null : (isset($_GET['fecha']) ? $_GET['fecha'] : (isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d')));
-
-// Valores por defecto
-$reserva = null;
-$horasOcupadas = [];
-$intervaloReservas = 30;
-$duracionReservas = 60;
-$fecha = null;
-
+// OBTENER DATOS DEL DOMINIO
 try {
     $reservaDomain = getContainer()->getReservaDomain();
     
-    // ✅ UN SOLO MÉTODO obtiene TODO lo necesario
-    $datosFormulario = $reservaDomain->obtenerDatosFormularioReserva(
-        $isEditMode ? $id : null,
-        $usuarioId,
-        $fechaParaHorasOcupadas ?? date('Y-m-d')
-    );
+    if ($isEditMode) {
+        // MODO EDICIÓN: Cargar reserva existente
+        $datosFormulario = $reservaDomain->obtenerDatosFormularioReserva($reservaId, $usuarioId, null);
+        
+        $reserva = $datosFormulario['reserva'];
+        $fecha = $datosFormulario['fecha'];
+        $horasOcupadas = $datosFormulario['horas_ocupadas'];
+        
+    } else {
+        // MODO CREACIÓN: Valores por defecto desde URL o actuales
+        $fecha = $_GET['fecha'] ?? $formData['fecha'] ?? date('Y-m-d');
+        
+        $datosFormulario = $reservaDomain->obtenerDatosFormularioReserva(null, $usuarioId, $fecha);
+        
+        $reserva = [
+            'telefono' => $_GET['telefono'] ?? $formData['telefono'] ?? '',
+            'nombre' => $_GET['nombre'] ?? $formData['nombre'] ?? '',
+            'hora' => $_GET['hora'] ?? $formData['hora'] ?? '',
+            'mensaje' => $formData['mensaje'] ?? '',
+            'estado' => 'pendiente'
+        ];
+        $horasOcupadas = $datosFormulario['horas_ocupadas'];
+    }
     
-    // Extraer todos los datos
-    $reserva = $datosFormulario['reserva'];
-    $horasOcupadas = $datosFormulario['horas_ocupadas'];
+    // Configuración común
     $intervaloReservas = $datosFormulario['intervalo'];
     $duracionReservas = $datosFormulario['duracion'];
     
-    // Determinar la fecha final a mostrar
-    if ($isEditMode) {
-        // En edición, usar la fecha de la reserva
-        $fecha = $datosFormulario['fecha'];
-    } else {
-        // En creación, priorizar URL, luego formData, luego hoy
-        $fecha = isset($_GET['fecha']) ? $_GET['fecha'] : (isset($formData['fecha']) ? $formData['fecha'] : date('Y-m-d'));
-    }
-    
 } catch (\DomainException $e) {
-    // Reserva no encontrada o no pertenece al usuario
     error_log("Error obteniendo datos del formulario: " . $e->getMessage());
     header('Location: /dia');
     exit;
 } catch (Exception $e) {
     error_log("Error inesperado: " . $e->getMessage());
+    header('Location: /dia');
+    exit;
 }
 
 // Incluir la cabecera
@@ -76,7 +66,8 @@ include 'includes/header.php';
 ?>
 
 <div class="flex items-center mb-6">
-    <a href="<?php echo $isEditMode ? "/reserva?id={$id}" : "/day?date={$fecha}"; ?>" class="mr-4 p-2 rounded-full hover:bg-gray-100">
+    <a href="<?php echo $isEditMode ? "/reserva?id={$reservaId}" : "/day?date={$fecha}"; ?>" 
+       class="mr-4 p-2 rounded-full hover:bg-gray-100">
         <i class="ri-arrow-left-line text-gray-600 text-xl"></i>
     </a>
     <h1 class="text-2xl font-bold text-gray-900">
@@ -84,7 +75,7 @@ include 'includes/header.php';
     </h1>
 </div>
 
-<!-- Mostrar mensaje de error si existe -->
+<!-- Mensaje de error -->
 <?php if ($error): ?>
 <div class="mb-6 bg-red-50 border border-red-300 rounded-lg p-4">
     <div class="flex items-center">
@@ -99,8 +90,7 @@ include 'includes/header.php';
     <div class="flex items-start">
         <i class="ri-error-warning-line text-red-500 mr-2 mt-0.5"></i>
         <div class="flex-1">
-            <ul id="errorList" class="text-red-700 text-sm space-y-1 list-disc list-inside">
-            </ul>
+            <ul id="errorList" class="text-red-700 text-sm space-y-1 list-disc list-inside"></ul>
         </div>
     </div>
 </div>
@@ -109,11 +99,11 @@ include 'includes/header.php';
 <div class="bg-white rounded-lg shadow-sm p-6">
     <form id="reservaForm" class="space-y-6">
         <?php if ($isEditMode): ?>
-            <input type="hidden" name="id" value="<?php echo $reserva['id']; ?>">
+            <input type="hidden" name="id" value="<?php echo $reservaId; ?>">
         <?php endif; ?>
         
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <!-- Teléfono con búsqueda de clientes -->
+            <!-- Teléfono -->
             <div class="relative">
                 <label for="telefono" class="block text-sm font-medium text-gray-700 mb-1">
                     Teléfono
@@ -130,25 +120,21 @@ include 'includes/header.php';
                         autocomplete="off"
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         placeholder="+34 600 123 456"
-                        value="<?php echo $isEditMode ? htmlspecialchars($reserva['telefono']) : (isset($formData['telefono']) ? htmlspecialchars($formData['telefono']) : htmlspecialchars($telefonoUrl)); ?>"
+                        value="<?php echo htmlspecialchars($reserva['telefono']); ?>"
                     >
-                    <!-- Indicador de búsqueda -->
                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none" id="searchIndicator" style="display: none;">
                         <div class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
                     </div>
                 </div>
                 
-                <!-- Dropdown de resultados de búsqueda -->
-                <div id="clientSearchResults" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg hidden max-h-60 overflow-y-auto">
-                    <!-- Los resultados se cargarán aquí dinámicamente -->
-                </div>
+                <div id="clientSearchResults" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg hidden max-h-60 overflow-y-auto"></div>
                 
                 <p class="mt-1 text-xs text-gray-500">
                     Ingrese el teléfono para buscar clientes existentes o crear uno nuevo
                 </p>
             </div>
             
-            <!-- Nombre del cliente -->
+            <!-- Nombre -->
             <div>
                 <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">
                     Nombre completo
@@ -164,7 +150,7 @@ include 'includes/header.php';
                         required
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         placeholder="Nombre del cliente"
-                        value="<?php echo $isEditMode ? htmlspecialchars($reserva['nombre']) : (isset($formData['nombre']) ? htmlspecialchars($formData['nombre']) : htmlspecialchars($nombreUrl)); ?>"
+                        value="<?php echo htmlspecialchars($reserva['nombre']); ?>"
                     >
                 </div>
                 <div id="clientInfoBadge" class="mt-1 hidden">
@@ -190,7 +176,7 @@ include 'includes/header.php';
                         id="fecha"
                         required
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        value="<?php echo $fecha; ?>"
+                        value="<?php echo htmlspecialchars($fecha); ?>"
                     >
                 </div>
             </div>
@@ -204,42 +190,28 @@ include 'includes/header.php';
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="ri-time-line text-gray-400"></i>
                     </div>
-                        <select
-                            name="hora"
-                            id="hora"
-                            required
-                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        >
-                            <option value="">Seleccione una hora</option>
-                            <?php
-                            // Generar todas las horas del día según el intervalo configurado
-                            $minutosIntervalo = $intervaloReservas;
-                            
-                            for ($hora = 0; $hora < 24; $hora++) {
-                                for ($minuto = 0; $minuto < 60; $minuto += $minutosIntervalo) {
-                                    $horaFormateada = sprintf('%02d:%02d', $hora, $minuto);
-                                    
-                                    // Verificar si está seleccionada
-                                    $selected = '';
-                                    if ($isEditMode && isset($reserva['hora']) && substr($reserva['hora'], 0, 5) === $horaFormateada) {
-                                        $selected = 'selected';
-                                    } elseif (!$isEditMode && $horaInicial === $horaFormateada) {
-                                        $selected = 'selected';
-                                    } elseif (!$isEditMode && isset($formData['hora']) && $formData['hora'] === $horaFormateada) {
-                                        $selected = 'selected';
-                                    }
-                                    
-                                    // Verificar si está ocupada
-                                    $ocupada = in_array($horaFormateada, $horasOcupadas);
-                                    $disabled = $ocupada ? 'disabled' : '';
-                                    $label = $ocupada ? "{$horaFormateada} (Ocupada)" : $horaFormateada;
-                                    $style = $ocupada ? 'style="color: #9ca3af; background-color: #f3f4f6;"' : '';
-                                    
-                                    echo "<option value=\"{$horaFormateada}\" {$selected} {$disabled} {$style}>{$label}</option>";
-                                }
+                    <select
+                        name="hora"
+                        id="hora"
+                        required
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    >
+                        <option value="">Seleccione una hora</option>
+                        <?php
+                        for ($h = 0; $h < 24; $h++) {
+                            for ($m = 0; $m < 60; $m += $intervaloReservas) {
+                                $horaFormateada = sprintf('%02d:%02d', $h, $m);
+                                $ocupada = in_array($horaFormateada, $horasOcupadas);
+                                $selected = ($reserva['hora'] && substr($reserva['hora'], 0, 5) === $horaFormateada) ? 'selected' : '';
+                                $disabled = $ocupada ? 'disabled' : '';
+                                $label = $ocupada ? "{$horaFormateada} (Ocupada)" : $horaFormateada;
+                                $style = $ocupada ? 'style="color: #9ca3af; background-color: #f3f4f6;"' : '';
+                                
+                                echo "<option value=\"{$horaFormateada}\" {$selected} {$disabled} {$style}>{$label}</option>";
                             }
-                            ?>
-                        </select>
+                        }
+                        ?>
+                    </select>
                 </div>
             </div>
             
@@ -253,8 +225,8 @@ include 'includes/header.php';
                     id="estado"
                     class="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 >
-                    <option value="pendiente" <?php echo ($isEditMode && $reserva['estado'] === 'pendiente') || !$isEditMode ? 'selected' : ''; ?>>Pendiente</option>
-                    <option value="confirmada" <?php echo $isEditMode && $reserva['estado'] === 'confirmada' ? 'selected' : ''; ?>>Confirmada</option>
+                    <option value="pendiente" <?php echo $reserva['estado'] === 'pendiente' ? 'selected' : ''; ?>>Pendiente</option>
+                    <option value="confirmada" <?php echo $reserva['estado'] === 'confirmada' ? 'selected' : ''; ?>>Confirmada</option>
                 </select>
             </div>
         </div>
@@ -277,13 +249,13 @@ include 'includes/header.php';
                     rows="4"
                     class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     placeholder="Notas adicionales para la reserva"
-                ><?php echo $isEditMode ? htmlspecialchars($reserva['mensaje']) : (isset($formData['mensaje']) ? htmlspecialchars($formData['mensaje']) : ''); ?></textarea>
+                ><?php echo htmlspecialchars($reserva['mensaje']); ?></textarea>
             </div>
         </div>
         
         <!-- Botones de acción -->
         <div class="flex justify-end space-x-3">            
-            <a href="<?php echo $isEditMode ? "/reserva?id={$id}" : "/day?date={$fecha}"; ?>"
+            <a href="<?php echo $isEditMode ? "/reserva?id={$reservaId}" : "/day?date={$fecha}"; ?>"
                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 Cancelar
             </a>
