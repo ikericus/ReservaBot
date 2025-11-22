@@ -112,7 +112,7 @@ Característica: Sistema de registro de ReservaBot
     Cuando completo el formulario con:
       | nombre           | Usuario Pro        |
       | negocio          | Negocio Pro Test   |
-      | email            | pro@test.com       |
+      | email            | pro_{timestamp}@test.com |
       | password         | Password123!       |
       | confirm_password | Password123!       |
     Y marco el radio button "plan" con valor "profesional"
@@ -162,4 +162,3 @@ Característica: Sistema de registro de ReservaBot
     Dado estoy autenticado como "demo@dev.reservabot.es"
     Cuando estoy en la página "/signup"
     Entonces debería estar en la página "/reservas"
-    
