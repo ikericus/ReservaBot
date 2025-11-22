@@ -13,7 +13,7 @@ $user = null;
 if (!empty($token)) {
     try {
         // En modo desarrollo, permitir tokens de prueba
-        $isTestToken = strpos($token, 'test') === 0;
+        $isTestToken = strpos($token, 'test') !== false;
         
         if (isDevelopment() && $isTestToken) {
             // Token de prueba en desarrollo
