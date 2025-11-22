@@ -653,4 +653,16 @@ public function hagoClicEnElElementoConAtributo($attribute, $value)
             throw new \Exception("El atributo '$attribute' del elemento '$id' es '$actualValue', se esperaba '$value'");
         }
     }
+    
+    /**
+     * @Given no estoy autenticado
+     */
+    public function noEstoyAutenticado()
+    {
+        // Limpiar cookies de sesión
+        $this->getSession()->reset();
+        
+        // O si usas un método específico para logout
+        // $this->visitPath('/logout');
+    }
 }
