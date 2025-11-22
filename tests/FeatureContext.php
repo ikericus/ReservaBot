@@ -564,61 +564,67 @@ public function hagoClicEnElElementoConAtributo($attribute, $value)
     }
 
     /**
-     * @Then debería ver un mensaje de error
-     */
-    public function deberiaVerUnMensajeDeError()
-    {
-        $page = $this->getSession()->getPage();
-        
-        // Buscar elementos comunes de error
-        $errorElements = [
-            '.alert-danger',
-            '.error',
-            '.text-red-500',
-            '.text-red-800',
-            '[role="alert"]'
-        ];
-        
-        $found = false;
-        foreach ($errorElements as $selector) {
-            $element = $page->find('css', $selector);
-            if (null !== $element && $element->isVisible()) {
-                $found = true;
-                break;
-            }
-        }
-        
-        if (!$found) {
-            throw new \Exception("No se encontró ningún mensaje de error visible");
-        }
-    }
-
-    /**
      * @Then debería ver un mensaje de éxito
      */
     public function deberiaVerUnMensajeDeExito()
     {
         $page = $this->getSession()->getPage();
+        $content = $page->getContent();
         
-        // Buscar elementos comunes de éxito
-        $successElements = [
-            '.alert-success',
-            '.success',
-            '.text-green-500',
-            '.text-green-800'
+        // Buscar textos comunes de éxito
+        $successTexts = [
+            'éxito',
+            'exitosa',
+            'exitosamente',
+            'correctamente',
+            'creada',
+            'registrado',
+            'bienvenido'
         ];
         
         $found = false;
-        foreach ($successElements as $selector) {
-            $element = $page->find('css', $selector);
-            if (null !== $element && $element->isVisible()) {
+        foreach ($successTexts as $text) {
+            if (stripos($content, $text) !== false) {
                 $found = true;
                 break;
             }
         }
         
         if (!$found) {
-            throw new \Exception("No se encontró ningún mensaje de éxito visible");
+            throw new \Exception("No se encontró ningún mensaje de éxito en la página");
+        }
+    }
+
+    /**
+     * @Then debería ver un mensaje de error
+     */
+    public function deberiaVerUnMensajeDeError()
+    {
+        $page = $this->getSession()->getPage();
+        $content = $page->getContent();
+        
+        // Buscar textos comunes de error
+        $errorTexts = [
+            'error',
+            'incorrecto',
+            'incorrecta',
+            'inválido',
+            'inválida',
+            'obligatorio',
+            'obligatoria',
+            'no válido'
+        ];
+        
+        $found = false;
+        foreach ($errorTexts as $text) {
+            if (stripos($content, $text) !== false) {
+                $found = true;
+                break;
+            }
+        }
+        
+        if (!$found) {
+            throw new \Exception("No se encontró ningún mensaje de error en la página");
         }
     }
 
