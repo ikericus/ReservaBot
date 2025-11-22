@@ -18,6 +18,11 @@ if (!empty($token)) {
         if (isDevelopment() && $isTestToken) {
             // Token de prueba en desarrollo
             $tokenValid = true;
+            $user = [
+                'id' => 1,
+                'nombre' => 'Usuario de Prueba',
+                'email' => 'demo@dev.reservabot.es'
+            ];
             debug_log("Usando token de prueba en desarrollo: $token");
         } else {
             // Validación normal de token
