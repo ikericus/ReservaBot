@@ -223,9 +223,9 @@ class FeatureContext extends MinkContext implements Context
         // Implementar lógica de autenticación según tu sistema
         // Por ejemplo, visitar login y completar formulario
         $this->visitPath('/login');
-        $this->fillField('username', $username);
-        $this->fillField('password', 'test-password');
-        $this->pressButton('Iniciar sesión');
+        $this->fillField('email', $username);
+        $this->fillField('password', 'demo123');
+        $this->pressButton('Iniciar Sesión');
     }
 
     /**
@@ -243,6 +243,415 @@ class FeatureContext extends MinkContext implements Context
         
         if ($actualRows != $rows) {
             throw new \Exception("Se esperaban $rows filas pero se encontraron $actualRows");
+        }
+    }
+
+    /**
+     * @When marco la casilla :checkbox
+     */
+    public function marcoLaCasilla($checkbox)
+    {
+        $page = $this->getSession()->getPage();
+        
+        // Intentar encontrar por id
+        $element = $page->findById($checkbox);
+        
+        // Si no se encuentra por id, intentar por name
+        if (null === $element) {
+            $element = $page->find('css', "input[name='$checkbox']");
+        }
+        
+        // Si no se encuentra, intentar por label
+        if (null === $element) {
+            $element = $page->find('css', "input[type='checkbox']");
+        }
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró la casilla '$checkbox'");
+        }
+        
+        $element->check();
+    }
+
+    /**
+     * @When desmarco la casilla :checkbox
+     */
+    public function desmarcoLaCasilla($checkbox)
+    {
+        $page = $this->getSession()->getPage();
+        
+        // Intentar encontrar por id
+        $element = $page->findById($checkbox);
+        
+        // Si no se encuentra por id, intentar por name
+        if (null === $element) {
+            $element = $page->find('css', "input[name='$checkbox']");
+        }
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró la casilla '$checkbox'");
+        }
+        
+        $element->uncheck();
+    }
+
+/**
+ * @When selecciono la opción :value del radio button :name
+ */
+public function seleccionoLaOpcionDelRadioButton($value, $name)
+{
+    $page = $this->getSession()->getPage();
+    
+    // Buscar el radio button por name y value
+    $element = $page->find('css', "input[type='radio'][name='$name'][value='$value']");
+    
+    if (null === $element) {
+        throw new \Exception("No se encontró el radio button con name='$name' y value='$value'");
+    }
+    
+    // Marcar el radio button
+    $element->click();
+}
+
+/**
+ * @When hago clic en el elemento con atributo :attribute igual a :value
+ */
+public function hagoClicEnElElementoConAtributo($attribute, $value)
+{
+    $page = $this->getSession()->getPage();
+    $element = $page->find('css', "[{$attribute}='{$value}']");
+    
+    if (null === $element) {
+        throw new \Exception("No se encontró elemento con atributo {$attribute}='{$value}'");
+    }
+    
+    $element->click();
+}
+
+/**
+ * @When marco el radio button :name con valor :value
+ */
+public function marcoElRadioButtonConValor($name, $value)
+{
+    $page = $this->getSession()->getPage();
+    
+    // Buscar el radio button
+    $element = $page->find('css', "input[type='radio'][name='$name'][value='$value']");
+    
+    if (null === $element) {
+        throw new \Exception("No se encontró el radio button '$name' con valor '$value'");
+    }
+    
+    // Si el radio button está oculto (como en el caso de los planes), 
+    // buscar el label o contenedor asociado y hacer clic ahí
+    if (!$element->isVisible()) {
+        // Buscar por data-plan o estructura similar
+        $container = $page->find('css', "[data-plan='$value']");
+        
+        if (null !== $container) {
+            $container->click();
+        } else {
+            // Intentar hacer clic en el label asociado
+            $id = $element->getAttribute('id');
+            if ($id) {
+                $label = $page->find('css', "label[for='$id']");
+                if (null !== $label) {
+                    $label->click();
+                } else {
+                    // Último recurso: usar JavaScript
+                    $this->getSession()->executeScript(
+                        "document.querySelector(\"input[name='$name'][value='$value']\").click();"
+                    );
+                }
+            }
+        }
+    } else {
+        $element->click();
+    }
+}
+
+    /**
+     * @Then el radio button :name con valor :value debe estar seleccionado
+     */
+    public function elRadioButtonConValorDebeEstarSeleccionado($name, $value)
+    {
+        $page = $this->getSession()->getPage();
+        $element = $page->find('css', "input[type='radio'][name='$name'][value='$value']");
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró el radio button '$name' con valor '$value'");
+        }
+        
+        if (!$element->isChecked()) {
+            throw new \Exception("El radio button '$name' con valor '$value' no está seleccionado");
+        }
+    }
+
+    /**
+     * @Then el radio button :name con valor :value no debe estar seleccionado
+     */
+    public function elRadioButtonConValorNoDebeEstarSeleccionado($name, $value)
+    {
+        $page = $this->getSession()->getPage();
+        $element = $page->find('css', "input[type='radio'][name='$name'][value='$value']");
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró el radio button '$name' con valor '$value'");
+        }
+        
+        if ($element->isChecked()) {
+            throw new \Exception("El radio button '$name' con valor '$value' está seleccionado cuando no debería");
+        }
+    }
+
+    /**
+     * @When hago clic en un elemento con clase :class
+     */
+    public function hagoClicEnUnElementoConClase($class)
+    {
+        $page = $this->getSession()->getPage();
+        $element = $page->find('css', '.' . $class);
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró elemento con clase '$class'");
+        }
+        
+        $element->click();
+    }
+
+    /**
+     * @When hago clic en el elemento con id :id
+     */
+    public function hagoClicEnElElementoConId($id)
+    {
+        $page = $this->getSession()->getPage();
+        $element = $page->findById($id);
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró elemento con id '$id'");
+        }
+        
+        $element->click();
+    }
+
+    /**
+     * @Then el campo :field debe tener el valor :value
+     */
+    public function elCampoDebeTenerElValor($field, $value)
+    {
+        $page = $this->getSession()->getPage();
+        
+        // Buscar por id
+        $element = $page->findById($field);
+        
+        // Si no, buscar por name
+        if (null === $element) {
+            $element = $page->find('css', "input[name='$field']");
+        }
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró el campo '$field'");
+        }
+        
+        $actualValue = $element->getValue();
+        
+        if ($actualValue !== $value) {
+            throw new \Exception("El campo '$field' tiene el valor '$actualValue', se esperaba '$value'");
+        }
+    }
+
+    /**
+     * @Then el campo :field debe estar vacío
+     */
+    public function elCampoDebeEstarVacio($field)
+    {
+        $this->elCampoDebeTenerElValor($field, '');
+    }
+
+    /**
+     * @Then la casilla :checkbox debe estar marcada
+     */
+    public function laCasillaDebeEstarMarcada($checkbox)
+    {
+        $page = $this->getSession()->getPage();
+        
+        $element = $page->findById($checkbox);
+        
+        if (null === $element) {
+            $element = $page->find('css', "input[name='$checkbox']");
+        }
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró la casilla '$checkbox'");
+        }
+        
+        if (!$element->isChecked()) {
+            throw new \Exception("La casilla '$checkbox' no está marcada");
+        }
+    }
+
+    /**
+     * @Then la casilla :checkbox no debe estar marcada
+     */
+    public function laCasillaNoDebeEstarMarcada($checkbox)
+    {
+        $page = $this->getSession()->getPage();
+        
+        $element = $page->findById($checkbox);
+        
+        if (null === $element) {
+            $element = $page->find('css', "input[name='$checkbox']");
+        }
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró la casilla '$checkbox'");
+        }
+        
+        if ($element->isChecked()) {
+            throw new \Exception("La casilla '$checkbox' está marcada cuando no debería");
+        }
+    }
+
+    /**
+     * @Then el elemento con id :id debe ser visible
+     */
+    public function elElementoConIdDebeSerVisible($id)
+    {
+        $element = $this->getSession()->getPage()->findById($id);
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró elemento con id '$id'");
+        }
+        
+        if (!$element->isVisible()) {
+            throw new \Exception("El elemento con id '$id' no es visible");
+        }
+    }
+
+    /**
+     * @Then el elemento con id :id no debe ser visible
+     */
+    public function elElementoConIdNoDebeSerVisible($id)
+    {
+        $element = $this->getSession()->getPage()->findById($id);
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró elemento con id '$id'");
+        }
+        
+        if ($element->isVisible()) {
+            throw new \Exception("El elemento con id '$id' es visible cuando no debería");
+        }
+    }
+
+    /**
+     * @Then el elemento con clase :class debe tener el texto :text
+     */
+    public function elElementoConClaseDebeTenerElTexto($class, $text)
+    {
+        $element = $this->getSession()->getPage()->find('css', '.' . $class);
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró elemento con clase '$class'");
+        }
+        
+        $actualText = $element->getText();
+        
+        if (strpos($actualText, $text) === false) {
+            throw new \Exception("El elemento con clase '$class' tiene el texto '$actualText', se esperaba '$text'");
+        }
+    }
+
+    /**
+     * @When selecciono :value del campo :field
+     */
+    public function seleccionoDelCampo($value, $field)
+    {
+        $this->selectOption($field, $value);
+    }
+
+    /**
+     * @Then debería ver un mensaje de error
+     */
+    public function deberiaVerUnMensajeDeError()
+    {
+        $page = $this->getSession()->getPage();
+        
+        // Buscar elementos comunes de error
+        $errorElements = [
+            '.alert-danger',
+            '.error',
+            '.text-red-500',
+            '.text-red-800',
+            '[role="alert"]'
+        ];
+        
+        $found = false;
+        foreach ($errorElements as $selector) {
+            $element = $page->find('css', $selector);
+            if (null !== $element && $element->isVisible()) {
+                $found = true;
+                break;
+            }
+        }
+        
+        if (!$found) {
+            throw new \Exception("No se encontró ningún mensaje de error visible");
+        }
+    }
+
+    /**
+     * @Then debería ver un mensaje de éxito
+     */
+    public function deberiaVerUnMensajeDeExito()
+    {
+        $page = $this->getSession()->getPage();
+        
+        // Buscar elementos comunes de éxito
+        $successElements = [
+            '.alert-success',
+            '.success',
+            '.text-green-500',
+            '.text-green-800'
+        ];
+        
+        $found = false;
+        foreach ($successElements as $selector) {
+            $element = $page->find('css', $selector);
+            if (null !== $element && $element->isVisible()) {
+                $found = true;
+                break;
+            }
+        }
+        
+        if (!$found) {
+            throw new \Exception("No se encontró ningún mensaje de éxito visible");
+        }
+    }
+
+    /**
+     * @When ejecuto el script :script
+     */
+    public function ejecutoElScript($script)
+    {
+        $this->getSession()->executeScript($script);
+    }
+
+    /**
+     * @Then el atributo :attribute del elemento :id debe ser :value
+     */
+    public function elAtributoDelElementoDebeSer($attribute, $id, $value)
+    {
+        $element = $this->getSession()->getPage()->findById($id);
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró elemento con id '$id'");
+        }
+        
+        $actualValue = $element->getAttribute($attribute);
+        
+        if ($actualValue !== $value) {
+            throw new \Exception("El atributo '$attribute' del elemento '$id' es '$actualValue', se esperaba '$value'");
         }
     }
 }
