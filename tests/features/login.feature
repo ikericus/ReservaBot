@@ -55,7 +55,7 @@ Característica: Sistema de login de ReservaBot
 
   Escenario: Login exitoso con credenciales válidas
     Dado estoy en la página "/login"
-    Cuando completo el campo "email" con "demo@reservabot.es"
+    Cuando completo el campo "email" con "demo@dev.reservabot.es"
     Y completo el campo "password" con "demo123"
     Y hago clic en el botón "Iniciar Sesión"
     Entonces debería estar en la página "/reservas"
