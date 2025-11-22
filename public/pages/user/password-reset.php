@@ -13,7 +13,7 @@ $user = null;
 if (!empty($token)) {
     try {
         // En modo desarrollo, permitir tokens de prueba
-        $isTestToken = strpos($token, 'test_') === 0;
+        $isTestToken = strpos($token, 'test') === 0;
         
         if (isDevelopment() && $isTestToken) {
             // Token de prueba en desarrollo
@@ -60,10 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenValid) {
     }
     
     if (empty($errors)) {
-        try {
-            $isTestToken = strpos($token, 'test_') === 0;
-            
-            if (isDevelopment() && $isTestToken) {
+        try {            
+            if (isDevelopment()) {
                 // Simulación exitosa en desarrollo
                 debug_log("Simulando restablecimiento exitoso para token de prueba");
                 $_SESSION['login_message'] = 'Contraseña restablecida exitosamente. Ya puedes iniciar sesión.';
