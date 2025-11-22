@@ -91,8 +91,8 @@ Característica: Sistema de registro de ReservaBot
 
   Escenario: Seleccionar plan Básico
     Dado estoy en la página "/signup"
-    Cuando hago clic en un elemento con clase "plan-card"
-    Entonces debería ver un elemento con id "plan-basico"
+    Cuando marco el radio button "plan" con valor "basico"
+    Entonces el radio button "plan" con valor "basico" debe estar seleccionado
 
   Escenario: Registro exitoso con plan Básico
     Dado estoy en la página "/signup"
@@ -104,7 +104,8 @@ Característica: Sistema de registro de ReservaBot
       | confirm_password | Password123!       |
     Y marco la casilla "terminos"
     Y hago clic en el botón "Crear mi cuenta"
-    Entonces la URL debería contener "api/register-handler"
+    Entonces debería estar en la página "/login"
+    Y debería ver un mensaje de éxito
 
   Escenario: Registro exitoso con plan Profesional
     Dado estoy en la página "/signup"
@@ -159,4 +160,4 @@ Característica: Sistema de registro de ReservaBot
   Escenario: Usuario autenticado no puede acceder a registro
     Dado estoy autenticado como "demo@dev.reservabot.es"
     Cuando estoy en la página "/signup"
-    Entonces debería estar en la página "/"
+    Entonces debería estar en la página "/reservas"

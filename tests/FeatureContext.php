@@ -328,47 +328,38 @@ public function hagoClicEnElElementoConAtributo($attribute, $value)
     $element->click();
 }
 
-/**
- * @When marco el radio button :name con valor :value
- */
-public function marcoElRadioButtonConValor($name, $value)
-{
-    $page = $this->getSession()->getPage();
-    
-    // Buscar el radio button
-    $element = $page->find('css', "input[type='radio'][name='$name'][value='$value']");
-    
-    if (null === $element) {
-        throw new \Exception("No se encontró el radio button '$name' con valor '$value'");
-    }
-    
-    // Si el radio button está oculto (como en el caso de los planes), 
-    // buscar el label o contenedor asociado y hacer clic ahí
-    if (!$element->isVisible()) {
-        // Buscar por data-plan o estructura similar
-        $container = $page->find('css', "[data-plan='$value']");
+    /**
+     * @When marco el radio button :name con valor :value
+     */
+    public function marcoElRadioButtonConValor($name, $value)
+    {
+        $page = $this->getSession()->getPage();
         
-        if (null !== $container) {
-            $container->click();
-        } else {
-            // Intentar hacer clic en el label asociado
-            $id = $element->getAttribute('id');
-            if ($id) {
-                $label = $page->find('css', "label[for='$id']");
-                if (null !== $label) {
-                    $label->click();
+        // Buscar el radio button
+        $element = $page->find('css', "input[type='radio'][name='$name'][value='$value']");
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró el radio button '$name' con valor '$value'");
+        }
+        
+        // Intentar seleccionar el radio button directamente
+        try {
+            $element->selectOption($value);
+        } catch (\Exception $e) {
+            // Si falla, intentar con click
+            try {
+                $element->click();
+            } catch (\Exception $e2) {
+                // Último recurso: buscar por data-plan y hacer clic
+                $container = $page->find('css', "[data-plan='$value']");
+                if (null !== $container) {
+                    $container->click();
                 } else {
-                    // Último recurso: usar JavaScript
-                    $this->getSession()->executeScript(
-                        "document.querySelector(\"input[name='$name'][value='$value']\").click();"
-                    );
+                    throw new \Exception("No se pudo seleccionar el radio button '$name' con valor '$value'");
                 }
             }
         }
-    } else {
-        $element->click();
     }
-}
 
     /**
      * @Then el radio button :name con valor :value debe estar seleccionado
