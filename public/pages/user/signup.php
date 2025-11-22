@@ -522,7 +522,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
             });
         });
         
-        // Form submission
+       // Form submission
         document.getElementById('registroForm').addEventListener('submit', function(e) {
             const submitBtn = document.getElementById('submitBtn');
             const originalText = submitBtn.innerHTML;
@@ -530,7 +530,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
             // Validar que los términos estén aceptados
             const terminos = document.getElementById('terminos');
             if (!terminos.checked) {
-                e.preventDefault();
+                e.preventDefault(); // SOLO prevenir si falla la validación
                 alert('Debes aceptar los términos y condiciones');
                 terminos.focus();
                 return;
@@ -539,7 +539,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
             // Validar email
             const email = emailInput.value.trim();
             if (!emailRegex.test(email)) {
-                e.preventDefault();
+                e.preventDefault(); // SOLO prevenir si falla la validación
                 emailInput.classList.add('border-red-300', 'focus:ring-red-500');
                 emailError.classList.remove('hidden');
                 emailInput.focus();
@@ -551,15 +551,19 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
             const confirmPassword = document.getElementById('confirm_password').value;
             
             if (password !== confirmPassword) {
-                e.preventDefault();
+                e.preventDefault(); // SOLO prevenir si falla la validación
                 alert('Las contraseñas no coinciden');
                 document.getElementById('confirm_password').focus();
                 return;
             }
             
+            // Si llegamos aquí, todo es válido - mostrar loading
             submitBtn.innerHTML = '<i class="ri-loader-line animate-spin mr-2"></i>Creando cuenta...';
             submitBtn.disabled = true;
             
+            // NO hacemos e.preventDefault() - dejamos que el formulario se envíe normalmente
+            
+            // Timeout por si acaso para resetear el botón si algo falla
             setTimeout(() => {
                 if (window.location.pathname.includes('signup')) {
                     submitBtn.innerHTML = originalText;
