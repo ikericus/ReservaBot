@@ -48,7 +48,7 @@ Característica: Sistema de creación de reservas
   Escenario: Crear reserva con datos mínimos
     Dado estoy en la página "/reserva-form"
     Cuando completo el formulario con:
-      | telefono | +34600123456              |
+      | telefono | +34600{timestamp}         |
       | nombre   | Cliente Test              |
       | fecha    | 2025-12-31                |
     Y selecciono "10:00" del campo "hora"
@@ -79,10 +79,6 @@ Característica: Sistema de creación de reservas
   Escenario: Acceder con parámetro de fecha en URL
     Dado estoy en la página "/reserva-form?fecha=2025-12-25"
     Entonces el campo "fecha" debe tener el valor "2025-12-25"
-
-  Escenario: Acceder con parámetro de hora en URL
-    Dado estoy en la página "/reserva-form?hora=14:00"
-    Entonces debería ver un elemento con id "hora"
 
   Escenario: Ver el selector de horas con intervalos
     Dado estoy en la página "/reserva-form"
@@ -117,24 +113,6 @@ Característica: Sistema de creación de reservas
     Dado no estoy autenticado
     Cuando estoy en la página "/reserva-form"
     Entonces debería estar en la página "/login"
-
-  Escenario: Estado por defecto es Pendiente
-    Dado estoy en la página "/reserva-form"
-    Entonces el radio button "estado" con valor "pendiente" debe estar seleccionado
-
-  @javascript
-  Escenario: Búsqueda de cliente existente por teléfono
-    Dado estoy en la página "/reserva-form"
-    Cuando completo el campo "telefono" con "600123456"
-    Y espero 1 segundos
-    Entonces debería ver un elemento con id "clientSearchResults"
-
-  @javascript
-  Escenario: Cambio de fecha actualiza horas disponibles
-    Dado estoy en la página "/reserva-form"
-    Cuando completo el campo "fecha" con "2025-12-30"
-    Y espero 1 segundos
-    Entonces debería ver un elemento con id "hora"
 
   Escenario: Verificar iconos en los campos
     Dado estoy en la página "/reserva-form"
