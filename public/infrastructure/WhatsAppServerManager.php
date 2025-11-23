@@ -173,7 +173,7 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
                 'method' => $method,
                 'header' => implode("\r\n", $headers),
                 'content' => $data ? json_encode($data) : null,
-                'timeout' => 30,
+                'timeout' => 6,
                 'ignore_errors' => true
             ]
         ];
