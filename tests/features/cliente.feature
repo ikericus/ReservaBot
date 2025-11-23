@@ -65,13 +65,13 @@ Característica: Detalle de cliente
     Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver "Chat WhatsApp"
 
-  Escenario: Ver botón Nueva Reserva
+  Escenario: Ver botón 'Nueva reserva' para
     Dado estoy en la página "/cliente?telefono=611105549"
-    Entonces debería ver "Nueva Reserva"
+    Entonces debería ver "Nueva reserva para"
 
-  Escenario: Botón Nueva Reserva prellenado con datos del cliente
+  Escenario: Botón 'Nueva reserva para' prellenado con datos del cliente
     Dado estoy en la página "/cliente?telefono=611105549"
-    Cuando hago clic en "Nueva Reserva"
+    Cuando hago clic en "Nueva reserva para"
     Entonces la URL debería contener "/reserva-form?telefono="
     Y la URL debería contener "&nombre="
 

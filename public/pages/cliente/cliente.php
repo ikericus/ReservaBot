@@ -141,7 +141,7 @@ include 'includes/header.php';
                 <a href="/reserva-form?telefono=<?php echo urlencode($cliente['telefono']); ?>&nombre=<?php echo urlencode($cliente['ultimo_nombre']); ?>" 
                    class="inline-flex items-center justify-center px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl w-full sm:w-auto">
                     <i class="ri-add-line mr-2"></i>
-                    Nueva Reserva
+                    Nueva reserva para <?php echo htmlspecialchars($cliente['ultimo_nombre']); ?>
                 </a>
             </div>
         </div>
