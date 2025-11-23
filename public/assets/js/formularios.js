@@ -401,14 +401,19 @@ function generateQRCode(container, url, nombre) {
         QRCode.toCanvas(canvas, url, {
             width: 256,
             margin: 2,
-            errorCorrectionLevel: 'M'
+            errorCorrectionLevel: 'H', // ✅ Cambiado a H para permitir logo
+            color: {
+                dark: '#667eea',  // ✅ Color base del gradiente
+                light: '#ffffff'
+            }
         }, function(error) {
             if (error) {
                 showNotification('Error al generar código QR', 'error');
             } else {
                 console.log('QR generado exitosamente');
                 
-                // ✅ AÑADIR LOGO AL QR
+                // ✅ Aplicar gradiente y añadir logo
+                applyGradientToQR(canvas);
                 addLogoToQR(canvas);
                 
                 setupQRButtons(container, url, nombre);
@@ -420,35 +425,58 @@ function generateQRCode(container, url, nombre) {
     }
 }
 
-// Nueva función para añadir logo al QR
+// Aplicar gradiente al QR
+function applyGradientToQR(canvas) {
+    const ctx = canvas.getContext('2d');
+    
+    // Guardar el canvas original
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(canvas, 0, 0);
+    
+    // Crear gradiente ReservaBot
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, '#667eea');
+    gradient.addColorStop(1, '#764ba2');
+    
+    // Aplicar gradiente
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Usar el QR original como máscara
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.drawImage(tempCanvas, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+}
+
+// Añadir logo sin recuadro
 function addLogoToQR(canvas) {
     const ctx = canvas.getContext('2d');
     const logo = new Image();
     
     logo.onload = function() {
-        // Tamaño del logo (aproximadamente 20% del QR)
         const logoSize = canvas.width * 0.2;
         const logoX = (canvas.width - logoSize) / 2;
         const logoY = (canvas.height - logoSize) / 2;
         
-        // Fondo blanco detrás del logo para mejor contraste
+        // Fondo blanco circular (sin borde)
         ctx.fillStyle = 'white';
-        ctx.fillRect(logoX - 5, logoY - 5, logoSize + 10, logoSize + 10);
+        ctx.beginPath();
+        ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2 + 6, 0, Math.PI * 2);
+        ctx.fill();
         
-        // Borde opcional alrededor del logo
-        ctx.strokeStyle = '#667eea'; // Color del gradiente de ReservaBot
-        ctx.lineWidth = 2;
-        ctx.strokeRect(logoX - 5, logoY - 5, logoSize + 10, logoSize + 10);
-        
-        // Dibujar el logo
+        // Dibujar logo circular
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, Math.PI * 2);
+        ctx.clip();
         ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+        ctx.restore();
     };
     
-    // Ruta de tu logo (ajusta según donde esté)
-    logo.src = '/icons/icon-192.png'; // O la ruta correcta
-    
-    // Si no tienes logo como archivo, puedes usar el icono inline:
-    // logo.src = 'data:image/svg+xml;base64,...'; 
+    logo.src = '/icons/icon-192.png';
 }
 
 function setupQRButtons(container, url, nombre) {
