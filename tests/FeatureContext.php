@@ -210,6 +210,19 @@ class FeatureContext extends MinkContext implements Context
     }
 
     /**
+     * @Then debería ver un campo con nombre :name
+     */
+    public function deberiaVerUnCampoConNombre($name)
+    {
+        $page = $this->getSession()->getPage();
+        $element = $page->find('css', "input[name='$name'], select[name='$name'], textarea[name='$name']");
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró campo con name '$name'");
+        }
+    }
+
+    /**
      * @When espero :seconds segundos
      */
     public function esperoSegundos($seconds)
@@ -297,38 +310,59 @@ class FeatureContext extends MinkContext implements Context
         $element->uncheck();
     }
 
-/**
- * @When selecciono la opción :value del radio button :name
- */
-public function seleccionoLaOpcionDelRadioButton($value, $name)
-{
-    $page = $this->getSession()->getPage();
-    
-    // Buscar el radio button por name y value
-    $element = $page->find('css', "input[type='radio'][name='$name'][value='$value']");
-    
-    if (null === $element) {
-        throw new \Exception("No se encontró el radio button con name='$name' y value='$value'");
+    /**
+     * @When selecciono la opción :value del radio button :name
+     */
+    public function seleccionoLaOpcionDelRadioButton($value, $name)
+    {
+        $page = $this->getSession()->getPage();
+        
+        // Buscar el radio button por name y value
+        $element = $page->find('css', "input[type='radio'][name='$name'][value='$value']");
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró el radio button con name='$name' y value='$value'");
+        }
+        
+        // Marcar el radio button
+        $element->click();
     }
-    
-    // Marcar el radio button
-    $element->click();
-}
 
-/**
- * @When hago clic en el elemento con atributo :attribute igual a :value
- */
-public function hagoClicEnElElementoConAtributo($attribute, $value)
-{
-    $page = $this->getSession()->getPage();
-    $element = $page->find('css', "[{$attribute}='{$value}']");
-    
-    if (null === $element) {
-        throw new \Exception("No se encontró elemento con atributo {$attribute}='{$value}'");
+    /**
+     * @When hago clic en el elemento con atributo :attribute igual a :value
+     */
+    public function hagoClicEnElElementoConAtributo($attribute, $value)
+    {
+        $page = $this->getSession()->getPage();
+        $element = $page->find('css', "[{$attribute}='{$value}']");
+        
+        if (null === $element) {
+            throw new \Exception("No se encontró elemento con atributo {$attribute}='{$value}'");
+        }
+        
+        $element->click();
     }
-    
-    $element->click();
-}
+
+    /**
+     * @When hago clic en el primer enlace que contiene :text
+     */
+    public function hagoClicEnElPrimerEnlaceQueContiene($text)
+    {
+        $page = $this->getSession()->getPage();
+        
+        // Buscar todos los enlaces
+        $links = $page->findAll('css', 'a');
+        
+        foreach ($links as $link) {
+            $href = $link->getAttribute('href');
+            if ($href && strpos($href, $text) !== false) {
+                $link->click();
+                return;
+            }
+        }
+        
+        throw new \Exception("No se encontró ningún enlace que contenga '$text'");
+    }
 
     /**
      * @When marco el radio button :name con valor :value

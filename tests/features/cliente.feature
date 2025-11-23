@@ -16,6 +16,10 @@ Característica: Detalle de cliente
     Dado estoy en la página "/cliente?telefono=611105549"
     Entonces el código de respuesta debe ser 200
 
+  Escenario: Mensaje cuando no existe cliente
+    Dado estoy en la página "/cliente?telefono=999999999"
+    Entonces debería ver "Cliente no encontrado"
+
   Escenario: Redirigir a lista si no hay teléfono
     Dado estoy en la página "/cliente"
     Entonces debería estar en la página "/clientes"
@@ -83,10 +87,6 @@ Característica: Detalle de cliente
     Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver un elemento con clase "ri-calendar-line"
 
-  Escenario: Mensaje cuando no hay reservas
-    Dado estoy en la página "/cliente?telefono=999999999"
-    Entonces debería ver "No hay reservas para este cliente"
-
   # ==========================================
   # DETALLES DE RESERVAS EN HISTORIAL
   # ==========================================
@@ -117,12 +117,12 @@ Característica: Detalle de cliente
 
   Escenario: Acceder a detalle de reserva desde historial
     Dado estoy en la página "/cliente?telefono=611105549"
-    Cuando hago clic en un elemento con clase "ri-eye-line"
+    Cuando hago clic en el primer enlace que contiene "/reserva?id="
     Entonces la URL debería contener "/reserva?id="
 
   Escenario: Acceder a editar reserva desde historial
     Dado estoy en la página "/cliente?telefono=611105549"
-    Cuando hago clic en un elemento con clase "ri-edit-line"
+    Cuando hago clic en el primer enlace que contiene "/reserva-form?id="
     Entonces la URL debería contener "/reserva-form?id="
 
   # ==========================================

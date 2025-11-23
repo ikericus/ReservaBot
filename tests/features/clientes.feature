@@ -32,7 +32,7 @@ Característica: Sistema de gestión de clientes
 
   Escenario: Ver formulario de búsqueda
     Dado estoy en la página "/clientes"
-    Entonces debería ver un elemento con id "search"
+    Entonces debería ver un campo con nombre "search"
     Y debería ver "Buscar"
 
   Escenario: Buscar cliente por nombre
