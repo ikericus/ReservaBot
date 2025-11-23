@@ -1041,6 +1041,9 @@ code {
                             setTimeout(() => window.location.reload(), 1000);
                         } else if (data.qr && this.elements.qrContainer) {
                             this.updateQR(data.qr);
+                        } else if (data.status === 'disconnected') {
+                            this.showNotification('WhatsApp ha sido desconectado', 'warning');
+                            setTimeout(() => window.location.reload(), 1000);
                         }
                     }
                 } catch (error) {
