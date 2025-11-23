@@ -226,7 +226,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Menú móvil -->
             <div id="mobileMenu" class="md:hidden fixed inset-0 z-50 hidden">
                 <div class="mobile-menu-bg absolute inset-0" onclick="closeMobileMenu()"></div>
