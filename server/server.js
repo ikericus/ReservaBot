@@ -310,8 +310,11 @@ async function notifyWebApp(userId, event, data) {
 app.get('/health', (req, res) => {
     const uptime = process.uptime();
     const activeClients = Array.from(clients.values()).filter(c => c.status === 'ready').length;
-    
-    logger.info(`Health check solicitado. Uptime: ${uptime}s, Clientes activos: ${activeClients}, Total clientes: ${clients.size}, Conexiones pendientes: ${qrCodes.size}`);
+
+    // Obtener IP real del solicitante
+    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
+
+    logger.info(`Health check solicitado desde IP: ${ip}. Uptime: ${uptime}s, Clientes activos: ${activeClients}, Total clientes: ${clients.size}, Conexiones pendientes: ${qrCodes.size}`);
 
     res.json({
         status: 'healthy',
@@ -319,9 +322,11 @@ app.get('/health', (req, res) => {
         timestamp: new Date().toISOString(),
         activeClients: activeClients,
         totalClients: clients.size,
-        pendingConnections: qrCodes.size
+        pendingConnections: qrCodes.size,
+        requestIP: ip
     });
 });
+
 
 // Conectar usuario
 app.post('/api/connect', authenticateJWT, async (req, res) => {
