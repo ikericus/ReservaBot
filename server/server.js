@@ -309,6 +309,8 @@ app.get('/health', (req, res) => {
     const uptime = process.uptime();
     const activeClients = Array.from(clients.values()).filter(c => c.status === 'ready').length;
     
+    logger.info(`Health check solicitado. Uptime: ${uptime}s, Clientes activos: ${activeClients}, Total clientes: ${clients.size}, Conexiones pendientes: ${qrCodes.size}`);
+
     res.json({
         status: 'healthy',
         uptime: uptime,
