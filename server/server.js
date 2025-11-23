@@ -14,6 +14,7 @@ const fs = require('fs');
 
 // Importar whatsapp-web.js
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const { log } = require('console');
 
 // Configuración
 const PORT = process.env.PORT || 3001;
@@ -224,6 +225,7 @@ function createWhatsAppClient(userId) {
 
     client.on('message', async (message) => {
         try {
+            logger.info(`Mensaje recibido para usuario ${userId} de ${message.from}: ${message.body}`);
             await handleIncomingMessage(userId, message);
         } catch (error) {
             logger.error(`Error procesando mensaje para usuario ${userId}:`, error);
@@ -325,6 +327,8 @@ app.get('/health', (req, res) => {
 app.post('/api/connect', authenticateJWT, async (req, res) => {
     const userId = req.userId;
     
+    logger.info(`Solicitud de conexión para usuario ${userId}`);
+
     try {
         // Verificar si ya existe
         if (clients.has(userId)) {
@@ -429,8 +433,11 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
 // Estado del usuario
 app.get('/api/status', authenticateJWT, (req, res) => {
     const userId = req.userId;
+
+    logger.info(`Obteniendo estado para usuario ${userId}`);
     
     if (!clients.has(userId)) {
+        logger.info(`Usuario ${userId} no conectado`);
         return res.json({
             success: true,
             status: 'disconnected',
@@ -441,6 +448,8 @@ app.get('/api/status', authenticateJWT, (req, res) => {
     const clientData = clients.get(userId);
     const qr = qrCodes.get(userId) || null;
     
+    logger.info(`Estado para usuario ${userId}: ${clientData.status}`);
+
     res.json({
         success: true,
         status: clientData.status,
@@ -453,6 +462,8 @@ app.post('/api/isuser', authenticateJWT, async (req, res) => {
     
     const phoneNum = req.phoneNum;
     const userId = req.userId;    
+
+    logger.info(`Comprobando nº para usuario ${userId} a ${phoneNum}`);
 
     try {
         // Validar parámetros
@@ -508,7 +519,7 @@ app.post('/api/isuser', authenticateJWT, async (req, res) => {
 app.post('/api/send', authenticateJWT, async (req, res) => {
     const userId = req.userId;
     const { to, message, type = 'text' } = req.body;
-    
+    logger.info(`Enviando mensaje para usuario ${userId} a ${to}`);
     try {
         // Validar parámetros
         if (!to || !message) {
@@ -563,7 +574,7 @@ app.post('/api/send', authenticateJWT, async (req, res) => {
 // Obtener chats
 app.get('/api/chats', authenticateJWT, async (req, res) => {
     const userId = req.userId;
-    
+    logger.info(`Obteniendo chats para usuario ${userId}`);
     try {
         if (!clients.has(userId) || clients.get(userId).status !== 'ready') {
             return res.status(400).json({
@@ -613,6 +624,7 @@ app.use((error, req, res, next) => {
 
 // Ruta catch-all
 app.use('*', (req, res) => {
+    logger.warn(`Endpoint no encontrado: ${req.method} ${req.originalUrl}`);
     res.status(404).json({
         success: false,
         error: 'Endpoint no encontrado'
