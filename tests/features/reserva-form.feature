@@ -88,7 +88,7 @@ Característica: Sistema de creación de reservas
   Escenario: Verificar botón de cancelar
     Dado estoy en la página "/reserva-form"
     Cuando hago clic en "Cancelar"
-    Entonces la URL debería contener "/day"
+    Entonces la URL debería contener "/dia"
 
   Escenario: Crear reserva con teléfono en formato español sin prefijo
     Dado estoy en la página "/reserva-form"

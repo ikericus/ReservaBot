@@ -69,7 +69,7 @@ include 'includes/header.php';
 ?>
 
 <div class="flex items-center mb-6">
-    <a href="<?php echo $isEditMode ? "/reserva?id={$reservaId}" : "/day?date={$fecha}"; ?>" 
+    <a href="<?php echo $isEditMode ? "/reserva?id={$reservaId}" : "/dia?fecha={$fecha}"; ?>" 
        class="mr-4 p-2 rounded-full hover:bg-gray-100">
         <i class="ri-arrow-left-line text-gray-600 text-xl"></i>
     </a>
@@ -259,7 +259,7 @@ include 'includes/header.php';
         
         <!-- Botones de acción -->
         <div class="flex justify-end space-x-3">            
-            <a href="<?php echo $isEditMode ? "/reserva?id={$reservaId}" : "/day?date={$fechaReserva}"; ?>"
+            <a href="<?php echo $isEditMode ? "/reserva?id={$reservaId}" : "/dia?fecha={$fechaReserva}"; ?>"
                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 Cancelar
             </a>

@@ -54,7 +54,6 @@ class Router {
         $this->addRoute('GET',      '/dia',                             'pages/calendario/dia.php',             ['auth']);        
         $this->addRoute('GET',      '/semana',                          'pages/calendario/semana.php',          ['auth']);        
         $this->addRoute('GET',      '/mes',                             'pages/calendario/mes.php',             ['auth']);
-        $this->addRoute('GET',      '/day',                             'pages/calendario/day.php',             ['auth']);
         $this->addRoute('GET',      '/reservas',                        'pages/reserva/reservas.php',           ['auth']);        
         $this->addRoute('GET',      '/reserva',                         'pages/reserva/reserva.php',            ['auth']);        
         $this->addRoute('GET',      '/reserva-form',                    'pages/reserva/reserva-form.php',       ['auth']);  
