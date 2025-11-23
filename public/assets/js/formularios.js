@@ -401,11 +401,7 @@ function generateQRCode(container, url, nombre) {
         QRCode.toCanvas(canvas, url, {
             width: 256,
             margin: 2,
-            errorCorrectionLevel: 'H', // ✅ Cambiado a H para permitir logo
-            color: {
-                dark: '#667eea',  // ✅ Color base del gradiente
-                light: '#ffffff'
-            }
+            errorCorrectionLevel: 'H'
         }, function(error) {
             if (error) {
                 showNotification('Error al generar código QR', 'error');
@@ -425,30 +421,39 @@ function generateQRCode(container, url, nombre) {
     }
 }
 
-// Aplicar gradiente al QR
+// Aplicar gradiente SOLO a los píxeles negros del QR
 function applyGradientToQR(canvas) {
     const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
     
-    // Guardar el canvas original
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.drawImage(canvas, 0, 0);
+    // Crear canvas temporal con gradiente
+    const gradientCanvas = document.createElement('canvas');
+    gradientCanvas.width = canvas.width;
+    gradientCanvas.height = canvas.height;
+    const gradientCtx = gradientCanvas.getContext('2d');
     
-    // Crear gradiente ReservaBot
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    const gradient = gradientCtx.createLinearGradient(0, 0, canvas.width, canvas.height);
     gradient.addColorStop(0, '#667eea');
     gradient.addColorStop(1, '#764ba2');
     
-    // Aplicar gradiente
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    gradientCtx.fillStyle = gradient;
+    gradientCtx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Usar el QR original como máscara
-    ctx.globalCompositeOperation = 'destination-in';
-    ctx.drawImage(tempCanvas, 0, 0);
-    ctx.globalCompositeOperation = 'source-over';
+    const gradientData = gradientCtx.getImageData(0, 0, canvas.width, canvas.height).data;
+    
+    // Reemplazar píxeles negros con gradiente
+    for (let i = 0; i < data.length; i += 4) {
+        // Si el píxel es negro (QR)
+        if (data[i] < 128) {
+            data[i] = gradientData[i];       // R
+            data[i + 1] = gradientData[i + 1]; // G
+            data[i + 2] = gradientData[i + 2]; // B
+        }
+        // Los píxeles blancos quedan blancos
+    }
+    
+    ctx.putImageData(imageData, 0, 0);
 }
 
 // Añadir logo sin recuadro
@@ -461,7 +466,7 @@ function addLogoToQR(canvas) {
         const logoX = (canvas.width - logoSize) / 2;
         const logoY = (canvas.height - logoSize) / 2;
         
-        // Fondo blanco circular (sin borde)
+        // Fondo blanco circular
         ctx.fillStyle = 'white';
         ctx.beginPath();
         ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2 + 6, 0, Math.PI * 2);
