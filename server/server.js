@@ -438,9 +438,12 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
 // Estado del usuario
 app.get('/api/status', authenticateJWT, (req, res) => {
     const userId = req.userId;
-
-    logger.info(`Obteniendo estado para usuario ${userId}`);
     
+    // Obtener IP real del solicitante
+    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
+
+    logger.info(`Estado solicitado para usuario ${userId} desde IP: ${ip}`);
+        
     if (!clients.has(userId)) {
         logger.info(`Usuario ${userId} no conectado`);
         return res.json({
