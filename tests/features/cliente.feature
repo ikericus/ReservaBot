@@ -13,7 +13,7 @@ Característica: Detalle de cliente
   # ==========================================
 
   Escenario: Acceder a detalle de cliente con teléfono válido
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces el código de respuesta debe ser 200
 
   Escenario: Redirigir a lista si no hay teléfono
@@ -22,7 +22,7 @@ Característica: Detalle de cliente
 
   Escenario: Usuario no autenticado no puede ver detalle
     Dado no estoy autenticado
-    Cuando estoy en la página "/cliente?telefono=600123456"
+    Cuando estoy en la página "/cliente?telefono=611105549"
     Entonces debería estar en la página "/login"
 
   # ==========================================
@@ -30,11 +30,11 @@ Característica: Detalle de cliente
   # ==========================================
 
   Escenario: Ver información básica del cliente
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver un elemento con clase "ri-user-line"
 
   Escenario: Ver fecha de primer contacto
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver "Cliente desde"
 
   # ==========================================
@@ -42,13 +42,13 @@ Característica: Detalle de cliente
   # ==========================================
 
   Escenario: Ver estadísticas de reservas
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver "Total Reservas"
     Y debería ver "Confirmadas"
     Y debería ver "Pendientes"
 
   Escenario: Verificar iconos en estadísticas
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver un elemento con clase "ri-calendar-line"
     Y debería ver un elemento con clase "ri-check-line"
     Y debería ver un elemento con clase "ri-time-line"
@@ -58,15 +58,15 @@ Característica: Detalle de cliente
   # ==========================================
 
   Escenario: Ver botón de WhatsApp
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver "Chat WhatsApp"
 
   Escenario: Ver botón Nueva Reserva
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver "Nueva Reserva"
 
   Escenario: Botón Nueva Reserva prellenado con datos del cliente
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Cuando hago clic en "Nueva Reserva"
     Entonces la URL debería contener "/reserva-form?telefono="
     Y la URL debería contener "&nombre="
@@ -76,11 +76,11 @@ Característica: Detalle de cliente
   # ==========================================
 
   Escenario: Ver título de historial de reservas
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver "Historial de Reservas"
 
   Escenario: Ver contador de reservas en historial
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver un elemento con clase "ri-calendar-line"
 
   Escenario: Mensaje cuando no hay reservas
@@ -92,15 +92,15 @@ Característica: Detalle de cliente
   # ==========================================
 
   Escenario: Ver estados de reservas en historial
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces el código de respuesta debe ser 200
 
   Escenario: Ver fecha y hora en reservas
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver un elemento con clase "ri-calendar-line"
 
   Escenario: Ver mensajes en reservas si existen
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver un elemento con clase "ri-message-2-line"
 
   # ==========================================
@@ -108,20 +108,20 @@ Característica: Detalle de cliente
   # ==========================================
 
   Escenario: Ver botón de ver detalle de reserva
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver un elemento con clase "ri-eye-line"
 
   Escenario: Ver botón de editar reserva
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver un elemento con clase "ri-edit-line"
 
   Escenario: Acceder a detalle de reserva desde historial
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Cuando hago clic en un elemento con clase "ri-eye-line"
     Entonces la URL debería contener "/reserva?id="
 
   Escenario: Acceder a editar reserva desde historial
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Cuando hago clic en un elemento con clase "ri-edit-line"
     Entonces la URL debería contener "/reserva-form?id="
 
@@ -130,11 +130,11 @@ Característica: Detalle de cliente
   # ==========================================
 
   Escenario: Ver badges de estado en reservas
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces el código de respuesta debe ser 200
 
   Escenario: Verificar colores por estado de reserva
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces el código de respuesta debe ser 200
 
   # ==========================================
@@ -142,7 +142,7 @@ Característica: Detalle de cliente
   # ==========================================
 
   Escenario: Vista mobile carga correctamente
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces el código de respuesta debe ser 200
     Y debería ver un elemento con clase "container-max-width"
 
@@ -151,7 +151,7 @@ Característica: Detalle de cliente
   # ==========================================
 
   Escenario: WhatsApp deshabilitado cuando no está conectado
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Entonces debería ver "Chat WhatsApp"
 
   # ==========================================
@@ -159,6 +159,6 @@ Característica: Detalle de cliente
   # ==========================================
 
   Escenario: Volver a lista de clientes
-    Dado estoy en la página "/cliente?telefono=600123456"
+    Dado estoy en la página "/cliente?telefono=611105549"
     Cuando hago clic en "Clientes"
     Entonces debería estar en la página "/clientes" 
