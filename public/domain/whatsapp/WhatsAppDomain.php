@@ -298,6 +298,8 @@ class WhatsAppDomain {
                 $config->conectar($serverResponse['phoneNumber']);
             } elseif ($serverResponse['status'] === 'waiting_qr' && isset($serverResponse['qr'])) {
                 $config->esperarQR($serverResponse['qr']);
+            } elseif ($serverResponse['status'] === 'disconnected') {
+                $config->desconectar();
             }
             
             $this->whatsappRepository->guardarConfiguracion($config);
