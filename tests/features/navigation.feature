@@ -15,7 +15,7 @@ Característica: Sistema de navegación de ReservaBot
   Escenario: Acceder a la página de Reservas desde el menú desktop
     Dado estoy en la página "/dia"
     Cuando hago clic en "Reservas"
-    Entonces debería estar en la página "/"
+    Entonces debería estar en la página "/reservas"
     Y el código de respuesta debe ser 200
 
   Escenario: Acceder a la página de Calendario desde el menú desktop
@@ -140,7 +140,7 @@ Característica: Sistema de navegación de ReservaBot
   Escenario: Usuario no autenticado es redirigido desde Reservas
     Dado no estoy autenticado
     Cuando estoy en la página "/"
-    Entonces debería estar en la página "/login"
+    Entonces debería estar en la página "/landing"
 
   Escenario: Usuario no autenticado es redirigido desde Calendario
     Dado no estoy autenticado
