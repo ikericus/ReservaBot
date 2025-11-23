@@ -404,37 +404,51 @@ function generateQRCode(container, url, nombre) {
             errorCorrectionLevel: 'M'
         }, function(error) {
             if (error) {
-                generateQRWithGoogleAPI(container, url, nombre);
+                showNotification('Error al generar código QR', 'error');
             } else {
+                console.log('QR generado exitosamente');
+                
+                // ✅ AÑADIR LOGO AL QR
+                addLogoToQR(canvas);
+                
                 setupQRButtons(container, url, nombre);
             }
         });
     } else {
-        generateQRWithGoogleAPI(container, url, nombre);
+        console.warn('Libreria QRCode no disponible');
+        showNotification('Error al generar código QR', 'error');
     }
 }
 
-function generateQRWithGoogleAPI(container, url, nombre) {
-    const qrSize = 256;
-    const encodedUrl = encodeURIComponent(url);
-    const qrApiUrl = `https://chart.googleapis.com/chart?chs=${qrSize}x${qrSize}&cht=qr&chl=${encodedUrl}`;
+// Nueva función para añadir logo al QR
+function addLogoToQR(canvas) {
+    const ctx = canvas.getContext('2d');
+    const logo = new Image();
     
-    const img = document.createElement('img');
-    img.src = qrApiUrl;
-    img.alt = `QR - ${nombre}`;
-    img.className = 'mx-auto border border-gray-200 rounded';
-    img.style.width = qrSize + 'px';
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = function() {
-        container.innerHTML = '';
-        container.appendChild(img);
-        setupQRButtons(container, url, nombre);
+    logo.onload = function() {
+        // Tamaño del logo (aproximadamente 20% del QR)
+        const logoSize = canvas.width * 0.2;
+        const logoX = (canvas.width - logoSize) / 2;
+        const logoY = (canvas.height - logoSize) / 2;
+        
+        // Fondo blanco detrás del logo para mejor contraste
+        ctx.fillStyle = 'white';
+        ctx.fillRect(logoX - 5, logoY - 5, logoSize + 10, logoSize + 10);
+        
+        // Borde opcional alrededor del logo
+        ctx.strokeStyle = '#667eea'; // Color del gradiente de ReservaBot
+        ctx.lineWidth = 2;
+        ctx.strokeRect(logoX - 5, logoY - 5, logoSize + 10, logoSize + 10);
+        
+        // Dibujar el logo
+        ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
     };
     
-    img.onerror = function() {
-        container.innerHTML = '<div class="text-red-500 p-4 text-center"><i class="ri-error-warning-line text-2xl"></i><br>Error al generar QR</div>';
-    };
+    // Ruta de tu logo (ajusta según donde esté)
+    logo.src = '/icons/icon-192.png'; // O la ruta correcta
+    
+    // Si no tienes logo como archivo, puedes usar el icono inline:
+    // logo.src = 'data:image/svg+xml;base64,...'; 
 }
 
 function setupQRButtons(container, url, nombre) {
