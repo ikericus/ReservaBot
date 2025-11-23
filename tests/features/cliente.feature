@@ -161,4 +161,4 @@ Característica: Detalle de cliente
   Escenario: Volver a lista de clientes
     Dado estoy en la página "/cliente?telefono=600123456"
     Cuando hago clic en "Clientes"
-    Entonces debería estar en la página "/clientes"
+    Entonces debería estar en la página "/clientes" 
