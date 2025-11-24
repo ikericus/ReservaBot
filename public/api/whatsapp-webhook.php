@@ -25,6 +25,7 @@ $data = json_decode($input, true);
 debug_log("Webhook recibido: " . $input);
 
 if (json_last_error() !== JSON_ERROR_NONE) {
+    error_log('Error decodificando JSON del webhook: ' . json_last_error_msg());
     http_response_code(400);
     echo json_encode(['error' => 'JSON inválido']);
     exit;

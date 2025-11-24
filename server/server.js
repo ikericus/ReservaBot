@@ -288,6 +288,8 @@ async function notifyWebApp(userId, event, data) {
         // Crear token para el webhook
         const token = jwt.sign(payload, WEBHOOK_SECRET, { expiresIn: '5m' });
         
+        logger.info(`Enviando webhook a ${webhookUrl} para usuario ${userId}, evento: ${event}`);
+
         await axios.post(webhookUrl, payload, {
             headers: {
                 'Content-Type': 'application/json',
@@ -443,7 +445,7 @@ app.get('/api/status', authenticateJWT, (req, res) => {
     const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
 
     logger.info(`Estado solicitado para usuario ${userId} desde IP: ${ip}`);
-        
+
     if (!clients.has(userId)) {
         logger.info(`Usuario ${userId} no conectado`);
         return res.json({

@@ -32,9 +32,7 @@ class WhatsAppWebhookHandler {
         if (!$event || !$userId) {
             throw new \InvalidArgumentException('Evento o userId inválido');
         }
-        
-        debug_log("Webhook recibido: {$event} para usuario {$userId}");
-        
+                
         switch ($event) {
             case 'qr_generated':
                 return $this->handleQRGenerated($userId, $eventData);
