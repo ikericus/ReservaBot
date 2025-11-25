@@ -1064,7 +1064,7 @@ code {
             startStatusCheck() {
                 if (this.statusInterval) return;
                 console.log('Iniciando verificación de estado...');
-                this.statusInterval = setInterval(() => this.checkStatus(), 3000);
+                this.statusInterval = setInterval(() => this.checkStatus(), 10000);
             }
 
             stopStatusCheck() {

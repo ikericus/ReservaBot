@@ -246,30 +246,59 @@ function createWhatsAppClient(userId) {
 // Función para manejar mensajes entrantes
 async function handleIncomingMessage(userId, message) {
     try {
-        const chat = await message.getChat();
-        const contact = await message.getContact();
+        // Extraer número directamente del mensaje (más confiable)
+        const phoneNumber = message.from.split('@')[0];
         
-        const messageData = {
+        let messageData = {
             id: message.id._serialized,
             from: message.from,
             to: message.to,
             body: message.body,
             type: message.type,
             timestamp: message.timestamp,
-            isForwarded: message.isForwarded,
-            isGroup: chat.isGroup,
-            chatName: chat.name,
-            contactName: contact.pushname || contact.number,
-            phoneNumber: contact.number
+            isForwarded: message.isForwarded || false,
+            phoneNumber: phoneNumber,
+            contactName: phoneNumber, // Por defecto usar número
+            isGroup: false,
+            chatName: null
         };
         
-        logger.info(`Mensaje entrante para usuario ${userId}: ${message.body}`);
+        // Intentar obtener chat (suele funcionar bien)
+        try {
+            const chat = await message.getChat();
+            if (chat) {
+                messageData.isGroup = chat.isGroup || false;
+                messageData.chatName = chat.name || null;
+            }
+        } catch (chatError) {
+            logger.warn(`No se pudo obtener chat: ${chatError.message}`);
+        }
+        
+        // Intentar obtener contacto con timeout
+        try {
+            const contact = await Promise.race([
+                message.getContact(),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout')), 2000)
+                )
+            ]);
+            
+            if (contact) {
+                messageData.contactName = contact.pushname || contact.name || phoneNumber;
+            }
+        } catch (contactError) {
+            // No es crítico, ya tenemos el número
+            logger.debug(`Contacto no disponible, usando número: ${phoneNumber}`);
+        }
+        
+        logger.info(`📥 Mensaje de ${messageData.contactName}: "${message.body.substring(0, 50)}..."`);
         
         // Enviar a la webapp
         await notifyWebApp(userId, 'message_received', messageData);
         
     } catch (error) {
-        logger.error(`Error procesando mensaje entrante:`, error);
+        logger.error(`❌ Error procesando mensaje:`, error.message);
+        // No lanzar el error para no romper el listener
     }
 }
 
