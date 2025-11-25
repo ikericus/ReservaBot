@@ -1093,15 +1093,16 @@ code {
                         return;
                     }
                     
-                    // Si cambió el estado, actualizar UI
-                    console.log('Estado actual:', this.currentStatus, 'Nuevo estado:', data.status);
+                    // ✅ PRIMERO: Mostrar QR SIEMPRE que esté disponible
+                    if (data.status === 'waiting_qr' && data.qr && this.elements.qrContainer) {
+                        this.updateQR(data.qr);
+                    }
+
+                    // ✅ SEGUNDO: Detectar cambios de estado (para notificaciones)
                     if (data.status !== this.currentStatus) {
                         if (data.status === 'connected' || data.status === 'ready') {
-                            this.showNotification('¡WhatsApp conectado correctamente!', 'success');
+                            this.showNotification('¡WhatsApp conectado!', 'success');
                             setTimeout(() => window.location.reload(), 1000);
-                        } else if (data.qr && this.elements.qrContainer) {
-                            console.log('Actualizando código QR...');
-                            this.updateQR(data.qr);
                         }
                         this.currentStatus = data.status;
                     }
