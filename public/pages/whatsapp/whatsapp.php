@@ -1084,7 +1084,7 @@ code {
                         return;
                     }
 
-                    console.log('Estado WhatsApp:', data.status, 'Servidor conectado:', data.serverConnected);
+                    console.log('Estado WhatsApp:', data.status, '. Servidor conectado:', data.serverConnected);
 
                     // Si el servidor no está disponible, mostrar warning
                     if (data.serverConnected === false) {
@@ -1094,6 +1094,7 @@ code {
                     }
                     
                     // Si cambió el estado, actualizar UI
+                    console.log('Estado actual:', this.currentStatus, 'Nuevo estado:', data.status);
                     if (data.status !== this.currentStatus) {
                         if (data.status === 'connected' || data.status === 'ready') {
                             this.showNotification('¡WhatsApp conectado correctamente!', 'success');
