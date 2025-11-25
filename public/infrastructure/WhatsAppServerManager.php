@@ -178,6 +178,14 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
         $url = $this->serverUrl . $endpoint;
         $token = $this->generarJWT($usuarioId);
         
+        // Timeouts diferenciados según operación
+        $timeout = match($endpoint) {
+            '/api/connect' => 60,      // Conexión inicial puede tardar hasta 1 minuto
+            '/api/send' => 15,         // Envío de mensajes
+            '/api/disconnect' => 10,   // Desconexión
+            default => 6               // Status y otros
+        };
+
         $headers = [
             'Content-Type: application/json',
             'Authorization: Bearer ' . $token

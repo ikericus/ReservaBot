@@ -1083,7 +1083,9 @@ code {
                         console.warn('Error obteniendo estado:', data.error);
                         return;
                     }
-                    
+
+                    console.log('Estado WhatsApp:', data.status, 'Servidor conectado:', data.serverConnected);
+
                     // Si el servidor no está disponible, mostrar warning
                     if (data.serverConnected === false) {
                         this.showNotification('Servidor WhatsApp no disponible. Mostrando último estado conocido.', 'warning');
@@ -1097,6 +1099,7 @@ code {
                             this.showNotification('¡WhatsApp conectado correctamente!', 'success');
                             setTimeout(() => window.location.reload(), 1000);
                         } else if (data.qr && this.elements.qrContainer) {
+                            console.log('Actualizando código QR...');
                             this.updateQR(data.qr);
                         }
                         this.currentStatus = data.status;
