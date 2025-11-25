@@ -302,7 +302,16 @@ async function notifyWebApp(userId, event, data) {
         logger.info(`Webhook enviado para usuario ${userId}, evento: ${event}`);
         
     } catch (error) {
-        logger.error(`Error enviando webhook (userId: ${userId}, evento: ${event}, data: ${JSON.stringify(data)}):`, error);
+        //logger.error(`Error enviando webhook (userId: ${userId}, evento: ${event}, data: ${JSON.stringify(data)}):`, error);
+        logger.error({  msg: "Error enviando webhook",
+                        userId,
+                        event,
+                        dataSummary: {
+                        keys: Object.keys(data),
+                        size: JSON.stringify(data).length
+                        },
+                        error: error.stack || error.message
+                    });
     }
 }
 

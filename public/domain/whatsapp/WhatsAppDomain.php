@@ -291,18 +291,44 @@ class WhatsAppDomain {
             $serverResponse = $this->serverManager->obtenerEstado($usuarioId);
             debug_log("Respuesta del servidor WhatsApp: " . json_encode($serverResponse));
             
-            // Sincronizar con BD local
-            $config = $this->obtenerConfiguracion($usuarioId);
-            
-            if ($serverResponse['status'] === 'connected' && isset($serverResponse['phoneNumber'])) {
-                $config->conectar($serverResponse['phoneNumber']);
-            } elseif ($serverResponse['status'] === 'waiting_qr' && isset($serverResponse['qr'])) {
-                $config->esperarQR($serverResponse['qr']);
-            } elseif ($serverResponse['status'] === 'disconnected') {
-                $config->desconectar();
+            // Sincronizar con BD local solo si la respuesta del servidor es exitosa
+            if ($serverResponse['success']) {
+                $config = $this->obtenerConfiguracion($usuarioId);
+                $cambioEstado = false;
+                
+                // Actualizar según respuesta del servidor
+                if ($serverResponse['status'] === 'connected' && isset($serverResponse['phoneNumber'])) {
+                    if ($config->getPhoneNumber() !== $serverResponse['phoneNumber'] || 
+                        $config->getStatus() !== 'connected') {
+                        debug_log("Sincronizando estado conectado con número: " . $serverResponse['phoneNumber']);
+                        $config->conectar($serverResponse['phoneNumber']);
+                        $cambioEstado = true;
+                    }
+                } elseif ($serverResponse['status'] === 'waiting_qr' && isset($serverResponse['qr'])) {
+                    if ($config->getStatus() !== 'waiting_qr') {
+                        debug_log("Sincronizando estado waiting_qr");
+                        $config->esperarQR($serverResponse['qr']);
+                        $cambioEstado = true;
+                    }
+                } elseif ($serverResponse['status'] === 'disconnected') {
+                    if ($config->getStatus() !== 'disconnected') {
+                        debug_log("Sincronizando estado disconnected");
+                        $config->desconectar();
+                        $cambioEstado = true;
+                    }
+                } elseif ($serverResponse['status'] === 'connecting') {
+                    if ($config->getStatus() !== 'connecting') {
+                        debug_log("Sincronizando estado connecting");
+                        $config->esperarQR(''); // Estado transitorio
+                        $cambioEstado = true;
+                    }
+                }
+                
+                // Solo guardar si hubo cambio
+                if ($cambioEstado) {
+                    $this->whatsappRepository->guardarConfiguracion($config);
+                }
             }
-            
-            $this->whatsappRepository->guardarConfiguracion($config);
             
             // Agregar mensaje descriptivo
             $serverResponse['message'] = match($serverResponse['status']) {
@@ -313,10 +339,13 @@ class WhatsAppDomain {
                 default => 'Estado desconocido'
             };
             
+            $serverResponse['serverConnected'] = true;
             return $serverResponse;
             
         } catch (\RuntimeException $e) {
-            // Si falla servidor, usar datos locales
+            debug_log("Error conectando con servidor WhatsApp: " . $e->getMessage());
+            
+            // Si falla servidor, usar datos locales como fallback
             $config = $this->obtenerConfiguracion($usuarioId);
             
             return [
@@ -324,8 +353,9 @@ class WhatsAppDomain {
                 'status' => $config->getStatus(),
                 'phoneNumber' => $config->getPhoneNumber(),
                 'lastActivity' => $config->getLastActivity()?->format('Y-m-d H:i:s'),
-                'message' => 'Mostrando último estado conocido',
-                'serverConnected' => false
+                'message' => 'Mostrando último estado conocido (servidor no disponible)',
+                'serverConnected' => false,
+                'warning' => 'No se pudo conectar con el servidor de WhatsApp. Mostrando último estado conocido.'
             ];
         }
     }

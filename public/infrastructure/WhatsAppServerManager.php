@@ -81,22 +81,37 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
     }
     
     public function obtenerEstado(int $usuarioId): array {
-        $response = $this->llamarAPI('/api/status', 'GET', null, $usuarioId);
-        
-        $status = $response['status'] ?? 'disconnected';
-        
-        // Unificar 'ready' a 'connected'
-        if ($status === 'ready') {
-            $status = 'connected';
+        try {
+            $response = $this->llamarAPI('/api/status', 'GET', null, $usuarioId);
+            
+            $status = $response['status'] ?? 'disconnected';
+            
+            // Unificar 'ready' a 'connected'
+            if ($status === 'ready') {
+                $status = 'connected';
+            }
+            
+            // Extraer número de teléfono de diferentes ubicaciones posibles
+            $phoneNumber = null;
+            if (isset($response['info']['me']['user'])) {
+                $phoneNumber = $response['info']['me']['user'];
+            } elseif (isset($response['phoneNumber'])) {
+                $phoneNumber = $response['phoneNumber'];
+            } elseif (isset($response['info']['phoneNumber'])) {
+                $phoneNumber = $response['info']['phoneNumber'];
+            }
+            
+            return [
+                'success' => true,
+                'status' => $status,
+                'qr' => $response['qr'] ?? null,
+                'info' => $response['info'] ?? null,
+                'phoneNumber' => $phoneNumber
+            ];
+        } catch (\RuntimeException $e) {
+            debug_log("Error en obtenerEstado: " . $e->getMessage());
+            throw $e; // Re-lanzar para que WhatsAppDomain maneje el fallback
         }
-        
-        return [
-            'success' => true,
-            'status' => $status,
-            'qr' => $response['qr'] ?? null,
-            'info' => $response['info'] ?? null,
-            'phoneNumber' => $response['info']['me']['user'] ?? null
-        ];
     }
     
     public function enviarMensaje(int $usuarioId, string $telefono, string $mensaje, ?array $media = null): array {
@@ -162,7 +177,7 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
     private function llamarAPI(string $endpoint, string $method, ?array $data, int $usuarioId): array {
         $url = $this->serverUrl . $endpoint;
         $token = $this->generarJWT($usuarioId);
-         
+        
         $headers = [
             'Content-Type: application/json',
             'Authorization: Bearer ' . $token
@@ -173,24 +188,30 @@ class WhatsAppServerManager implements IWhatsAppServerManager {
                 'method' => $method,
                 'header' => implode("\r\n", $headers),
                 'content' => $data ? json_encode($data) : null,
-                'timeout' => 60,
+                'timeout' => 6,
                 'ignore_errors' => true
             ]
         ];
+        
+        debug_log("Llamando a WhatsApp API: $method $url");
         
         $context = stream_context_create($options);
         $result = @file_get_contents($url, false, $context);
         
         if ($result === false) {
-            throw new \RuntimeException('No se pudo conectar con el servidor WhatsApp');
+            $error = error_get_last();
+            debug_log("Error conectando con servidor WhatsApp: " . ($error['message'] ?? 'Unknown'));
+            throw new \RuntimeException('No se pudo conectar con el servidor WhatsApp: ' . ($error['message'] ?? 'Sin conexión'));
         }
         
         $response = json_decode($result, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
+            debug_log("Respuesta inválida del servidor: " . $result);
             throw new \RuntimeException('Respuesta inválida del servidor WhatsApp');
         }
-
+        
+        debug_log("Respuesta del servidor: " . json_encode($response));
         return $response;
     }
 

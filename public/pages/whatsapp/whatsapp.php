@@ -27,16 +27,45 @@ $whatsappConectado = false;
 if ($tieneAccesoWhatsApp) {
     try {
         $whatsappDomain = getContainer()->getWhatsAppDomain();
-        $config = $whatsappDomain->obtenerConfiguracion($userId);
         
+        // PRIMERO: Intentar obtener estado real del servidor
+        try {
+            $estadoServidor = $whatsappDomain->obtenerEstadoWhatsApp($userId);
+            $connectionStatus = $estadoServidor['status'];
+            $phoneNumber = $estadoServidor['phoneNumber'] ?? null;
+            $serverConnected = $estadoServidor['serverConnected'] ?? true;
+            
+            debug_log("Estado obtenido del servidor WhatsApp: $connectionStatus");
+            
+            // Si el servidor respondió con warning, mostrarlo al usuario
+            if (!empty($estadoServidor['warning'])) {
+                setFlashError($estadoServidor['warning']);
+            }
+        } catch (Exception $e) {
+            debug_log("Error conectando con servidor WhatsApp: " . $e->getMessage());
+            // Si falla el servidor, usar estado local como fallback
+            $config = $whatsappDomain->obtenerConfiguracion($userId);
+            $connectionStatus = $config->getStatus();
+            $phoneNumber = $config->getPhoneNumber();
+            $lastActivity = $config->getLastActivity();
+            $serverConnected = false;
+            
+            setFlashError('No se pudo conectar con el servidor de WhatsApp. Mostrando último estado conocido.');
+        }
+        
+        // Obtener configuración de BD para otros datos (auto_mensajes, etc)
+        $config = $whatsappDomain->obtenerConfiguracion($userId);
         $whatsappConfig = $config->toArray();
-        $connectionStatus = $config->getStatus();
-        $phoneNumber = $config->getPhoneNumber();
-        $lastActivity = $config->getLastActivity();
+        if (!isset($lastActivity)) {
+            $lastActivity = $config->getLastActivity();
+        }
         
         // Verificar si WhatsApp está realmente conectado
         $whatsappConectado = ($connectionStatus === 'connected' || $connectionStatus === 'ready');
+        
+        debug_log("Estado final: $connectionStatus, Conectado: " . ($whatsappConectado ? 'Si' : 'No') . ", Servidor: " . ($serverConnected ? 'OK' : 'No disponible'));
     } catch (Exception $e) {
+        error_log('Error al cargar configuración de WhatsApp: ' . $e->getMessage());
         setFlashError('Error al cargar configuración de WhatsApp: ' . $e->getMessage());
     }
 }
@@ -524,6 +553,22 @@ code {
                     <?php endif; ?>
                 </div>
                 
+                <?php if (isset($serverConnected) && !$serverConnected): ?>
+                    <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <i class="ri-alert-line text-yellow-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-800">
+                                    No se pudo conectar con el servidor de WhatsApp. 
+                                    Mostrando último estado conocido.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Card de mensajes automáticos ACTUALIZADO CON BOTONES PERSONALIZAR -->
                 <div class="whatsapp-card rounded-xl shadow-lg p-6 <?php echo ($connectionStatus !== 'connected' && $connectionStatus !== 'ready') ? 'opacity-50 pointer-events-none' : ''; ?>">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -1034,20 +1079,32 @@ code {
                     const response = await fetch('/api/whatsapp-status');
                     const data = await response.json();
                     
-                    if (data.success && data.status !== this.currentStatus) {
-                        // Estado cambió, recargar página para actualizar UI
+                    if (!data.success) {
+                        console.warn('Error obteniendo estado:', data.error);
+                        return;
+                    }
+                    
+                    // Si el servidor no está disponible, mostrar warning
+                    if (data.serverConnected === false) {
+                        this.showNotification('Servidor WhatsApp no disponible. Mostrando último estado conocido.', 'warning');
+                        this.stopStatusCheck(); // No seguir verificando si el servidor no está disponible
+                        return;
+                    }
+                    
+                    // Si cambió el estado, actualizar UI
+                    if (data.status !== this.currentStatus) {
                         if (data.status === 'connected' || data.status === 'ready') {
                             this.showNotification('¡WhatsApp conectado correctamente!', 'success');
                             setTimeout(() => window.location.reload(), 1000);
                         } else if (data.qr && this.elements.qrContainer) {
                             this.updateQR(data.qr);
-                        } else if (data.status === 'disconnected') {
-                            this.showNotification('WhatsApp ha sido desconectado', 'warning');
-                            setTimeout(() => window.location.reload(), 1000);
                         }
+                        this.currentStatus = data.status;
                     }
                 } catch (error) {
                     console.error('Error verificando estado:', error);
+                    this.showNotification('Error de conexión con el servidor', 'error');
+                    this.stopStatusCheck();
                 }
             }
 
