@@ -148,7 +148,7 @@ async function removeSessionFromFile(userId) {
         logger.error('Error eliminando sesión:', error);
     }
 }
-
+ 
 async function restoreAllSessions() {
     const savedSessions = await loadActiveSessions();
     const userIds = Object.keys(savedSessions);
