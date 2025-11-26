@@ -523,7 +523,7 @@ app.post('/api/connect', authenticateJWT, async (req, res) => {
                 error: 'Máximo número de clientes alcanzado'
             });
         }
-        
+         
         logger.info(`Iniciando conexión para usuario ${userId}`);
         
         // Crear nuevo cliente
