@@ -561,6 +561,8 @@ app.get('/api/status', authenticateJWT, (req, res) => {
     const userId = req.userId;
     
     logger.info(`Solicitud de estado para usuario ${userId}`);
+    logger.info(`Clientes en memoria: ${Array.from(clients.keys()).join(', ')}`);
+    
     if (!clients.has(userId)) {
         logger.info(`Usuario ${userId} no está conectado`);
         return res.json({
