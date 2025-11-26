@@ -560,7 +560,9 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
 app.get('/api/status', authenticateJWT, (req, res) => {
     const userId = req.userId;
     
+    logger.info(`Solicitud de estado para usuario ${userId}`);
     if (!clients.has(userId)) {
+        logger.info(`Usuario ${userId} no está conectado`);
         return res.json({
             success: true,
             status: 'disconnected',
