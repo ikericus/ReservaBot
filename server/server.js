@@ -411,6 +411,8 @@ app.post('/api/connect', authenticateJWT, async (req, res) => {
         
         // Inicializar cliente
         await client.initialize();
+
+        logger.info(`Proceso de conexión iniciado para usuario ${userId}`);
         
         res.json({
             success: true,

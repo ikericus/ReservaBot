@@ -282,6 +282,7 @@ if (!isset($conversationsPageContent)) {
         bottom: 0;
         z-index: 50;
         background: white;
+        overflow: hidden;
     }
     
     .chat-area.mobile-active {
