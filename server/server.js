@@ -562,7 +562,17 @@ app.get('/api/status', authenticateJWT, (req, res) => {
     
     logger.info(`Solicitud de estado para usuario ${userId}`);
     logger.info(`Clientes en memoria: ${Array.from(clients.keys()).join(', ')}`);
+
+    // ⭐ CRÍTICO: Ver tipos de cada key
+    for (const [key, value] of clients) {
+        logger.info(`  - Key: ${key} (tipo: ${typeof key}), status: ${value.status}`);
+    }
     
+    logger.info(`¿Existe ${userId}? ${clients.has(userId)}`);
+    logger.info(`¿Existe "${userId}"? ${clients.has(String(userId))}`);
+    logger.info(`¿Existe ${parseInt(userId)}? ${clients.has(parseInt(userId))}`);
+    
+
     if (!clients.has(userId)) {
         logger.info(`Usuario ${userId} no está conectado`);
         return res.json({
