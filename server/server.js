@@ -756,11 +756,11 @@ async function startServer() {
 
 startServer();
 
-process.on('SIGINT', async () => {
+// Manejo de cierre graceful
+const gracefulShutdown = async () => {
     logger.info('🛑 Cerrando servidor...');
     
-    await saveActiveSessions();
-    
+    // Solo destruir clientes (sin logout para mantener sesión)
     for (const [userId, clientData] of clients) {
         try {
             if (clientData.client) {
@@ -773,7 +773,10 @@ process.on('SIGINT', async () => {
     
     logger.info('✅ Servidor cerrado correctamente');
     process.exit(0);
-});
+};
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
 
 process.on('uncaughtException', (error) => {
     logger.error('Excepción no capturada:', error);
@@ -782,6 +785,6 @@ process.on('uncaughtException', (error) => {
 
 process.on('unhandledRejection', (reason, promise) => {
     logger.error('Promesa rechazada no manejada:', reason);
-}); 
+});
 
 module.exports = app;
