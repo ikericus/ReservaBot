@@ -1,4 +1,4 @@
-// server.js - Servidor WhatsApp simplificado y estable para ReservaBot
+// server.js - Servidor WhatsApp con persistencia de sesiones
 require('dotenv').config();
 
 const express = require('express');
@@ -14,7 +14,6 @@ const fs = require('fs');
 
 // Importar whatsapp-web.js
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
-const { log } = require('console');
 
 // Configuración
 const PORT = process.env.PORT || 3001;
@@ -23,6 +22,9 @@ const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 const WEBAPP_URL = process.env.WEBAPP_URL || 'http://localhost';
 const MAX_CLIENTS = parseInt(process.env.MAX_CLIENTS) || 50;
 const SESSIONS_DIR = process.env.SESSIONS_DIR || './sessions';
+
+// ⭐ NUEVO: Archivo de persistencia
+const ACTIVE_SESSIONS_FILE = './active_sessions.json';
 
 // Verificar configuración
 if (!JWT_SECRET || !WEBHOOK_SECRET) {
@@ -48,11 +50,9 @@ const logger = winston.createLogger({
                 winston.format.simple()
             )
         }),
-        // Solo mensajes "info" (no incluye warn ni error)
         new winston.transports.File({
             filename: './logs/info.log',
             level: 'info',
-            // Este filtro evita que se incluyan mensajes de nivel superior (warn/error)
             format: winston.format((info) => {
                 return info.level === 'info' ? info : false;
             })()
@@ -71,6 +71,108 @@ const logger = winston.createLogger({
 const clients = new Map(); // userId -> { client, qr, status, info }
 const qrCodes = new Map(); // userId -> qr string
 
+// ==================== FUNCIONES DE PERSISTENCIA ====================
+
+/**
+ * ⭐ NUEVO: Guarda las sesiones activas en disco
+ */
+async function saveActiveSessions() {
+    try {
+        const sessionsData = {};
+        
+        for (const [userId, clientData] of clients) {
+            // Solo guardar metadata, no el cliente
+            sessionsData[userId] = {
+                userId: userId,
+                status: clientData.status,
+                phoneNumber: clientData.info?.wid?.user || null,
+                pushname: clientData.info?.pushname || null,
+                lastActivity: new Date().toISOString()
+            };
+        }
+        
+        await fs.promises.writeFile(
+            ACTIVE_SESSIONS_FILE, 
+            JSON.stringify(sessionsData, null, 2)
+        );
+        
+    } catch (error) {
+        logger.error('Error guardando sesiones:', error);
+    }
+}
+
+/**
+ * ⭐ NUEVO: Carga las sesiones activas desde disco
+ */
+async function loadActiveSessions() {
+    try {
+        const data = await fs.promises.readFile(ACTIVE_SESSIONS_FILE, 'utf-8');
+        const sessionsData = JSON.parse(data);
+        
+        return sessionsData;
+        
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            return {};
+        }
+        logger.error('Error cargando sesiones:', error);
+        return {};
+    }
+}
+
+/**
+ * ⭐ NUEVO: Elimina una sesión del archivo
+ */
+async function removeSessionFromFile(userId) {
+    try {
+        const sessions = await loadActiveSessions();
+        delete sessions[userId];
+        await fs.promises.writeFile(
+            ACTIVE_SESSIONS_FILE, 
+            JSON.stringify(sessions, null, 2)
+        );
+    } catch (error) {
+        logger.error('Error eliminando sesión:', error);
+    }
+}
+
+/**
+ * ⭐ NUEVO: Restaura todas las sesiones al iniciar
+ */
+async function restoreAllSessions() {
+    const savedSessions = await loadActiveSessions();
+    const userIds = Object.keys(savedSessions);
+    
+    if (userIds.length === 0) {
+        return;
+    }
+    
+    for (const userId of userIds) {
+        try {
+            // Crear y conectar cliente
+            const client = createWhatsAppClient(userId);
+            
+            clients.set(userId, {
+                client: client,
+                status: 'connecting',
+                qr: null,
+                info: null
+            });
+            
+            // Inicializar (usará LocalAuth para reconectar)
+            await client.initialize();
+            
+            // Esperar un poco entre reconexiones
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+        } catch (error) {
+            logger.error(`Error restaurando usuario ${userId}:`, error.message);
+        }
+    }
+}
+
+// ==================== FIN FUNCIONES DE PERSISTENCIA ====================
+
 // Configurar Express
 const app = express();
 
@@ -86,8 +188,8 @@ app.use(cors({
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100, // máximo 100 requests por ventana
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     message: { error: 'Demasiadas peticiones, intenta más tarde' }
 });
 app.use('/api/', limiter);
@@ -157,6 +259,9 @@ function createWhatsAppClient(userId) {
                 clients.get(userId).status = 'waiting_qr';
             }
             
+            // ⭐ NUEVO: Guardar sesiones
+            await saveActiveSessions();
+            
             // Notificar a la webapp (opcional)
             notifyWebApp(userId, 'qr_generated', { qr: qrDataUrl });
             
@@ -181,6 +286,9 @@ function createWhatsAppClient(userId) {
             // Limpiar QR
             qrCodes.delete(userId);
             
+            // ⭐ NUEVO: Guardar sesiones
+            await saveActiveSessions();
+            
             // Notificar a la webapp
             notifyWebApp(userId, 'connected', {
                 phoneNumber: info.wid.user,
@@ -192,15 +300,18 @@ function createWhatsAppClient(userId) {
         }
     });
 
-    client.on('authenticated', () => {
+    client.on('authenticated', async () => {
         logger.info(`Cliente ${userId} autenticado correctamente`);
         
         if (clients.has(userId)) {
             clients.get(userId).status = 'authenticated';
         }
+        
+        // ⭐ NUEVO: Guardar sesiones
+        await saveActiveSessions();
     });
 
-    client.on('auth_failure', (msg) => {
+    client.on('auth_failure', async (msg) => {
         logger.error(`Fallo de autenticación para usuario ${userId}:`, msg);
         
         // Actualizar estado
@@ -208,16 +319,26 @@ function createWhatsAppClient(userId) {
             clients.get(userId).status = 'auth_failed';
         }
         
+        // ⭐ NUEVO: Guardar sesiones
+        await saveActiveSessions();
+        
         // Notificar error
         notifyWebApp(userId, 'auth_failed', { error: msg });
     });
 
-    client.on('disconnected', (reason) => {
+    client.on('disconnected', async (reason) => {
         logger.info(`Cliente ${userId} desconectado: ${reason}`);
         
         // Limpiar cliente
         clients.delete(userId);
         qrCodes.delete(userId);
+        
+        // ⭐ NUEVO: Si fue logout, eliminar; si no, mantener
+        if (reason === 'LOGOUT') {
+            await removeSessionFromFile(userId);
+        } else {
+            await saveActiveSessions();
+        }
         
         // Notificar desconexión
         notifyWebApp(userId, 'disconnected', { reason: reason });
@@ -225,7 +346,6 @@ function createWhatsAppClient(userId) {
 
     client.on('message', async (message) => {
         try {
-            logger.info(`Mensaje recibido para usuario ${userId} de ${message.from}: ${message.body}`);
             await handleIncomingMessage(userId, message);
         } catch (error) {
             logger.error(`Error procesando mensaje para usuario ${userId}:`, error);
@@ -233,12 +353,9 @@ function createWhatsAppClient(userId) {
     });
 
     client.on('message_ack', async (message, ack) => {
-        
         logger.info(`Mensaje ack para usuario ${userId}: ${message.id._serialized}, ack: ${ack}`);
-                
         notifyWebApp(userId, 'message_ack', { ack: ack, messageId: message.id._serialized});
     });
-
 
     return client;
 }
@@ -246,7 +363,7 @@ function createWhatsAppClient(userId) {
 // Función para manejar mensajes entrantes
 async function handleIncomingMessage(userId, message) {
     try {
-        // Extraer número directamente del mensaje (más confiable)
+        // Extraer número directamente (más confiable)
         const phoneNumber = message.from.split('@')[0];
         
         let messageData = {
@@ -258,12 +375,12 @@ async function handleIncomingMessage(userId, message) {
             timestamp: message.timestamp,
             isForwarded: message.isForwarded || false,
             phoneNumber: phoneNumber,
-            contactName: phoneNumber, // Por defecto usar número
+            contactName: phoneNumber, // Por defecto
             isGroup: false,
             chatName: null
         };
         
-        // Intentar obtener chat (suele funcionar bien)
+        // Intentar obtener chat
         try {
             const chat = await message.getChat();
             if (chat) {
@@ -271,7 +388,7 @@ async function handleIncomingMessage(userId, message) {
                 messageData.chatName = chat.name || null;
             }
         } catch (chatError) {
-            logger.warn(`No se pudo obtener chat: ${chatError.message}`);
+            logger.debug(`No se pudo obtener chat: ${chatError.message}`);
         }
         
         // Intentar obtener contacto con timeout
@@ -287,8 +404,7 @@ async function handleIncomingMessage(userId, message) {
                 messageData.contactName = contact.pushname || contact.name || phoneNumber;
             }
         } catch (contactError) {
-            // No es crítico, ya tenemos el número
-            logger.debug(`Contacto no disponible, usando número: ${phoneNumber}`);
+            logger.debug(`Contacto no disponible: ${phoneNumber}`);
         }
         
         logger.info(`📥 Mensaje de ${messageData.contactName}: "${message.body.substring(0, 50)}..."`);
@@ -297,8 +413,7 @@ async function handleIncomingMessage(userId, message) {
         await notifyWebApp(userId, 'message_received', messageData);
         
     } catch (error) {
-        logger.error(`❌ Error procesando mensaje:`, error.message);
-        // No lanzar el error para no romper el listener
+        logger.error(`Error procesando mensaje entrante:`, error.message);
     }
 }
 
@@ -317,8 +432,6 @@ async function notifyWebApp(userId, event, data) {
         // Crear token para el webhook
         const token = jwt.sign(payload, WEBHOOK_SECRET, { expiresIn: '5m' });
         
-        logger.info(`Enviando webhook a ${webhookUrl} para usuario ${userId}, evento: ${event}`);
-
         await axios.post(webhookUrl, payload, {
             headers: {
                 'Content-Type': 'application/json',
@@ -331,16 +444,7 @@ async function notifyWebApp(userId, event, data) {
         logger.info(`Webhook enviado para usuario ${userId}, evento: ${event}`);
         
     } catch (error) {
-        //logger.error(`Error enviando webhook (userId: ${userId}, evento: ${event}, data: ${JSON.stringify(data)}):`, error);
-        logger.error({  msg: "Error enviando webhook",
-                        userId,
-                        event,
-                        dataSummary: {
-                        keys: Object.keys(data),
-                        size: JSON.stringify(data).length
-                        },
-                        error: error.stack || error.message
-                    });
+        logger.error(`Error enviando webhook (userId: ${userId}, evento: ${event}):`, error.message);
     }
 }
 
@@ -350,30 +454,21 @@ async function notifyWebApp(userId, event, data) {
 app.get('/health', (req, res) => {
     const uptime = process.uptime();
     const activeClients = Array.from(clients.values()).filter(c => c.status === 'ready').length;
-
-    // Obtener IP real del solicitante
-    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
-
-    logger.info(`Health check solicitado desde IP: ${ip}. Uptime: ${uptime}s, Clientes activos: ${activeClients}, Total clientes: ${clients.size}, Conexiones pendientes: ${qrCodes.size}`);
-
+    
     res.json({
         status: 'healthy',
         uptime: uptime,
         timestamp: new Date().toISOString(),
         activeClients: activeClients,
         totalClients: clients.size,
-        pendingConnections: qrCodes.size,
-        requestIP: ip
+        pendingConnections: qrCodes.size
     });
 });
-
 
 // Conectar usuario
 app.post('/api/connect', authenticateJWT, async (req, res) => {
     const userId = req.userId;
     
-    logger.info(`Solicitud de conexión para usuario ${userId}`);
-
     try {
         // Verificar si ya existe
         if (clients.has(userId)) {
@@ -411,8 +506,6 @@ app.post('/api/connect', authenticateJWT, async (req, res) => {
         
         // Inicializar cliente
         await client.initialize();
-
-        logger.info(`Proceso de conexión iniciado para usuario ${userId}`);
         
         res.json({
             success: true,
@@ -458,6 +551,9 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
         clients.delete(userId);
         qrCodes.delete(userId);
         
+        // ⭐ NUEVO: Eliminar de persistencia
+        await removeSessionFromFile(userId);
+        
         res.json({
             success: true,
             message: 'Usuario desconectado correctamente'
@@ -469,6 +565,7 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
         // Forzar limpieza
         clients.delete(userId);
         qrCodes.delete(userId);
+        await removeSessionFromFile(userId);
         
         res.json({
             success: true,
@@ -481,13 +578,7 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
 app.get('/api/status', authenticateJWT, (req, res) => {
     const userId = req.userId;
     
-    // Obtener IP real del solicitante
-    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
-
-    logger.info(`Estado solicitado para usuario ${userId} desde IP: ${ip}`);
-
     if (!clients.has(userId)) {
-        logger.info(`Usuario ${userId} no conectado`);
         return res.json({
             success: true,
             status: 'disconnected',
@@ -498,8 +589,6 @@ app.get('/api/status', authenticateJWT, (req, res) => {
     const clientData = clients.get(userId);
     const qr = qrCodes.get(userId) || null;
     
-    logger.info(`Estado para usuario ${userId}: ${clientData.status}`);
-
     res.json({
         success: true,
         status: clientData.status,
@@ -513,14 +602,12 @@ app.post('/api/isuser', authenticateJWT, async (req, res) => {
     const phoneNum = req.phoneNum;
     const userId = req.userId;    
 
-    logger.info(`Comprobando nº para usuario ${userId} a ${phoneNum}`);
-
     try {
         // Validar parámetros
         if (!phoneNum) {
             return res.status(400).json({
                 success: false,
-                error: 'Parámetro "phoneNum" es obligatario '
+                error: 'Parámetro "phoneNum" es obligatorio'
             });
         }
         
@@ -545,10 +632,10 @@ app.post('/api/isuser', authenticateJWT, async (req, res) => {
         // Formatear número
         const user = phoneNum.includes('@') ? phoneNum : `${phoneNum}@c.us`;
         
-        logger.info(`Enviando mensaje de usuario ${userId} a ${phoneNumber}`);
+        logger.info(`Comprobando si ${phoneNum} es usuario de WhatsApp`);
         
-        // Enviar mensaje
-        const isRegistered  = await client.isRegisteredUser(user);
+        // Verificar usuario
+        const isRegistered = await client.isRegisteredUser(user);
         
         res.json({
             success: true,
@@ -569,7 +656,7 @@ app.post('/api/isuser', authenticateJWT, async (req, res) => {
 app.post('/api/send', authenticateJWT, async (req, res) => {
     const userId = req.userId;
     const { to, message, type = 'text' } = req.body;
-    logger.info(`Enviando mensaje para usuario ${userId} a ${to}`);
+    
     try {
         // Validar parámetros
         if (!to || !message) {
@@ -624,7 +711,7 @@ app.post('/api/send', authenticateJWT, async (req, res) => {
 // Obtener chats
 app.get('/api/chats', authenticateJWT, async (req, res) => {
     const userId = req.userId;
-    logger.info(`Obteniendo chats para usuario ${userId}`);
+    
     try {
         if (!clients.has(userId) || clients.get(userId).status !== 'ready') {
             return res.status(400).json({
@@ -674,27 +761,47 @@ app.use((error, req, res, next) => {
 
 // Ruta catch-all
 app.use('*', (req, res) => {
-    logger.warn(`Endpoint no encontrado: ${req.method} ${req.originalUrl}`);
     res.status(404).json({
         success: false,
         error: 'Endpoint no encontrado'
     });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    logger.info(`🚀 Servidor WhatsApp iniciado en puerto ${PORT}`);
-    logger.info(`📱 Máximo de clientes: ${MAX_CLIENTS}`);
-    logger.info(`🔐 JWT Secret configurado: ${!!JWT_SECRET}`);
-    logger.info(`🌐 Web App URL: ${WEBAPP_URL}`);
-    logger.info(`📂 Directorio de sesiones: ${SESSIONS_DIR}`);
-});
+// ⭐ NUEVO: Iniciar servidor con restauración de sesiones
+async function startServer() {
+    try {
+        logger.info('🚀 Iniciando servidor WhatsApp...');
+        
+        // Restaurar sesiones previas
+        await restoreAllSessions();
+        
+        // Iniciar servidor HTTP
+        app.listen(PORT, () => {
+            logger.info(`✅ Servidor WhatsApp iniciado en puerto ${PORT}`);
+            logger.info(`📱 Máximo de clientes: ${MAX_CLIENTS}`);
+            logger.info(`🔐 JWT Secret configurado: ${!!JWT_SECRET}`);
+            logger.info(`🌐 Web App URL: ${WEBAPP_URL}`);
+            logger.info(`📂 Directorio de sesiones: ${SESSIONS_DIR}`);
+            logger.info(`📊 Sesiones activas: ${clients.size}`);
+        });
+        
+    } catch (error) {
+        logger.error('❌ Error iniciando servidor:', error);
+        process.exit(1);
+    }
+}
+
+// Iniciar
+startServer();
 
 // Manejo de cierre graceful
 process.on('SIGINT', async () => {
-    logger.info('Cerrando servidor...');
+    logger.info('🛑 Cerrando servidor...');
     
-    // Desconectar todos los clientes
+    // ⭐ NUEVO: Guardar sesiones antes de cerrar
+    await saveActiveSessions();
+    
+    // Desconectar todos los clientes (sin logout, para mantener sesión)
     for (const [userId, clientData] of clients) {
         try {
             if (clientData.client) {
@@ -705,6 +812,7 @@ process.on('SIGINT', async () => {
         }
     }
     
+    logger.info('✅ Servidor cerrado correctamente');
     process.exit(0);
 });
 
