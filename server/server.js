@@ -107,14 +107,40 @@ async function saveActiveSessions() {
 async function loadActiveSessions() {
     try {
         const data = await fs.promises.readFile(ACTIVE_SESSIONS_FILE, 'utf-8');
+        
+        // Verificar que no esté vacío
+        if (!data || data.trim() === '') {
+            logger.warn('Archivo de sesiones vacío, inicializando nuevo archivo');
+            await fs.promises.writeFile(ACTIVE_SESSIONS_FILE, '{}');
+            return {};
+        }
+        
         const sessionsData = JSON.parse(data);
         
         return sessionsData;
         
     } catch (error) {
         if (error.code === 'ENOENT') {
+            // Archivo no existe, crear uno vacío
+            await fs.promises.writeFile(ACTIVE_SESSIONS_FILE, '{}');
             return {};
         }
+        
+        if (error instanceof SyntaxError) {
+            // JSON corrupto, hacer backup y crear nuevo
+            logger.error('Archivo de sesiones corrupto, creando backup y reiniciando');
+            try {
+                const backupFile = `${ACTIVE_SESSIONS_FILE}.backup.${Date.now()}`;
+                await fs.promises.rename(ACTIVE_SESSIONS_FILE, backupFile);
+                logger.info(`Backup guardado en: ${backupFile}`);
+            } catch (e) {
+                // Si falla el backup, solo eliminar
+                await fs.promises.unlink(ACTIVE_SESSIONS_FILE).catch(() => {});
+            }
+            await fs.promises.writeFile(ACTIVE_SESSIONS_FILE, '{}');
+            return {};
+        }
+        
         logger.error('Error cargando sesiones:', error);
         return {};
     }
