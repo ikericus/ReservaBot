@@ -780,6 +780,6 @@ process.on('uncaughtException', (error) => {
 
 process.on('unhandledRejection', (reason, promise) => {
     logger.error('Promesa rechazada no manejada:', reason);
-});
+}); 
 
 module.exports = app;
