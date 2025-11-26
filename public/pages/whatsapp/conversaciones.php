@@ -146,6 +146,7 @@ if (!isset($conversationsPageContent)) {
     max-height: 120px;
     min-height: 48px;
     width: 100%;
+    overflow: hidden;
 }
 
 .chat-input:focus {
