@@ -144,11 +144,16 @@ async function restoreAllSessions() {
     const userIds = Object.keys(savedSessions);
     
     if (userIds.length === 0) {
+        logger.info('No hay sesiones previas para restaurar');
         return;
     }
     
+    logger.info(`🔄 Restaurando ${userIds.length} sesión(es) guardada(s)...`);
+    
     for (const userId of userIds) {
         try {
+            logger.info(`Restaurando cliente para usuario ${userId}`);
+            
             // Crear y conectar cliente
             const client = createWhatsAppClient(userId);
             
@@ -166,9 +171,11 @@ async function restoreAllSessions() {
             await new Promise(resolve => setTimeout(resolve, 2000));
             
         } catch (error) {
-            logger.error(`Error restaurando usuario ${userId}:`, error.message);
+            logger.error(`Error restaurando sesión usuario ${userId}:`, error.message);
         }
     }
+    
+    logger.info('✅ Proceso de restauración completado');
 }
 
 // ==================== FIN FUNCIONES DE PERSISTENCIA ====================
