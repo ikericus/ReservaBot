@@ -91,6 +91,8 @@ async function saveActiveSessions() {
             ACTIVE_SESSIONS_FILE, 
             JSON.stringify(sessionsData, null, 2)
         );
+
+        logger.info('Sesiones guardadas correctamente');
         
     } catch (error) {
         logger.error('Error guardando sesiones:', error);
