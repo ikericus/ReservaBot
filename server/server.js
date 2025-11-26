@@ -68,20 +68,16 @@ const logger = winston.createLogger({
 });
 
 // Variables globales
-const clients = new Map(); // userId -> { client, qr, status, info }
-const qrCodes = new Map(); // userId -> qr string
+const clients = new Map();
+const qrCodes = new Map();
 
 // ==================== FUNCIONES DE PERSISTENCIA ====================
 
-/**
- * ⭐ NUEVO: Guarda las sesiones activas en disco
- */
 async function saveActiveSessions() {
     try {
         const sessionsData = {};
         
         for (const [userId, clientData] of clients) {
-            // Solo guardar metadata, no el cliente
             sessionsData[userId] = {
                 userId: userId,
                 status: clientData.status,
@@ -101,14 +97,10 @@ async function saveActiveSessions() {
     }
 }
 
-/**
- * ⭐ NUEVO: Carga las sesiones activas desde disco
- */
 async function loadActiveSessions() {
     try {
         const data = await fs.promises.readFile(ACTIVE_SESSIONS_FILE, 'utf-8');
         
-        // Verificar que no esté vacío
         if (!data || data.trim() === '') {
             logger.warn('Archivo de sesiones vacío, inicializando nuevo archivo');
             await fs.promises.writeFile(ACTIVE_SESSIONS_FILE, '{}');
@@ -116,25 +108,21 @@ async function loadActiveSessions() {
         }
         
         const sessionsData = JSON.parse(data);
-        
         return sessionsData;
         
     } catch (error) {
         if (error.code === 'ENOENT') {
-            // Archivo no existe, crear uno vacío
             await fs.promises.writeFile(ACTIVE_SESSIONS_FILE, '{}');
             return {};
         }
         
         if (error instanceof SyntaxError) {
-            // JSON corrupto, hacer backup y crear nuevo
             logger.error('Archivo de sesiones corrupto, creando backup y reiniciando');
             try {
                 const backupFile = `${ACTIVE_SESSIONS_FILE}.backup.${Date.now()}`;
                 await fs.promises.rename(ACTIVE_SESSIONS_FILE, backupFile);
                 logger.info(`Backup guardado en: ${backupFile}`);
             } catch (e) {
-                // Si falla el backup, solo eliminar
                 await fs.promises.unlink(ACTIVE_SESSIONS_FILE).catch(() => {});
             }
             await fs.promises.writeFile(ACTIVE_SESSIONS_FILE, '{}');
@@ -146,9 +134,6 @@ async function loadActiveSessions() {
     }
 }
 
-/**
- * ⭐ NUEVO: Elimina una sesión del archivo
- */
 async function removeSessionFromFile(userId) {
     try {
         const sessions = await loadActiveSessions();
@@ -162,9 +147,6 @@ async function removeSessionFromFile(userId) {
     }
 }
 
-/**
- * ⭐ NUEVO: Restaura todas las sesiones al iniciar
- */
 async function restoreAllSessions() {
     const savedSessions = await loadActiveSessions();
     const userIds = Object.keys(savedSessions);
@@ -180,7 +162,6 @@ async function restoreAllSessions() {
         try {
             logger.info(`Restaurando cliente para usuario ${userId}`);
             
-            // Crear y conectar cliente
             const client = createWhatsAppClient(userId);
             
             clients.set(userId, {
@@ -190,10 +171,8 @@ async function restoreAllSessions() {
                 info: null
             });
             
-            // Inicializar (usará LocalAuth para reconectar)
             await client.initialize();
             
-            // Esperar un poco entre reconexiones
             await new Promise(resolve => setTimeout(resolve, 2000));
             
         } catch (error) {
@@ -209,7 +188,6 @@ async function restoreAllSessions() {
 // Configurar Express
 const app = express();
 
-// Middleware de seguridad
 app.use(helmet({
     contentSecurityPolicy: false
 }));
@@ -219,7 +197,6 @@ app.use(cors({
     credentials: true
 }));
 
-// Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -227,11 +204,9 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Middleware para parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Middleware de autenticación JWT
 const authenticateJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
     
@@ -252,7 +227,6 @@ const authenticateJWT = (req, res, next) => {
     });
 };
  
-// Función para crear cliente WhatsApp
 function createWhatsAppClient(userId) {
     const clientId = `client_${userId}`;
     
@@ -278,7 +252,6 @@ function createWhatsAppClient(userId) {
         }
     });
 
-    // Event handlers
     client.on('qr', async (qr) => {
         try {
             logger.info(`QR generado para usuario ${userId}`);
@@ -286,16 +259,14 @@ function createWhatsAppClient(userId) {
             const qrDataUrl = await QRCode.toDataURL(qr);
             qrCodes.set(userId, qrDataUrl);
             
-            // Actualizar estado del cliente
             if (clients.has(userId)) {
                 clients.get(userId).qr = qrDataUrl;
                 clients.get(userId).status = 'waiting_qr';
             }
             
-            // ⭐ NUEVO: Guardar sesiones
+            // ⭐ Guardar sesiones
             await saveActiveSessions();
             
-            // Notificar a la webapp (opcional)
             notifyWebApp(userId, 'qr_generated', { qr: qrDataUrl });
             
         } catch (error) {
@@ -308,7 +279,6 @@ function createWhatsAppClient(userId) {
             const info = client.info;
             logger.info(`Cliente ${userId} conectado como: ${info.wid.user}`);
             
-            // Actualizar estado del cliente
             clients.set(userId, {
                 client: client,
                 status: 'ready',
@@ -316,13 +286,11 @@ function createWhatsAppClient(userId) {
                 qr: null
             });
             
-            // Limpiar QR
             qrCodes.delete(userId);
             
-            // ⭐ NUEVO: Guardar sesiones
+            // ⭐ Guardar sesiones
             await saveActiveSessions();
             
-            // Notificar a la webapp
             notifyWebApp(userId, 'connected', {
                 phoneNumber: info.wid.user,
                 pushname: info.pushname
@@ -340,40 +308,36 @@ function createWhatsAppClient(userId) {
             clients.get(userId).status = 'authenticated';
         }
         
-        // ⭐ NUEVO: Guardar sesiones
+        // ⭐ Guardar sesiones
         await saveActiveSessions();
     });
 
     client.on('auth_failure', async (msg) => {
         logger.error(`Fallo de autenticación para usuario ${userId}:`, msg);
         
-        // Actualizar estado
         if (clients.has(userId)) {
             clients.get(userId).status = 'auth_failed';
         }
         
-        // ⭐ NUEVO: Guardar sesiones
+        // ⭐ Guardar sesiones
         await saveActiveSessions();
         
-        // Notificar error
         notifyWebApp(userId, 'auth_failed', { error: msg });
     });
 
     client.on('disconnected', async (reason) => {
         logger.info(`Cliente ${userId} desconectado: ${reason}`);
         
-        // Limpiar cliente
         clients.delete(userId);
         qrCodes.delete(userId);
         
-        // ⭐ NUEVO: Si fue logout, eliminar; si no, mantener
+        // ⭐ Si fue logout, eliminar; si no, mantener
         if (reason === 'LOGOUT') {
             await removeSessionFromFile(userId);
         } else {
             await saveActiveSessions();
         }
         
-        // Notificar desconexión
         notifyWebApp(userId, 'disconnected', { reason: reason });
     });
 
@@ -393,10 +357,8 @@ function createWhatsAppClient(userId) {
     return client;
 }
 
-// Función para manejar mensajes entrantes
 async function handleIncomingMessage(userId, message) {
     try {
-        // Extraer número directamente (más confiable)
         const phoneNumber = message.from.split('@')[0];
         
         let messageData = {
@@ -408,12 +370,11 @@ async function handleIncomingMessage(userId, message) {
             timestamp: message.timestamp,
             isForwarded: message.isForwarded || false,
             phoneNumber: phoneNumber,
-            contactName: phoneNumber, // Por defecto
+            contactName: phoneNumber,
             isGroup: false,
             chatName: null
         };
         
-        // Intentar obtener chat
         try {
             const chat = await message.getChat();
             if (chat) {
@@ -424,7 +385,6 @@ async function handleIncomingMessage(userId, message) {
             logger.debug(`No se pudo obtener chat: ${chatError.message}`);
         }
         
-        // Intentar obtener contacto con timeout
         try {
             const contact = await Promise.race([
                 message.getContact(),
@@ -442,7 +402,6 @@ async function handleIncomingMessage(userId, message) {
         
         logger.info(`📥 Mensaje de ${messageData.contactName}: "${message.body.substring(0, 50)}..."`);
         
-        // Enviar a la webapp
         await notifyWebApp(userId, 'message_received', messageData);
         
     } catch (error) {
@@ -450,7 +409,6 @@ async function handleIncomingMessage(userId, message) {
     }
 }
 
-// Función para notificar a la webapp
 async function notifyWebApp(userId, event, data) {
     try {
         const webhookUrl = `${WEBAPP_URL}/api/whatsapp-webhook`;
@@ -462,7 +420,6 @@ async function notifyWebApp(userId, event, data) {
             timestamp: new Date().toISOString()
         };
         
-        // Crear token para el webhook
         const token = jwt.sign(payload, WEBHOOK_SECRET, { expiresIn: '5m' });
         
         await axios.post(webhookUrl, payload, {
@@ -481,9 +438,8 @@ async function notifyWebApp(userId, event, data) {
     }
 }
 
-// ==================== RUTAS DE LA API ====================
+// ==================== RUTAS ====================
 
-// Health check
 app.get('/health', (req, res) => {
     const uptime = process.uptime();
     const activeClients = Array.from(clients.values()).filter(c => c.status === 'ready').length;
@@ -498,12 +454,10 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Conectar usuario
 app.post('/api/connect', authenticateJWT, async (req, res) => {
     const userId = req.userId;
     
     try {
-        // Verificar si ya existe
         if (clients.has(userId)) {
             const existingClient = clients.get(userId);
             if (existingClient.status === 'ready') {
@@ -516,20 +470,17 @@ app.post('/api/connect', authenticateJWT, async (req, res) => {
             }
         }
         
-        // Verificar límite de clientes
         if (clients.size >= MAX_CLIENTS) {
             return res.status(429).json({
                 success: false,
                 error: 'Máximo número de clientes alcanzado'
             });
         }
-         
+        
         logger.info(`Iniciando conexión para usuario ${userId}`);
         
-        // Crear nuevo cliente
         const client = createWhatsAppClient(userId);
         
-        // Almacenar cliente
         clients.set(userId, {
             client: client,
             status: 'connecting',
@@ -537,7 +488,6 @@ app.post('/api/connect', authenticateJWT, async (req, res) => {
             info: null
         });
         
-        // Inicializar cliente
         await client.initialize();
         
         res.json({
@@ -557,7 +507,6 @@ app.post('/api/connect', authenticateJWT, async (req, res) => {
     }
 });
 
-// Desconectar usuario
 app.post('/api/disconnect', authenticateJWT, async (req, res) => {
     const userId = req.userId;
     
@@ -574,17 +523,15 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
         
         logger.info(`Desconectando usuario ${userId}`);
         
-        // Desconectar cliente
         if (client) {
             await client.logout();
             await client.destroy();
         }
         
-        // Limpiar datos
         clients.delete(userId);
         qrCodes.delete(userId);
         
-        // ⭐ NUEVO: Eliminar de persistencia
+        // ⭐ Eliminar de persistencia
         await removeSessionFromFile(userId);
         
         res.json({
@@ -595,7 +542,6 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
     } catch (error) {
         logger.error(`Error desconectando usuario ${userId}:`, error);
         
-        // Forzar limpieza
         clients.delete(userId);
         qrCodes.delete(userId);
         await removeSessionFromFile(userId);
@@ -607,7 +553,6 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
     }
 }); 
 
-// Estado del usuario
 app.get('/api/status', authenticateJWT, (req, res) => {
     const userId = req.userId;
     
@@ -631,12 +576,10 @@ app.get('/api/status', authenticateJWT, (req, res) => {
 });
 
 app.post('/api/isuser', authenticateJWT, async (req, res) => {
-    
-    const phoneNum = req.phoneNum;
+    const phoneNum = req.body.phoneNum;
     const userId = req.userId;    
 
     try {
-        // Validar parámetros
         if (!phoneNum) {
             return res.status(400).json({
                 success: false,
@@ -644,7 +587,6 @@ app.post('/api/isuser', authenticateJWT, async (req, res) => {
             });
         }
         
-        // Verificar cliente conectado
         if (!clients.has(userId)) {
             return res.status(400).json({
                 success: false,
@@ -661,13 +603,10 @@ app.post('/api/isuser', authenticateJWT, async (req, res) => {
         }
         
         const client = clientData.client;
-        
-        // Formatear número
         const user = phoneNum.includes('@') ? phoneNum : `${phoneNum}@c.us`;
         
         logger.info(`Comprobando si ${phoneNum} es usuario de WhatsApp`);
         
-        // Verificar usuario
         const isRegistered = await client.isRegisteredUser(user);
         
         res.json({
@@ -685,13 +624,11 @@ app.post('/api/isuser', authenticateJWT, async (req, res) => {
     }
 });
 
-// Enviar mensaje
 app.post('/api/send', authenticateJWT, async (req, res) => {
     const userId = req.userId;
     const { to, message, type = 'text' } = req.body;
     
     try {
-        // Validar parámetros
         if (!to || !message) {
             return res.status(400).json({
                 success: false,
@@ -699,7 +636,6 @@ app.post('/api/send', authenticateJWT, async (req, res) => {
             });
         }
         
-        // Verificar cliente conectado
         if (!clients.has(userId)) {
             return res.status(400).json({
                 success: false,
@@ -716,13 +652,10 @@ app.post('/api/send', authenticateJWT, async (req, res) => {
         }
         
         const client = clientData.client;
-        
-        // Formatear número
         const phoneNumber = to.includes('@') ? to : `${to}@c.us`;
         
         logger.info(`Enviando mensaje de usuario ${userId} a ${phoneNumber}`);
         
-        // Enviar mensaje
         const sentMessage = await client.sendMessage(phoneNumber, message);
         
         res.json({
@@ -741,7 +674,6 @@ app.post('/api/send', authenticateJWT, async (req, res) => {
     }
 });
 
-// Obtener chats
 app.get('/api/chats', authenticateJWT, async (req, res) => {
     const userId = req.userId;
     
@@ -783,7 +715,6 @@ app.get('/api/chats', authenticateJWT, async (req, res) => {
     }
 });
 
-// Middleware de manejo de errores
 app.use((error, req, res, next) => {
     logger.error('Error no manejado:', error);
     res.status(500).json({
@@ -792,7 +723,6 @@ app.use((error, req, res, next) => {
     });
 });
 
-// Ruta catch-all
 app.use('*', (req, res) => {
     res.status(404).json({
         success: false,
@@ -800,15 +730,13 @@ app.use('*', (req, res) => {
     });
 });
 
-// ⭐ NUEVO: Iniciar servidor con restauración de sesiones
+// ⭐ Iniciar servidor con restauración
 async function startServer() {
     try {
         logger.info('🚀 Iniciando servidor WhatsApp...');
         
-        // Restaurar sesiones previas
         await restoreAllSessions();
         
-        // Iniciar servidor HTTP
         app.listen(PORT, () => {
             logger.info(`✅ Servidor WhatsApp iniciado en puerto ${PORT}`);
             logger.info(`📱 Máximo de clientes: ${MAX_CLIENTS}`);
@@ -824,17 +752,13 @@ async function startServer() {
     }
 }
 
-// Iniciar
 startServer();
 
-// Manejo de cierre graceful
 process.on('SIGINT', async () => {
     logger.info('🛑 Cerrando servidor...');
     
-    // ⭐ NUEVO: Guardar sesiones antes de cerrar
     await saveActiveSessions();
     
-    // Desconectar todos los clientes (sin logout, para mantener sesión)
     for (const [userId, clientData] of clients) {
         try {
             if (clientData.client) {
