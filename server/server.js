@@ -446,6 +446,8 @@ app.get('/health', (req, res) => {
     const uptime = process.uptime();
     const activeClients = Array.from(clients.values()).filter(c => c.status === 'ready').length;
     
+    logger.info('Chequeo de salud solicitado');
+
     res.json({
         status: 'healthy',
         uptime: uptime,
@@ -522,9 +524,7 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
         
         const clientData = clients.get(userId);
         const client = clientData.client;
-        
-        logger.info(`Desconectando usuario ${userId}`);
-        
+                
         if (client) {
             await client.logout();
             await client.destroy();
@@ -536,6 +536,8 @@ app.post('/api/disconnect', authenticateJWT, async (req, res) => {
         // ⭐ Eliminar de persistencia
         await removeSessionFromFile(userId);
         
+        logger.info(`Usuario ${userId} desconectado correctamente`);
+
         res.json({
             success: true,
             message: 'Usuario desconectado correctamente'
@@ -569,6 +571,8 @@ app.get('/api/status', authenticateJWT, (req, res) => {
     const clientData = clients.get(userId);
     const qr = qrCodes.get(userId) || null;
     
+    logger.info(`Estado solicitado para usuario ${userId}: ${clientData.status}`);
+
     res.json({
         success: true,
         status: clientData.status,
