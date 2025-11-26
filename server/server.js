@@ -756,7 +756,6 @@ async function startServer() {
 
 startServer();
 
-// Manejo de cierre graceful
 const gracefulShutdown = async () => {
     logger.info('🛑 Cerrando servidor...');
     
