@@ -22,19 +22,19 @@ else
 // ========== 1. CARGAR CONFIGURACIÓN ==========
 $dbConfig = require PROJECT_ROOT . '/config/database.php';
 
-// ========== 2. CREAR CONEXIÓN PDO ==========
-if (!isset($GLOBALS['pdo'])) {
+// ========== 2. CREAR CONNECTION POOL ==========
+if (!isset($GLOBALS['connectionPool'])) {
     try {
-        $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['database']};charset={$dbConfig['charset']}";
-        $GLOBALS['pdo'] = new PDO($dsn, $dbConfig['username'], $dbConfig['password'], $dbConfig['options']);
-    } catch (PDOException $e) {
-        error_log("Bootstrap: Error BD - " . $e->getMessage());
-        $GLOBALS['pdo'] = null;
+        require_once PROJECT_ROOT . '/config/connectionPool.php';
+        $GLOBALS['connectionPool'] = new \ReservaBot\Config\ConnectionPool($dbConfig);
+    } catch (Exception $e) {
+        error_log("Bootstrap: Error ConnectionPool - " . $e->getMessage());
+        $GLOBALS['connectionPool'] = null;
     }
 }
 
-function getPDO(): ?PDO {
-    return $GLOBALS['pdo'] ?? null;
+function getPDO(): ?\ReservaBot\Config\ConnectionPool {
+    return $GLOBALS['connectionPool'] ?? null;
 }
 
 // ========== 3. INCLUIR AUTH Y FUNCIONES ==========

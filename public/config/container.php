@@ -20,20 +20,19 @@ use ReservaBot\Infrastructure\FormularioRepository;
 use ReservaBot\Infrastructure\AdminRepository;
 use ReservaBot\Infrastructure\UsuarioRepository;
 use ReservaBot\Infrastructure\EmailRepository;
-use PDO;
 
 class Container {
     private static ?Container $instance = null;
     private array $services = [];
-    private PDO $pdo;
+    private ConnectionPool $pool;
     
-    private function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
+    private function __construct(ConnectionPool $pool) {
+        $this->pool = $pool;
     }
     
-    public static function getInstance(PDO $pdo): Container {
+    public static function getInstance(ConnectionPool $pool): Container {
         if (self::$instance === null) {
-            self::$instance = new Container($pdo);
+            self::$instance = new Container($pool);
         }
         return self::$instance;
     }
@@ -121,54 +120,54 @@ class Container {
     
     private function getReservaRepository(): ReservaRepository {
         if (!isset($this->services['reservaRepository'])) {
-            $this->services['reservaRepository'] = new ReservaRepository($this->pdo);
+            $this->services['reservaRepository'] = new ReservaRepository($this->pool);
         }
         return $this->services['reservaRepository'];
     }
     
     private function getClienteRepository(): ClienteRepository {
         if (!isset($this->services['clienteRepository'])) {
-            $this->services['clienteRepository'] = new ClienteRepository($this->pdo);
+            $this->services['clienteRepository'] = new ClienteRepository($this->pool);
         }
         return $this->services['clienteRepository'];
     }
     
     private function getConfiguracionNegocioRepository(): ConfiguracionNegocioRepository {
         if (!isset($this->services['configuracionNegocioRepository'])) {
-            $this->services['configuracionNegocioRepository'] = new ConfiguracionNegocioRepository($this->pdo);
+            $this->services['configuracionNegocioRepository'] = new ConfiguracionNegocioRepository($this->pool);
         }
         return $this->services['configuracionNegocioRepository'];
     }
     
     private function getWhatsAppRepository(): WhatsAppRepository {
         if (!isset($this->services['whatsappRepository'])) {
-            $this->services['whatsappRepository'] = new WhatsAppRepository($this->pdo);
+            $this->services['whatsappRepository'] = new WhatsAppRepository($this->pool);
         }
         return $this->services['whatsappRepository'];
     }
     
     private function getFormularioRepository(): FormularioRepository {
         if (!isset($this->services['formularioRepository'])) {
-            $this->services['formularioRepository'] = new FormularioRepository($this->pdo);
+            $this->services['formularioRepository'] = new FormularioRepository($this->pool);
         }
         return $this->services['formularioRepository'];
     }
 
     private function getAdminRepository(): AdminRepository {
         if (!isset($this->services['adminRepository'])) {
-            $this->services['adminRepository'] = new AdminRepository($this->pdo);
+            $this->services['adminRepository'] = new AdminRepository($this->pool);
         }
         return $this->services['adminRepository'];
     }
     
     private function getUsuarioRepository(): UsuarioRepository {
         if (!isset($this->services['usuarioRepository'])) {
-            $this->services['usuarioRepository'] = new UsuarioRepository($this->pdo);
+            $this->services['usuarioRepository'] = new UsuarioRepository($this->pool);
         }
         return $this->services['usuarioRepository'];
     }
 
-        public function getEmailRepository(): EmailRepository {
+    public function getEmailRepository(): EmailRepository {
         if (!isset($this->services['emailRepository'])) {
             $this->services['emailRepository'] = new EmailRepository();
         }

@@ -4,13 +4,13 @@
 namespace ReservaBot\Infrastructure;
 
 use ReservaBot\Domain\Admin\IAdminRepository;
-use PDO;
+use ReservaBot\Config\ConnectionPool;
 
 class AdminRepository implements IAdminRepository {
-    private PDO $pdo;
+    private ConnectionPool $pool;
     
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
+    public function __construct(ConnectionPool $pool) {
+        $this->pool = $pool;
     }
     
     // =============== ACTIVIDAD ===============
@@ -31,9 +31,9 @@ class AdminRepository implements IAdminRepository {
                 ORDER BY u.last_activity DESC
                 LIMIT ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$limit]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     public function contarLoginsHoy(): int {
@@ -41,7 +41,7 @@ class AdminRepository implements IAdminRepository {
                 FROM usuarios_sesiones 
                 WHERE DATE(created_at) = CURDATE()";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -52,7 +52,7 @@ class AdminRepository implements IAdminRepository {
                 WHERE last_activity >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
                 AND activo = 1";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -70,9 +70,9 @@ class AdminRepository implements IAdminRepository {
                 ORDER BY total_accesos DESC
                 LIMIT 20";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
         if (empty($result)) {
             return [
@@ -109,14 +109,14 @@ class AdminRepository implements IAdminRepository {
                 ORDER BY u.created_at DESC
                 LIMIT ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$limit]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     public function contarTotalUsuarios(): int {
         $sql = "SELECT COUNT(*) FROM usuarios WHERE activo = 1";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -135,9 +135,9 @@ class AdminRepository implements IAdminRepository {
                         WHEN 'basico' THEN 3
                     END";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     public function obtenerUsuariosMasActivos(int $limit): array {
@@ -156,9 +156,9 @@ class AdminRepository implements IAdminRepository {
                 ORDER BY total_reservas DESC
                 LIMIT ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$limit]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     public function contarUsuariosActivosUltimos30Dias(): int {
@@ -166,14 +166,14 @@ class AdminRepository implements IAdminRepository {
                 FROM reservas 
                 WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
     
     public function contarNuevosUsuariosHoy(): int {
         $sql = "SELECT COUNT(*) FROM usuarios WHERE DATE(created_at) = CURDATE()";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -199,35 +199,35 @@ class AdminRepository implements IAdminRepository {
                 ORDER BY r.created_at DESC
                 LIMIT ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$limit]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     public function contarTotalReservas(): int {
         $sql = "SELECT COUNT(*) FROM reservas";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
     
     public function contarReservasHoy(): int {
         $sql = "SELECT COUNT(*) FROM reservas WHERE DATE(created_at) = CURDATE()";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
     
     public function contarReservasSemana(): int {
         $sql = "SELECT COUNT(*) FROM reservas WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
     
     public function contarReservasMes(): int {
         $sql = "SELECT COUNT(*) FROM reservas WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -241,9 +241,9 @@ class AdminRepository implements IAdminRepository {
                 GROUP BY DATE(created_at)
                 ORDER BY fecha ASC";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     public function obtenerVolumenReservasPorHoraHoy(): array {
@@ -255,9 +255,9 @@ class AdminRepository implements IAdminRepository {
                 GROUP BY HOUR(created_at)
                 ORDER BY hora ASC";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     public function obtenerDistribucionEstadoReservas(): array {
@@ -273,9 +273,9 @@ class AdminRepository implements IAdminRepository {
                         WHEN 'cancelada' THEN 3
                     END";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     // =============== WHATSAPP ===============
@@ -285,7 +285,7 @@ class AdminRepository implements IAdminRepository {
                 FROM whatsapp_config 
                 WHERE status = 'connected'";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -295,7 +295,7 @@ class AdminRepository implements IAdminRepository {
                 FROM whatsapp_config 
                 WHERE phone_number IS NOT NULL";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -317,9 +317,9 @@ class AdminRepository implements IAdminRepository {
                 ORDER BY wc.last_activity DESC
                 LIMIT ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$limit]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     public function contarMensajesEnviados(): int {
@@ -327,7 +327,7 @@ class AdminRepository implements IAdminRepository {
                 FROM whatsapp_messages 
                 WHERE direction = 'outgoing'";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -337,7 +337,7 @@ class AdminRepository implements IAdminRepository {
                 FROM whatsapp_messages 
                 WHERE direction = 'incoming'";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -348,7 +348,7 @@ class AdminRepository implements IAdminRepository {
                 WHERE direction = 'outgoing' 
                 AND DATE(created_at) = CURDATE()";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -359,7 +359,7 @@ class AdminRepository implements IAdminRepository {
                 WHERE direction = 'incoming' 
                 AND DATE(created_at) = CURDATE()";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -369,7 +369,7 @@ class AdminRepository implements IAdminRepository {
                 FROM whatsapp_messages 
                 WHERE DATE(created_at) = CURDATE()";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
@@ -384,9 +384,9 @@ class AdminRepository implements IAdminRepository {
                 GROUP BY DATE(created_at)
                 ORDER BY fecha ASC";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     public function obtenerNumerosMasActivos(int $limit): array {
@@ -399,8 +399,8 @@ class AdminRepository implements IAdminRepository {
                 ORDER BY total_conversaciones DESC
                 LIMIT ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$limit]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 }

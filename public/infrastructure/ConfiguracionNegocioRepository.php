@@ -4,20 +4,21 @@
 namespace ReservaBot\Infrastructure;
 
 use ReservaBot\Domain\Configuracion\IConfiguracionNegocioRepository;
+use ReservaBot\Config\ConnectionPool;
 use DateTime;
 use PDO;
 
 class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository {
-    private PDO $pdo;
-    
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
+    private ConnectionPool $pool;
+
+    public function __construct(ConnectionPool $pool) {
+        $this->pool = $pool;
     }
     
     public function obtenerTodas(int $usuarioId): array {
         // Usa tabla configuraciones_usuario
         $sql = "SELECT clave, valor FROM configuraciones_usuario WHERE usuario_id = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId]);
         
         $config = [];
@@ -31,7 +32,7 @@ class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository 
     public function obtener(string $clave, int $usuarioId): ?string {
         $sql = "SELECT valor FROM configuraciones_usuario 
                 WHERE clave = ? AND usuario_id = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$clave, $usuarioId]);
         
         $valor = $stmt->fetchColumn();
@@ -50,20 +51,20 @@ class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository 
                 VALUES (?, ?, ?) 
                 ON DUPLICATE KEY UPDATE valor = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId, $clave, $valor, $valor]);
     }
     
     public function actualizarVarias(array $configuraciones, int $usuarioId): void {
-        $this->pdo->beginTransaction();
+        $this->pool->beginTransaction();
         
         try {
             foreach ($configuraciones as $clave => $valor) {
                 $this->actualizar($clave, $valor, $usuarioId);
             }
-            $this->pdo->commit();
+            $this->pool->commit();
         } catch (\Exception $e) {
-            $this->pdo->rollBack();
+            $this->pool->rollBack();
             throw $e;
         }
     }
@@ -131,7 +132,7 @@ class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository 
     }
     
     public function obtenerIntervalo(int $usuarioId): int {
-        $stmt = $this->pdo->prepare(
+        $stmt = $this->pool->prepare(
             "SELECT valor FROM configuraciones_usuario WHERE clave = 'intervalo_reservas' AND usuario_id = ?"
         );
         $stmt->execute([$usuarioId]);
@@ -141,7 +142,7 @@ class ConfiguracionNegocioRepository implements IConfiguracionNegocioRepository 
     }
 
     public function obtenerDuracionReserva(int $usuarioId): int {
-        $stmt = $this->pdo->prepare(
+        $stmt = $this->pool->prepare(
             "SELECT valor FROM configuraciones_usuario WHERE clave = 'duracion_reserva' AND usuario_id = ?"
         );
         $stmt->execute([$usuarioId]);

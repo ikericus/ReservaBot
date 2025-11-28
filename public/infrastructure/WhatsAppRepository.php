@@ -7,20 +7,21 @@ use ReservaBot\Domain\WhatsApp\IWhatsAppRepository;
 use ReservaBot\Domain\WhatsApp\WhatsAppConfig;
 use ReservaBot\Domain\WhatsApp\WhatsAppMessage;
 use ReservaBot\Domain\WhatsApp\WhatsAppMessageTemplate;
+use ReservaBot\Config\ConnectionPool;
 use PDO;
 
 class WhatsAppRepository implements IWhatsAppRepository {
-    private PDO $pdo;
-    
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
+    private ConnectionPool $pool;
+
+    public function __construct(ConnectionPool $pool) {
+        $this->pool = $pool;
     }
     
     // ==================== CONFIGURACIÓN ====================
     
     public function obtenerConfiguracion(int $usuarioId): ?WhatsAppConfig {
         $sql = "SELECT * FROM whatsapp_config WHERE usuario_id = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId]);
         
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -45,7 +46,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
                     auto_recordatorio = VALUES(auto_recordatorio),
                     auto_bienvenida = VALUES(auto_bienvenida)";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $data['usuario_id'],
             $data['phone_number'],
@@ -78,7 +79,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
                  is_group, has_media, status, timestamp_received, timestamp_sent)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $data['usuario_id'],
             $data['message_id'],
@@ -92,7 +93,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
             $data['timestamp_sent']
         ]);
         
-        $id = (int)$this->pdo->lastInsertId();
+        $id = (int)$this->pool->lastInsertId();
         
         return $this->obtenerMensajePorId($id);
     }
@@ -106,7 +107,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $data['status'],
             $data['timestamp_sent'],
@@ -118,7 +119,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
     
     private function obtenerMensajePorId(int $id): WhatsAppMessage {
         $sql = "SELECT * FROM whatsapp_messages WHERE id = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$id]);
         
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -132,7 +133,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
                 ORDER BY timestamp_received DESC 
                 LIMIT ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId, $phoneNumber, $limit]);
         
         $mensajes = [];
@@ -149,7 +150,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
                 ORDER BY timestamp_received DESC 
                 LIMIT ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId, $limit]);
         
         $mensajes = [];
@@ -164,7 +165,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
         $sql = "SELECT * FROM whatsapp_messages 
                 WHERE message_id = ? AND usuario_id = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$messageId, $usuarioId]);
         
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -177,7 +178,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
                 SET status = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE message_id = ? AND usuario_id = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         return $stmt->execute([$estado, $messageId, $usuarioId]);
     }
     
@@ -198,14 +199,14 @@ class WhatsAppRepository implements IWhatsAppRepository {
                 ORDER BY ultima_actividad DESC
                 LIMIT ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId, $limit]);
         
         $conversaciones = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             // Obtener el último mensaje completo
             $sqlMsg = "SELECT * FROM whatsapp_messages WHERE id = ?";
-            $stmtMsg = $this->pdo->prepare($sqlMsg);
+            $stmtMsg = $this->pool->prepare($sqlMsg);
             $stmtMsg->execute([$row['ultimo_id']]);
             $msgData = $stmtMsg->fetch(PDO::FETCH_ASSOC);
             
@@ -226,7 +227,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
                 AND direction = 'incoming' 
                 AND status != 'read'";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId]);
         
         return (int)$stmt->fetchColumn();
@@ -240,7 +241,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
                 AND direction = 'incoming'
                 AND status != 'read'";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         return $stmt->execute([$usuarioId, $phoneNumber]);
     }
     
@@ -249,21 +250,21 @@ class WhatsAppRepository implements IWhatsAppRepository {
     public function obtenerEstadisticas(int $usuarioId): array {
         // Total mensajes
         $sql = "SELECT COUNT(*) FROM whatsapp_messages WHERE usuario_id = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId]);
         $totalMensajes = $stmt->fetchColumn();
         
         // Mensajes hoy
         $sql = "SELECT COUNT(*) FROM whatsapp_messages 
                 WHERE usuario_id = ? AND DATE(timestamp_received) = CURDATE()";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId]);
         $mensajesHoy = $stmt->fetchColumn();
         
         // Conversaciones únicas
         $sql = "SELECT COUNT(DISTINCT phone_number) FROM whatsapp_messages 
                 WHERE usuario_id = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId]);
         $totalConversaciones = $stmt->fetchColumn();
         
@@ -271,7 +272,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
         $sql = "SELECT COUNT(DISTINCT phone_number) FROM whatsapp_messages 
                 WHERE usuario_id = ? 
                 AND timestamp_received >= DATE_SUB(NOW(), INTERVAL 24 HOUR)";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId]);
         $conversacionesActivas = $stmt->fetchColumn();
         
@@ -292,7 +293,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
         $sql = "SELECT * FROM whatsapp_automessage_templates 
                 WHERE usuario_id = ? AND tipo_mensaje = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId, $tipoMensaje]);
         
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -308,7 +309,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
                 WHERE usuario_id = ?
                 ORDER BY tipo_mensaje";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId]);
         
         $templates = [];
@@ -332,7 +333,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
                     mensaje = VALUES(mensaje),
                     updated_at = CURRENT_TIMESTAMP";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $data['usuario_id'],
             $data['tipo_mensaje'],
@@ -354,7 +355,7 @@ class WhatsAppRepository implements IWhatsAppRepository {
         $sql = "DELETE FROM whatsapp_automessage_templates 
                 WHERE usuario_id = ? AND tipo_mensaje = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         return $stmt->execute([$usuarioId, $tipoMensaje]);
     }
 }

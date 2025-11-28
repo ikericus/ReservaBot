@@ -5,18 +5,19 @@ namespace ReservaBot\Infrastructure;
 
 use ReservaBot\Domain\Usuario\IUsuarioRepository;
 use ReservaBot\Domain\Usuario\Usuario;
+use ReservaBot\Config\ConnectionPool;
 use PDO;
 
 class UsuarioRepository implements IUsuarioRepository {
-    private PDO $pdo;
-    
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
+    private ConnectionPool $pool;
+
+    public function __construct(ConnectionPool $pool) {
+        $this->pool = $pool;
     }
     
     public function obtenerPorEmail(string $email): ?Usuario {
         $sql = "SELECT * FROM usuarios WHERE email = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$email]);
         
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -26,7 +27,7 @@ class UsuarioRepository implements IUsuarioRepository {
     
     public function obtenerPorId(int $id): ?Usuario {
         $sql = "SELECT * FROM usuarios WHERE id = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$id]);
         
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -36,7 +37,7 @@ class UsuarioRepository implements IUsuarioRepository {
     
     public function obtenerPorTokenRestablecimiento(string $token): ?Usuario {
         $sql = "SELECT * FROM usuarios WHERE reset_token = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$token]);
         
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -57,7 +58,7 @@ class UsuarioRepository implements IUsuarioRepository {
                 (nombre, email, telefono, password_hash, plan, api_key, created_at, activo) 
                 VALUES (?, ?, ?, ?, ?, ?, NOW(), 1)";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $nombre,
             $email,
@@ -67,7 +68,7 @@ class UsuarioRepository implements IUsuarioRepository {
             $apiKey
         ]);
         
-        $id = (int) $this->pdo->lastInsertId();
+        $id = (int) $this->pool->lastInsertId();
         
         return $this->obtenerPorId($id);
     }
@@ -85,13 +86,13 @@ class UsuarioRepository implements IUsuarioRepository {
         
         $sql = "UPDATE usuarios SET " . implode(', ', $campos) . ", updated_at = NOW() WHERE id = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute($valores);
     }
     
     public function actualizarPassword(int $id, string $passwordHash): void {
         $sql = "UPDATE usuarios SET password_hash = ?, updated_at = NOW() WHERE id = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$passwordHash, $id]);
     }
     
@@ -100,7 +101,7 @@ class UsuarioRepository implements IUsuarioRepository {
                 SET reset_token = ?, reset_token_expiry = ?, updated_at = NOW() 
                 WHERE id = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $token,
             $expiry->format('Y-m-d H:i:s'),
@@ -113,18 +114,18 @@ class UsuarioRepository implements IUsuarioRepository {
                 SET reset_token = NULL, reset_token_expiry = NULL, updated_at = NOW() 
                 WHERE id = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$id]);
     }
     
     public function emailExiste(string $email, ?int $excluirId = null): bool {
         if ($excluirId) {
             $sql = "SELECT COUNT(*) FROM usuarios WHERE email = ? AND id != ?";
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([$email, $excluirId]);
         } else {
             $sql = "SELECT COUNT(*) FROM usuarios WHERE email = ?";
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([$email]);
         }
         
@@ -158,7 +159,7 @@ class UsuarioRepository implements IUsuarioRepository {
                 FROM usuarios 
                 WHERE verificacion_token = ? AND 
                       updated_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$token]);
         
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -172,7 +173,7 @@ class UsuarioRepository implements IUsuarioRepository {
                     updated_at = NOW() 
                 WHERE id = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $token,
             $id
@@ -186,7 +187,7 @@ class UsuarioRepository implements IUsuarioRepository {
                     updated_at = NOW() 
                 WHERE id = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$id]);
     }
     

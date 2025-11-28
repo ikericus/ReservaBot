@@ -7,17 +7,17 @@ use PDO;
 use PDOException;
 use ReservaBot\Domain\Formulario\Formulario;
 use ReservaBot\Domain\Formulario\IFormularioRepository;
+use ReservaBot\Config\ConnectionPool;
 
 /**
  * Implementación PDO del repositorio de Formularios
  */
 class FormularioRepository implements IFormularioRepository
 {
-    private PDO $pdo;
+    private ConnectionPool $pool;
 
-    public function __construct(PDO $pdo)
-    {
-        $this->pdo = $pdo;
+    public function __construct(ConnectionPool $pool) {
+        $this->pool = $pool;
     }
 
     /**
@@ -36,7 +36,7 @@ class FormularioRepository implements IFormularioRepository
         ";
 
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([
                 ':usuario_id' => $formulario->getUsuarioId(),
                 ':nombre' => $formulario->getNombre(),
@@ -48,7 +48,7 @@ class FormularioRepository implements IFormularioRepository
                 ':updated_at' => $formulario->getUpdatedAt()->format('Y-m-d H:i:s'),
             ]);
 
-            $id = (int) $this->pdo->lastInsertId();
+            $id = (int) $this->pool->lastInsertId();
 
             // Reconstruir con el ID asignado
             $row = $formulario->toArray();
@@ -79,7 +79,7 @@ class FormularioRepository implements IFormularioRepository
         ";
 
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([
                 ':id' => $formulario->getId(),
                 ':usuario_id' => $formulario->getUsuarioId(),
@@ -103,7 +103,7 @@ class FormularioRepository implements IFormularioRepository
         $sql = "SELECT * FROM formularios_publicos WHERE slug = :slug AND activo = 1 LIMIT 1";
 
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([':slug' => $slug]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -123,7 +123,7 @@ class FormularioRepository implements IFormularioRepository
         $sql = "SELECT * FROM formularios_publicos WHERE id = :id AND usuario_id = :usuario_id LIMIT 1";
 
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([
                 ':id' => $id,
                 ':usuario_id' => $usuarioId
@@ -150,7 +150,7 @@ class FormularioRepository implements IFormularioRepository
         ";
 
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([':usuario_id' => $usuarioId]);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -174,16 +174,16 @@ class FormularioRepository implements IFormularioRepository
     {
         try {
             // Iniciar transacción
-            $this->pdo->beginTransaction();
+            $this->pool->beginTransaction();
 
             // Eliminar referencias en reservas_origen (si existen)
             $sqlOrigen = "DELETE FROM reservas_origen WHERE formulario_id = :formulario_id";
-            $stmtOrigen = $this->pdo->prepare($sqlOrigen);
+            $stmtOrigen = $this->pool->prepare($sqlOrigen);
             $stmtOrigen->execute([':formulario_id' => $id]);
 
             // Eliminar el formulario
             $sql = "DELETE FROM formularios_publicos WHERE id = :id AND usuario_id = :usuario_id";
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([
                 ':id' => $id,
                 ':usuario_id' => $usuarioId
@@ -192,14 +192,14 @@ class FormularioRepository implements IFormularioRepository
             $deleted = $stmt->rowCount() > 0;
 
             // Confirmar transacción
-            $this->pdo->commit();
+            $this->pool->commit();
 
             return $deleted;
 
         } catch (PDOException $e) {
             // Revertir transacción en caso de error
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
+            if ($this->pool->inTransaction()) {
+                $this->pool->rollBack();
             }
             error_log("Error al eliminar formulario: " . $e->getMessage());
             throw $e;
@@ -214,7 +214,7 @@ class FormularioRepository implements IFormularioRepository
         $sql = "SELECT COUNT(*) FROM formularios_publicos WHERE slug = :slug";
 
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([':slug' => $slug]);
             return $stmt->fetchColumn() > 0;
 
@@ -241,7 +241,7 @@ class FormularioRepository implements IFormularioRepository
         ";
 
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([':formulario_id' => $formularioId]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
 

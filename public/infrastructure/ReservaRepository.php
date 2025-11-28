@@ -6,14 +6,15 @@ namespace ReservaBot\Infrastructure;
 use ReservaBot\Domain\Reserva\IReservaRepository;
 use ReservaBot\Domain\Reserva\Reserva;
 use ReservaBot\Domain\Reserva\EstadoReserva;
+use ReservaBot\Config\ConnectionPool;
 use DateTime;
 use PDO;
 
 class ReservaRepository implements IReservaRepository {
-    private PDO $pdo;
-    
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
+    private ConnectionPool $pool;
+
+    public function __construct(ConnectionPool $pool) {
+        $this->pool = $pool;
     }
     
     public function guardar(Reserva $reserva): Reserva {
@@ -29,7 +30,7 @@ class ReservaRepository implements IReservaRepository {
                 (nombre, telefono, whatsapp_id, fecha, hora, mensaje, notas_internas, estado, usuario_id, email, access_token, token_expires, formulario_id) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $reserva->getNombre(),
             $reserva->getTelefono()->getValue(),
@@ -46,7 +47,7 @@ class ReservaRepository implements IReservaRepository {
             $reserva->getFormularioId()
         ]);
         
-        $id = (int)$this->pdo->lastInsertId();
+        $id = (int)$this->pool->lastInsertId();
         
         // Registrar en auditoría
         $this->registrarAuditoria(
@@ -77,7 +78,7 @@ class ReservaRepository implements IReservaRepository {
                     formulario_id = ?
                 WHERE id = ? AND usuario_id = ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $reserva->getNombre(),
             $reserva->getTelefono()->getValue(),
@@ -141,7 +142,7 @@ class ReservaRepository implements IReservaRepository {
     
     public function obtenerPorId(int $id, int $usuarioId): ?Reserva {
         $sql = "SELECT * FROM reservas WHERE id = ? AND usuario_id = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$id, $usuarioId]);
         
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -151,7 +152,7 @@ class ReservaRepository implements IReservaRepository {
     
     public function obtenerPorUsuario(int $usuarioId): array {
         $sql = "SELECT * FROM reservas WHERE usuario_id = ? ORDER BY fecha DESC, hora DESC";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId]);
         
         $reservas = [];
@@ -167,7 +168,7 @@ class ReservaRepository implements IReservaRepository {
                 WHERE usuario_id = ? AND estado = ? 
                 ORDER BY fecha, hora";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId, $estado]);
         
         $reservas = [];
@@ -183,7 +184,7 @@ class ReservaRepository implements IReservaRepository {
                 WHERE fecha = ? AND usuario_id = ? 
                 ORDER BY hora ASC";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$fecha->format('Y-m-d'), $usuarioId]);
         
         $reservas = [];
@@ -200,7 +201,7 @@ class ReservaRepository implements IReservaRepository {
                 AND usuario_id = ? 
                 ORDER BY fecha ASC, hora ASC";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $desde->format('Y-m-d'),
             $hasta->format('Y-m-d'),
@@ -221,7 +222,7 @@ class ReservaRepository implements IReservaRepository {
                 AND token_expires > NOW()
                 AND estado IN (?, ?)";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $token,
             EstadoReserva::PENDIENTE->value,
@@ -257,7 +258,7 @@ class ReservaRepository implements IReservaRepository {
             $params[] = $excluirId;
         }
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute($params);
         
         return $stmt->fetchColumn() > 0;
@@ -269,7 +270,7 @@ class ReservaRepository implements IReservaRepository {
                 ORDER BY fecha DESC, hora DESC 
                 LIMIT 10";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$whatsappId, $usuarioId]);
         
         $reservas = [];
@@ -282,7 +283,7 @@ class ReservaRepository implements IReservaRepository {
     
     public function eliminar(int $id, int $usuarioId): void {
         $sql = "DELETE FROM reservas WHERE id = ? AND usuario_id = ?";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$id, $usuarioId]);
     }
     
@@ -315,7 +316,7 @@ class ReservaRepository implements IReservaRepository {
             $params[] = $hasta->format('Y-m-d');
         }
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute($params);
         
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -326,7 +327,7 @@ class ReservaRepository implements IReservaRepository {
                 WHERE telefono = ? AND usuario_id = ? 
                 ORDER BY fecha DESC, hora DESC";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$telefono, $usuarioId]);
         
         $reservas = [];
@@ -344,7 +345,7 @@ class ReservaRepository implements IReservaRepository {
                 AND token_expires > NOW()
                 AND estado IN (?, ?)";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $id, 
             $token,
@@ -368,7 +369,7 @@ class ReservaRepository implements IReservaRepository {
                         reserva_id, formulario_id, origen, ip_address, user_agent, created_at
                     ) VALUES (?, ?, ?, ?, ?, NOW())";
             
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([
                 $reservaId,
                 $formularioId,
@@ -390,7 +391,7 @@ class ReservaRepository implements IReservaRepository {
                 ORDER BY a.created_at DESC
                 LIMIT ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId, $limite]);
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -409,7 +410,7 @@ class ReservaRepository implements IReservaRepository {
                     (reserva_id, usuario_id, accion, campo_modificado, valor_anterior, valor_nuevo, ip_address, user_agent)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pool->prepare($sql);
             $stmt->execute([
                 $reservaId,
                 $usuarioId,

@@ -5,13 +5,13 @@ namespace ReservaBot\Infrastructure;
 
 use ReservaBot\Domain\Cliente\IClienteRepository;
 use ReservaBot\Domain\Cliente\Cliente;
-use PDO;
+use ReservaBot\Config\ConnectionPool;
 
 class ClienteRepository implements IClienteRepository {
-    private PDO $pdo;
+    private ConnectionPool $pool;
     
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
+    public function __construct(ConnectionPool $pool) {
+        $this->pool = $pool;
     }
     
     public function obtenerEstadisticasCliente(string $telefono, int $usuarioId): ?Cliente {
@@ -29,9 +29,9 @@ class ClienteRepository implements IClienteRepository {
                 WHERE telefono = ? AND usuario_id = ?
                 GROUP BY telefono, nombre";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$telefono, $usuarioId]);
-        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
         
         if (!$data) {
             return null;
@@ -63,7 +63,7 @@ class ClienteRepository implements IClienteRepository {
             $params[] = "%$search%";
         }
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute($params);
         
         return (int)$stmt->fetchColumn();
@@ -105,11 +105,11 @@ class ClienteRepository implements IClienteRepository {
         $params[] = $perPage;
         $params[] = $offset;
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute($params);
         
         $clientes = [];
-        while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($data = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $clientes[] = new Cliente(
                 $data['telefono'],
                 $data['ultimo_nombre'],
@@ -155,7 +155,7 @@ class ClienteRepository implements IClienteRepository {
         
         $patron = '%' . $telefonoNormalizado . '%';
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([
             $usuarioId,
             $patron,
@@ -165,7 +165,7 @@ class ClienteRepository implements IClienteRepository {
             $limite
         ]);
         
-        return $this->procesarResultadosBusqueda($stmt->fetchAll(PDO::FETCH_ASSOC));
+        return $this->procesarResultadosBusqueda($stmt->fetchAll(\PDO::FETCH_ASSOC));
     }
     
     public function buscarPorNombreConEstadisticas(
@@ -187,10 +187,10 @@ class ClienteRepository implements IClienteRepository {
                 ORDER BY last_created DESC, total_reservas DESC
                 LIMIT ?";
         
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pool->prepare($sql);
         $stmt->execute([$usuarioId, '%' . $nombre . '%', $limite]);
         
-        return $this->procesarResultadosBusqueda($stmt->fetchAll(PDO::FETCH_ASSOC));
+        return $this->procesarResultadosBusqueda($stmt->fetchAll(\PDO::FETCH_ASSOC));
     }
     
     /**
