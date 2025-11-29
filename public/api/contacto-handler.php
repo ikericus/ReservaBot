@@ -4,11 +4,7 @@
 /**
  * Manejador del formulario de contacto
  */
-
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
 
 // Solo permitir POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -16,8 +12,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'Método no permitido']);
     exit;
 }
-
-require_once dirname(__DIR__) . '/includes/bootstrap.php';
 
 // Validar datos de entrada
 $input = json_decode(file_get_contents('php://input'), true);
