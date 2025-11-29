@@ -455,7 +455,7 @@ class ReservaDomain {
      * @param int $usuarioId ID del usuario/negocio
      * @param string $fecha Fecha para la cual obtener horas ocupadas
      */
-    public function obtenerDatosFormularioReserva(?int $reservaId, int $usuarioId, string $fecha): array {
+    public function obtenerDatosFormularioReserva(?int $reservaId, int $usuarioId, ?string $fecha): array {
         $reserva = null;
         $horasOcupadas = [];
         
