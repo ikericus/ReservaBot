@@ -29,23 +29,20 @@ try {
         
         $reserva = $datosFormulario['reserva'];
         $fechaReserva = $datosFormulario['fecha'];
-        echo "<!-- DEBUG 0: : '$fechaReserva' -->";
         $horasOcupadas = $datosFormulario['horas_ocupadas'];
         
     } else {
         // MODO CREACIÓN: Valores por defecto desde URL o actuales
         $fechaReserva = $_GET['fecha'] ?? $formData['fecha'] ?? date('Y-m-d');
-        echo "<!-- DEBUG 1: : '$fechaReserva' -->";
-        
+                
         $datosFormulario = $reservaDomain->obtenerDatosFormularioReserva(null, $usuarioId, $fechaReserva);
         
-        echo "<!-- DEBUG 11: : '$fechaReserva' -->";
         $reserva = [
             'telefono' => $_GET['telefono'] ?? $formData['telefono'] ?? '',
             'nombre' => $_GET['nombre'] ?? $formData['nombre'] ?? '',
             'hora' => $_GET['hora'] ?? $formData['hora'] ?? '',
             'mensaje' => $formData['mensaje'] ?? '',
-            'estado' => 'pendiente'
+            'estado' => 'confirmada'
         ];
         $horasOcupadas = $datosFormulario['horas_ocupadas'];
     }
@@ -229,8 +226,8 @@ include 'includes/header.php';
                     id="estado"
                     class="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 >
-                    <option value="confirmada" <?php echo $reserva['estado'] === 'confirmada' ? 'selected' : ''; ?>>Confirmada</option>
                     <option value="pendiente" <?php echo $reserva['estado'] === 'pendiente' ? 'selected' : ''; ?>>Pendiente</option>
+                    <option value="confirmada" <?php echo $reserva['estado'] === 'confirmada' ? 'selected' : ''; ?>>Confirmada</option>
                 </select>
             </div>
         </div>
