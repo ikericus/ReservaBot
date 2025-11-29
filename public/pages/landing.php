@@ -180,7 +180,7 @@
         
         <!-- Mobile menu -->
         <div id="mobileMenu" class="mobile-menu md:hidden fixed inset-y-0 right-0 w-80 shadow-xl z-50 border-l border-gray-200" style="background-color: white !important;">
-            <div class="h-full flex flex-col" style="background-color: white !important;">
+            <div class="h-full h-screen flex flex-col" style="background-color: white !important;">
                 <!-- Header del menú -->
                 <div class="flex items-center justify-between p-6 border-b border-gray-100" style="background-color: white !important;">
                     <div class="flex items-center">
@@ -297,7 +297,7 @@
                     </div>
                     
                     <div class="flex flex-col sm:flex-row gap-4 mb-8">
-                        <a href="/login?user=demo@reservabot.es&pass=demo1234" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all">
+                        <a href="/login?user=demo@reservabot.es&pass=demo1234" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all inline-flex items-center justify-center">
                             <i class="ri-play-circle-line mr-2"></i>
                             Iniciar prueba
                         </a>
