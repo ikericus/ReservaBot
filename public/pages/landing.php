@@ -122,6 +122,20 @@
             transform: translateX(0);
             visibility: visible;
         }
+        
+        /* Screenshot carousel */
+        .screenshot-slide {
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        .screenshot-slide.hidden {
+            display: none;
+        }
+        
+        .screenshot-dot.active {
+            background: white;
+            transform: scale(1.2);
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -272,8 +286,12 @@
                                 <span>Fisioterapia</span>
                             </div>
                             <div class="flex items-center">
-                                <i class="ri-psychology-line mr-2 text-yellow-300"></i>
+                                <i class="ri-briefcase-line mr-2 text-yellow-300"></i>
                                 <span>Consultoría</span>
+                            </div>
+                            <div class="flex items-center col-span-2">
+                                <i class="ri-calendar-check-line mr-2 text-yellow-300"></i>
+                                <span>Cualquier negocio que gestione citas</span>
                             </div>
                         </div>
                     </div>
@@ -298,59 +316,39 @@
                             <i class="ri-check-line text-green-300 mr-2"></i>
                             <span>Gratis en Beta</span>
                         </div>
-                        <div class="flex items-center">
-                            <i class="ri-check-line text-green-300 mr-2"></i>
-                            <span>Soporte incluido</span>
-                        </div>
                     </div>
                 </div>
                 
                 <div class="lg:text-right fade-in-up" style="animation-delay: 0.3s;">
                     <div class="relative">
-                        <!-- Phone mockup -->
-                        <div class="relative mx-auto w-80 h-96 bg-gray-900 rounded-3xl p-2">
-                            <div class="w-full h-full bg-white rounded-2xl p-4 overflow-hidden">
-                                <div class="flex items-center justify-between mb-4">
-                                    <div class="flex items-center">
-                                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                            <i class="ri-whatsapp-line text-white text-sm"></i>
-                                        </div>
-                                        <span class="ml-2 font-semibold text-sm">Beauty Center</span>
-                                    </div>
-                                    <span class="text-xs text-gray-500">Online</span>
+                        <!-- App Screenshots Carousel -->
+                        <div class="relative mx-auto max-w-sm">
+                            <div id="screenshotCarousel" class="overflow-hidden rounded-2xl shadow-2xl">
+                                <!-- Screenshot 1 - Calendario -->
+                                <div class="screenshot-slide active">
+                                    <img src="/uploads/1764403351596_image.png" alt="Calendario de reservas ReservaBot" class="w-full h-auto">
                                 </div>
-                                
-                                <div class="space-y-4">
-                                    <div class="flex justify-start">
-                                        <div class="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-2 max-w-xs">
-                                            <p class="text-sm">¡Hola! 👋 ¿Te gustaría reservar una cita?</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex justify-end">
-                                        <div class="bg-blue-500 text-white rounded-2xl rounded-br-md px-4 py-2 max-w-xs">
-                                            <p class="text-sm">Sí, para tratamiento facial</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex justify-start">
-                                        <div class="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-2 max-w-xs">
-                                            <p class="text-sm">Perfecto! Tengo disponible mañana 16:00, 17:30 y 18:00. ¿Cuál prefieres?</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex justify-end">
-                                        <div class="bg-blue-500 text-white rounded-2xl rounded-br-md px-4 py-2 max-w-xs">
-                                            <p class="text-sm">17:30 está perfecto</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex justify-start">
-                                        <div class="bg-green-100 rounded-2xl rounded-bl-md px-4 py-2 max-w-xs">
-                                            <p class="text-sm">¡Reserva confirmada! ✅ Te esperamos mañana a las 17:30</p>
-                                        </div>
-                                    </div>
+                                <!-- Screenshot 2 - Pendientes -->
+                                <div class="screenshot-slide hidden">
+                                    <img src="/uploads/1764403357831_image.png" alt="Gestión de reservas pendientes" class="w-full h-auto">
                                 </div>
+                                <!-- Screenshot 3 - Detalle reserva -->
+                                <div class="screenshot-slide hidden">
+                                    <img src="/uploads/1764403363698_image.png" alt="Detalle de reserva confirmada" class="w-full h-auto">
+                                </div>
+                            </div>
+                            
+                            <!-- Carousel Controls -->
+                            <div class="flex justify-center mt-6 space-x-2">
+                                <button onclick="showScreenshot(0)" class="screenshot-dot w-3 h-3 rounded-full bg-white transition-all active"></button>
+                                <button onclick="showScreenshot(1)" class="screenshot-dot w-3 h-3 rounded-full bg-white/50 transition-all"></button>
+                                <button onclick="showScreenshot(2)" class="screenshot-dot w-3 h-3 rounded-full bg-white/50 transition-all"></button>
+                            </div>
+                            
+                            <div class="text-center mt-4">
+                                <p class="text-white text-sm font-medium">
+                                    <span id="screenshotLabel">Calendario de citas</span>
+                                </p>
                             </div>
                         </div>
                         
@@ -388,7 +386,7 @@
                             </div>
                             <div>
                                 <h3 class="text-xl font-bold text-gray-900 mb-2">Reduce las llamadas constantes</h3>
-                                <p class="text-gray-600">Deja que tus clientes reserven automáticamente por WhatsApp, sin interrumpir tu trabajo con llamadas continuas.</p>
+                                <p class="text-gray-600">Deja que tus clientes reserven por WhatsApp, sin interrumpir tu trabajo con llamadas continuas.</p>
                             </div>
                         </div>
                         
@@ -500,10 +498,6 @@
                             <i class="ri-close-line text-red-500 mr-3"></i>
                             <span class="text-gray-400">Sin integración WhatsApp</span>
                         </li>
-                        <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Soporte por email</span>
-                        </li>
                     </ul>
                     
                     <a href="/signup?plan=profesional" class="w-full block text-center py-3 px-6 border-2 border-gray-300 rounded-full font-semibold text-gray-700 hover:border-gray-400 transition-all">
@@ -552,14 +546,6 @@
                             <i class="ri-check-line text-green-500 mr-3"></i>
                             <span>Recordatorios automáticos</span>
                         </li>
-                        <li class="flex items-center">
-                            <i class="ri-close-line text-red-500 mr-3"></i>
-                            <span class="text-gray-400">Sin IA automática</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Soporte prioritario</span>
-                        </li>
                     </ul>
                     
                     <a href="/signup?plan=profesional" class="btn-shine w-full block text-center py-3 px-6 gradient-bg text-white rounded-full font-semibold hover:shadow-lg transition-all">
@@ -575,7 +561,7 @@
                         <div class="mb-8">
                             <div class="flex items-center justify-center gap-2 mb-2">
                                 <span class="text-2xl font-bold price-old">19€</span>
-                                <span class="price-beta">Gratis en Beta</span>
+                                <span class="price-beta">Próximamente</span>
                             </div>
                             <span class="text-gray-600">/mes</span>
                         </div>
@@ -606,14 +592,10 @@
                             <i class="ri-check-line text-green-500 mr-3"></i>
                             <span>Analytics avanzados</span>
                         </li>
-                        <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span>Soporte 24/7</span>
-                        </li>
                     </ul>
                     
                     <div class="text-center">
-                        <span class="inline-block bg-red-100 text-red-800 text-sm px-4 py-2 rounded-full font-semibold mb-4">
+                        <span class="inline-block bg-orange-100 text-orange-800 text-sm px-4 py-2 rounded-full font-semibold mb-4">
                             Próximamente
                         </span>
                         <button disabled class="w-full py-3 px-6 border-2 border-gray-300 rounded-full font-semibold text-gray-400 cursor-not-allowed opacity-60">
@@ -742,10 +724,6 @@
                     <i class="ri-check-line text-green-300 mr-2"></i>
                     <span>Sin tarjeta de crédito</span>
                 </div>
-                <div class="flex items-center">
-                    <i class="ri-check-line text-green-300 mr-2"></i>
-                    <span>Soporte incluido</span>
-                </div>
             </div>
         </div>
     </section>
@@ -764,20 +742,6 @@
                     <p class="text-gray-400 text-lg leading-relaxed max-w-md">
                         Plataforma completa de gestión de citas con WhatsApp, calendario, agenda de clientes y comunicación automática. Perfecto para profesionales que trabajan con citas individuales.
                     </p>
-                    <div class="flex space-x-4 mt-6">
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
-                            <i class="ri-twitter-line"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
-                            <i class="ri-facebook-line"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
-                            <i class="ri-linkedin-line"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
-                            <i class="ri-instagram-line"></i>
-                        </a>
-                    </div>
                 </div>
                 
                 <div>
@@ -791,11 +755,9 @@
                 </div>
                 
                 <div>
-                    <h3 class="text-lg font-semibold mb-6">Soporte</h3>
+                    <h3 class="text-lg font-semibold mb-6">Empresa</h3>
                     <ul class="space-y-3 text-gray-400">
-                        <li><a href="#" class="hover:text-white transition-colors">Centro de Ayuda</a></li>
                         <li><button onclick="openContactModal()" class="hover:text-white transition-colors">Contacto</button></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Tutoriales</a></li>
                         <li><a href="#" class="hover:text-white transition-colors">Estado del Sistema</a></li>
                     </ul>
                 </div>
@@ -823,24 +785,29 @@
                     <i class="ri-close-line text-2xl"></i>
                 </button>
             </div>
-            <form>
+            <form id="contactForm" onsubmit="handleContactSubmit(event)">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-                        <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="text" name="name" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                        <input type="email" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="email" name="email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Asunto</label>
+                        <input type="text" name="subject" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Mensaje</label>
-                        <textarea rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        <textarea name="message" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                     </div>
                 </div>
-                <button type="submit" class="w-full mt-6 gradient-bg text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                <button type="submit" id="submitBtn" class="w-full mt-6 gradient-bg text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
                     Enviar Mensaje
                 </button>
+                <div id="formMessage" class="mt-4 text-center hidden"></div>
             </form>
         </div>
     </div>
@@ -892,6 +859,88 @@
         function closeContactModal() {
             document.getElementById('contactModal').classList.add('hidden');
             document.body.style.overflow = 'auto';
+        }
+        
+        
+        // Screenshot carousel
+        let currentScreenshot = 0;
+        const screenshotLabels = [
+            'Calendario de citas',
+            'Gestión de reservas pendientes',
+            'Detalle de reserva'
+        ];
+        
+        function showScreenshot(index) {
+            const slides = document.querySelectorAll('.screenshot-slide');
+            const dots = document.querySelectorAll('.screenshot-dot');
+            const label = document.getElementById('screenshotLabel');
+            
+            slides.forEach(slide => slide.classList.add('hidden'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            slides[index].classList.remove('hidden');
+            dots[index].classList.add('active');
+            label.textContent = screenshotLabels[index];
+            
+            currentScreenshot = index;
+        }
+        
+        // Auto-rotate screenshots
+        setInterval(() => {
+            const nextIndex = (currentScreenshot + 1) % 3;
+            showScreenshot(nextIndex);
+        }, 4000);
+        
+        // Contact form submission
+        async function handleContactSubmit(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const submitBtn = document.getElementById('submitBtn');
+            const formMessage = document.getElementById('formMessage');
+            
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando...';
+            formMessage.classList.add('hidden');
+            
+            try {
+                const formData = new FormData(form);
+                const data = {
+                    name: formData.get('name'),
+                    email: formData.get('email'),
+                    subject: formData.get('subject') || 'Contacto desde landing',
+                    message: formData.get('message')
+                };
+                
+                const response = await fetch('/api/contacto-handler', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    formMessage.textContent = result.message || '¡Mensaje enviado correctamente!';
+                    formMessage.className = 'mt-4 text-center text-green-600';
+                    formMessage.classList.remove('hidden');
+                    form.reset();
+                } else {
+                    formMessage.textContent = result.error || 'Error al enviar el mensaje';
+                    formMessage.className = 'mt-4 text-center text-red-600';
+                    formMessage.classList.remove('hidden');
+                }
+            } catch (error) {
+                formMessage.textContent = 'Error de conexión. Inténtalo de nuevo.';
+                formMessage.className = 'mt-4 text-center text-red-600';
+                formMessage.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enviar Mensaje';
+            }
         }
         
         // FAQ toggle function
