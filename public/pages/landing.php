@@ -326,15 +326,15 @@
                             <div id="screenshotCarousel" class="overflow-hidden rounded-2xl shadow-2xl">
                                 <!-- Screenshot 1 - Calendario -->
                                 <div class="screenshot-slide active">
-                                    <img src="../images/screenshot_2.png" alt="Calendario de reservas ReservaBot" class="w-full h-auto" style="max-width: 280px; margin: 0 auto;">
+                                    <img src="../images/screenshot_2.png" alt="Calendario de reservas ReservaBot" class="w-full h-auto" >
                                 </div>
                                 <!-- Screenshot 2 - Pendientes -->
                                 <div class="screenshot-slide hidden">
-                                    <img src="../images/screenshot_1.png" alt="Gestión de reservas pendientes" class="w-full h-auto" style="max-width: 280px; margin: 0 auto;">
+                                    <img src="../images/screenshot_1.png" alt="Gestión de reservas pendientes" class="w-full h-auto" >
                                 </div>
                                 <!-- Screenshot 3 - Detalle reserva -->
                                 <div class="screenshot-slide hidden">
-                                    <img src="../images/screenshot_3.png" alt="Detalle de reserva confirmada" class="w-full h-auto" style="max-width: 280px; margin: 0 auto;">
+                                    <img src="../images/screenshot_3.png" alt="Detalle de reserva confirmada" class="w-full h-auto" >
                                 </div>
                             </div>
                             
