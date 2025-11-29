@@ -322,19 +322,19 @@
                 <div class="lg:text-right fade-in-up" style="animation-delay: 0.3s;">
                     <div class="relative">
                         <!-- App Screenshots Carousel -->
-                        <div class="relative mx-auto max-w-sm">
+                        <div class="relative mx-auto max-w-xs">
                             <div id="screenshotCarousel" class="overflow-hidden rounded-2xl shadow-2xl">
                                 <!-- Screenshot 1 - Calendario -->
                                 <div class="screenshot-slide active">
-                                    <img src="../images/screenshot_2.png" alt="Calendario de reservas ReservaBot" class="w-full h-auto">
+                                    <img src="../images/screenshot_2.png" alt="Calendario de reservas ReservaBot" class="w-full h-auto" style="max-width: 280px; margin: 0 auto;">
                                 </div>
                                 <!-- Screenshot 2 - Pendientes -->
                                 <div class="screenshot-slide hidden">
-                                    <img src="../images/screenshot_1.png" alt="Gestión de reservas pendientes" class="w-full h-auto">
+                                    <img src="../images/screenshot_1.png" alt="Gestión de reservas pendientes" class="w-full h-auto" style="max-width: 280px; margin: 0 auto;">
                                 </div>
                                 <!-- Screenshot 3 - Detalle reserva -->
                                 <div class="screenshot-slide hidden">
-                                    <img src="../images/screenshot_3.png" alt="Detalle de reserva confirmada" class="w-full h-auto">
+                                    <img src="../images/screenshot_3.png" alt="Detalle de reserva confirmada" class="w-full h-auto" style="max-width: 280px; margin: 0 auto;">
                                 </div>
                             </div>
                             
@@ -921,20 +921,27 @@
                     body: JSON.stringify(data)
                 });
                 
-                const result = await response.json();
+                let result;
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    console.error('Error parsing JSON:', jsonError);
+                    throw new Error('Respuesta inválida del servidor');
+                }
                 
-                if (result.success) {
+                if (response.ok && result.success) {
                     formMessage.textContent = result.message || '¡Mensaje enviado correctamente!';
                     formMessage.className = 'mt-4 text-center text-green-600';
                     formMessage.classList.remove('hidden');
                     form.reset();
                 } else {
-                    formMessage.textContent = result.error || 'Error al enviar el mensaje';
+                    formMessage.textContent = result.error || result.errors?.join(', ') || 'Error al enviar el mensaje';
                     formMessage.className = 'mt-4 text-center text-red-600';
                     formMessage.classList.remove('hidden');
                 }
             } catch (error) {
-                formMessage.textContent = 'Error de conexión. Inténtalo de nuevo.';
+                console.error('Error en envío:', error);
+                formMessage.textContent = error.message || 'Error de conexión. Inténtalo de nuevo.';
                 formMessage.className = 'mt-4 text-center text-red-600';
                 formMessage.classList.remove('hidden');
             } finally {
