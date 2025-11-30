@@ -49,8 +49,17 @@ class ConnectionPool {
         return $this->getConnection()->query($query, $fetchMode);
     }
     
-    public function lastInsertId(?string $name = null): string|false {
-        return $this->getConnection()->lastInsertId($name);
+    public function lastInsertId(): int {
+        $sql = "SELECT LAST_INSERT_ID() as id";
+        $stmt = $this->prepare($sql); 
+        $stmt->execute();
+        $id = (int) $stmt->fetchColumn();
+        
+        if ($id === 0) {
+            throw new \RuntimeException('No se pudo obtener el último ID insertado');
+        }
+        
+        return $id; 
     }
     
     public function beginTransaction(): bool {
