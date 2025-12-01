@@ -289,7 +289,7 @@ class WhatsAppDomain {
     public function obtenerEstadoWhatsApp(int $usuarioId): array {
         try {
             $serverResponse = $this->serverManager->obtenerEstado($usuarioId);
-            debug_log("Respuesta del servidor WhatsApp: " . json_encode($serverResponse));
+            debug_log("Estado de WhatsApp recibido de server.reservabot.es para usuario ' . $usuarioId . ': " . $serverResponse['status']);
             
             // Sincronizar con BD local solo si la respuesta del servidor es exitosa
             if ($serverResponse['success']) {

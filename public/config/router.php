@@ -163,6 +163,7 @@ class Router {
                 return $this->handleNotFound();
             }
 
+            debug_log("Router: Ejecutando ruta " . $route['method'] . " " . $route['path'] . " -> " . $filePath);
             require_once $filePath;
             return true;
             

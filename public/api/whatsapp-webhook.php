@@ -22,7 +22,7 @@ if (strpos($contentType, 'application/json') === false) {
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
-debug_log("Webhook recibido: " . $input);
+debug_log("Webhook recibido. 'event:' " . $data['event'] . ", 'userId:' " . ($data['userId'] ?? 'null'));
 
 if (json_last_error() !== JSON_ERROR_NONE) {
     error_log('Error decodificando JSON del webhook: ' . json_last_error_msg());
