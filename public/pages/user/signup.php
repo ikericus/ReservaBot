@@ -362,9 +362,9 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
                         <div class="ml-3 text-sm">
                             <label for="terminos" class="text-gray-700">
                                 Acepto los 
-                                <a href="#" class="text-purple-600 hover:text-purple-500 font-medium transition-colors">términos y condiciones</a>
+                                <a href="/terminos" target="_blank" class="text-purple-600 hover:text-purple-500 font-medium transition-colors">términos y condiciones</a>
                                 y la 
-                                <a href="#" class="text-purple-600 hover:text-purple-500 font-medium transition-colors">política de privacidad</a>
+                                <a href="/politica-privacidad" class="text-purple-600 hover:text-purple-500 font-medium transition-colors">política de privacidad</a>
                                 *
                             </label>
                         </div>

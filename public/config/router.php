@@ -38,7 +38,10 @@ class Router {
         $this->addRoute('GET',      '/verificar-email',                 'pages/user/verificar-email.php');               
         $this->addRoute('POST',     '/api/login-handler',               'api/user/login-handler.php');        
         $this->addRoute('POST',     '/api/register-handler',            'api/user/register-handler.php');
-        $this->addRoute('POST',     '/api/contacto-handler',            'api/contacto-handler.php');   
+        $this->addRoute('POST',     '/api/contacto-handler',            'api/contacto-handler.php');     
+        $this->addRoute('GET',      '/terminos',                        'pages/docs/terminos.php');  
+        $this->addRoute('GET',      '/politica-privacidad',             'pages/docs/politica-privacidad.php');  
+        $this->addRoute('GET',      '/politica-cookies',                'pages/docs/politica-cookies.php');  
 
         // Rutas protegidas   
 
