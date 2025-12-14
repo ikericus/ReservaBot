@@ -223,7 +223,7 @@
                             <i class="ri-login-circle-line mr-2"></i>
                             <span class="font-medium">Iniciar Sesión</span>
                         </a>
-                        <a href="/login?user=demo@reservabot.es&pass=demo1234" class="w-full flex items-center justify-center gradient-bg text-white py-3 rounded-xl hover:shadow-lg transition-all font-semibold">
+                        <a href="/login?user=demo@reservabot.es&pass=demo123" class="w-full flex items-center justify-center gradient-bg text-white py-3 rounded-xl hover:shadow-lg transition-all font-semibold">
                             <i class="ri-play-circle-line mr-2"></i>
                             <span>Iniciar Demo</span>
                         </a>
@@ -297,7 +297,7 @@
                     </div>
                     
                     <div class="flex flex-col sm:flex-row gap-4 mb-8">
-                        <a href="/login?user=demo@reservabot.es&pass=demo1234" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all inline-flex items-center justify-center">
+                        <a href="/login?user=demo@reservabot.es&pass=demo123" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all inline-flex items-center justify-center">
                             <i class="ri-play-circle-line mr-2"></i>
                             Iniciar prueba
                         </a>
@@ -705,7 +705,7 @@
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-                <a href="/login?user=demo@reservabot.es&pass=demo1234" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all">
+                <a href="/login?user=demo@reservabot.es&pass=demo123" class="btn-shine bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all">
                     <i class="ri-rocket-line mr-2"></i>
                     Probar Beta Gratis
                 </a>
@@ -749,7 +749,7 @@
                     <ul class="space-y-3 text-gray-400">
                         <li><a href="#funcionalidades" class="hover:text-white transition-colors">Funcionalidades</a></li>
                         <li><a href="#planes" class="hover:text-white transition-colors">Precios</a></li>
-                        <li><a href="/login?user=demo@reservabot.es&pass=demo1234" class="hover:text-white transition-colors">Demo</a></li>
+                        <li><a href="/login?user=demo@reservabot.es&pass=demo123" class="hover:text-white transition-colors">Demo</a></li>
                         <li><a href="#" class="hover:text-white transition-colors">API</a></li>
                     </ul>
                 </div>
